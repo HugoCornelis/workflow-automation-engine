@@ -1,0 +1,1759 @@
+#!/usr/bin/perl -w
+#!/usr/bin/perl -d:ptkdb
+#
+# $Id: run 1.80 Wed, 26 Dec 2007 21:42:57 -0600 hugo $
+#
+
+use strict;
+
+
+our $core_directory;
+
+our $built_exe_directory;
+
+# our $perl_modules_directory;
+
+our $config;
+
+
+BEGIN
+{
+    # default : running stand-alone
+
+    my $test_mode = 'stand-alone';
+
+    # find the package core directory
+
+    $config = do 'tests.config';
+
+    if (!defined $config)
+    {
+	if ($ENV{srcdir})
+	{
+	    $config = do "$ENV{srcdir}/tests.config";
+
+	    # register that we are running from automake
+
+	    $test_mode = 'automake';
+	}
+    }
+
+    if (!defined $config)
+    {
+	die "No test configuration found";
+    }
+
+    # protect for automake
+
+    if ($test_mode eq 'stand-alone')
+    {
+	$core_directory = $config->{core_directory};
+    }
+    else
+    {
+	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
+
+	$core_directory = $config->{core_directory};
+
+    }
+
+    # remove parent and current directories
+
+    $core_directory =~ s(([^\.])\./)($1)g;
+
+    $core_directory =~ s([^/\.]+/\.\./)()g;
+
+    print "$0: core_directory is $core_directory\n";
+
+    # add to tests directory to include paths
+
+    if (!exists $config->{tests_directory})
+    {
+	$config->{tests_directory} = "${core_directory}tests/specifications";
+    }
+
+    unshift @INC, $config->{tests_directory};
+
+#     # find the perl modules directory
+
+#     $perl_modules_directory = $core_directory;
+
+#     $perl_modules_directory .= "perl";
+
+#     # add to include path
+
+#     unshift @INC, $perl_modules_directory;
+
+    # more automake hacking : if there is a special _build directory
+    # that separates sources and derived files, we assume that the
+    # _build directory will contain the executables.
+
+    $built_exe_directory = $core_directory . "_build/";
+
+    if (!-d $built_exe_directory)
+    {
+	$built_exe_directory = $core_directory;
+    }
+}
+
+
+my $loaded_mail_sender = eval "require Mail::Sender";
+
+use Data::Comparator qw(data_comparator);
+use Data::Transformator;
+
+use Expect;
+
+use Getopt::Long;
+
+use YAML;
+
+
+my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
+my $option_flattenout;
+my $option_help;
+my $option_numerical_compare = $config->{numerical_compare} || 0;
+my $option_random_order;
+my $option_regex_selector = ".*";
+my $option_report_disabled;
+my $option_show;
+my $option_timeout_multiplier = 1;
+my $option_timings;
+my $option_trace;
+my $option_verbose;
+
+
+print "Executable is $0,\n";
+print "core_directory is $core_directory\n";
+
+my $environment_settings = $config->{environment_settings};
+
+foreach my $environment_setting_name (keys %$environment_settings)
+{
+    my $environment_setting = $environment_settings->{$environment_setting_name};
+
+    # if simply setting values in the environment
+
+    if (!ref $environment_setting)
+    {
+	# set the value in the environment
+
+	$ENV{$environment_setting_name} = $environment_setting;
+    }
+
+    # if additional initialization required
+
+    elsif (ref $environment_setting eq 'HASH')
+    {
+	# get environment_setting value
+
+	my $value = $environment_setting->{value};
+
+	# set the value in the environment
+
+	$ENV{$environment_setting_name} = $value;
+
+	# give feedback
+
+	my $description = $environment_setting->{description};
+
+	$description =~ s/%value/$value/g;
+
+	print $description;
+
+	# loop over shell commands for initialization
+
+	my $shell_commands = $environment_setting->{initialization}->{shell};
+
+	foreach my $shell_command (@$shell_commands)
+	{
+	    # replace value
+
+	    $shell_command =~ s/%value/$value/g;
+
+	    # execute command
+
+	    print "$0: executing ($shell_command)\n";
+
+	    system $shell_command;
+	}
+    }
+    else
+    {
+	die "$0: illegal environment_settings, was processing $environment_setting";
+    }
+}
+
+if (defined ($config->{environment}))
+{
+    print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
+}
+
+
+my $error_count = 0;
+
+my $test_report
+    = {
+       description => {
+		       command => $0,
+		       name => "Test report",
+		       package => $config->{package},
+		      },
+       global => {
+		  config => $config,
+		  error_count => $error_count,
+		  status => 'initializing',
+		  test_count => 0,
+		  time_start => `date`,
+		 },
+       target => {
+		  OS => $^O,
+		  system => {
+			     libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
+			     uname => (join '', `uname -a`),
+			    },
+		  packages => {
+			       bison => (join '', `bison --version`),
+			       flex => (join '', `flex --version`),
+			       gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
+			       perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
+			       swig => (join '', `swig 2>&1 -version`),
+			      },
+		 },
+      };
+
+
+$SIG{'__DIE__'}
+    = sub
+      {
+	  use Carp;
+
+	  print STDERR Carp::longmess(@_);
+
+	  $test_report->{global}->{status} = 'Died';
+
+	  report_exit(3, @_);
+      };
+
+
+$SIG{'INT'}
+    = sub
+      {
+	  $test_report->{global}->{status} = 'Interrupted';
+
+	  report_exit(2);
+      };
+
+
+sub main
+{
+    read_cmd_line();
+
+    my $test_modules = test_library_construct();
+
+    $test_modules = test_library_expand($test_modules);
+
+    # total test count so far is zero
+
+    my $test_count = 0;
+
+    # compute the library checksum
+
+    my $library_sha_before;
+
+    if (defined ($config->{model_library}))
+    {
+	$library_sha_before = model_library_sha();
+
+    }
+
+    # the previous command had no side effects on the loaded model (since there is no model yet)
+
+    my $previous_side_effects = 0;
+
+    # set status: running
+
+    $test_report->{global}->{status} = 'Running';
+
+    # loop over all test modules
+
+    my $exp;
+
+    my $running_command_definition;
+
+    my $test_startup;
+
+    # randomize order if required
+
+    if (defined $option_random_order)
+    {
+	require List::Util;
+
+	my $seed = time() ^ $$ ^ unpack "%L*", `ps axww | gzip`;
+
+	if ($option_random_order =~ /^[0-9]*$/
+	    and $option_random_order ne 1)
+	{
+	    $seed = $option_random_order
+	}
+
+	print "Randomizing test specifications, seed is $seed\n";
+
+	srand($seed);
+
+	$test_report->{random_seed} = $seed;
+
+	# and shuffle the modules
+
+	$test_modules = [ List::Util::shuffle(@$test_modules), ];
+    }
+    else
+    {
+	$test_report->{random_seed} = 'not randomized';
+    }
+
+    foreach my $module_definition (@$test_modules)
+    {
+	if (!defined $module_definition->{name})
+	{
+	    $module_definition->{name} = 'unnamed';
+
+	    report_error_add
+		(
+		 {
+		  description => 'unnamed module',
+		  error => 'unnamed module',
+		  module_name => 'unnamed module',
+		 },
+		);
+	}
+
+	my $module_name = $module_definition->{name};
+
+	if (!defined $module_definition->{description})
+	{
+	    $module_definition->{description} = $module_definition->{name};
+
+	    report_error_add
+		(
+		 {
+		  description => 'no module description',
+		  error => 'no module description',
+		  module_name => $module_name,
+		 },
+		);
+	}
+
+	if ($module_definition->{disabled})
+	{
+	    report_message(1, 2, "Module $module_definition->{description} is disabled ($module_definition->{disabled}).
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+	    $test_report->{disabled}->{modules}->{$module_name} = $module_definition->{disabled};
+
+	    next;
+	}
+
+	report_message(2, 1, "Running tests of module $module_definition->{description}");
+
+	my $preparation = $module_definition->{preparation};
+
+	my $module_preparation_result;
+
+	if ($preparation)
+	{
+	    print "*** Preparing Module $module_name ($preparation->{description})\n";
+
+	    my $preparer = $preparation->{preparer};
+
+	    $module_preparation_result = &$preparer();
+	}
+
+	# loop over commands for this module
+
+	my $command_definitions = $module_definition->{command_definitions};
+
+	foreach my $command_definition (@$command_definitions)
+	{
+	    my $description = $command_definition->{description};
+
+	    if ($command_definition->{disabled})
+	    {
+		report_message(1, 2, "Tests of $description are disabled ($command_definition->{disabled})
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+		$test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
+
+		next;
+	    }
+
+	    if ($option_show)
+	    {
+		if (!$test_report->{selected}->{$module_name}->{$description})
+		{
+		    $test_report->{selected}->{$module_name}->{$description} = 1;
+		}
+
+		next;
+	    }
+
+	    # give some diagnostics
+
+	    if (@$command_definitions > 1)
+	    {
+		report_message(2, 1, "Running tests of $description");
+	    }
+
+	    my $preparation = $command_definition->{preparation};
+
+	    my $preparation_result;
+
+	    if ($preparation)
+	    {
+		print "*** Preparing ($preparation->{description})\n";
+
+		my $preparer = $preparation->{preparer};
+
+		$preparation_result = &$preparer();
+	    }
+
+	    my $command = $command_definition->{command};
+
+	    my $spawn_new;
+
+	    if (ref $command eq 'CODE')
+	    {
+		$spawn_new = 0;
+	    }
+	    else
+	    {
+		# a command can be an absolute pathname,
+		# can come from the _build directory
+		# or from the sources for a script
+
+# 		-f $command and print "Found command $command\n";
+# 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
+# 		-f $core_directory . $command and print "Found core $core_directory$command\n";
+
+		my $test_command
+		    = -f $command
+			? $command
+			    : -f $built_exe_directory . $command
+				? $built_exe_directory . $command
+				    : $core_directory . $command;
+
+		# find differences between how to run this command and
+		# the one already running
+
+		my $new_command_definition
+		    = {
+		       arguments => $command_definition->{arguments},
+		       command => $test_command,
+		      };
+
+		my $differences
+		    = data_comparator
+			($new_command_definition, $running_command_definition);
+
+		# remember to spawn a new command
+
+		$spawn_new
+		    =
+			# if we did not have any command yet
+
+			!$exp
+
+			    # or if there were differences with the previous command
+
+			    || !$differences->is_empty()
+
+				# or if the previous command had side effects
+
+				|| $previous_side_effects
+
+				    # or if we had to prepare this command
+
+				    || $preparation;
+
+		# prefix the command with the core directory
+
+		$command = $new_command_definition->{command};
+
+		my $arguments = $command_definition->{arguments};
+
+		# if the command can be executed
+
+		if (-x $command)
+		{
+		    if ($spawn_new)
+		    {
+			if ($exp)
+			{
+			    # terminate the previous command
+
+			    #t could be that the hard_close() call is needed because
+			    #t neurospaces uses readline, not sure needs investigation,
+			    #t perhaps.
+
+			    $exp->hard_close();
+			}
+
+			# create a new Expect object by spawning a new process with the new command
+
+			$exp = Expect->new();
+
+			#! see the expect manual for this one
+
+			$exp->raw_pty(1);
+
+			# 		    $exp->slave->stty(qw(raw -echo));
+
+			$exp->spawn
+			    (
+			     (
+			      $option_trace
+			      ? ("strace", "-f")
+			      : ()
+			     ),
+			     $command,
+			     @$arguments
+			    )
+				or die "$0: cannot spawn $command: $!\n";
+
+			# set the running_command_definition
+
+			$running_command_definition = $new_command_definition;
+
+			print "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+			# remember to do startup testing
+
+			$test_startup = 1;
+
+			# there were no side effects yet
+
+			$previous_side_effects = 0;
+		    }
+		    else
+		    {
+			print "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+			$test_startup = 0;
+		    }
+		}
+		else
+		{
+		    my $error = "$command is not executable";
+
+ 		    report_error_add
+			(
+			 {
+			  description => $description,
+			  error => $error,
+			  module_name => $module_name,
+			 },
+			);
+
+		}
+	    }
+
+	    # loop over all tests for this command
+
+	    my $command_tests = $command_definition->{command_tests};
+
+	    foreach my $command_test (@$command_tests)
+	    {
+		# give feedback about this specific test
+
+		my $description = $command_test->{description};
+
+		if ($command_test->{disabled})
+		{
+		    report_message(1, 2, "Tests of $description are disabled ($command_test->{disabled})
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+		    $test_report->{disabled}->{command_tests}->{$module_name}->{$description} = $command_test->{disabled};
+
+		    next;
+		}
+
+		# expect this output
+
+		my ($matched_pattern_position,
+		    $error,
+		    $successfully_matching_string,
+		    $before_match,
+		    $after_match);
+
+		my $expected;
+
+		my $time_elapsed;
+
+		if (ref $command eq 'CODE')
+		{
+		    $error
+			= &$command
+			    (
+			     $command_test,
+			     {
+			      c_code => {
+					 directory => $core_directory,
+					},
+			     },
+			    );
+		}
+		else
+		{
+		    print "*** Test: $description\n";
+
+		    if ($description =~ /startup successful \?$/)
+		    {
+			if (!$test_startup)
+			{
+			    print "*** Skipped: not testing startup tests on a recycled command ($description)\n";
+
+			    next;
+			}
+		    }
+
+		    # emit comment if any
+
+		    my $comment = $command_test->{comment};
+
+		    if ($comment)
+		    {
+			print "*** Comment: $comment\n";
+		    }
+
+		    # set read, wait and write strings
+
+		    my $read = $command_test->{read};
+
+		    my $wait = $command_test->{wait};
+
+		    my $write = $command_test->{write};
+
+		    # set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
+
+		    my $timeout
+			= defined $command_test->{timeout}
+			    ? $command_test->{timeout} * $option_timeout_multiplier
+				: $spawn_new
+				    ? 4 * $option_timeout_multiplier
+					: 2 * $option_timeout_multiplier;
+
+		    use Time::HiRes qw(gettimeofday tv_interval);
+
+		    # write
+
+		    my $time_start = [ gettimeofday(), ];
+
+		    if (defined $write)
+		    {
+			print "*** Write: $write\n";
+
+			$exp->send("$write\n");
+		    }
+
+		    # wait
+
+		    if ($wait)
+		    {
+			print "*** Wait: $wait\n";
+
+			select(undef, undef, undef, $wait);
+		    }
+
+		    # read
+
+		    if (defined $read)
+		    {
+			# substitute variables
+
+			$read = substitute_variables($read);
+
+			# if literal text expected
+
+			if (!ref $read)
+			{
+			    ($matched_pattern_position,
+			     $error,
+			     $successfully_matching_string,
+			     $before_match,
+			     $after_match)
+				= $exp->expect($timeout, $read, );
+
+			    $expected = $read;
+			}
+
+			# if array, means regex match
+
+			elsif (ref $read eq 'ARRAY')
+			{
+			    ($matched_pattern_position,
+			     $error,
+			     $successfully_matching_string,
+			     $before_match,
+			     $after_match)
+				= $exp->expect($timeout, @$read, );
+
+			    #! skip the expect '-re' flag
+
+			    $expected = $read->[1];
+			}
+
+			# else, hash, one of several alternatives expected
+
+			else
+			{
+			    # compose the alternatives regex
+
+			    if ($read->{alternatives})
+			    {
+				my $alternatives = $read->{alternatives};
+
+				$expected = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
+
+				# read from the application
+
+				($matched_pattern_position,
+				 $error,
+				 $successfully_matching_string,
+				 $before_match,
+				 $after_match)
+				    = $exp->expect($timeout, "-re", $expected, );
+			    }
+			    elsif ($read->{application_output_file})
+			    {
+				my $application_output_file
+				    = $read->{application_output_file};
+
+ 				print "*** Application output file: $application_output_file\n";
+
+				my $expected_output_file
+				    = $read->{expected_output_file};
+
+				local $/;
+
+				my $application_output = `cat "$application_output_file"`;
+
+				my $expected_output;
+
+				if ($expected_output_file)
+				{
+				    print "*** Expected output file: $expected_output_file\n";
+
+				    $expected_output = `cat "$expected_output_file"`;
+				}
+				elsif (defined $read->{expected_output})
+				{
+				    $expected_output = $read->{expected_output};
+				}
+
+				$expected = $expected_output;
+
+				if ($expected_output eq $application_output)
+				{
+				    $before_match = $application_output;
+				}
+				else
+				{
+				    $before_match = $application_output;
+
+				    $read = $expected_output;
+
+				    $error = 'expected_output does not match application_output';
+				}
+
+				
+# 				print `pwd`;
+
+				#
+				# Might want to check the file the application outputs
+				# so comment this out. 
+
+				#`rm -f $application_output_file`;
+			    }
+			    elsif ($read->{shell})
+			    {
+				my $shell = $read->{shell};
+
+				my $expected = `$shell`;
+
+				($matched_pattern_position,
+				 $error,
+				 $successfully_matching_string,
+				 $before_match,
+				 $after_match)
+				    = $exp->expect($timeout, $expected, );
+
+			    }
+			    else
+			    {
+				die "test not understood by $0, aborting";
+			    }
+			}
+
+			$time_elapsed = tv_interval($time_start);
+
+			# fill in the elapsed time in the report
+
+			if ($option_timings)
+			{
+			    $test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
+			}
+
+			# if things don't match
+
+			if ($error)
+			{
+			    # if allowed to compare numerically
+
+			    if ((!$command_test->{string_only}
+				 && $option_numerical_compare)
+
+				# or forced to compare numerically
+
+				|| $command_test->{numerical_compare}
+				|| $command_definition->{numerical_compare}
+				|| $module_definition->{numerical_compare})
+			    {
+				# compare numerically
+
+				$error = numerical_compare($command_test, $before_match, $read, $error);
+			    }
+			}
+		    }
+		}
+
+		# process errors
+
+		if ($error)
+		{
+		    my $description = $command_test->{description};
+
+		    my $command_definition_description = $command_definition->{description};
+
+		    my $message;
+
+		    if ($option_verbose)
+		    {
+			$message = $before_match;
+		    }
+
+ 		    report_error_add
+			(
+			 {
+			  description => $description,
+			  error => $error,
+			  expected => $expected,
+			  message => $message,
+			  module_name => $module_name,
+			  seen => $before_match,
+			  subdescription => $command_definition_description,
+			 },
+			);
+
+		}
+
+		# register if this command had side effects
+
+		$previous_side_effects ||= $command_test->{side_effects} || 0;
+
+		# increment total test count
+
+		$test_report->{global}->{test_count}++;
+	    }
+
+	    my $reparation = $command_definition->{reparation};
+
+	    if ($reparation)
+	    {
+		print "*** Reparing ($reparation->{description})\n";
+
+		my $reparer = $reparation->{reparer};
+
+		my $reparation_error = &$reparer($preparation_result);
+
+		# process errors
+
+		if ($reparation_error)
+		{
+		    my $description = $reparation_error;
+
+		    my $command_definition_description = $command_definition->{description};
+
+		    report_error_add
+			(
+			 {
+			  description => $description,
+			  error => $reparation_error,
+			  module_name => $module_name,
+			  subdescription => $command_definition_description,
+			 },
+			);
+		}
+	    }
+
+	    if (@$command_definitions > 1)
+	    {
+		report_message(1, 2, "End for tests of $description
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+	    }
+
+	    # register if this command had side effects
+
+	    #! e.g. using a preparer/reparer combination
+
+	    $previous_side_effects ||= $command_definition->{side_effects} || 0;
+	}
+
+	my $reparation = $module_definition->{reparation};
+
+	if ($reparation)
+	{
+	    print "*** Reparing Module $module_name ($reparation->{description})\n";
+
+	    my $reparer = $reparation->{reparer};
+
+	    my $reparation_error = &$reparer($module_preparation_result);
+
+	    # process errors
+
+	    if ($reparation_error)
+	    {
+		my $description = $reparation_error;
+
+		my $module_definition_description = $module_definition->{description};
+
+		report_error_add
+		    (
+		     {
+		      description => $description,
+		      error => $reparation_error,
+		      module_name => $module_name,
+		      subdescription => $module_definition_description,
+		     },
+		    );
+	    }
+	}
+
+	# if library checksum mismatch
+
+	if (defined ($config->{model_library}))
+	{
+	    my $library_sha_after = model_library_sha();
+
+	    if ($library_sha_after ne $library_sha_before)
+	    {
+		my $error = 'model library checksum mismatch (model library has changed)';
+
+		my $description = $module_definition->{description};
+
+		report_error_add
+		    (
+		     {
+		      description => $description,
+		      error => $error,
+		      module_name => $module_name,
+		     },
+		    );
+	    }
+	}
+
+	# register if this command had side effects
+
+	#! don't think that make sense, but anyway ...
+
+	$previous_side_effects ||= $module_definition->{side_effects} || 0;
+
+	report_message(1, 2, "End of tests of module $module_definition->{description}
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+    }
+
+    # if there is a command running
+
+    if ($exp)
+    {
+	# terminate the command
+
+	#t could be that the hard_close() call is needed because
+	#t neurospaces uses readline, not sure needs investigation,
+	#t perhaps.
+
+	$exp->hard_close();
+    }
+
+    $test_report->{global}->{status} = 'Finished';
+
+    report_exit(0);
+}
+
+
+sub read_cmd_line
+{
+    my $result
+	= GetOptions
+	    (
+	     "email" => \$option_email,
+	     "flattenout" => \$option_flattenout,
+	     "help!" => \$option_help,
+	     "numerical-compare!" => \$option_numerical_compare,
+	     "randomize-order=s" => \$option_random_order,
+	     "regex-selector=s" => \$option_regex_selector,
+	     "report-disabled" => \$option_report_disabled,
+	     "show!" => \$option_show,
+	     "timeout-multiplier=s" => \$option_timeout_multiplier,
+	     "timings!" => \$option_timings,
+	     "trace!" => \$option_trace,
+	     "v|verbose+" => \$option_verbose,
+	    );
+
+    if (!$result)
+    {
+	die "$0: Error in option processing";
+    }
+
+    $test_report->{options}
+	= {
+	   email => $option_email,
+	   flattenout => $option_flattenout,
+	   help => $option_help,
+	   numerical_compare => $option_numerical_compare,
+	   random_order => $option_random_order,
+	   regex_selector => $option_regex_selector,
+	   report_disabled => $option_report_disabled,
+	   show => $option_show,
+	   timeout_multiplier => $option_timeout_multiplier,
+	   timings => $option_timings,
+	   trace => $option_trace,
+	   verbose => $option_verbose,
+	  };
+
+    if ($option_help)
+    {
+	print
+	    "
+$0: test definition executor
+
+options:
+    --email              allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
+    --flattenout         flattenout the test definitions before testing,
+                         this experimental feature might increase test performance,
+                         by recycling test definitions.
+    --help               print usage information.
+    --numerical-compare  attempt to compare numbers numerically when string differences are found (default enabled).
+    --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
+    --regex-selector     defines a regex to run specific tests.
+    --report-disabled    include information of disabled tests in the test report.
+    --show               show tests that would be run using the current configuration.
+    --timeout-multiplier multiply all timeout values with this constant.
+    --timings            add timing information about the tests to the report.
+    --trace              enable tracing using the strace unix shell command.
+    --verbose            set verbosity level.
+";
+
+	exit 1;
+    }
+
+}
+
+
+sub report_error_add
+{
+    my $arguments = shift;
+
+    my $description = $arguments->{description};
+    my $error = $arguments->{error};
+    my $expected = $arguments->{expected};
+    my $message = $arguments->{message};
+    my $module_name = $arguments->{module_name};
+    my $seen = $arguments->{seen};
+    my $subdescription = $arguments->{subdescription};
+
+    $error_count++;
+
+    print STDERR "*** Error: $error ($description, $module_name, error_count $error_count)\n";
+
+    # fill in the error report
+
+    $test_report->{global}->{error_count} = $error_count;
+
+    if ($subdescription)
+    {
+	$test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{description} = $description;
+    }
+    else
+    {
+	$test_report->{errors}->{modules}->{$module_name}->{$error_count}->{description} = $description;
+    }
+
+    $test_report->{errors}->{modules}->{$module_name}->{$error_count}->{error} = $error;
+
+    if (defined $message)
+    {
+	#! subdescription can be undefined here, in which case
+	#! $message is undefined too.  Both can be defined when
+	#! running in verbose mode seems, allows to track regex
+	#! problems ... I think.
+
+	$test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{report} = $message;
+    }
+
+    if (defined $expected
+	and defined $seen)
+    {
+	my $processed_expected = [ split "\n", $expected, ];
+
+	$processed_expected = join "\n*** Error: expected: ", "", @$processed_expected, "\n";
+
+	print STDERR $processed_expected;
+
+	my $processed_seen = [ split "\n", $seen, ];
+
+	$processed_seen = join "\n*** Error: seen: ", "", @$processed_seen, "\n";
+
+	print STDERR $processed_seen;
+
+	use IO::File;
+
+	my $expected_filename = "/tmp/text_$config->{package}->{name}_$error_count.expected";
+
+	my $expected_file = IO::File->new(">$expected_filename");
+
+	print $expected_file $expected;
+
+	$expected_file->close();
+
+	my $seen_filename = "/tmp/text_$config->{package}->{name}_$error_count.seen";
+
+	my $seen_file = IO::File->new(">$seen_filename");
+
+	print $seen_file $seen;
+
+	$seen_file->close();
+    }
+
+}
+
+
+sub report_exit
+{
+    my $exit_code = shift;
+
+    my $description = shift;
+
+    $test_report->{global}->{time_end} = `date`;
+
+    if (defined $description
+        && $exit_code eq 3)
+    {
+	print "*** die: $description\n";
+    }
+
+    # yaml out the test report
+
+    my $report_text
+	= "\n"
+	    . Dump(
+		   {
+		    description => $test_report->{description},
+		    ($option_report_disabled ? (disabled => $test_report->{disabled}) : ()),
+		    ($option_show ? () : (errors => $test_report->{errors})),
+		    ($option_show ? () : (global => $test_report->{global})),
+		    ($error_count ? (target => $test_report->{target}) : ()),
+		    ($option_show ? (selected => $test_report->{selected}) : ()),
+		   },
+		  );
+
+    print($report_text);
+
+    # and write the full report to a file
+
+    my $report_filename = ">/tmp/report_$config->{package}->{name}.yml";
+
+    eval
+    {
+	YAML::DumpFile($report_filename, $test_report);
+    };
+
+    if ($@)
+    {
+	print STDERR "*** Error: Failed to write output report to $report_filename\n";
+    }
+
+    # if email enabled by the options
+
+    if ($option_email)
+    {
+	# check for a default route
+
+	#! from perl/basic.t
+
+	my $no_default_route = (`/sbin/route` =~ /default/ ? '' : 'no default route to the internet found');
+
+	if (!$no_default_route)
+	{
+	    # ask use if sending an email is ok
+
+	    my $default_answer_prompt = $error_count ? "Y/n" : "y/N";
+
+	    print "\n--\n  These tests generated $error_count error(s)";
+	    print ( $error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
+	    print "\n  Ok to send an email to hugo.cornelis\@gmail.com for this test report,\n  this email will not reveal your identity to the recipient ?  [$default_answer_prompt]";
+
+	    my $answer = readline(*STDIN);
+
+	    # send an email if ok
+
+	    if ($answer =~ /^y/)
+	    {
+		#t perhaps should consider Mail::Builder, don't know
+
+		if ($loaded_mail_sender)
+		{
+		    my $sender
+			= Mail::Sender->new
+			    (
+			     {
+# 			      smtp => 'googlemail.l.google.com',
+			      smtp => 'mta1.uthscsa.edu',
+			      from => 'hugo.cornelis@gmail.com',
+			     },
+			    );
+
+		    print
+			"Sending ... should not take more than 30 seconds
+";
+
+		    my $message
+			= (
+			   "neurospaces_harness test report\n"
+			   . "Generated on " . `date` . "\n"
+			   . "\n========\n"
+			   . Dump($test_report)
+			   . "\n========\n"
+			  );
+
+		    $sender->MailMsg
+			(
+			 {
+			  to => 'cornelis@uthscsa.edu',
+			  subject => '[neurospaces_harness] test report',
+			  msg => $message,
+			 },
+			);
+
+		    # 	    $sender->Attach
+		    # 		(
+		    # 		 {
+		    # 		  description => 'test_report',
+		    # 		 },
+		    # 		);
+
+		    $sender->Close();
+
+		    if ($sender->{error})
+		    {
+			print
+			    "*** Error: $sender->{error}
+Email was not sent.
+";
+		    }
+		    else
+		    {
+			print
+			    "Email was sent.
+";
+		    }
+		}
+		else
+		{
+		    print
+			"*** Error: Cannot load the perl module Mail::Sender, contact your sysadmin to install this perl module.
+(use the shell command \"sudo perl -MCPAN -e 'install Mail::Sender'\")
+Email was not sent.
+";
+		}
+	    }
+	    else
+	    {
+		print
+		    "Email was not sent.
+";
+	    }
+	}
+	else
+	{
+	    print
+		"*** Warning: No default route to the internet found.
+Email was not sent.
+";
+	}
+    }
+    else
+    {
+	print
+	    "No email sent.
+";
+    }
+
+    # if there were errors
+
+    if ($error_count)
+    {
+	# exit with failure
+
+	$exit_code ||= 1;
+
+	print "$0: $error_count error(s)\n";
+
+	print "$0: exit_code $exit_code\n\n";
+
+	exit $exit_code;
+    }
+
+    # else
+
+    else
+    {
+	# exit, possibly success
+
+	print "$0: $error_count error(s)\n\n";
+
+	exit $exit_code;
+    }
+}
+
+
+sub report_message
+{
+    my $header = shift;
+
+    my $trailer = shift;
+
+    my $message = shift;
+
+    my $lines = [ split '\n', $message, ];
+
+    my $longest = 0;
+
+    map
+    {
+	($longest < length) && ($longest = length)
+    }
+	@$lines;
+
+    my $line = '-' x $longest;
+
+    if (!$option_show)
+    {
+	print "\n";
+	print "$line\n" for 0 .. $header;
+	print "\n";
+	print "$message\n\n";
+	print "$line\n" for 0 .. $trailer;
+	print "\n";
+    }
+}
+
+
+sub numerical_compare
+{
+    my $command_test = shift;
+
+    my $string1 = shift;
+
+    my $string2 = shift;
+
+    my $current_diffs = shift;
+
+    my $result = $current_diffs;
+
+    print "*** Checking numerical values ($command_test->{description})\n";
+
+    push @{$test_report->{numerical_compare}}, $command_test->{description};
+
+    if (($string1 eq '' and $string2 ne '')
+	or ($string2 eq '' and $string1 ne ''))
+    {
+	return 'numerical_compare(): one empty string, the other not.';
+    }
+
+    my $texts1 = [ split '\n', $string1, ];
+
+    my $numbers1 = [];
+
+    foreach my $text (@$texts1)
+    {
+	while ($text =~ s/([+-]?\.?\d+(\.[0-9]+)?(e[+-]?[0-9]+)?)/HERE_WAS_A_NUMBER/)
+	{
+	    my $number = $1;
+
+	    push @$numbers1, $number;
+	}
+    }
+
+    my $texts2 = [ split '\n', $string2, ];
+
+    my $numbers2 = [];
+
+    foreach my $text (@$texts2)
+    {
+	while ($text =~ s/([+-]?\.?\d+(\.[0-9]+)?(e[+-]?[0-9]+)?)/HERE_WAS_A_NUMBER/)
+	{
+	    my $number = $1;
+
+	    push @$numbers2, $number;
+	}
+    }
+
+    # from here on the default result is no error
+
+    $result = '';
+
+    # and can be overwritten by the next tests
+
+    # line up the numbers expected
+
+    # but the number of numbers must not differ by more than say 5
+
+    my $number_shifts = 5;
+
+    while (scalar @$numbers1 > scalar @$numbers2)
+    {
+	shift @$numbers1;
+
+	$number_shifts++;
+
+# 	return 'numerical_compare(): different number count, aborting with error';
+    }
+
+    while (scalar @$numbers1 < scalar @$numbers2)
+    {
+	shift @$numbers2;
+
+	$number_shifts++;
+
+# 	return 'numerical_compare(): different number count, aborting with error';
+    }
+
+    # we also line up the texts expected
+
+    my $text_shifts = 5;
+
+    while (scalar @$texts1 > scalar @$texts2)
+    {
+	shift @$texts1;
+
+	$text_shifts++;
+
+# 	return 'numerical_compare(): different text count, aborting with error';
+    }
+
+    while (scalar @$texts1 < scalar @$texts2)
+    {
+	shift @$texts2;
+
+	$text_shifts++;
+
+# 	return 'numerical_compare(): different text count, aborting with error';
+    }
+
+    # when we had to do to many textual corrections
+
+    if ($number_shifts < 0
+	or $text_shifts < 0)
+    {
+	# flag this as an error
+
+	return 'numerical_compare(): amount of data expected is to different from amount of seen data (number_shifts is $number_shifts, text_shifts is $text_shifts), aborting with an error';
+    }
+
+    # compare the texts between the numbers
+
+    foreach my $index (0 .. $#$texts1)
+    {
+	if ($texts1->[$index] ne $texts2->[$index])
+	{
+	    return 'numerical_compare(): texts differ ($texts1->[$index] ne $texts2->[$index]), aborting with an error';
+	}
+    }
+
+    # numerical compare of numbers
+
+    foreach my $index (0 .. $#$numbers1)
+    {
+	if ($numbers1->[$index] != $numbers2->[$index])
+	{
+	    my $diff = $numbers1->[$index] - $numbers2->[$index];
+
+	    #t the 1000 is a bit arbitrary, quite large differences allowed ...
+
+	    if (abs($diff) > abs($numbers1->[$index] / 1000))
+	    {
+		return 'numerical_compare(): numbers differ above accuracy ($numbers1->[$index] != $numbers2->[$index]), aborting with an error';
+	    }
+	}
+    }
+
+    # return result
+
+    #! if we get here, it means no error
+
+    return $result;
+}
+
+
+sub substitute_variables
+{
+    my $string = shift;
+
+    my $variables
+	= [
+	   [ '$(libdir)' => "$core_directory/tests/models", ],
+	  ];
+
+    foreach my $variable (@$variables)
+    {
+	my $searcher = quotemeta($variable->[0]);
+
+	$string =~ s/$searcher/$variable->[1]/g;
+    }
+
+    return $string;
+}
+
+
+sub test_library_construct
+{
+    # define the tests
+
+    my $additional_test_modules
+	= [
+	  ];
+
+    my $program_name = $0;
+
+    $program_name =~ s/.*\///;
+
+    my $library = $0;
+
+    $library =~ s/$program_name$/specifications/;
+
+    my $test_modules
+	= [
+	   @$additional_test_modules,
+	   map
+	   {
+	       chomp; $_;
+	   }
+	   sort
+	   `find $config->{tests_directory} -name "*.t"`,
+	  ];
+
+    return $test_modules;
+}
+
+
+sub test_library_expand
+{
+    my $library = shift;
+
+    my $result = [];
+
+    # parse all modules
+
+    foreach my $test_module (@$library)
+    {
+	if ($test_module !~ /$option_regex_selector/i)
+	{
+	    next;
+	}
+
+	my $module_definition = do $test_module;
+
+	if ($@)
+	{
+	    report_error_add
+		(
+		 {
+		  description => $@,
+		  error => $@,
+		  module_name => $test_module,
+		 },
+		);
+	}
+	else
+	{
+# 	    if (!$module_definition->{disabled})
+	    {
+		push @$result, $module_definition;
+	    }
+	}
+    }
+
+    if ($option_flattenout)
+    {
+	# sort modules
+
+	#t first need to transform: select command_definitions, flatten
+	#t out, keep the module names (for referencing errors).
+
+	my $transformator
+	    = Data::Transformator->new
+		(
+		 apply_identity_transformation => 0,
+		 name => 'test-module-selector',
+		 contents => $result,
+		 separator => '`',
+		 array_filter =>
+		 sub
+		 {
+		     my ($context, $component) = @_;
+
+		     # never filter for the first two component in the path
+
+		     my $depth = $context->{array};
+		     $depth = $#$depth;
+
+		     if ($depth < 2)
+		     {
+			 return 1;
+		     }
+
+		     # extract the data: command definitions with test commands
+
+		     $context->{path} =~ m|^[^/]*/([^/]*)/([^/]*)|;
+
+		     my $content = Data::Transformator::_context_get_current_content($context);
+
+		     # push it onto the result
+
+		     my $result = Data::Transformator::_context_get_main_result($context);
+
+		     if (!$result->{content})
+		     {
+			 $result->{content} = [];
+		     }
+
+		     push @{$result->{content}}, $content;
+
+		     # add the module name
+
+		     my $module_name = $context->{array}->[1]->{content}->{name};
+
+		     $content->{module_name} = $module_name;
+
+		     # add the module description
+
+		     my $module_description = $context->{array}->[1]->{content}->{description};
+
+		     $content->{module_description} = $module_description;
+
+		     # result is known, everything gets filtered
+
+		     0;
+		 },
+		);
+
+	#t for an empty array as content, the transformator returns an
+	#t undef, this is a bug that still needs fixing.
+
+	my $tests = $transformator->transform() || [];
+
+	# sort the flattened test definitions
+
+	$tests
+	    = [
+	       sort
+	       {
+		   my $module1 = $a;
+		   my $module2 = $b;
+
+		   my $command1 = $module1->{command};
+		   my $command2 = $module2->{command};
+
+		   my $command1_arguments = $module1->{arguments} || [];
+		   my $command2_arguments = $module2->{arguments} || [];
+
+		   my $command1_string = join ' ', $command1, @$command1_arguments;
+		   my $command2_string = join ' ', $command2, @$command2_arguments;
+
+		   my $comparison = $command1_string cmp $command2_string;
+
+		   if ($module1->{tester_head})
+		   {
+		       $comparison = -1;
+		   }
+		   elsif ($module2->{tester_head})
+		   {
+		       $comparison = 1;
+		   }
+
+		   $comparison;
+	       }
+	       @$tests,
+	      ];
+
+	# transform back to the regular test module format by putting
+	# every command definition in its own module
+
+	$tests
+	    = [
+	       map
+	       {
+		   my $command_definition = $_;
+
+		   (
+		    {
+		     command_definitions => [
+					     $command_definition,
+					    ],
+		     description => $command_definition->{module_description},
+		     name => $command_definition->{module_name},
+		    }
+		   );
+	       }
+	       @$tests,
+	      ];
+
+	# set result
+
+	$result = $tests;
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+sub model_library_sha
+{
+    # find all models
+
+    use File::Find::Rule;
+
+    my $files = [ File::Find::Rule->file()->in( $ENV{NEUROSPACES_NMC_MODELS} ), ];
+
+    my $shas
+	= [
+	   map
+	   {
+	       `sha1sum $_`;
+	   }
+	   @$files,
+	  ];
+
+    use Digest::SHA qw(sha1_hex);
+
+    my $sha = sha1_hex(join ', ', @$shas);
+
+    return $sha;
+}
+
+
+main();
+
+
