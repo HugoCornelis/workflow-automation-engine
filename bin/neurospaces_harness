@@ -356,6 +356,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	report_message(2, 1, "Running tests of module $module_definition->{description}");
 
+	# emit comment if any
+
+	my $comment = $module_definition->{comment};
+
+	if ($comment)
+	{
+	    print "*** Comment: $comment\n";
+	}
+
 	my $preparation = $module_definition->{preparation};
 
 	my $module_preparation_result;
@@ -402,6 +411,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    if (@$command_definitions > 1)
 	    {
 		report_message(2, 1, "Running tests of $description");
+
+		# emit comment if any
+
+		my $comment = $command_definition->{comment};
+
+		if ($comment)
+		{
+		    print "*** Comment: $comment\n";
+		}
 	    }
 
 	    my $preparation = $command_definition->{preparation};
