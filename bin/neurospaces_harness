@@ -1369,7 +1369,7 @@ Email was not sent.
 
 	$exit_code ||= 1;
 
-	print "$0: $error_count error(s)\n";
+	print "$0: $test_report->{global}->{test_count} test(s), $error_count error(s)\n";
 
 	print "$0: exit_code $exit_code\n\n";
 
