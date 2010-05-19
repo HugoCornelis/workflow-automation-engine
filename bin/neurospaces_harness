@@ -354,6 +354,21 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    next;
 	}
 
+	if ($module_definition->{error})
+	{
+	    report_error_add
+		(
+		 {
+		  description => $module_definition->{description},
+		  error => "this test was tagged with the error flag",
+		  module_name => $module_name,
+		  subdescription => $module_definition->{error},
+		 },
+		);
+
+	    next;
+	}
+
 	report_message(2, 1, "Running tests of module $module_definition->{description}");
 
 	# emit comment if any
@@ -392,6 +407,21 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 		$test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
+
+		next;
+	    }
+
+	    if ($command_definition->{error})
+	    {
+		report_error_add
+		    (
+		     {
+		      description => $description,
+		      error => "this test was tagged with the error flag",
+		      module_name => $module_name,
+		      subdescription => $command_definition->{error},
+		     },
+		    );
 
 		next;
 	    }
@@ -591,6 +621,21 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 		    $test_report->{disabled}->{command_tests}->{$module_name}->{$description} = $command_test->{disabled};
+
+		    next;
+		}
+
+		if ($command_test->{error})
+		{
+		    report_error_add
+			(
+			 {
+			  description => $description,
+			  error => "this test was tagged with the error flag",
+			  module_name => $module_name,
+			  subdescription => $command_test->{error},
+			 },
+			);
 
 		    next;
 		}
