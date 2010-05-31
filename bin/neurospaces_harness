@@ -920,7 +920,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 				push @{$test_report->{numerical_compare}}, $command_test->{description};
 
-				$error = Neurospaces::Utilities::numerical_compare($command_test, $before_match, $read, $error);
+				$error
+				    = Neurospaces::Utilities::numerical_compare
+					(
+					 {
+					  description => $command_test->{description},
+					 },
+					 $before_match,
+					 $read,
+					 $error);
 			    }
 			}
 		    }
