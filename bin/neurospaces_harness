@@ -1179,9 +1179,11 @@ sub report_error_add
     my $seen = $arguments->{seen};
     my $subdescription = $arguments->{subdescription};
 
+    my $package_name = $test_report->{description}->{package}->{name};
+
     $error_count++;
 
-    print STDERR "*** Error: $error ($description, $module_name, error_count $error_count)\n";
+    print STDERR "*** Error: $error ($description, package $package_name, $module_name, error_count $error_count)\n";
 
     # fill in the error report
 
