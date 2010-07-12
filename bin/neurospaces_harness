@@ -826,7 +826,11 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 				my $application_output_file
 				    = $read->{application_output_file};
 
- 				print "*** Application output file: $application_output_file\n";
+				my $pwd = `pwd`;
+
+				chomp $pwd;
+
+ 				print "*** Application output file: $application_output_file (in $pwd)\n";
 
 				my $expected_output_file
 				    = $read->{expected_output_file};
@@ -862,15 +866,6 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 				    $error = 'expected_output does not match application_output';
 				}
-
-				
-# 				print `pwd`;
-
-				#
-				# Might want to check the file the application outputs
-				# so comment this out. 
-
-				#`rm -f $application_output_file`;
 			    }
 			    elsif ($read->{shell})
 			    {
