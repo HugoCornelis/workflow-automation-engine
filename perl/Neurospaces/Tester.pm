@@ -9,6 +9,130 @@ use strict;
 package Neurospaces::Tester::Comparators;
 
 
+sub trace_2_array
+{
+    my $string = shift;
+
+    my $texts = [ split '\n', $string, ];
+
+    my $result = [];
+
+    foreach my $text (@$texts)
+    {
+	while ($text =~ s/([+-]?\.?\d+(\.[0-9]+)?(e[+-]?[0-9]+)?)/HERE_WAS_A_NUMBER/)
+	{
+	    my $number = $1;
+
+	    push @$result, $number;
+	}
+    }
+
+    return $result;
+}
+
+
+sub signal_trace_voltage
+{
+    my $command_test = shift;
+
+    my $values = shift;
+
+    my $expected_characteristics = shift;
+
+    my $current_diffs = shift;
+
+    my $result = $current_diffs;
+
+    print "*** Checking voltage traces ($command_test->{description})\n";
+
+    # convert the values to an array
+
+    if (!ref $values)
+    {
+	$values = trace_2_array($values);
+    }
+
+    # extract the characteristics from the values
+
+    my $previous_value = undef;
+
+    my $threshold = 0;
+
+    my $seen_characteristics
+	= {
+	   average => undef,
+	   average_count => undef,
+	   max => undef,
+	   min => undef,
+	   spike_count => 0,
+	  };
+
+    foreach my $value (@$values)
+    {
+	# minimum
+
+	if (not defined $seen_characteristics->{min})
+	{
+	    $seen_characteristics->{min} = $value;
+	}
+	else
+	{
+	    if ($value < $seen_characteristics->{min})
+	    {
+		$seen_characteristics->{min} = $value;
+	    }
+	}
+
+	# maximum
+
+	if (not defined $seen_characteristics->{max})
+	{
+	    $seen_characteristics->{max} = $value;
+	}
+	else
+	{
+	    if ($value < $seen_characteristics->{max})
+	    {
+		$seen_characteristics->{max} = $value;
+	    }
+	}
+
+	# average
+
+	if (not defined $seen_characteristics->{average})
+	{
+	    $seen_characteristics->{average_count} = 1;
+
+	    $seen_characteristics->{average} = $value;
+	}
+	else
+	{
+	    if ($value < $seen_characteristics->{average})
+	    {
+		$seen_characteristics->{average_count} += 1;
+
+		$seen_characteristics->{average} += $value / $seen_characteristics->{average_count};
+	    }
+	}
+
+	# spike_count
+
+	if (defined $previous_value)
+	{
+	    if ($previous_value < $threshold
+		and $value >= $threshold)
+	    {
+		$seen_characteristics->{spike_count}++;
+	    }
+	}
+
+	$previous_value = $value;
+    }
+
+    return $result;
+}
+
+
 sub numerical
 {
     my $command_test = shift;
