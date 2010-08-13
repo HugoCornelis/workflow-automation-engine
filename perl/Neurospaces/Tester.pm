@@ -19,9 +19,11 @@ sub trace_2_array
 
     foreach my $text (@$texts)
     {
-	while ($text =~ s/([+-]?\.?\d+(\.[0-9]+)?(e[+-]?[0-9]+)?)/HERE_WAS_A_NUMBER/)
+	while ($text =~ s/([+-]?\h?\.?\d+(\.[0-9]+)?(e[+-]?[0-9]+)?)/HERE_WAS_A_NUMBER/)
 	{
 	    my $number = $1;
+
+	    $number =~ s/\h//g;
 
 	    push @$result, $number;
 	}
@@ -53,6 +55,13 @@ sub voltage_characteristics
 
     if (!ref $given_values)
     {
+	# arbitrarily only use the last column
+
+	if ($given_values =~ /\h/)
+	{
+	    $given_values =~ s/.*\h(!<\h-)(.*)\n/$1\n/g;
+	}
+
 	$values = Neurospaces::Tester::Utilities::trace_2_array($given_values);
     }
     else
@@ -90,7 +99,7 @@ sub voltage_characteristics
 	}
 	else
 	{
-	    if ($value < $result->{max})
+	    if ($value > $result->{max})
 	    {
 		$result->{max} = $value;
 	    }
@@ -106,12 +115,9 @@ sub voltage_characteristics
 	}
 	else
 	{
-	    if ($value < $result->{average})
-	    {
-		$result->{average_count} += 1;
+	    $result->{average_count} += 1;
 
-		$result->{average} += $value / $result->{average_count};
-	    }
+	    $result->{average} += ($value - $result->{average}) / $result->{average_count};
 	}
 
 	# spike_count
