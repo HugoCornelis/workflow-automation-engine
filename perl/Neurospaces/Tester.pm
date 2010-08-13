@@ -6,7 +6,7 @@
 use strict;
 
 
-package Neurospaces::Tester::Comparators;
+package Neurospaces::Tester::Utilities;
 
 
 sub trace_2_array
@@ -31,34 +31,14 @@ sub trace_2_array
 }
 
 
-sub signal_trace_voltage
+package Neurospaces::Signals;
+
+
+sub voltage_characteristics
 {
-    my $command_test = shift;
+    my $given_values = shift;
 
-    my $values = shift;
-
-    my $expected_characteristics = shift;
-
-    my $current_diffs = shift;
-
-    my $result = $current_diffs;
-
-    print "*** Checking voltage traces ($command_test->{description})\n";
-
-    # convert the values to an array
-
-    if (!ref $values)
-    {
-	$values = trace_2_array($values);
-    }
-
-    # extract the characteristics from the values
-
-    my $previous_value = undef;
-
-    my $threshold = 0;
-
-    my $seen_characteristics
+    my $result
 	= {
 	   average => undef,
 	   average_count => undef,
@@ -67,51 +47,70 @@ sub signal_trace_voltage
 	   spike_count => 0,
 	  };
 
+    # convert the values to an array
+
+    my $values;
+
+    if (!ref $given_values)
+    {
+	$values = Neurospaces::Tester::Utilities::trace_2_array($given_values);
+    }
+    else
+    {
+	$values = $given_values;
+    }
+
+    # extract the characteristics from the values
+
+    my $previous_value = undef;
+
+    my $threshold = 0;
+
     foreach my $value (@$values)
     {
 	# minimum
 
-	if (not defined $seen_characteristics->{min})
+	if (not defined $result->{min})
 	{
-	    $seen_characteristics->{min} = $value;
+	    $result->{min} = $value;
 	}
 	else
 	{
-	    if ($value < $seen_characteristics->{min})
+	    if ($value < $result->{min})
 	    {
-		$seen_characteristics->{min} = $value;
+		$result->{min} = $value;
 	    }
 	}
 
 	# maximum
 
-	if (not defined $seen_characteristics->{max})
+	if (not defined $result->{max})
 	{
-	    $seen_characteristics->{max} = $value;
+	    $result->{max} = $value;
 	}
 	else
 	{
-	    if ($value < $seen_characteristics->{max})
+	    if ($value < $result->{max})
 	    {
-		$seen_characteristics->{max} = $value;
+		$result->{max} = $value;
 	    }
 	}
 
 	# average
 
-	if (not defined $seen_characteristics->{average})
+	if (not defined $result->{average})
 	{
-	    $seen_characteristics->{average_count} = 1;
+	    $result->{average_count} = 1;
 
-	    $seen_characteristics->{average} = $value;
+	    $result->{average} = $value;
 	}
 	else
 	{
-	    if ($value < $seen_characteristics->{average})
+	    if ($value < $result->{average})
 	    {
-		$seen_characteristics->{average_count} += 1;
+		$result->{average_count} += 1;
 
-		$seen_characteristics->{average} += $value / $seen_characteristics->{average_count};
+		$result->{average} += $value / $result->{average_count};
 	    }
 	}
 
@@ -122,7 +121,7 @@ sub signal_trace_voltage
 	    if ($previous_value < $threshold
 		and $value >= $threshold)
 	    {
-		$seen_characteristics->{spike_count}++;
+		$result->{spike_count}++;
 	    }
 	}
 
@@ -131,6 +130,9 @@ sub signal_trace_voltage
 
     return $result;
 }
+
+
+package Neurospaces::Tester::Comparators;
 
 
 sub numerical
@@ -273,6 +275,30 @@ sub numerical
     # return result
 
     #! if we get here, it means no error
+
+    return $result;
+}
+
+
+sub signal_trace_voltage
+{
+    my $command_test = shift;
+
+    my $values = shift;
+
+    my $expected_characteristics = shift;
+
+    my $current_diffs = shift;
+
+    my $result = $current_diffs;
+
+    print "*** Checking voltage traces ($command_test->{description})\n";
+
+    # extract the characteristics from the values
+
+    my $seen_characteristics = Neurospaces::Signals::voltage_characteristics($values);
+
+    # compare the seen ones with the expected ones
 
     return $result;
 }
