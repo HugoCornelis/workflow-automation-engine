@@ -139,7 +139,7 @@ use Expect;
 
 use Getopt::Long;
 
-use Neurospaces::Utilities;
+use Neurospaces::Tester;;
 
 use YAML;
 
@@ -917,7 +917,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 				push @{$test_report->{numerical_compare}}, $command_test->{description};
 
 				$error
-				    = Neurospaces::Utilities::numerical_compare
+				    = Neurospaces::Tester::Comparators::numerical
 					(
 					 {
 					  description => $command_test->{description},

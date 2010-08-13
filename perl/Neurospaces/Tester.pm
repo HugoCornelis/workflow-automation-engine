@@ -6,10 +6,10 @@
 use strict;
 
 
-package Neurospaces::Utilities;
+package Neurospaces::Tester::Comparators;
 
 
-sub numerical_compare
+sub numerical
 {
     my $command_test = shift;
 
