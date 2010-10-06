@@ -246,6 +246,7 @@ my $test_report
 		  system => {
 			     libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
 			     uname => (join '', `uname -a`),
+			     cpu => (join '', `cat /proc/cpuinfo`),
 			    },
 		  packages => {
 			       bison => (join '', `bison --version`),
