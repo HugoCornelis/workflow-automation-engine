@@ -1,0 +1,57 @@
+#!/usr/bin/perl -w
+#!/usr/bin/perl -w -d:ptkdb
+
+use strict;
+
+my $module_filenames = [ @ARGV, ];
+
+use Data::Dumper;
+
+print "Installing CPAN modules\n";
+
+print Dumper($module_filenames);
+
+foreach my $module_filename (@$module_filenames)
+{
+    $module_filename =~ /^...(.*)\.tar\.gz$/i;
+
+    my $module_name = $1;
+
+    if ($module_name =~ /inline-python/i)
+    {
+	next;
+    }
+
+    print "Installing $module_name ($module_filename)\n";
+
+    print `pwd`;
+
+    system "tar xfz $module_filename";
+
+    chdir $module_name;
+
+    print `pwd`;
+
+    if ($module_name =~ /inline-python/i)
+    {
+	system "echo '' | perl Makefile.PL";
+    }
+    elsif ($module_name =~ /inline/i)
+    {
+	system "echo y | perl Makefile.PL";
+    }
+    else
+    {
+	system "perl Makefile.PL";
+    }
+
+    system "make";
+
+    system "make test";
+
+    system "sudo make install";
+
+    chdir "..";
+}
+
+
