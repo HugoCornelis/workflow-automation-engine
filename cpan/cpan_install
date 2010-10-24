@@ -3,7 +3,7 @@
 
 use strict;
 
-my $module_filenames = [ @ARGV, ];
+my $module_filenames = [ sort @ARGV, ];
 
 use Data::Dumper;
 
