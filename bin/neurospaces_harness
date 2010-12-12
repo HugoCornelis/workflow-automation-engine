@@ -405,7 +405,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    next;
 	}
 
-	report_message(2, 1, "Running tests of module $module_definition->{description}");
+	report_message(2, 1, "Running tests of module $module_definition->{description} ($module_definition->{name})");
 
 	# emit comment if any
 
