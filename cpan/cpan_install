@@ -52,6 +52,9 @@ foreach my $module_filename (@$module_filenames)
     system "sudo make install";
 
     chdir "..";
+
+    system "rm -fr $module_name";
+
 }
 
 
