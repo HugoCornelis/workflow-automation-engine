@@ -151,6 +151,7 @@ my $option_numerical_compare = $config->{numerical_compare} || 0;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
+my $option_report_target;
 my $option_show;
 my $option_timeout_multiplier = 1;
 my $option_timings;
@@ -1106,7 +1107,8 @@ sub read_cmd_line
 	     "numerical-compare!" => \$option_numerical_compare,
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
-	     "report-disabled" => \$option_report_disabled,
+	     "report-disabled!" => \$option_report_disabled,
+	     "report-target!" => \$option_report_target,
 	     "show!" => \$option_show,
 	     "timeout-multiplier=s" => \$option_timeout_multiplier,
 	     "timings!" => \$option_timings,
@@ -1128,6 +1130,7 @@ sub read_cmd_line
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
+	   report_target => $option_report_target,
 	   show => $option_show,
 	   timeout_multiplier => $option_timeout_multiplier,
 	   timings => $option_timings,
@@ -1258,6 +1261,8 @@ sub report_exit
 	print "*** die: $description\n";
     }
 
+    my $report_target = $option_report_target || $error_count;
+
     # yaml out the test report
 
     my $report_text
@@ -1268,7 +1273,7 @@ sub report_exit
 		    ($option_report_disabled ? (disabled => $test_report->{disabled}) : ()),
 		    ($option_show ? () : (errors => $test_report->{errors})),
 		    ($option_show ? () : (global => $test_report->{global})),
-		    ($error_count ? (target => $test_report->{target}) : ()),
+		    ($report_target ? (target => $test_report->{target}) : ()),
 		    ($option_show ? (selected => $test_report->{selected}) : ()),
 		   },
 		  );
