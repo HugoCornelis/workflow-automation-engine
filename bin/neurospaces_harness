@@ -151,6 +151,7 @@ my $option_numerical_compare = $config->{numerical_compare} || 0;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
+my $option_report_mac;
 my $option_report_target;
 my $option_show;
 my $option_timeout_multiplier = 1;
@@ -393,6 +394,18 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    next;
 	}
 
+
+	if ($module_definition->{mac_report})
+	{
+	    report_message(1, 2, "Module $module_definition->{description} is disabled on Mac OSX: ($module_definition->{mac_report}).
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+	    $test_report->{mac_report}->{modules}->{$module_name} = $module_definition->{mac_report};
+
+	    next;
+	}
+
+
 	if ($module_definition->{error})
 	{
 	    report_error_add
@@ -446,6 +459,17 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 		$test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
+
+		next;
+	    }
+
+
+	    if ($command_definition->{mac_report})
+	    {
+		report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_definition->{mac_report})
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+		$test_report->{mac_report}->{command_definitions}->{$module_name}->{$description} = $command_definition->{mac_report};
 
 		next;
 	    }
@@ -661,6 +685,16 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 		    $test_report->{disabled}->{command_tests}->{$module_name}->{$description} = $command_test->{disabled};
+
+		    next;
+		}
+
+		if ($command_test->{mac_report})
+		{
+		    report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_test->{mac_report})
+Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+		    $test_report->{mac_report}->{command_tests}->{$module_name}->{$description} = $command_test->{mac_report};
 
 		    next;
 		}
@@ -1110,6 +1144,7 @@ sub read_cmd_line
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
+	     "report-mac!" => \$option_report_mac,
 	     "report-target!" => \$option_report_target,
 	     "show!" => \$option_show,
 	     "timeout-multiplier=s" => \$option_timeout_multiplier,
@@ -1156,6 +1191,7 @@ options:
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
+    --report-mac         include information of disabled tests on Mac OSX.
     --show               show tests that would be run using the current configuration.
     --timeout-multiplier multiply all timeout values with this constant.
     --timings            add timing information about the tests to the report.
@@ -1273,6 +1309,7 @@ sub report_exit
 		   {
 		    description => $test_report->{description},
 		    ($option_report_disabled ? (disabled => $test_report->{disabled}) : ()),
+		    ($option_report_mac ? (mac_report => $test_report->{mac_report}) : ()),
 		    ($option_show ? () : (errors => $test_report->{errors})),
 		    ($option_show ? () : (global => $test_report->{global})),
 		    ($report_target ? (target => $test_report->{target}) : ()),
