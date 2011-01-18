@@ -395,15 +395,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	}
 
 
-	if ($module_definition->{mac_report})
-	{
-	    report_message(1, 2, "Module $module_definition->{description} is disabled on Mac OSX: ($module_definition->{mac_report}).
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+# 	if ($module_definition->{mac_report})
+# 	{
+# 	    report_message(1, 2, "Module $module_definition->{description} is disabled on Mac OSX: ($module_definition->{mac_report}).
+# Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-	    $test_report->{mac_report}->{modules}->{$module_name} = $module_definition->{mac_report};
+# 	    $test_report->{mac_report}->{modules}->{$module_name} = $module_definition->{mac_report};
 
-	    next;
-	}
+# 	    next;
+# 	}
 
 
 	if ($module_definition->{error})
@@ -464,15 +464,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    }
 
 
-	    if ($command_definition->{mac_report})
-	    {
-		report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_definition->{mac_report})
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+# 	    if ($command_definition->{mac_report})
+# 	    {
+# 		report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_definition->{mac_report})
+# Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-		$test_report->{mac_report}->{command_definitions}->{$module_name}->{$description} = $command_definition->{mac_report};
+# 		$test_report->{mac_report}->{command_definitions}->{$module_name}->{$description} = $command_definition->{mac_report};
 
-		next;
-	    }
+# 		next;
+# 	    }
 
 	    if ($command_definition->{error})
 	    {
@@ -689,15 +689,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		    next;
 		}
 
-		if ($command_test->{mac_report})
-		{
-		    report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_test->{mac_report})
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+# 		if ($command_test->{mac_report})
+# 		{
+# 		    report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_test->{mac_report})
+# Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-		    $test_report->{mac_report}->{command_tests}->{$module_name}->{$description} = $command_test->{mac_report};
+# 		    $test_report->{mac_report}->{command_tests}->{$module_name}->{$description} = $command_test->{mac_report};
 
-		    next;
-		}
+# 		    next;
+# 		}
 
 		if ($command_test->{error})
 		{
@@ -1309,7 +1309,7 @@ sub report_exit
 		   {
 		    description => $test_report->{description},
 		    ($option_report_disabled ? (disabled => $test_report->{disabled}) : ()),
-		    ($option_report_mac ? (mac_report => $test_report->{mac_report}) : ()),
+# 		    ($option_report_mac ? (mac_report => $test_report->{mac_report}) : ()),
 		    ($option_show ? () : (errors => $test_report->{errors})),
 		    ($option_show ? () : (global => $test_report->{global})),
 		    ($report_target ? (target => $test_report->{target}) : ()),
