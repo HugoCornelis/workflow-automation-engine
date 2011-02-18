@@ -22,6 +22,26 @@ foreach my $module_filename (@$module_filenames)
 	next;
     }
 
+    $module_name =~ /([^0-9\.]+)-([0-9\.]+)/;
+
+    my $module_perl = $1;
+
+    my $module_version_to_install = $2;
+
+    $module_perl =~ s/-/::/g;
+
+    print "checking for perl -e 'use $module_perl $module_version_to_install'\n";
+    system "perl -e 'use $module_perl $module_version_to_install'";
+
+    my $installed = not $?;
+
+    if ($installed)
+    {
+	print "Not installing $module_name ($module_filename), it looks like it is already installed\n";
+
+	next;
+    }
+
     print "Installing $module_name ($module_filename)\n";
 
     print `pwd`;
