@@ -248,16 +248,19 @@ sub numerical
     {
 	# flag this as an error
 
-	return 'numerical_compare(): amount of data expected is to different from amount of seen data (number_shifts is $number_shifts, text_shifts is $text_shifts), aborting with an error';
+	return 'numerical_compare(): amount of data expected is to different from amount of seen data (number_shifts is ' . $number_shifts . ', text_shifts is ' . $text_shifts . '), aborting with an error';
     }
 
     # compare the texts between the numbers
 
     foreach my $index (0 .. $#$texts1)
     {
+	$texts1->[$index] =~ s/\s*//g;
+	$texts2->[$index] =~ s/\s*//g;
+
 	if ($texts1->[$index] ne $texts2->[$index])
 	{
-	    return 'numerical_compare(): texts differ ($texts1->[$index] ne $texts2->[$index]), aborting with an error';
+	    return 'numerical_compare(): texts differ ($texts1->[' . $index . '] (' . $texts1->[$index] . ') ne $texts2->[' . $index . '] (' . $texts2->[$index] . ') ), aborting with an error';
 	}
     }
 
@@ -273,7 +276,7 @@ sub numerical
 
 	    if (abs($diff) > abs($numbers1->[$index] / 1000))
 	    {
-		return 'numerical_compare(): numbers differ above accuracy ($numbers1->[$index] != $numbers2->[$index]), aborting with an error';
+		return 'numerical_compare(): numbers differ above accuracy ($numbers1->[' . $index . '] (' . $numbers1->[$index] . ') != $numbers2->[' . $index . '] (' . $numbers2->[$index] . ') ), aborting with an error';
 	    }
 	}
     }
