@@ -1280,6 +1280,23 @@ sub report_error_add
 	print $seen_file $seen;
 
 	$seen_file->close();
+
+	my $diff = `diff "$expected_filename" "$seen_filename"`;
+
+	my $diff_filename = "/tmp/text_$config->{package}->{name}_$error_count.diff";
+
+	my $diff_file = IO::File->new(">$diff_filename");
+
+	print $diff_file $diff;
+
+	$diff_file->close();
+
+	my $processed_diff = [ split "\n", $diff, ];
+
+	$processed_diff = join "\n*** Error: diff: ", "", @$processed_diff, "\n";
+
+	print STDERR $processed_diff;
+
     }
 
 }
