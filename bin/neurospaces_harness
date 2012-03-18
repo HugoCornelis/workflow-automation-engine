@@ -1269,17 +1269,31 @@ sub report_error_add
 
 	my $expected_file = IO::File->new(">$expected_filename");
 
-	print $expected_file $expected;
+	if ($expected_file)
+	{
+	    print $expected_file $expected;
 
-	$expected_file->close();
+	    $expected_file->close();
+	}
+	else
+	{
+	    print STDERR "*** Warning: cannot open $expected_filename for writing\n";
+	}
 
 	my $seen_filename = "/tmp/text_$config->{package}->{name}_$error_count.seen";
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
-	print $seen_file $seen;
+	if ($seen_filename)
+	{
+	    print $seen_file $seen;
 
-	$seen_file->close();
+	    $seen_file->close();
+	}
+	else
+	{
+	    print STDERR "*** Warning: cannot open $seen_filename for writing\n";
+	}
 
 	my $diff = `diff "$expected_filename" "$seen_filename"`;
 
@@ -1287,9 +1301,16 @@ sub report_error_add
 
 	my $diff_file = IO::File->new(">$diff_filename");
 
-	print $diff_file $diff;
+	if ($diff_file)
+	{
+	    print $diff_file $diff;
 
-	$diff_file->close();
+	    $diff_file->close();
+	}
+	else
+	{
+	    print STDERR "*** Warning: cannot open $diff_filename for writing\n";
+	}
 
 	my $processed_diff = [ split "\n", $diff, ];
 
