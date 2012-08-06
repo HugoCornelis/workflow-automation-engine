@@ -251,8 +251,9 @@ my $test_report
 			     cpu => (join '', `cat /proc/cpuinfo`),
 			    },
 		  packages => {
-			       autoconf => (join '', `autoconf --version`)
-			       automake => (join '', `automake --version`)
+			       '/etc/lsb-release' => (join '', `autoconf --version`),
+			       autoconf => (join '', `autoconf --version`),
+			       automake => (join '', `automake --version`),
 			       bison => (join '', `bison --version`),
 			       flex => (join '', `flex --version`),
 			       gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
