@@ -251,7 +251,7 @@ my $test_report
 			     cpu => (join '', `cat /proc/cpuinfo`),
 			    },
 		  packages => {
-			       '/etc/lsb-release' => (join '', `autoconf --version`),
+			       '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
 			       autoconf => (join '', `autoconf --version`),
 			       automake => (join '', `automake --version`),
 			       bison => (join '', `bison --version`),
