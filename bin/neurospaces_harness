@@ -251,13 +251,15 @@ my $test_report
 			     cpu => (join '', `cat /proc/cpuinfo`),
 			    },
 		  packages => {
+			       autoconf => (join '', `autoconf --version`)
+			       automake => (join '', `automake --version`)
 			       bison => (join '', `bison --version`),
 			       flex => (join '', `flex --version`),
 			       gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
 			       perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
-			       swig => (join '', `swig 2>&1 -version`),
 			       python => (join '', `python 2>&1 --version`),
 			       python_installation => (join '', `./contrib/pythontest 2>&1`),,
+			       swig => (join '', `swig 2>&1 -version`),
 			      },
 		 },
       };
