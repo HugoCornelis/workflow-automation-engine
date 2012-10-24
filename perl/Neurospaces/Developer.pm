@@ -322,6 +322,18 @@ sub create
 
     my $vframe_tags = Gtk2::Frame->new("Locally Available Package Tags");
 
+    #t this seems to be doing nothing
+
+    $vframe_tags->set_shadow_type('none');
+
+#     {
+# 	no strict "refs";
+
+# 	use Data::Dumper;
+
+# 	print Dumper(\%{'::Gtk2::ShadowType::'});
+#     }
+
     $tooltips->set_tip($vframe_tags, $tooltip_tags);
 
     $hbox->pack_start($vframe_tags, 0, 1, 0);
