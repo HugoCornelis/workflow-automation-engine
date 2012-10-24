@@ -244,8 +244,8 @@ my $program_name = $1;
 
 $program_name =~ m((.*)[_-](.*));
 
-my $documentation_set_name = $1;
-my $root_operation_name = $2;
+our $documentation_set_name = $1;
+our $root_operation_name = $2;
 
 my $role = 'empty';
 
