@@ -32,10 +32,7 @@ sub packages_by_tags
 
     if ($@)
     {
-	print STDERR "$0: *** Error: cannot find package information, does the 'neurospaces_repositories' command work correctly?";
-
-	exit 1;
-
+	die "$0: *** Error: cannot find package information, does the 'neurospaces_repositories' command work correctly?";
     }
 
 #     use Data::Dumper;
@@ -56,9 +53,7 @@ sub packages
 
     if ($@)
     {
-	print STDERR "$0: *** Error: cannot find package information, does the 'neurospaces_repositories' command work correctly?";
-
-	exit 1;
+	die "$0: *** Error: cannot find package information, does the 'neurospaces_repositories' command work correctly?";
     }
 
     my $packages = YAML::Load($packages_text);
