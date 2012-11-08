@@ -207,6 +207,15 @@ our $operations
        },
        {
 	clicked => 'content',
+	name => 'content_build',
+	targets => {
+		    content_developer => 1,
+		    content_user => 0,
+		    software_developer => 1,
+		   },
+       },
+       {
+	clicked => 'content',
 	name => 'content_check',
 	targets => {
 		    content_developer => 1,
