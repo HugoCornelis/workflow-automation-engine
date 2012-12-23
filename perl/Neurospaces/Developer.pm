@@ -601,7 +601,7 @@ sub packages_validate
 		if ($first_package->{version_control}->{port_number}
 		    eq $second_package->{version_control}->{port_number})
 		{
-		    return "$0: *** Error: package $first_package_name and $second_package_name have the same version control port number";
+		    return "package $first_package_name and $second_package_name have the same version control port number";
 		}
 	    }
 	}
@@ -645,7 +645,7 @@ my $error = packages_validate($default_packages);
 
 if (defined $error)
 {
-    die $error;
+    die "$0: *** Error: $error";
 }
 
 
