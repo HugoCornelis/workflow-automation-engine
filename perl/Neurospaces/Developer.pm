@@ -259,6 +259,10 @@ sub default_packages_read()
 	   gshell => {
 		      dependencies => {
 				       'model-container' => 'for storing the model in computer memory',
+				       'ns-sli' => 'for loading G-2 models',
+				       chemesis3 => 'for solving biochemical pathways',
+				       exchange => 'to load neuroml and nineml model',
+				       experiment => 'for the experiment protocol definitions',
 				       heccer => 'for solving single neurons',
 				       ssp => 'to schedule the solvers',
 				      },
