@@ -509,14 +509,13 @@ sub default_packages_read()
 	   studio => {
 		      dependencies => {
 				       'model-container' => 'for storing the model in computer memory',
-				       heccer => 'for solving single neurons',
-				       ssp => 'to schedule the solvers',
 				      },
 		      description => 'visualizes and explores models in the model-container',
 		      directory => "$ENV{HOME}/neurospaces_project/studio/source/snapshots/0",
 		      disabled => 0,
 		      order => 5,
 		      tags => [
+			       'genesis3',
 			       'neurospaces',
 			      ],
 		      version_control => {
