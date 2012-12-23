@@ -567,6 +567,292 @@ sub default_packages_read()
 }
 
 
+#
+# extended_bubble_sort()
+#
+# Sort the items in the given list using the given comparator, that is
+# assumed to implement a partial order.
+#
+# The algorithm is stable at a cost of performance.  Stability is not
+# always guaranteed with arbitrary topological sorting algorithms.
+#
+# Difference with a regular bubble sort : assumes the order
+# implemented by the comparator is a partial order, so the last entry
+# must be checked too.  If we don't, we actually assume the order to
+# be fully transitive and full comparable, which is of course not
+# always the case for a _partial_ order.
+#
+
+sub extended_bubble_sort(&@);
+
+sub extended_bubble_sort(&@)
+{
+    my $comparator = shift;
+
+    my @array = @_;
+
+    my $count = $#array;
+
+    my $i;
+    my $j;
+
+    #! note about this loop : read comments for this sub carefully.
+
+    for ($i = 0; $i <= ($count - 1); $i++)
+    {
+	for ($j = ($i + 1); $j <= ($count); $j++)
+	{
+	    my $comparison;
+
+	    {
+		local $::a = $array[$j];
+		local $::b = $array[$i];
+		$comparison = &$comparator($array[$j], $array[$i]);
+	    }
+
+	    if ($comparison < 0)
+	    {
+		my $swap = $array[$j];
+		$array[$j] = $array[$i];
+		$array[$i] = $swap;
+	    }
+	}
+    }
+
+    return @array;
+}
+
+
+sub package_comparator
+{
+    my ($package1, $package2) = @_;
+
+    $package1 = $::a;
+
+    $package2 = $::b;
+
+    my $graph_id1 = $package1->{sort_id} || '';
+    my $graph_id2 = $package2->{sort_id} || '';
+
+    my $graph_dependencies1 = $package1->{dependencies} || {};
+    my $graph_dependencies2 = $package2->{dependencies} || {};
+
+    # if the packages are cycled
+
+    if ($graph_dependencies1->{$graph_id2}
+	&& $graph_dependencies2->{$graph_id1})
+    {
+	print STDERR "$0: *** Warning: package dependency cycle detected between $graph_id1 and graph_id2\n";
+
+	# return unordered (fastest)
+
+	return 0;
+    }
+
+    # check command ordering
+
+    if ($graph_dependencies1->{$graph_id2})
+    {
+	# package1 should come last in list
+
+	return 1;
+    }
+
+    if ($graph_dependencies2->{$graph_id1})
+    {
+	# package2 should come last in list
+
+	return -1;
+    }
+
+    # return unordered
+
+    return 0;
+}
+
+
+sub packages_sort
+{
+    my $all_packages = shift;
+
+    # first assign unique sort IDs to all packages
+
+    foreach my $package_name (keys %$all_packages)
+    {
+	my $package = $all_packages->{$package_name};
+
+	if (not exists $package->{sort_id})
+	{
+	    $package->{sort_id} = $package_name;
+	}
+    }
+
+    # create an array of package references for sorting
+
+    my $package_array
+	= [
+	   map
+	   {
+	       my $result = $all_packages->{$_};
+
+	       if (not exists $result->{dependencies}->{developer})
+	       {
+		   $result->{dependencies}->{developer} = "must always be installed";
+	       }
+
+	       $result;
+	   }
+	   keys %$all_packages,
+	  ];
+
+    my $transitive_package_array
+	= [
+	   transifier(\&package_namer, \&package_dependency_enumerator, \&package_dependency_creator, @$package_array),
+	  ];
+
+    # order the references to the package definitions
+
+    my $ordered_package_array
+	= [
+	   extended_bubble_sort(\&package_comparator, @$package_array)
+	  ];
+
+    # assign order numbers based on the ordered_package_array
+
+    my $order_number = 1;
+
+    foreach my $package (@$ordered_package_array)
+    {
+	$package->{order} = $order_number;
+
+	$order_number++;
+    }
+
+    # return errors of processing
+
+    return undef;
+}
+
+
+sub package_dependency_creator
+{
+    my $package = shift;
+
+    my $dependency = shift;
+
+    if (not exists $package->{dependencies}->{$dependency})
+    {
+	$package->{dependencies}->{$dependency} = 1;
+    }
+}
+
+
+sub package_dependency_enumerator
+{
+    my $package_name = shift;
+
+    my @packages = @_;
+
+    if ($package_name eq '')
+    {
+	return ();
+    }
+
+    foreach my $package (@packages)
+    {
+	if (exists $package->{sort_id}
+	    && $package->{sort_id} eq $package_name)
+	{
+	    my $dependencies = $package->{dependencies};
+
+	    return keys %$dependencies;
+	}
+    }
+
+    return ();
+}
+
+
+sub package_namer
+{
+    my $package = shift;
+
+    return $package->{sort_id} || '';
+}
+
+
+#
+# transifier()
+#
+# Take care that the order relationship of the items in the given list
+# is transitive.  The order relationship is external to this sub, it
+# is being defined during execution of this code by the following
+# arguments :
+#
+# $item_namer : a coderef that gives a (unique) name to all items.
+#
+# $dependency_enumerator : a coderef that, given a item name, returns
+# a list of names that the given item depends on.
+#
+# $dependency_creator : a coderef that takes care that the given item
+# becomes dependent on the given name.
+#
+# I guess this one can easily be combined with (built into) the
+# extended_bubble_sort() above.  That would boost the sort quite a bit.
+#
+
+sub transifier(&&&@)
+{
+    my $item_namer = shift;
+
+    my $dependency_enumerator = shift;
+
+    my $dependency_creator = shift;
+
+    my @array = @_;
+
+    # loop over all items in the array
+
+    foreach my $item (@array)
+    {
+	# initially we did not see any dependencies for this item
+
+	my $seen_dependencies = {};
+
+	# loop over all transitive dependencies of this item (included)
+
+	my $dependency_names = [ &$item_namer($item), ];
+
+	while (@$dependency_names)
+	{
+	    my $dependency_name = shift @$dependency_names;
+
+	    my @new_dependency_names = &$dependency_enumerator($dependency_name, @array, );
+
+	    foreach my $new_dependency_name (@new_dependency_names)
+	    {
+		# if the dependency has not been seen yet
+
+		if (!$seen_dependencies->{$new_dependency_name})
+		{
+		    # create the dependency in the item
+
+		    &$dependency_creator($item, $new_dependency_name);
+
+		    # remember that we saw this dependency
+
+		    $seen_dependencies->{$new_dependency_name} = $new_dependency_name;
+
+		    # add the dependency to the list of dependencies
+
+		    push @$dependency_names, $new_dependency_name;
+		}
+	    }
+	}
+    }
+}
+
+
 sub packages_validate
 {
     my $all_packages = shift;
@@ -636,11 +922,18 @@ personal_build_configuration_read();
 
 $default_packages = default_packages_read();
 
-my $error = packages_validate($default_packages);
+my $error1 = packages_sort($default_packages);
 
-if (defined $error)
+if (defined $error1)
 {
-    die "$0: *** Error: $error";
+    die "$0: *** Error: $error1";
+}
+
+my $error2 = packages_validate($default_packages);
+
+if (defined $error2)
+{
+    die "$0: *** Error: $error2";
 }
 
 
