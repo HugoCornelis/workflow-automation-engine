@@ -111,6 +111,537 @@ sub unique(@)
 }
 
 
+package Neurospaces::Developer::Configurator;
+
+
+use Data::Utilities;
+
+use YAML;
+
+
+our $whole_build_configuration;
+
+our $personal_build_configuration;
+
+our $default_packages;
+
+
+sub whole_build_configuration_automated_merges
+{
+    # automated merges on a server only if allowed by the configuration, default is yes
+
+    my $no_automated_merges
+	= $Neurospaces::Developer::Configurator::whole_build_configuration->{no_automated_merges};
+
+    return not $no_automated_merges;
+}
+
+
+sub whole_build_configuration_read
+{
+    if (-f '/etc/neurospaces/developer/build.yml')
+    {
+	eval
+	{
+	    $whole_build_configuration = YAML::LoadFile('/etc/neurospaces/developer/build.yml');
+	};
+
+	if ($@)
+	{
+	    die "$0: *** Error: reading file /etc/neurospaces/developer/build.yml ($@)";
+	}
+    }
+}
+
+
+sub personal_build_configuration_read
+{
+    if (-f $ENV{HOME} . '/.neurospaces/developer/build.yml')
+    {
+	eval
+	{
+	    $personal_build_configuration = YAML::LoadFile($ENV{HOME} . '/.neurospaces/developer/build.yml');
+	};
+
+	if ($@)
+	{
+	    die "$0: *** Error: reading file $ENV{HOME}/.neurospaces/developer/build.yml ($@)";
+	}
+    }
+}
+
+
+sub default_packages_read()
+{
+    my $result
+	= {
+	   experiment => {
+			  description => 'Experimental protocols',
+			  directory => "$ENV{HOME}/neurospaces_project/experiment/source/snapshots/0",
+			  operations => {
+					 './configure' => {
+							   debug => [
+								     "CFLAGS=-g -O0",
+								    ],
+							   release => [
+								       "CFLAGS=-g -O9",
+								      ],
+							  },
+					},
+			  order => 1.5,
+			  tags => [
+				   'genesis3',
+				  ],
+			  version_control => {
+					      branch_name => 0,
+					      port_number => 4703,
+					     },
+			 },
+	   chemesis3 => {
+			 dependencies => {
+					  experiment => 'for running the tests',
+					 },
+			 description => 'a simple reaction-diffusion solver',
+			 operations => {
+					'./configure' => {
+							  debug => [
+								    'CFLAGS=-g -O0',
+								   ],
+							  release => [
+								      'CFLAGS=-g -O9',
+								     ],
+							 },
+				       },
+			 tags => [
+				  'genesis3',
+				 ],
+			 order => 2.5,
+			 version_control => {
+					     branch_name => 0,
+					     port_number => 4706,
+					     #server => '91.183.94.6',
+					    },
+			},
+	   configurator => {
+			    dependencies => {
+					    },
+			    description => 'common configurations of the Neurospaces tool chain',
+			    disabled => 'the Configurator must always be disabled',
+			    order => 0.5,
+			    tags => [
+				     'neurospaces',
+				    ],
+			    version_control => {
+						branch_name => 0,
+						port_number => 4707,
+						server => '91.183.94.6',
+					       },
+			    version_script => 0,
+			   },
+	   dash => {
+		    dependencies => {
+				    },
+		    description => 'a single neuron solver that uses dual exponential equations to model channel currents',
+		    directory => "$ENV{HOME}/neurospaces_project/dash/source/snapshots/0",
+		    disabled => 1,
+		    order => 2,
+		    tags => [
+			     'genesis3',
+			    ],
+		    version_script => 0,
+		   },
+	   geometry => {
+			dependencies => {
+					},
+			description => 'a collection of algorithms in computational geometry useful for the conversion of EM image stacks ao.',
+			directory => "$ENV{HOME}/neurospaces_project/geometry/source/snapshots/0",
+			disabled => 'far from finished.',
+			order => 4,
+			tags => [
+				 'genesis3',
+				],
+			version_script => 0,
+		       },
+	   gshell => {
+		      dependencies => {
+				       'model-container' => 'for storing the model in computer memory',
+				       heccer => 'for solving single neurons',
+				       ssp => 'to schedule the solvers',
+				      },
+		      description => 'an interactive GENESIS shell environment developed in perl',
+		      directory => "$ENV{HOME}/neurospaces_project/gshell/source/snapshots/0",
+		      order => 13,
+		      tags => [
+			       'genesis3',
+			      ],
+		      version_control => {
+					  branch_name => 0,
+					  port_number => 4699,
+					 },
+		      version_script => 'genesis-g3 --version',
+		     },
+	   'g-tube' => {
+			directory => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0",
+			description => 'GENESIS GUI',
+			#		   disabled => 'g-tube is not complete yet',
+			order => 30,
+			tags => [
+				 'genesis3',
+				],
+			version_control => {
+					    branch_name => 0,
+					    repository => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0/.hg",
+					   },
+			version_script => 0,
+		       },
+	   heccer => {
+		      dependencies => {
+				       'model-container' => 'for storing the model in computer memory',
+				      },
+		      description => 'a single neuron solver',
+		      directory => "$ENV{HOME}/neurospaces_project/heccer/source/snapshots/0",
+		      disabled => 0,
+		      operations => {
+				     './configure' => {
+						       debug => [
+								 "CFLAGS=-g -O0",
+								],
+						       release => [
+								   "CFLAGS=-g -O9",
+								  ],
+						      },
+				    },
+		      order => 2,
+		      tags => [
+			       'genesis3',
+			      ],
+		      version_control => {
+					  branch_name => 0,
+					  port_number => 4694,
+					 },
+		     },
+	   developer => {
+			 description => 'developer utilities that comply for GENESIS 3',
+			 directory => "$ENV{HOME}/neurospaces_project/developer/source/snapshots/0",
+			 disabled => 0, # disabled => 1,
+			 order => 0,
+			 tags => [
+				  'genesis3',
+				  'neurospaces',
+				 ],
+			 version_control => {
+					     branch_name => 0,
+					     port_number => 4696,
+					    },
+			 version_script => 'neurospaces_build --version',
+			},
+	   'model-container' => {
+				 description => 'backend independent model storage',
+				 directory => "$ENV{HOME}/neurospaces_project/model-container/source/snapshots/0",
+				 disabled => 0,
+				 operations => {
+						'./configure' => {
+								  debug => [
+									    "CFLAGS=-g -O0",
+									   ],
+								  release => [
+									      "CFLAGS=-g -O9",
+									     ],
+								 },
+					       },
+				 order => 1,
+				 tags => [
+					  'genesis3',
+					  'neurospaces',
+					 ],
+				 version_control => {
+						     branch_name => 0,
+						     port_number => 4693,
+						    },
+				},
+	   exchange => {
+			dependencies => {
+					 'model-container' => 'for storing the model in computer memory',
+					},
+			description => 'model exchange using common standars such as NeuroML and NineML',
+			directory => "$ENV{HOME}/neurospaces_project/exchange/source/snapshots/0",
+			order => 6.5,
+			tags => [
+				 'genesis3',
+				],
+			version_control => {
+					    branch_name => 0,
+					    port_number => 4701,
+					   },
+			version_script => 'neurospaces_exchange --version',
+		       },
+	   neurospaces_prcs => {
+				description => 'backend independent model storage -- OLD',
+				directory => "$ENV{HOME}/neurospaces_project/model-container/source/snapshots/prcs.0",
+				disabled => 'obsoleted by the model-container under mtn control rather than prcs',
+				order => 0.5,
+				tags => [
+					 'neurospaces',
+					],
+				version_control => {
+						    commands => {
+								 missing => undef,
+								 status => [
+									    'prcs',
+									    'diff',
+									    'neurospaces.prj',
+									    '`prcs 2>/dev/null execute --not ".*\(directory\|symlink\)" neurospaces.prj | grep -v "neurospaces\.prj" | grep -v "purkinjespine" `',
+									    '--',
+									    '--unified',
+									   ],
+								 unknown => undef,
+								},
+						   },
+				version_script => 'prcsentry Project-Version',
+			       },
+	   'ns-sli' => {
+			dependencies => {
+					 'model-container' => 'for storing the model in computer memory',
+					 heccer => 'for solving single neurons',
+					},
+			description => 'GENESIS-2 Backward Compatibility',
+			directory => "$ENV{HOME}/neurospaces_project/ns-sli/source/snapshots/0",
+			order => 6,
+			operations => {
+				       './configure' => {
+							 debug => [
+								   "CFLAGS=-g -O0",
+								  ],
+							 release => [
+								     "CFLAGS=-g -O9",
+								    ],
+							},
+				      },
+			tags => [
+				 'genesis3',
+				],
+			version_control => {
+					    branch_name => 0,
+					    port_number => 4692,
+					   },
+			version_script => 0,
+		       },
+	   'project-browser' => {
+				 dependencies => {
+						  'model-container' => 'for storing the model in computer memory',
+						  heccer => 'for solving single neurons',
+						  ssp => 'to schedule the solvers',
+						 },
+				 description => 'inspect and compare simulation output',
+				 directory => "$ENV{HOME}/neurospaces_project/project-browser/source/snapshots/0",
+				 disabled => 'parts working, only for experts who are familiar with the Sesa internals',
+				 order => 7,
+				 tags => [
+					  'neurospaces',
+					 ],
+				 version_control => {
+						     branch_name => 0,
+						     port_number => 4697,
+						     repository => "$ENV{HOME}/neurospaces_project/MTN/neurospacesweb.mtn",
+						    },
+				 version_script => 'pb-version',
+				},
+	   publications => {
+			    description => 'prototyping the publication framework',
+			    directory => "$ENV{HOME}/neurospaces_project/publications/source/snapshots/0",
+			    disabled => 'Allan\'s experiment working area',
+			    order => 32,
+			    tags => [
+				     'genesis3',
+				    ],
+			    version_control => {
+						branch_name => 0,
+						port_number => 4702,
+					       },
+			    version_script => 0,
+			   },
+	   rtxi => {
+		    description => 'interface with the RTXI dynamic clamp software',
+		    directory => "$ENV{HOME}/neurospaces_project/rtxi/source/snapshots/0",
+		    disabled => 'slow progress, yet important',
+		    order => 29,
+		    tags => [
+			     'genesis3',
+			    ],
+		    version_control => {
+					branch_name => 0,
+					port_number => 4704,
+				       },
+		    version_script => 0,
+		   },
+	   ssp => {
+		   dependencies => {
+				    'model-container' => 'for storing the model in computer memory',
+				    heccer => 'for solving single neurons',
+				   },
+		   description => 'simple scheduler in perl',
+		   directory => "$ENV{HOME}/neurospaces_project/ssp/source/snapshots/0",
+		   disabled => 0,
+		   order => 3,
+		   tags => [
+			    'genesis3',
+			   ],
+		   version_control => {
+				       branch_name => 0,
+				       port_number => 4695,
+				      },
+		  },
+	   sspy => {
+		    dependencies => {
+				     'model-container' => 'for storing the model in computer memory',
+				     heccer => 'for solving single neurons',
+				    },
+		    description => 'simple scheduler in python',
+		    directory => "$ENV{HOME}/neurospaces_project/sspy/source/snapshots/0",
+		    order => 3.1,
+		    tags => [
+			     'genesis3',
+			    ],
+		    version_control => {
+					branch_name => 0,
+					port_number => 4705,
+				       },
+		   },
+	   studio => {
+		      dependencies => {
+				       'model-container' => 'for storing the model in computer memory',
+				       heccer => 'for solving single neurons',
+				       ssp => 'to schedule the solvers',
+				      },
+		      description => 'visualizes and explores models in the model-container',
+		      directory => "$ENV{HOME}/neurospaces_project/studio/source/snapshots/0",
+		      disabled => 0,
+		      order => 5,
+		      tags => [
+			       'neurospaces',
+			      ],
+		      version_control => {
+					  branch_name => 0,
+					  port_number => 4698,
+					 },
+		      version_script => 'neurospaces --version',
+		     },
+	   system => {
+		      description => 'system data',
+		      directory => "$ENV{HOME}/neurospaces_project/.",
+		      disabled => 1,
+		      order => 129,
+		      tags => [
+			       'neurospaces',
+			      ],
+		      version_script => 0,
+		     },
+	   userdocs => {
+			description => 'all you need to know about installing, using and simulating using GENESIS 3. ',
+			directory => "$ENV{HOME}/neurospaces_project/userdocs/source/snapshots/0",
+			disabled => 0,
+			order => 31,
+			tags => [
+				 'genesis3',
+				],
+			version_control => {
+					    branch_name => 0,
+					    port_number => 4700,
+					   },
+			version_script => 0,
+		       },
+	  };
+
+    # if there is a local package configuration
+
+    if ($whole_build_configuration)
+    {
+	# merge
+
+	my $merged_packages = Data::Merger::merger($result, $whole_build_configuration->{all_packages});
+    }
+
+    # if there is a personal package configuration
+
+    if ($personal_build_configuration)
+    {
+	my $merged_packages = Data::Merger::merger($result, $personal_build_configuration->{all_packages});
+    }
+
+    return $result;
+}
+
+
+sub packages_validate
+{
+    my $all_packages = shift;
+
+    # check validity of the package configuration
+
+    foreach my $first_package_name (keys %$all_packages)
+    {
+	my $first_package = $all_packages->{$first_package_name};
+
+	foreach my $second_package_name (keys %$all_packages)
+	{
+	    next if $first_package_name eq $second_package_name;
+
+	    my $second_package = $all_packages->{$second_package_name};
+
+	    # if the version control port numbers are the same
+
+	    #! to support version control systems other than monotone,
+	    #! we only compare port numbers if they have been defined.
+
+	    if ($first_package->{version_control}
+		and $first_package->{version_control}->{port_number}
+		and $second_package->{version_control}
+		and $second_package->{version_control}->{port_number})
+	    {
+		if ($first_package->{version_control}->{port_number}
+		    eq $second_package->{version_control}->{port_number})
+		{
+		    die "$0: *** Error: package $first_package_name and $second_package_name have the same version control port number";
+		}
+	    }
+	}
+
+	# if the directory of the package is not set
+
+	if (not exists $first_package->{directory})
+	{
+	    # set default
+
+	    my $configurator_branch = '0';
+
+	    $first_package->{directory} = $ENV{HOME} . "/neurospaces_project/$first_package_name/source/snapshots/$configurator_branch";
+
+	    $first_package->{directory} =~ s(//)(/)g;
+	}
+
+	# if the version control repository filesystem location is not set
+
+	if (not exists $first_package->{version_control}->{repository})
+	{
+	    # set default
+
+	    $first_package->{version_control}->{repository} = $ENV{HOME} . "/neurospaces_project/MTN/$first_package_name.mtn";
+
+	    $first_package->{version_control}->{repository} =~ s(//)(/)g;
+	}
+    }
+}
+
+
+whole_build_configuration_read();
+
+personal_build_configuration_read();
+
+$default_packages = default_packages_read();
+
+packages_validate($default_packages);
+
+
 package Neurospaces::Developer::Manager;
 
 
