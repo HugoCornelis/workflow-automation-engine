@@ -223,8 +223,6 @@ sub default_packages_read()
 					    },
 			},
 	   configurator => {
-			    dependencies => {
-					    },
 			    description => 'common configurations of the Neurospaces tool chain',
 			    disabled => 'the Configurator must always be disabled',
 			    order => 0.5,
@@ -239,8 +237,6 @@ sub default_packages_read()
 			    version_script => 0,
 			   },
 	   dash => {
-		    dependencies => {
-				    },
 		    description => 'a single neuron solver that uses dual exponential equations to model channel currents',
 		    directory => "$ENV{HOME}/neurospaces_project/dash/source/snapshots/0",
 		    disabled => 1,
@@ -251,8 +247,6 @@ sub default_packages_read()
 		    version_script => 0,
 		   },
 	   geometry => {
-			dependencies => {
-					},
 			description => 'a collection of algorithms in computational geometry useful for the conversion of EM image stacks ao.',
 			directory => "$ENV{HOME}/neurospaces_project/geometry/source/snapshots/0",
 			disabled => 'far from finished.',
@@ -281,8 +275,11 @@ sub default_packages_read()
 		      version_script => 'genesis-g3 --version',
 		     },
 	   'g-tube' => {
-			directory => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0",
+			dependencies => {
+					 gshell => 'as an interface',
+					},
 			description => 'GENESIS GUI',
+			directory => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0",
 			#		   disabled => 'g-tube is not complete yet',
 			order => 30,
 			tags => [
@@ -296,7 +293,7 @@ sub default_packages_read()
 		       },
 	   heccer => {
 		      dependencies => {
-				       'model-container' => 'for storing the model in computer memory',
+				       'model-container' => 'only for compilation',
 				      },
 		      description => 'a single neuron solver',
 		      directory => "$ENV{HOME}/neurospaces_project/heccer/source/snapshots/0",
@@ -323,7 +320,6 @@ sub default_packages_read()
 	   developer => {
 			 description => 'developer utilities that comply for GENESIS 3',
 			 directory => "$ENV{HOME}/neurospaces_project/developer/source/snapshots/0",
-			 disabled => 0, # disabled => 1,
 			 order => 0,
 			 tags => [
 				  'genesis3',
@@ -338,7 +334,6 @@ sub default_packages_read()
 	   'model-container' => {
 				 description => 'backend independent model storage',
 				 directory => "$ENV{HOME}/neurospaces_project/model-container/source/snapshots/0",
-				 disabled => 0,
 				 operations => {
 						'./configure' => {
 								  debug => [
