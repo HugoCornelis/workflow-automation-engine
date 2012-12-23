@@ -704,6 +704,12 @@ sub packages_sort
 		   $result->{dependencies}->{developer} = "must always be installed";
 	       }
 
+	       if (not exists $result->{dependencies}->{configurator}
+		   and $result->{sort_id} ne 'developer')
+	       {
+		   $result->{dependencies}->{configurator} = "must always come after the developer package";
+	       }
+
 	       $result;
 	   }
 	   keys %$all_packages,
@@ -730,6 +736,23 @@ sub packages_sort
 	$package->{order} = $order_number;
 
 	$order_number++;
+    }
+
+    # for sake of certainty
+
+    if (exists $all_packages->{developer})
+    {
+	$all_packages->{developer}->{order} = 0;
+    }
+
+    if (exists $all_packages->{configurator})
+    {
+	$all_packages->{configurator}->{order} = 0.5;
+    }
+
+    if (exists $all_packages->{heterarch})
+    {
+	$all_packages->{heterarch}->{order} = 0.75;
     }
 
     # return errors of processing
