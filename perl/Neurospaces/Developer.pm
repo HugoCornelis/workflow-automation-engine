@@ -601,7 +601,7 @@ sub packages_validate
 		if ($first_package->{version_control}->{port_number}
 		    eq $second_package->{version_control}->{port_number})
 		{
-		    die "$0: *** Error: package $first_package_name and $second_package_name have the same version control port number";
+		    return "$0: *** Error: package $first_package_name and $second_package_name have the same version control port number";
 		}
 	    }
 	}
@@ -630,6 +630,8 @@ sub packages_validate
 	    $first_package->{version_control}->{repository} =~ s(//)(/)g;
 	}
     }
+
+    return undef;
 }
 
 
@@ -639,7 +641,12 @@ personal_build_configuration_read();
 
 $default_packages = default_packages_read();
 
-packages_validate($default_packages);
+my $error = packages_validate($default_packages);
+
+if (defined $error)
+{
+    die $error;
+}
 
 
 package Neurospaces::Developer::Manager;
