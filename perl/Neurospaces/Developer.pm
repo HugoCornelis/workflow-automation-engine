@@ -747,12 +747,17 @@ sub packages_sort
 
     if (exists $all_packages->{configurator})
     {
-	$all_packages->{configurator}->{order} = 0.5;
+	$all_packages->{configurator}->{order} = 0.25;
     }
 
     if (exists $all_packages->{heterarch})
     {
-	$all_packages->{heterarch}->{order} = 0.75;
+	$all_packages->{heterarch}->{order} = 0.5;
+    }
+
+    if (exists $all_packages->{tesseract})
+    {
+	$all_packages->{tesseract}->{order} = 0.75;
     }
 
     # return errors of processing
