@@ -12,6 +12,13 @@ package Neurospaces::Developer;
 sub unique(@);
 
 
+=head4 packages_by_tags
+
+Enumerate packages given a series of tags.  The result is a list
+reference consisting of hashes that describe a package each.
+
+=cut
+
 sub packages_by_tags
 {
     my $active_tags = shift;
@@ -44,8 +51,17 @@ sub packages_by_tags
     $packages = [ %$packages, ];
 
     $packages = [ @{$packages->[1]->{repositories}}, ];
+
+    return $packages;
 }
 
+
+=head4 packages_by_tags
+
+Enumerate all packages.  The result is a list reference consisting of
+hashes that describe a package each.
+
+=cut
 
 sub packages
 {
