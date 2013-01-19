@@ -6,11 +6,25 @@
 use strict;
 
 
+=head3
+
+package Neurospaces::Developer;
+
+=cut
+
+
 package Neurospaces::Developer;
 
 
 sub unique(@);
 
+
+=head4 sub packages_by_tags()
+
+Enumerate packages given a series of tags.  The result is a list
+reference consisting of hashes that describe a package each.
+
+=cut
 
 sub packages_by_tags
 {
@@ -44,27 +58,71 @@ sub packages_by_tags
     $packages = [ %$packages, ];
 
     $packages = [ @{$packages->[1]->{repositories}}, ];
+
+    return $packages;
 }
 
 
+=head4 sub packages()
+
+Enumerate all packages.  The result is a list reference consisting of
+hashes that describe a package each.
+
+Note: this sub should not be used anymore, instead, use packages_all()
+
+=cut
+
 sub packages
 {
-    my $packages_text = `neurospaces_repositories`;
+    my $all_info = shift;
 
-    if ($@)
+    if (defined $all_info)
     {
-	die "$0: *** Error: cannot find package information, does the 'neurospaces_repositories' command work correctly?";
+	return(packages_all());
     }
+    else
+    {
+	my $packages_text = `neurospaces_repositories`;
 
-    my $packages = YAML::Load($packages_text);
+	if ($@)
+	{
+	    die "$0: *** Error: cannot find package information, does the 'neurospaces_repositories' command work correctly?";
+	}
 
-    $packages = [ %$packages, ];
+	my $packages = YAML::Load($packages_text);
 
-    my $result = [ @{$packages->[1]->{repositories}}, ];
+	$packages = [ %$packages, ];
+
+	my $result = [ @{$packages->[1]->{repositories}}, ];
+
+	return($result);
+    }
+}
+
+
+=head4 sub packages_all()
+
+Enumerate all packages.  The result is a list reference consisting of
+hashes that describe a package each.
+
+Note: this sub should not be used anymore, instead, use packages_all()
+
+=cut
+
+sub packages_all
+{
+    my $result = $Neurospaces::Developer::Configurator::default_packages;
 
     return($result);
 }
 
+
+=head4 sub package_tags()
+
+Enumerate all tags found in all the enabled packages.  The result is a
+hash reference where the keys are the tag names.
+
+=cut
 
 sub package_tags
 {
@@ -111,6 +169,13 @@ sub unique(@)
 }
 
 
+=head3
+
+package Neurospaces::Developer::Configurator;
+
+=cut
+
+
 package Neurospaces::Developer::Configurator;
 
 
@@ -122,6 +187,14 @@ use YAML;
 our $whole_build_configuration;
 
 our $personal_build_configuration;
+
+=head4 $default_packages
+
+A hash reference consisting of hashes that describe each package.  The
+order key in each package can be used to sort the packages on
+dependency order.
+
+=cut
 
 our $default_packages;
 
@@ -170,6 +243,16 @@ sub personal_build_configuration_read
     }
 }
 
+
+=head4 sub default_packages_read()
+
+Enumerate all the configured packages on this system.  Note that the
+result is unordered.
+
+This sub should not be used to obtain a valid list of configured
+packages.  Use the $default_packages variables instead.
+
+=cut
 
 sub default_packages_read()
 {
