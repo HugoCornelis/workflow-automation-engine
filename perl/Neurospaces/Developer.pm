@@ -485,6 +485,7 @@ sub default_packages_read()
 			dependencies => {
 					 'model-container' => 'for storing the model in computer memory',
 					 heccer => 'for solving single neurons',
+					 ssp => 'for some of the tests',
 					},
 			description => 'GENESIS-2 Backward Compatibility',
 			directory => "$ENV{HOME}/neurospaces_project/ns-sli/source/snapshots/0",
