@@ -259,6 +259,9 @@ sub default_packages_read()
     my $result
 	= {
 	   experiment => {
+			  dependencies => {
+					   'model-container' => 'required during linking, for storing the model in computer memory',
+					  },
 			  description => 'Experimental protocols',
 			  directory => "$ENV{HOME}/neurospaces_project/experiment/source/snapshots/0",
 			  operations => {
