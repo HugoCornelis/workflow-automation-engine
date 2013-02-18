@@ -533,142 +533,159 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    my $command = $command_definition->{command};
 
+	    my $object;
+
 	    my $spawn_new;
 
-	    if (ref $command eq 'CODE')
+	    if ($command_definition->{class})
 	    {
-		$spawn_new = 0;
+		my $class = $command_definition->{class};
+
+		my $filename = $class . ".pm";
+
+		$filename =~ s(::)(/)g;
+
+		require $filename;
+
+		$object = eval "$class->new()";
 	    }
 	    else
 	    {
-		# a command can be an absolute pathname,
-		# can come from the _build directory
-		# or from the sources for a script
+		if (ref $command eq 'CODE')
+		{
+		    $spawn_new = 0;
+		}
+		else
+		{
+		    # a command can be an absolute pathname,
+		    # can come from the _build directory
+		    # or from the sources for a script
 
 # 		-f $command and print "Found command $command\n";
 # 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
 # 		-f $core_directory . $command and print "Found core $core_directory$command\n";
 
-		my $test_command
-		    = -f $command
-			? $command
-			    : -f $built_exe_directory . $command
-				? $built_exe_directory . $command
-				    : $core_directory . $command;
+		    my $test_command
+			= -f $command
+			    ? $command
+				: -f $built_exe_directory . $command
+				    ? $built_exe_directory . $command
+					: $core_directory . $command;
 
-		# find differences between how to run this command and
-		# the one already running
+		    # find differences between how to run this command and
+		    # the one already running
 
-		my $new_command_definition
-		    = {
-		       arguments => $command_definition->{arguments},
-		       command => $test_command,
-		      };
+		    my $new_command_definition
+			= {
+			   arguments => $command_definition->{arguments},
+			   command => $test_command,
+			  };
 
-		my $differences
-		    = data_comparator
-			($new_command_definition, $running_command_definition);
+		    my $differences
+			= data_comparator
+			    ($new_command_definition, $running_command_definition);
 
-		# remember to spawn a new command
+		    # remember to spawn a new command
 
-		$spawn_new
-		    =
-			# if we did not have any command yet
+		    $spawn_new
+			=
+			    # if we did not have any command yet
 
-			!$exp
+			    !$exp
 
-			    # or if there were differences with the previous command
+				# or if there were differences with the previous command
 
-			    || !$differences->is_empty()
+				|| !$differences->is_empty()
 
 				# or if the previous command had side effects
 
-				|| $previous_side_effects
+				    || $previous_side_effects
 
-				    # or if we had to prepare this command
+					# or if we had to prepare this command
 
-				    || $preparation;
+					|| $preparation;
 
-		# prefix the command with the core directory
+		    # prefix the command with the core directory
 
-		$command = $new_command_definition->{command};
+		    $command = $new_command_definition->{command};
 
-		my $arguments = $command_definition->{arguments};
+		    my $arguments = $command_definition->{arguments};
 
-		# if the command can be executed
+		    # if the command can be executed
 
-		if (-x $command)
-		{
-		    if ($spawn_new)
+		    if (-x $command)
 		    {
-			if ($exp)
+			if ($spawn_new)
 			{
-			    # terminate the previous command
+			    if ($exp)
+			    {
+				# terminate the previous command
 
-			    #t could be that the hard_close() call is needed because
-			    #t neurospaces uses readline, not sure needs investigation,
-			    #t perhaps.
+				#t could be that the hard_close() call is needed because
+				#t neurospaces uses readline, not sure needs investigation,
+				#t perhaps.
 
-			    $exp->hard_close();
+				$exp->hard_close();
+			    }
+
+			    # create a new Expect object by spawning a new process with the new command
+
+			    $exp = Expect->new();
+
+			    #! see the expect manual for this one
+
+			    $exp->raw_pty(1);
+
+			    # 		    $exp->slave->stty(qw(raw -echo));
+
+			    $exp->spawn
+				(
+				 (
+				  $option_trace
+				  ? ("strace", "-f")
+				  : ()
+				 ),
+				 $command,
+				 @$arguments
+				)
+				    or die "$0: cannot spawn $command: $!\n";
+
+			    # set the running_command_definition
+
+			    $running_command_definition = $new_command_definition;
+
+			    print "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+			    # remember to do startup testing
+
+			    $test_startup = 1;
+
+			    # there were no side effects yet
+
+			    $previous_side_effects = 0;
 			}
+			else
+			{
+			    print "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
 
-			# create a new Expect object by spawning a new process with the new command
-
-			$exp = Expect->new();
-
-			#! see the expect manual for this one
-
-			$exp->raw_pty(1);
-
-			# 		    $exp->slave->stty(qw(raw -echo));
-
-			$exp->spawn
-			    (
-			     (
-			      $option_trace
-			      ? ("strace", "-f")
-			      : ()
-			     ),
-			     $command,
-			     @$arguments
-			    )
-				or die "$0: cannot spawn $command: $!\n";
-
-			# set the running_command_definition
-
-			$running_command_definition = $new_command_definition;
-
-			print "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-			# remember to do startup testing
-
-			$test_startup = 1;
-
-			# there were no side effects yet
-
-			$previous_side_effects = 0;
+			    $test_startup = 0;
+			}
 		    }
 		    else
 		    {
-			print "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+			my $error = "$command is not executable";
 
-			$test_startup = 0;
+			report_error_add
+			    (
+			     {
+			      description => $description,
+			      error => $error,
+			      module_name => $module_name,
+			     },
+			    );
+
+			next;
 		    }
-		}
-		else
-		{
-		    my $error = "$command is not executable";
-
- 		    report_error_add
-			(
-			 {
-			  description => $description,
-			  error => $error,
-			  module_name => $module_name,
-			 },
-			);
-
-		    next;
 		}
 	    }
 
@@ -729,7 +746,39 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		my $time_elapsed;
 
-		if (ref $command eq 'CODE')
+		print "*** Test: $description\n";
+
+		if ($object
+		    and (ref $command_test->{write} eq 'ARRAY'))
+		{
+		    my $result;
+
+		    my $last_method;
+
+		    my $writes = $command_test->{write};
+
+		    foreach my $write (@$writes)
+		    {
+			my $method = $write->{method};
+
+			$last_method = $method;
+
+			my $arguments = $write->{arguments};
+
+			$result = $object->$method(@$arguments);
+		    }
+
+		    if (exists $command_test->{read})
+		    {
+			my $read = $command_test->{read};
+
+			$error
+			    = ($result eq $read
+			       ? ""
+			       : "$last_method returned $result, expected $read");
+		    }
+		}
+		elsif (ref $command eq 'CODE')
 		{
 		    $error
 			= &$command
@@ -744,8 +793,6 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		}
 		else
 		{
-		    print "*** Test: $description\n";
-
 		    if ($description =~ /startup successful \?$/)
 		    {
 			if (!$test_startup)
@@ -768,6 +815,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		    # set read, wait and write strings
 
 		    my $read = $command_test->{read};
+
+		    my $shell = $command_test->{shell};
 
 		    my $wait = $command_test->{wait};
 
@@ -802,6 +851,13 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			print "*** Wait: $wait\n";
 
 			select(undef, undef, undef, $wait);
+		    }
+
+		    # shell command
+
+		    if ($shell)
+		    {
+			system $shell;
 		    }
 
 		    # read
