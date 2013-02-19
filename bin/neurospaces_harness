@@ -857,6 +857,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    if ($shell)
 		    {
+			print "*** Shell: $shell\n";
+
 			system $shell;
 		    }
 
