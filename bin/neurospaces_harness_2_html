@@ -1,0 +1,1078 @@
+#!/usr/bin/perl -w
+#!/usr/bin/perl -d:ptkdb
+#
+#
+#
+
+use strict;
+
+
+our $core_directory;
+
+our $built_exe_directory;
+
+# our $perl_modules_directory;
+
+our $config;
+
+
+my $command_definition_disabled = [];
+my $command_tests_disabled = 0;
+
+
+my $option_header;
+my $option_help;
+my $option_introduction;
+my $option_verbose;
+
+
+BEGIN
+{
+    # default : running stand-alone
+
+    my $test_mode = 'stand-alone';
+
+    # find the package core directory
+
+    $config = do 'tests.config';
+
+    if (!defined $config)
+    {
+	if ($ENV{srcdir})
+	{
+	    $config = do "$ENV{srcdir}/tests.config";
+
+	    # register that we are running from automake
+
+	    $test_mode = 'automake';
+	}
+    }
+
+    if (!defined $config)
+    {
+	die "No test configuration found";
+    }
+
+    # protect for automake
+
+    if ($test_mode eq 'stand-alone')
+    {
+	$core_directory = $config->{core_directory};
+    }
+    else
+    {
+	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
+    }
+
+    # remove parent and current directories
+
+    $core_directory =~ s(([^\.])\./)($1)g;
+
+    $core_directory =~ s([^/\.]+/\.\./)()g;
+
+    print "$0: core_directory is $core_directory\n";
+
+    # add to tests directory to include paths
+
+    if (!exists $config->{tests_directory})
+    {
+	$config->{tests_directory} = "${core_directory}tests/specifications";
+    }
+
+    unshift @INC, $config->{tests_directory};
+
+#     # find the perl modules directory
+
+#     $perl_modules_directory = $core_directory;
+
+#     $perl_modules_directory .= "perl";
+
+#     # add to include path
+
+#     unshift @INC, $perl_modules_directory;
+
+#     #! this one is for distcheck, second run of the disthook
+
+#     unshift @INC, '../../../perl';
+
+    # more automake hacking : if there is a special _build directory
+    # that separates sources and derived files, we assume that the
+    # _build directory will contain the executables.
+
+    $built_exe_directory = $core_directory . "_build/";
+
+    if (!-d $built_exe_directory)
+    {
+	$built_exe_directory = $core_directory;
+    }
+}
+
+
+$ENV{NEUROSPACES_NMC_MODELS} = ${core_directory} . '/library';
+
+my $tests_dir = $config->{tests_directory};
+
+my $outputs_dir = $config->{outputs_dir};
+
+
+use CGI;
+
+use Data::Transformator;
+
+use Getopt::Long;
+
+use HTML::Table;
+use HTML::Template;
+
+use IO::File;
+
+
+sub html_index
+{
+    my $cgi = shift;
+
+    my $sections = shift;
+
+    my $result = '';
+
+    # create template table
+
+    my $table = HTML::Table->new(1, (scalar keys %{$sections->[0]}) - 1, );
+
+    #! note : using $cgi for this would replace '<' with html
+    #! entities, which in turn makes the template illegal.
+
+    $table->setCell(1, 1, "<a href=\"<TMPL_VAR NAME=target>\"><TMPL_VAR NAME=source></a>", );
+
+    my $column = 2;
+
+    foreach my $entry (keys %{$sections->[0]})
+    {
+	next if $entry eq 'source';
+	next if $entry eq 'target';
+
+	$table->setCell(1, $column, "<TMPL_VAR NAME=$entry>");
+
+	$column++;
+    }
+
+    my $template_text .= $table->getTable();
+
+    # create the template with a loop over the sections
+
+    #! do not know how otherwise to insert a template loop ...
+
+    $template_text =~ s/(<table.*?>)/$1\n<TMPL_LOOP NAME="index">\n/i;
+
+    $template_text =~ s/(<\/table.*?>)/\n<\/TMPL_LOOP>\n$1/i;
+
+    my $template
+	= HTML::Template->new
+	    (
+	     type => "scalarref",
+	     source => \$template_text,
+	    );
+
+    $template->param(index => $sections, );
+
+    # add expanded template to result
+
+    $result .= $template->output();
+
+    # return result
+
+    return $result;
+}
+
+
+#
+# html_table_code()
+#
+# Convert the given source to an html table with the given name.
+#
+# Source is a hash to be converted to a two column table with key --
+# value rows.
+#
+
+sub html_table_code
+{
+    my $name = shift;
+
+    my $source = shift;
+
+    my $result = '';
+
+    my $table
+	= HTML::Table->new
+	    (
+	     -border => 2,
+	     -spacing => 2,
+	     -padding => 5,
+	    );
+
+    $result .= "<a name=\"$name\"></a>";
+
+    my $interesting_keys = [ sort keys %$source, ];
+
+    $table->addCol(@$interesting_keys, );
+
+    $table->addCol
+	(
+	 map
+	 { (!defined) ? '' : $_ }
+	 @$source{ @$interesting_keys, },
+	);
+
+    $table->setColFormat(2, "<pre>\n", "</pre>\n", );
+
+    $table->setColVAlign(1, "TOP");
+    $table->setColVAlign(2, "TOP");
+
+    $result .= $table->getTable();
+
+    return $result;
+}
+
+
+sub main
+{
+    my $total_tests = 0;
+
+    my $result
+	= GetOptions
+	    (
+	     "help!" => \$option_help,
+	     "header=s" => \$option_header,
+	     "introduction=s" => \$option_introduction,
+	     "v|verbose+" => \$option_verbose,
+	    );
+
+    if ($option_help)
+    {
+	print
+	    "
+$0: convert test definitions to html.
+
+options :
+    header         header to insert before any titles.
+    help           print usage information.
+    introduction   optional introduction file (literal HTML).
+    v|verbose      tell what is being done, specify multiple times to get
+                   more feedback.
+";
+
+	exit 1;
+    }
+
+    my $cgi = CGI->new();
+
+    # produce list of all directories
+
+    my $directories = [ sort split '\n', `find $tests_dir -type d`, ];
+
+    my $directory_2_files
+	= {
+	   map
+	   {
+	       my $directory = $_;
+
+	       $directory => [
+			      sort
+			      map { s/\.t$//; $_ }
+			      grep { /\.t$/ }
+			      split '\n', `find $directory -maxdepth 1 -type f`,
+			     ],
+	   }
+	   @$directories,
+	  };
+
+    # filter out empty directories
+
+    $directories
+	= [
+	   grep
+	   {
+	       @{$directory_2_files->{$_}}
+	   }
+	   @$directories,
+	  ];
+
+    # loop over all directories
+
+    foreach my $directory (@$directories)
+    {
+	# read files in this directory
+
+	my $files
+	    = [
+	       sort
+	       map { s/\.t$//; $_ }
+	       grep { /\.t$/ }
+	       split '\n', `find $directory -maxdepth 1 -type f`,
+	      ];
+
+	my $sections
+	    = [
+	       sort { $a->{source} cmp $b->{source} }
+	       map
+	       {
+		   my $content = do "$_.t";
+
+		   my $description = $content->{description};
+
+		   $_ =~ m(.*/(.*)$);
+
+		   {
+		    description => $description,
+		    source => $_,
+		    target => "$1.html",
+		   };
+	       }
+	       @$files,
+	      ];
+
+	# create index for this directory
+
+	my $depth = ( $directory =~ tr(/)(/) ) + 1;
+
+	output_content
+	    (
+	     {
+	      cgi => $cgi,
+	      content => html_index($cgi, $sections, ),
+	      filename => "$directory/main.html",
+	      flow => {
+		       index => "../" x ($depth - 1) . "index.html",
+		      },
+	      header => $option_header,
+	      title => "Index of group $directory",
+	     },
+	    );
+
+	# loop over all files in this directory
+
+	foreach my $file (@$files)
+	{
+	    print "Converting $file\n";
+
+	    # read the file data
+
+	    my $content = do "$file.t";
+
+	    my $html = '';
+
+	    $html .= $cgi->h1($content->{description});
+
+	    if ($content->{comment}
+		|| $content->{overview})
+	    {
+		# give header
+
+		$html .= $cgi->h4("Overview, Comments, Preparation, Reparation");
+
+		# create table
+
+		my $count = 1;
+
+		my $source = {};
+
+		if ($content->{overview})
+		{
+		    $source->{$count . ". Overview"} = $content->{overview};
+
+		    $count++;
+		}
+
+		if ($content->{comment})
+		{
+		    $source->{$count . ". Comments"} = $content->{comment};
+
+		    $count++;
+		}
+
+		# render
+
+		$html
+		    .= html_table_code
+			(
+			 "${directory}_${file}_starter",
+			 $source,
+			);
+
+# 		if ($content->{comment})
+# 		{
+# 		    $html .= $cgi->font( { -size => 2, }, $content->{comment});
+
+# 		    $html .= $cgi->br();
+# 		}
+	    }
+
+	    # create index for this file
+
+	    my $command_definitions = $content->{command_definitions};
+
+	    my $count = 0;
+
+	    my $sections
+		= [
+		   map
+		   {
+		       $count++;
+
+# 		       "${directory}_${file}_${command_definition_count}_${command_test_count}";
+
+		       {
+			   source => $count . ". " . ucfirst $_->{description},
+			       target => "#${directory}_${file}_${count}",
+			   };
+		   }
+		   @$command_definitions,
+		  ];
+
+	    $html .= html_index($cgi, $sections, );
+
+	    # loop over all command definitions
+
+	    my $command_definition_count = 1;
+
+	    foreach my $command_definition (@$command_definitions)
+	    {
+		my $command_tests = $command_definition->{command_tests};
+
+		$html .= $cgi->hr();
+
+		$html .= "<a name=\"${directory}_${file}_${command_definition_count}\"></a>";
+
+		$html .= $cgi->h2($command_definition_count . ". " . ucfirst $command_definition->{description});
+
+		if ($command_definition->{disabled})
+		{
+		    $html .= $cgi->h2("This command definition is currently disabled (disabled is '$command_definition->{disabled}')");
+
+		    push
+			@$command_definition_disabled,
+			{
+			 command_test_count => scalar @$command_tests,
+			 description => $command_definition->{description},
+			};
+		}
+
+		if ($command_definition->{command} =~ /CODE/)
+		{
+		    # embedded perl code
+
+		    use Data::Dumper;
+
+		    $Data::Dumper::Deparse = 1;
+
+		    {
+			my $perl_code = Dumper($command_definition->{command});
+
+			if (0)
+			{
+			    require PPI;
+			    require PPI::HTML;
+
+# 			    print $perl_code;
+
+			    # Load your Perl file
+			    my $Document = PPI::Document->new(\$perl_code);
+
+			    # Create a reusable syntax highlighter
+			    my $Highlight = PPI::HTML->new( line_numbers => 1 );
+
+			    # Spit out the HTML
+			    $html .= "\n<verbatim>\n" . $Highlight->html( $Document ) . "\n</verbatim>\n";
+			}
+			elsif (0)
+			{
+			    require IPC::Open3;
+
+			    my ($wtr, $rdr, $err);
+			    my $pid = open3($wtr, $rdr, $err, "source-highlight 2>&1 --line-number-ref --src-lang perl --out-format html");
+
+			    #! this might block for long code fragments ?
+
+			    print $wtr $perl_code;
+
+			    my $source_html;
+
+			    read $rdr, $source_html, 100000;
+
+			    $html .= "\n<verbatim>\n" . $source_html . "\n</verbatim>\n";
+			}
+			elsif (1)
+			{
+			    use File::Temp qw/ tempfile tempdir /;
+
+			    my ($fh, $filename) = tempfile();
+
+			    print $fh $perl_code;
+
+			    $fh->close();
+
+			    use IO::File;
+
+			    my $reader;
+
+			    open($reader, "source-highlight 2>&1 --line-number-ref --src-lang perl --out-format html --input \"$filename\" |");
+
+			    local $/;
+
+			    my $source_html = <$reader>;
+
+			    close($reader);
+
+			    $html .= "\n<verbatim>\n" . $source_html . "\n</verbatim>\n";
+			}
+
+		    }
+		}
+		else
+		{
+		    my $model = [ $command_definition->{command}, @{$command_definition->{arguments} || []}, ];
+
+		    if (@$model)
+		    {
+			# output source code
+
+			#! guessing turned on when need to turn executables into highlighted source code.
+
+			my $guessing = `pwd` =~ /heccer/;
+
+			my $source_information = output_source($file, $model, { guessing => $guessing, }, );
+
+			my $source_anchor = defined $source_information->{result_anchor} ? " href=\"$source_information->{result_anchor}\"" . $source_information->{result_anchor} : "" ;
+
+			my $command .= "<a$source_anchor>" . (join ' ', @$model) . "</a>";
+
+			$html .= $cgi->h4("Startup command : " . $command);
+
+			if (! scalar grep { /^[^-]/ } @$model [ 1 .. $#$model ] )
+			{
+			    $html .= "(No model has been loaded for the following set of commands.)";
+			}
+		    }
+		}
+
+		$html .= $cgi->hr();
+
+		if ($command_definition->{comment}
+		    || $command_definition->{overview}
+		    || $command_definition->{preparation}
+		    || $command_definition->{reparation})
+		{
+		    # give header
+
+		    $html .= $cgi->h4("Overview, Comments, Preparation, Reparation");
+
+		    # create table
+
+		    my $count = 1;
+
+		    my $source = {};
+
+		    if ($command_definition->{overview})
+		    {
+			$source->{$count . ". Overview of this test definition"} = $command_definition->{overview};
+
+			$count++;
+		    }
+
+		    if ($command_definition->{comment})
+		    {
+			$source->{$count . ". Comment for this test definition"} = $command_definition->{comment};
+
+			$count++;
+		    }
+
+		    if ($command_definition->{preparation})
+		    {
+			$source->{$count . ". Preparation needed before the commands below : "} = $command_definition->{preparation}->{description};
+
+			$count++;
+		    }
+
+		    if ($command_definition->{reparation})
+		    {
+			$source->{$count . ". And repared afterwards using : "} = $command_definition->{reparation}->{description};
+
+			$count++;
+		    }
+
+		    # render
+
+		    $html
+			.= html_table_code
+			    (
+			     "${directory}_${file}_${command_definition_count}_prep",
+			     $source,
+			    );
+		}
+
+		# loop over all tests
+
+		my $command_test_count = 1;
+
+		foreach my $command_test (@$command_tests)
+		{
+		    # increment total count
+
+		    $total_tests++;
+
+		    # convert this test
+
+		    $html .= $cgi->h4("$command_definition_count.$command_test_count. " . $command_test->{description});
+
+		    my $entries = 1;
+
+		    my $source;
+
+		    if (defined $command_test->{write})
+		    {
+			$source->{"$entries. Executed command"} = $command_test->{write};
+
+			$entries++;
+		    }
+
+		    my $read = $command_test->{read};
+
+		    if (ref $read eq 'ARRAY')
+		    {
+			$read
+			    = (
+			       @$read == 2
+			       ? $read->[1]
+			       : join '  ', @$read
+			      );
+		    }
+		    elsif (ref $read eq 'HASH')
+		    {
+			my $alternatives = $read->{alternatives};
+
+			if ($alternatives)
+			{
+			    $read = "----- OR:\n" . join "\n----- OR:\n", @$alternatives;
+			}
+			elsif ($read->{application_output_file})
+			{
+			    my $output = "application_output_file: $read->{application_output_file}\n";
+
+			    if (defined $read->{expected_output_file})
+			    {
+				$output .= "expected_output_file: $read->{expected_output_file}\n";
+			    }
+			    elsif (defined $read->{expected_output})
+			    {
+				$output .= "$read->{expected_output}";
+			    }
+			    else
+			    {
+				die "$0: unknown read specification";
+			    }
+
+			    $read = $output;
+			}
+			elsif ($read->{shell})
+			{
+			    $read = "shell: $read->{shell}\n";
+			}
+			else
+			{
+			    die "$0: unknown read specification";
+			}
+		    }
+
+		    # do some simple replacements for entities
+
+		    #t see also http://www.w3schools.com/tags/ref_entities.asp
+
+		    if ($read)
+		    {
+			$read =~ s/</&lt;/g;
+			$read =~ s/>/&gt;/g;
+			$read =~ s/&/&amp;/g;
+		    }
+
+		    $source->{"$entries. Part of expected output "} = $read;
+
+		    $entries++;
+
+		    if (defined $command_test->{comment})
+		    {
+			$source->{"$entries. Comment"} = $command_test->{comment};
+
+			$entries++;
+		    }
+
+		    if ($command_test->{disabled}
+			|| $command_definition->{disabled})
+		    {
+			#! loose some info here, don't really care
+
+			my $disabled
+			    = $command_test->{disabled}
+				|| $command_definition->{disabled};
+
+			$source->{"$entries. This test is currently not executed"} = "(disabled is '$disabled')";
+
+			$entries++;
+
+			$command_tests_disabled++;
+		    }
+
+		    # render
+
+		    $html
+			.= html_table_code
+			    (
+			     "${directory}_${file}_${command_definition_count}_${command_test_count}",
+			     $source,
+			    );
+
+		    $command_test_count++;
+		}
+
+		$command_definition_count++;
+	    }
+
+	    # write output of command definitions
+
+	    output_content
+		(
+		 {
+		  cgi => $cgi,
+		  content => $html,
+		  filename => "$file.html",
+		  flow => {
+			   index => "../" x ($depth - 1) . "index.html",
+			   up => "main.html",
+			  },
+		  header => $option_header,
+		  title => "Index of group $file",
+		 },
+		);
+	}
+    }
+
+    # produce an index file for the main directory
+
+    #! so main.html contains all the tests per directory ...
+
+    my $sections
+	= [
+	   sort { $a->{source} cmp $b->{source} }
+	   map
+	   {
+	       {
+		   files => @{$directory_2_files->{$_}} . " test definition file(s)",
+		       source => $_,
+			   target => "$_/main.html",
+		   };
+	   }
+	   @$directories,
+	  ];
+
+    #! ... and a single index.html links to all the directories
+    #! (ie. 'main.html's).
+
+    my $command_definition_disabled_total = 0;
+
+    output_content
+	(
+	 {
+	  cgi => $cgi,
+	  content => (
+		      html_index($cgi, $sections, )
+		      . "<hr> Total of $total_tests tests ("
+		      . (scalar @$command_definition_disabled)
+		      . " command definition(s) disabled, with in total "
+		      . (
+			 (
+			  scalar
+			  map
+			  {
+			      $command_definition_disabled_total += $_->{command_test_count}
+			  }
+			  @$command_definition_disabled
+			 )
+			 || $command_definition_disabled_total
+			)
+		      . " test(s) disabled, $command_tests_disabled individual command test(s) disabled)"
+		     ),
+	  filename => "index.html",
+	  header => $option_header,
+	  introduction => (defined $option_introduction ? (join "\n", `cat $option_introduction`) : ""),
+	  title => "Main Index",
+	 },
+	);
+}
+
+
+sub output_content
+{
+    my $arguments = shift;
+
+    my $cgi = $arguments->{cgi};
+
+    my $content = $arguments->{content};
+
+    my $filename = $arguments->{filename};
+
+    my $header = $arguments->{header};
+
+    my $introduction = $arguments->{introduction};
+
+    my $title = $arguments->{title};
+
+    my $result = '';
+
+    # start result
+
+    $result .= $cgi->start_html(
+				-head => [
+					  $cgi->Link(
+						     {
+						      -rel => "shortcut icon",
+						      -href => "/favicon.ico",
+						      -type => "image/x-icon",
+						     },
+						    ),
+					  $cgi->Link(
+						     {
+						      -rel => "icon",
+						      -href => "/favicon.ico",
+						      -type => "image/x-icon",
+						     },
+						    ),
+					 ],
+				-title => "$filename: $title",
+			       );
+
+    if (defined $header)
+    {
+	$result .= $header;
+    }
+
+    if ($introduction)
+    {
+	$result .= $introduction;
+
+	$result .= '<hr>';
+    }
+
+    $result .= $cgi->h1("$title");
+
+    # add hierarchy flow if needed
+
+    if ($arguments->{flow})
+    {
+	$result .= $cgi->hr();
+
+	my $flow = $arguments->{flow};
+
+	# loop over all flow elements
+
+	foreach my $flow_element (sort keys %$flow)
+	{
+	    # generate the flow element
+
+	    if (defined $flow->{$flow_element})
+	    {
+		$result .= $cgi->a( { href => $flow->{$flow_element} }, ucfirst $flow_element, );
+
+		$result .= $cgi->br();
+	    }
+	}
+
+	$result .= $cgi->hr();
+    }
+
+    # add external content
+
+    $result .= $content;
+
+    # add analyzer data
+
+    $result
+	.=
+'
+      <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src=\'" + gaJsHost + "google-analytics.com/ga.js\' type=\'text/javascript\'%3E%3C/script%3E"));
+      </script>
+      <script type="text/javascript">
+      var pageTracker = _gat._getTracker("UA-4642942-1");
+      pageTracker._initData();
+      pageTracker._trackPageview();
+      </script>
+';
+
+
+    my $old_code
+	=
+'
+      <script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+      </script>
+      <script type="text/javascript">
+	_uacct = "UA-4642942-1";
+	urchinTracker();
+      </script>
+';
+
+    # terminate html
+
+    $result .= $cgi->end_html();
+
+    # compute real output filename
+
+    my $output_file = "$outputs_dir/$filename";
+
+    output_prepare($output_file);
+
+    # write output
+
+    if ($option_verbose)
+    {
+	print "Generating $output_file\n";
+    }
+
+    my $file = IO::File->new(">$output_file");
+
+    print $file $result;
+
+    $file->close();
+
+    return $result;
+}
+
+
+sub output_prepare
+{
+    my $file_location = shift;
+
+    my $output_dir = $file_location;
+
+    $output_dir =~ s/(.*)\/.*/$1/;
+
+    #! note : -p assumes GNU mkdir
+
+    `mkdir -p $output_dir`;
+}
+
+
+sub output_source
+{
+    my $test_definition_file = shift;
+
+    my $source = shift;
+
+    my $options = shift;
+
+    my $result = {};
+
+    # guess the tester source
+
+    my $source_text_file = $config->{core_directory} . $source->[0];
+
+    #t guessing is ok, but the implementation not so (duplicate code, use a hash instead)
+
+    if ($options->{guessing})
+    {
+	my $source_profile = `file '$source_text_file'`;
+
+	if ($source_profile =~ /ELF.*executable/
+	    || $source_profile =~ /ERROR/)
+	{
+	    $source_text_file .= ".c";
+	}
+	elsif ($source_profile =~ /perl/)
+	{
+	}
+	else
+	{
+# 	    die "source_type for $source_text_file cannot be determined";
+	}
+    }
+
+    # profile the tester source
+
+    my $source_profile = `file '$source_text_file'`;
+
+    if ($source_profile =~ /ASCII C\+\+ program text/i)
+    {
+	$result->{source_type} = "cpp";
+    }
+    elsif ($source_profile =~ /perl/i)
+    {
+	$result->{source_type} = "perl";
+    }
+    elsif ($source_profile =~ /python/i)
+    {
+	$result->{source_type} = "python";
+    }
+    else
+    {
+# 	die "source_type for $source_text_file cannot be determined";
+    }
+
+    # if this is a known source type
+
+    if (defined $result->{source_type}
+	&& $result->{source_type} =~ m(cpp|perl|python))
+    {
+	# set result: where to find the source text
+
+	$result->{source_text_file} = $source_text_file;
+
+	# slurp source text
+
+	$result->{source_text} = `cat "$source_text_file"`;
+
+	# define an output text location
+
+	#! at most five levels deep
+
+	$result->{result_text_file} = "$outputs_dir/sources/a/b/c/d/e/$source_text_file.source.html";
+
+	#! this does not look good to me, it is a reversed parent
+	#! directory removal, there must be something wrong with the data
+	#! flow design here.
+
+	#! I guess it is somehow related to the global configuration in $config ...
+
+	#! code line coming from the heccer source
+
+	#     $result->{result_text_file} =~ s(/\.\./tests)();
+
+	$result->{result_text_file} =~ s(html/\.\./tests)(html);
+
+	output_prepare($result->{result_text_file});
+
+	if ($option_verbose)
+	{
+	    print "Generating $result->{result_text_file}\n";
+	}
+
+	system "source-highlight 2>&1 --line-number-ref --src-lang $result->{source_type} --out-format html --input \"$source_text_file\" --output $result->{result_text_file} ";
+
+	#! oh boy ...
+
+	$result->{result_anchor} = $result->{result_text_file};
+
+	my $parents = ( $test_definition_file =~ tr(/)(/));
+
+	$parents = "../" x ($parents);
+
+	$result->{result_anchor} =~ s(html/)(html/$parents);
+    }
+
+    # return result: source information
+
+    return $result;
+}
+
+
+main();
+
+
