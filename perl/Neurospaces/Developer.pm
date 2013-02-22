@@ -1126,6 +1126,14 @@ our $operations
 		   },
        },
        {
+	name => 'diff',
+	targets => {
+		    content_developer => 0,
+		    content_user => 0,
+		    software_developer => 1,
+		   },
+       },
+       {
 	name => 'configure',
 	targets => {
 		    content_developer => 0,
