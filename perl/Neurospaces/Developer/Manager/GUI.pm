@@ -49,9 +49,89 @@ sub create
     # Sets the border width of the window.
     $window->set_border_width(10);
 
+    my $vbox = Gtk2::VBox->new();
+
+    $window->add($vbox);
+
+    my $menubar = new Gtk2::MenuBar();
+    $vbox->pack_start($menubar, 0,0,2 );
+    $menubar->show();
+
+    my $file_menu = new Gtk2::Menu();
+    $file_menu->set_tearoff_state(0);
+
+    my $help_menu = new Gtk2::Menu();
+    $help_menu->set_tearoff_state(0);
+
+
+    # Create the file menu
+    my $file_menu_login = new Gtk2::MenuItem( "Create a _New Package" );
+    my $file_menu_quit = new Gtk2::MenuItem( "_Quit" );
+
+    # Add them to the menu
+    $file_menu->append( $file_menu_login );
+    $file_menu->append( $file_menu_quit );
+
+    # Attach the callback functions to the activate signal
+#     $file_menu_login->signal_connect( 'activate', \&show_login_dialog );
+    $file_menu_quit->signal_connect( 'activate', sub { Gtk2->main_quit; } );
+
+    # We do not need the show the menu, but we do need to show the menu items
+    $file_menu_login->show();
+    $file_menu_quit->show();
+
+    my $file_item = new Gtk2::MenuItem( "File" );
+    $file_item->show();
+    $file_item->set_submenu( $file_menu );
+
+    $menubar->append( $file_item );
+
+    # Create the help menu
+    my $help_menu_help = new Gtk2::MenuItem( "Help" );
+    my $help_menu_about = new Gtk2::MenuItem( "About" );
+
+    # add help items to the menu
+    $help_menu->append( $help_menu_help );
+    $help_menu->append( $help_menu_about );
+
+    #attach the callback of the menu
+    $help_menu_help->signal_connect
+	(
+	 'activate',
+	 sub
+	 {
+	     &show_dialog('hallo test', 'help');
+	 },
+	);
+    $help_menu_about->signal_connect
+	(
+	 'activate',
+	 sub
+	 {
+	     &show_dialog
+		 ("
+The neurospaces-manager-gui manages your local Neurospaces configuration.
+
+Written in perl/Gtk
+(C) Hugo Cornelis, 2012--2013",
+ 'about',
+		 );
+	 }
+	);
+
+    # show the items
+    $help_menu_help->show();
+    $help_menu_about->show();
+
+    my $help_item = new Gtk2::MenuItem( "Help" );
+    $help_item->show();
+    $help_item->set_submenu( $help_menu );
+
+    $menubar->append( $help_item );
+
     my $hbox = Gtk2::HBox->new();
 
-    $window->add($hbox);
+    $vbox->add($hbox);
 
     # left: tag check boxes
 
@@ -545,6 +625,20 @@ sub package_list_update
 		 $active_package->{package},
 		];
     }
+}
+
+
+sub show_dialog
+{
+    my ($message, $title) = @_;
+
+    my $dialog = Gtk2::MessageDialog->new($main, 'destroy-with-parent', 'info', 'ok', $message);
+
+    $dialog->set_title($title);
+
+    $dialog->run;
+
+    $dialog->destroy;
 }
 
 
