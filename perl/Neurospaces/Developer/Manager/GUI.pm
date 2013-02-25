@@ -107,7 +107,7 @@ sub create
 	 'activate',
 	 sub
 	 {
-	     &show_dialog('See http://www.genesis-sim.org/', 'help');
+	     &show_dialog('Help', 'See http://www.genesis-sim.org/');
 	 },
 	);
     $help_menu_about->signal_connect
@@ -116,12 +116,13 @@ sub create
 	 sub
 	 {
 	     &show_dialog
-		 ("
+		 (
+		  'About',
+		  "
 The neurospaces-manager-gui manages your local Neurospaces configuration.
 
 Written in perl/Gtk
-(C) Hugo Cornelis, 2012--2013",
- 'about',
+(C) Hugo Cornelis, 2012 -- 2013",
 		 );
 	 }
 	);
@@ -632,6 +633,15 @@ sub package_list_row_activated
 }
 
 
+=head4 sub package_list_update()
+
+Act after a package tag checkbox has changed state.
+
+Updates the package list to list packages tagged with one of the
+selected package tags.
+
+=cut
+
 sub package_list_update
 {
     my $active_tags = shift;
@@ -657,15 +667,15 @@ sub package_list_update
 
 sub show_dialog
 {
-    my ($message, $title) = @_;
+    my ($title, $message) = @_;
 
     my $dialog = Gtk2::MessageDialog->new($window_main, 'destroy-with-parent', 'info', 'ok', $message);
 
     $dialog->set_title($title);
 
-    $dialog->run;
+    $dialog->run();
 
-    $dialog->destroy;
+    $dialog->destroy();
 }
 
 
