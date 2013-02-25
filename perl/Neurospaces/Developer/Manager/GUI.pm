@@ -1,6 +1,9 @@
 package Neurospaces::Developer::Manager::GUI;
 
 
+use strict;
+
+
 use Glib qw/TRUE FALSE/;
 
 use Gtk2 '-init';
@@ -12,6 +15,8 @@ our $gtk2_package_list;
 our $gtk2_tb_package_information;
 our $tooltips = Gtk2::Tooltips->new();
 
+our $window_main;
+
 
 sub create
 {
@@ -20,6 +25,8 @@ sub create
     my $assigned_role = $Neurospaces::Developer::Manager::assigned_role;
 
     my $window = Gtk2::Window->new('toplevel');
+
+    $window_main = $window;
 
     $window->set_title("Neurospaces Developer Management Console");
 
@@ -65,30 +72,30 @@ sub create
 
 
     # Create the file menu
-    my $file_menu_login = new Gtk2::MenuItem( "Create a _New Package" );
+    my $file_menu_new = new Gtk2::MenuItem( "Create a _New Package" );
     my $file_menu_quit = new Gtk2::MenuItem( "_Quit" );
 
     # Add them to the menu
-    $file_menu->append( $file_menu_login );
+    $file_menu->append( $file_menu_new );
     $file_menu->append( $file_menu_quit );
 
     # Attach the callback functions to the activate signal
-#     $file_menu_login->signal_connect( 'activate', \&show_login_dialog );
-    $file_menu_quit->signal_connect( 'activate', sub { Gtk2->main_quit; } );
+    $file_menu_new->signal_connect( 'activate', \&show_dialog_new_package );
+    $file_menu_quit->signal_connect( 'activate', sub { Gtk2->main_quit(); } );
 
     # We do not need the show the menu, but we do need to show the menu items
-    $file_menu_login->show();
+    $file_menu_new->show();
     $file_menu_quit->show();
 
-    my $file_item = new Gtk2::MenuItem( "File" );
+    my $file_item = new Gtk2::MenuItem( "_File" );
     $file_item->show();
     $file_item->set_submenu( $file_menu );
 
     $menubar->append( $file_item );
 
     # Create the help menu
-    my $help_menu_help = new Gtk2::MenuItem( "Help" );
-    my $help_menu_about = new Gtk2::MenuItem( "About" );
+    my $help_menu_help = new Gtk2::MenuItem( "H_elp" );
+    my $help_menu_about = new Gtk2::MenuItem( "_About" );
 
     # add help items to the menu
     $help_menu->append( $help_menu_help );
@@ -100,7 +107,7 @@ sub create
 	 'activate',
 	 sub
 	 {
-	     &show_dialog('hallo test', 'help');
+	     &show_dialog('See http://www.genesis-sim.org/', 'help');
 	 },
 	);
     $help_menu_about->signal_connect
@@ -123,7 +130,7 @@ Written in perl/Gtk
     $help_menu_help->show();
     $help_menu_about->show();
 
-    my $help_item = new Gtk2::MenuItem( "Help" );
+    my $help_item = new Gtk2::MenuItem( "_Help" );
     $help_item->show();
     $help_item->set_submenu( $help_menu );
 
@@ -632,13 +639,317 @@ sub show_dialog
 {
     my ($message, $title) = @_;
 
-    my $dialog = Gtk2::MessageDialog->new($main, 'destroy-with-parent', 'info', 'ok', $message);
+    my $dialog = Gtk2::MessageDialog->new($window_main, 'destroy-with-parent', 'info', 'ok', $message);
 
     $dialog->set_title($title);
 
     $dialog->run;
 
     $dialog->destroy;
+}
+
+
+sub show_dialog_new_package
+{
+    my $dlg_package = Gtk2::Dialog->new("Create a Neurospaces Package", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
+
+    my $lbl_name = Gtk2::Label->new("Package Name: ");
+
+    $lbl_name->show();
+
+    my $tb_name = Gtk2::Entry->new();
+
+    $tb_name->show();
+
+
+    my $lbl_server = Gtk2::Label->new("Package Server: ");
+
+    $lbl_server->show();
+
+    my $tb_server = Gtk2::Entry->new();
+
+    $tb_server->show();
+
+
+    my $lbl_port = Gtk2::Label->new(" : ");
+
+    $lbl_port->show();
+
+    my $tb_port = Gtk2::Entry->new();
+
+    $tb_port->show();
+
+    my $hbox_server = Gtk2::HBox->new();
+
+    $hbox_server->pack_start($tb_server, 0, 1, 0);
+
+    $hbox_server->pack_start($lbl_port, 0, 1, 0);
+
+    $hbox_server->pack_start($tb_port, 0, 1, 0);
+
+    $hbox_server->show();
+
+
+    my $ck_server = Gtk2::CheckButton->new_with_label("Is this PC the Main Repository Server?");
+
+    $ck_server->show();
+
+    $ck_server->set_active(0);
+
+    my $ck_heterarch = Gtk2::CheckButton->new_with_label("Is a Heterarch Package?");
+
+    $ck_heterarch->show();
+
+    $ck_heterarch->set_active(1);
+
+
+    my $tbl_name = Gtk2::Table->new(4, 2, 1);
+
+    $tbl_name->show();
+
+    $dlg_package->vbox->add($tbl_name);
+
+    $tbl_name->attach_defaults($lbl_name, 0,1,0,1);
+    $tbl_name->attach_defaults($tb_name, 1,2,0,1);
+
+    $tbl_name->attach_defaults($lbl_server, 0,1,1,2);
+    $tbl_name->attach_defaults($hbox_server, 1,2,1,2);
+
+    $tbl_name->attach_defaults($ck_server, 1,2,2,3);
+    $tbl_name->attach_defaults($ck_heterarch, 1,2,3,4);
+
+
+
+    my $lbl_tag1 = Gtk2::Label->new("Package Tag 1: ");
+
+    $lbl_tag1->show();
+
+    my $tb_tag1 = Gtk2::Entry->new();
+
+    $tb_tag1->show();
+
+    my $lbl_tag2 = Gtk2::Label->new("Optional Package Tag 2: ");
+
+    $lbl_tag2->show();
+
+    my $tb_tag2 = Gtk2::Entry->new();
+
+    $tb_tag2->show();
+
+    my $lbl_tag3 = Gtk2::Label->new("Optional Package Tag 3: ");
+
+    $lbl_tag3->show();
+
+    my $tb_tag3 = Gtk2::Entry->new();
+
+    $tb_tag3->show();
+
+    my $tbl_tags = Gtk2::Table->new(3, 2, 1);
+
+    $dlg_package->vbox->add($tbl_tags);
+
+    $tbl_tags->show();
+
+    $tbl_tags->attach_defaults($lbl_tag1, 0,1,0,1);
+    $tbl_tags->attach_defaults($tb_tag1, 1,2,0,1);
+
+    $tbl_tags->attach_defaults($lbl_tag2, 0,1,1,2);
+    $tbl_tags->attach_defaults($tb_tag2, 1,2,1,2);
+
+    $tbl_tags->attach_defaults($lbl_tag3, 0,1,2,3);
+    $tbl_tags->attach_defaults($tb_tag3, 1,2,2,3);
+
+
+    $dlg_package->signal_connect
+	(
+	 'response',
+	 sub
+	 {
+	     # $data will be the third argument given to ->signal_connect()
+
+	     my ($dlg, $response, $data) = @_;
+
+	     if ($response eq 'ok')
+	     {
+		 my $error;
+
+		 my $command = "neurospaces_new_component ";
+
+		 my $package_name = $tb_name->get_text();
+
+		 if (not $package_name)
+		 {
+		     if (not $error)
+		     {
+			 $error = "no package name given";
+		     }
+		 }
+		 else
+		 {
+		     $command .= "--component-name '$package_name' ";
+		 }
+
+		 if ($ck_heterarch->get_active())
+		 {
+		     $command .= "--heterarch-set ";
+		 }
+		 else
+		 {
+		 }
+
+		 if ($ck_server->get_active())
+		 {
+		     $command .= "--as-server ";
+		 }
+		 else
+		 {
+		 }
+
+		 my $server = $tb_server->get_text();
+
+		 if (not $server)
+		 {
+		     if (not $error)
+		     {
+			 $error = "no server name given";
+		     }
+		 }
+		 else
+		 {
+		 }
+
+		 my $port = $tb_port->get_text();
+
+		 if (not $port)
+		 {
+		     if (not $error)
+		     {
+			 $error = "no server port given";
+		     }
+		 }
+		 else
+		 {
+		     $command .= "--repository-server '$server:$port' ";
+		 }
+
+		 my $tag1 = $tb_tag1->get_text();
+
+		 if (not $tag1)
+		 {
+		     if (not $error)
+		     {
+			 $error = "the first tag name must be defined";
+		     }
+		 }
+		 else
+		 {
+		     $command .= "--package-tags '$tag1' ";
+		 }
+
+		 my $tag2 = $tb_tag2->get_text();
+
+		 if (not $tag2)
+		 {
+		 }
+		 else
+		 {
+		     $command .= "--package-tags '$tag2' ";
+		 }
+
+		 my $tag3 = $tb_tag3->get_text();
+
+		 if (not $tag3)
+		 {
+		 }
+		 else
+		 {
+		     $command .= "--package-tags '$tag3' ";
+		 }
+
+		 if ($error)
+		 {
+		     print "*** $0: *** Error: $error\n";
+		 }
+		 else
+		 {
+		     $command .= "--verbose ";
+
+		     print "*** $0: executing: $command\n";
+
+		     system "$command";
+
+		     if ($?)
+		     {
+			 print "*** $0: *** Error: Could not create component, check terminal for error messages\n";
+		     }
+		     else
+		     {
+			 $dlg->destroy();
+		     }
+		 }
+	     }
+	     else
+	     {
+		 $dlg->destroy();
+	     }
+	 },
+	 [],
+	);
+
+    $dlg_package->run();
+#     $dlg_package->destroy();
+}
+
+
+# example of how to use the TreeView widget
+
+sub show_dialog_tree
+{
+    my $dlg_tree = Gtk2::Dialog->new("Create a Neurospaces Package", $window_main, 'destroy-with-parent','gtk-ok' => 'ok');
+
+    my $model = Gtk2::ListStore -> new('Glib::String', 'Glib::String','Glib::String', 'Glib::String');
+    my $list = Gtk2::TreeView -> new_with_model($model);
+    $dlg_tree->vbox->add($list);
+
+    my $colDate = Gtk2::TreeViewColumn -> new_with_attributes('Datum',Gtk2::CellRendererText->new, text => 0);
+    my $colDown = Gtk2::TreeViewColumn -> new_with_attributes('Download',Gtk2::CellRendererText->new, text => 1);
+    my $colUp = Gtk2::TreeViewColumn -> new_with_attributes('Upload',Gtk2::CellRendererText->new, text => 2);
+    my $colTotal = Gtk2::TreeViewColumn -> new_with_attributes('Totaal',Gtk2::CellRendererText->new, text => 3);
+
+    $list->append_column($colDate);
+    $list->append_column($colDown);
+    $list->append_column($colUp);
+    $list->append_column($colTotal);
+
+    my $i = 0;
+
+    my $composed_values
+	= [
+	   [ 2, 3, 4, 5, ],
+	   [ 12, 13, 14, 15, ],
+	  ];
+
+    my $iter;
+
+    foreach my $decomposed_value (@$composed_values)
+    {
+	$iter->[$i] = $model->insert($i);
+
+	my $y = 0;
+
+	foreach my $value (@$decomposed_value)
+	{
+	    $model->set_value($iter->[$i], $y, $value);
+
+	    $y++;
+	}
+
+	$i++;
+    }
+
+    $list->show();
+    $dlg_tree->run();
+    $dlg_tree->destroy();
 }
 
 
