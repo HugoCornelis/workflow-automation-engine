@@ -72,7 +72,7 @@ sub create
 
 
     # Create the file menu
-    my $file_menu_new = new Gtk2::MenuItem( "Create a _New Package" );
+    my $file_menu_new = new Gtk2::MenuItem( "Configure a _New or Foreign Package" );
     my $file_menu_quit = new Gtk2::MenuItem( "_Quit" );
 
     # Add them to the menu
@@ -571,6 +571,13 @@ satisfying one or more of the selected tags";
 }
 
 
+=head4 sub package_list_cursor_changed()
+
+Update the gtk2_tb_package_information widget with information about
+the selected package in the package list.
+
+=cut
+
 sub package_list_cursor_changed
 {
     my ($widget) = @_;
@@ -600,6 +607,17 @@ sub package_list_cursor_changed
 }
 
 
+=head4 sub package_list_row_activated()
+
+Act after a package has been activated in the package list.
+
+Currently opens the mtn-browse monotone browser for any project (also
+when it is not versioned with monotone).
+
+Used to open a window with detailed information about the package.
+
+=cut
+
 sub package_list_row_activated
 {
     my ($widget, $path, $column) = @_;
@@ -608,7 +626,9 @@ sub package_list_row_activated
 
     my $package_name = $row_ref->[0];
 
-    window_package_create($package_name);
+    system "cd '$ENV{HOME}/neurospaces_project/$package_name/source/snapshots/0' && mtn-browse & ";
+
+#     window_package_create($package_name);
 }
 
 
@@ -952,6 +972,13 @@ sub show_dialog_tree
     $dlg_tree->destroy();
 }
 
+
+=head4 sub window_package_create()
+
+Open a window with detailed information about the package that was
+activated in the package list.
+
+=cut
 
 sub window_package_create
 {
