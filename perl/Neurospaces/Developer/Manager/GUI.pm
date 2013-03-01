@@ -597,11 +597,13 @@ sub package_list_cursor_changed
 
 	my $contents = "Selected package information: $package_name\n";
 
+	my $description = `neurospaces_describe '$package_name'`;
+
 	my $repository = `neurospaces_repositories '$package_name'`;
 
 	my $status = `neurospaces_status '$package_name'`;
 
-	$contents .= join "\n", $repository, $status;
+	$contents .= join "", $description, $status, $repository;
 
 	$gtk2_tb_package_information->set_text($contents);
     }
