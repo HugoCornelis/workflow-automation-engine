@@ -225,7 +225,7 @@ Written in perl/Gtk
 	 'none',
 	);
 
-    my $tooltip_tags_none = "unselect all packages";
+    my $tooltip_tags_none = "unselect all tags";
 
     $tooltips->set_tip($tags_none_button, $tooltip_tags_none);
 
