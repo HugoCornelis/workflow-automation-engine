@@ -605,6 +605,87 @@ sub implementation
 }
 
 
+package Neurospaces::Developer::Operations::Documentation::MakeDocs;
+
+
+sub condition
+{
+    return $::option_docs;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'docs', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'docs', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Documentation::WebSitePrepare;
+
+
+sub condition
+{
+    return $::option_website_prepare;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'website-prepare', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'website-prepare', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Documentation::WebSiteUpload;
+
+
+sub condition
+{
+    return $::option_website_upload;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'html-upload', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'html-upload', ],
+	};
+}
+
+
 package Neurospaces::Developer::Operations::Install::Version;
 
 
@@ -1136,6 +1217,576 @@ sub implementation
 }
 
 
+package Neurospaces::Developer::Operations::Release::AutoGen;
+
+
+sub condition
+{
+    return $::option_configure || $::option_compile || $::option_check || $::option_install;
+}
+
+
+sub description
+{
+    return
+	@{
+	    #
+	    # If a change is made to the automake files (Makefile.am and confgiure.ac) that changes
+	    # file paths then autogen.sh must be rerun. A previously existing configure file may exist
+	    # but the test command prevents a new one from being generated. An error that can stop
+	    # a build can occur when autoheader is not rerun.
+	    #
+
+	    #	    operation => [ 'test', '-f', './configure', '||', './autogen.sh', ],
+
+	    [ './autogen.sh', ],
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ './autogen.sh', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::Certification;
+
+
+sub condition
+{
+    return $::option_certification_report;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ]
+	};
+}
+
+
+sub implementation
+{
+    #t only for monotone
+
+    return
+	@{
+	    [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ],
+	};
+
+    # MERCURIAL cert
+    # mercurial doesn't yet have it's own cert functionality.
+    # It's on a TODO, more info here: http://mercurial.selenic.com/wiki/ArbitraryMetadata
+}
+
+
+package Neurospaces::Developer::Operations::Release::Configure;
+
+
+sub condition
+{
+    return $::option_configure && $::option_mac_universal == 0 && $::option_configure_with_prefix == 0;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ './configure', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ './configure', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::ConfigureLuebeck;
+
+
+sub condition
+{
+    return $::option_configure_with_prefix && $::option_mac_universal == 0;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile;
+
+
+sub condition
+{
+    return $::option_mac_universal || $::option_compile || $::option_check || $::option_install;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'test', '-f', './Makefile', '||', './configure', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'test', '-f', './Makefile', '||', './configure', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::ConfigureWithUniversal;
+
+
+sub condition
+{
+    return $::option_mac_universal && $::option_configure_with_prefix == 0;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ './configure', '--with-universal', '--disable-dependency-tracking',]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ './configure', '--with-universal', '--disable-dependency-tracking',],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::DistClean;
+
+
+sub condition
+{
+    return $::option_distclean && !$::option_uninstall;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'distclean', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'distclean', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::Keywords;
+
+
+sub condition
+{
+    return $::option_distkeywords;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [
+	     #! after keyword expansion, regenerate the
+	     #! autotool related files that perhaps are
+	     #! checked in.
+
+	     ( 'make', 'dist-keywords', ),
+	     ( '&&', 'make', 'clean', ),
+	     ( '&&', 'make', 'clean', ),
+	    ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [
+	     #! after keyword expansion, regenerate the
+	     #! autotool related files that perhaps are
+	     #! checked in.
+
+	     ( 'make', 'dist-keywords', ),
+	     ( '&&', 'make', 'clean', ),
+	     ( '&&', 'make', 'clean', ),
+	    ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::Make;
+
+
+sub condition
+{
+    return $::option_compile;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::MakeCheck;
+
+
+sub condition
+{
+    return $::option_check;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'check', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'check', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::MakeClean;
+
+
+sub condition
+{
+    return $::option_clean;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'clean', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'clean', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::MakeDist;
+
+
+sub condition
+{
+    return $::option_dist;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist']
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist'],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::MakeDistCheck;
+
+
+sub condition
+{
+    return $::option_distcheck;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::MakeInstall;
+
+
+sub condition
+{
+    return $::option_compile && !$::option_uninstall && $::option_install;
+}
+
+
+sub description
+{
+    #! always make as the regular user to avoid cluttering the
+    #! source directory with root owned files
+
+    return
+	@{
+	    [ 'make', '&&', 'sudo', 'make', 'install', ]
+	};
+}
+
+
+sub implementation
+{
+    #! always make as the regular user to avoid cluttering the
+    #! source directory with root owned files
+
+    return
+	@{
+	    [ 'make', '&&', 'sudo', 'make', 'install', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::MakeUninstall;
+
+
+sub condition
+{
+    return $::option_uninstall;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::ReleaseExpand;
+
+
+sub condition
+{
+    return $::option_tag;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [
+	     #t only for monotone
+
+	     # MERCURIAL
+	     # hg status
+	     # this shows all changed or missing files in the repository. 
+	     # doesn't have any exact equivalen to monotones missing or unknown commands.
+	     # status essentially does all of it.
+	     ( "test", "!", '"`mtn ls unknown && mtn ls missing && mtn ls changed`"', ),
+	     ( '&&', 'release-expand', "--package", "'%package'", "--major", "'%release_major'",
+	       "--minor", "'%release_minor'", "--micro", "'%release_micro'", "--label",
+	       "'%release_major-%release_minor'", "--email",'hugo.cornelis@gmail.com', '--verbose', ),
+
+	     #! after keyword expansion, regenerate the
+	     #! autotool related files that perhaps are
+	     #! checked in.
+
+	     ( '&&', 'make', 'clean', ),
+	     ( '&&', 'make', 'clean', ),
+	     # 			  ( "&&", 'mtn', 'ci', "-m", "'1. Keywords only: $::option_tag\n'", ),
+	     ( "&&", "test", "!", '"`mtn ls unknown && mtn ls missing`"', ),
+	    ]
+	};
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [
+	     #t only for monotone
+
+	     # MERCURIAL
+	     # hg status
+	     # this shows all changed or missing files in the repository. 
+	     # doesn't have any exact equivalen to monotones missing or unknown commands.
+	     # status essentially does all of it.
+	     ( "test", "!", '"`mtn ls unknown && mtn ls missing && mtn ls changed`"', ),
+	     ( '&&', 'release-expand', "--package", "'%package'", "--major", "'%release_major'",
+	       "--minor", "'%release_minor'", "--micro", "'%release_micro'", "--label",
+	       "'%release_major-%release_minor'", "--email",'hugo.cornelis@gmail.com', '--verbose', ),
+
+	     #! after keyword expansion, regenerate the
+	     #! autotool related files that perhaps are
+	     #! checked in.
+
+	     ( '&&', 'make', 'clean', ),
+	     ( '&&', 'make', 'clean', ),
+	     # 			  ( "&&", 'mtn', 'ci', "-m", "'1. Keywords only: $::option_tag\n'", ),
+	     ( "&&", "test", "!", '"`mtn ls unknown && mtn ls missing`"', ),
+	    ],
+	};
+}
+
+
+package Neurospaces::Developer::Operations::Release::SetTag;
+
+
+sub condition
+{
+    return $::option_tag;
+}
+
+
+sub description
+{
+    return
+	@{
+	    [
+	     #t only for monotone
+
+	     #! in a separate operation such that we have the correct %version
+	     #! gets replaced by `mtn automate get_base_revision_id`
+	     #! during build variable substitution in sub operation_execute()
+
+	      ( 'mtn', 'tag', '\'%version\'', "'$::option_tag'", ),
+	     ],
+
+	    # MERCURIAL
+	    # hg tag -m '\'%version\'' $::option_tag
+	    # needs to be noted that in mercurial a tag is just an alias for
+	    # branch so this may not be what we need here. The arbitrary metadata
+	    # system described earlier is probably more in line with what monotone
+	    # uses as tags.
+
+	 };
+}
+
+
+sub implementation
+{
+    return
+	@{
+	    [
+	     #t only for monotone
+
+	     #! in a separate operation such that we have the correct %version
+	     #! gets replaced by `mtn automate get_base_revision_id`
+	     #! during build variable substitution in sub operation_execute()
+
+	     ( 'mtn', 'tag', '\'%version\'', "'$::option_tag'", ),
+	    ],
+
+	    # MERCURIAL
+	    # hg tag -m '\'%version\'' $::option_tag
+	    # needs to be noted that in mercurial a tag is just an alias for
+	    # branch so this may not be what we need here. The arbitrary metadata
+	    # system described earlier is probably more in line with what monotone
+	    # uses as tags.
+
+	};
+}
+
+
 package Neurospaces::Developer::Operations::Repository::Init;
 
 
@@ -1638,7 +2289,7 @@ sub implementation
     {
 	# initialize the repository if necessary
 
-	#t MONOTONE
+	# monotone
 
 	my $port_number = $package_information->{package}->{version_control}->{port_number};
 
@@ -2052,7 +2703,7 @@ sub implementation
 
     # initialize the repository if necessary
 
-    #t MONOTONE
+    # monotone
 
     operation_execute
 	(
@@ -2170,7 +2821,7 @@ sub implementation
 
     # initialize the repository if necessary
 
-    #t MONOTONE
+    # monotone
 
     operation_execute
 	(
@@ -2210,7 +2861,7 @@ sub implementation
 	# like in monotone. The mercurial repository uses a different method for serving
 	# the repos.
 
-	#t MONOTONE
+	# monotone
 
 	operation_execute
 	    (
@@ -2505,7 +3156,7 @@ sub implementation
 
     # update code
 
-    #t MONOTONE
+    # monotone
 		
     # MERCURIAL update checkout
     # these two are actually aliased to each other because of how it pulls a workspace.
@@ -3332,65 +3983,24 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Workspace::Difference::implementation,
 	   },
 	   {
-	    condition => $::option_distclean && !$::option_uninstall,
-	    operation => [ 'make', 'distclean', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::DistClean::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::DistClean::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::DistClean::implementation,
 	   },
 	   {
-	    condition => $::option_distkeywords,
-	    operation => [
-			  #! after keyword expansion, regenerate the
-			  #! autotool related files that perhaps are
-			  #! checked in.
-
-			  ( 'make', 'dist-keywords', ),
-			  ( '&&', 'make', 'clean', ),
-			  ( '&&', 'make', 'clean', ),
-			 ],
+	    condition => \&Neurospaces::Developer::Operations::Release::Keywords::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::Keywords::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::Keywords::implementation,
 	   },
 	   {
-	    condition => $::option_tag,
-	    operation => [
-			  #t MONOTONE
-
-			  # MERCURIAL
-			  # hg status
-			  # this shows all changed or missing files in the repository. 
-			  # doesn't have any exact equivalen to monotones missing or unknown commands.
-			  # status essentially does all of it.
-			  ( "test", "!", '"`mtn ls unknown && mtn ls missing && mtn ls changed`"', ),
-			  ( '&&', 'release-expand', "--package", "'%package'", "--major", "'%release_major'",
-			    "--minor", "'%release_minor'", "--micro", "'%release_micro'", "--label",
-			    "'%release_major-%release_minor'", "--email",'hugo.cornelis@gmail.com', '--verbose', ),
-
-			  #! after keyword expansion, regenerate the
-			  #! autotool related files that perhaps are
-			  #! checked in.
-
-			  ( '&&', 'make', 'clean', ),
-			  ( '&&', 'make', 'clean', ),
-			  # 			  ( "&&", 'mtn', 'ci', "-m", "'1. Keywords only: $::option_tag\n'", ),
-			  ( "&&", "test", "!", '"`mtn ls unknown && mtn ls missing`"', ),
-			 ],
+	    condition => \&Neurospaces::Developer::Operations::Release::ReleaseExpand::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::ReleaseExpand::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::ReleaseExpand::implementation,
 	   },
 	   {
-	    condition => $::option_tag,
-	    operation => [
-			  #t MONOTONE
-
-			  #! in a separate operation such that we have the correct %version
-			  #! gets replaced by `mtn automate get_base_revision_id`
-			  #! during build variable substitution in sub operation_execute()
-
-			  ( 'mtn', 'tag', '\'%version\'', "'$::option_tag'", ),
-			 ],
-
-	    # MERCURIAL
-	    # hg tag -m '\'%version\'' $::option_tag
-	    # needs to be noted that in mercurial a tag is just an alias for
-	    # branch so this may not be what we need here. The arbitrary metadata
-	    # system described earlier is probably more in line with what monotone
-	    # uses as tags.
-
+	    condition => \&Neurospaces::Developer::Operations::Release::SetTag::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::SetTag::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::SetTag::implementation,
 	   },
 	   {
 	    condition => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::condition,
@@ -3411,41 +4021,40 @@ sub construct_all
 	   # everything that is compilation related needs a configure script, so create it.
 
 	   {
-	    condition => $::option_configure || $::option_compile || $::option_check || $::option_install,
-	    #
-	    # If a change is made to the automake files (Makefile.am and confgiure.ac) that changes
-	    # file paths then autogen.sh must be rerun. A previously existing configure file may exist
-	    # but the test command prevents a new one from being generated. An error that can stop
-	    # a build can occur when autoheader is not rerun.
-	    #
-	    #	    operation => [ 'test', '-f', './configure', '||', './autogen.sh', ],
-	    operation => [ './autogen.sh', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::AutoGen::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::AutoGen::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::AutoGen::implementation,
 	   },
 	   {
-	    condition => $::option_mac_universal && $::option_configure_with_prefix == 0,
-	    operation => [ './configure', '--with-universal', '--disable-dependency-tracking',],
+	    condition => \&Neurospaces::Developer::Operations::Release::ConfigureWithUniversal::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::ConfigureWithUniversal::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::ConfigureWithUniversal::implementation,
 	   },
 	   {
-	    condition => $::option_configure && $::option_mac_universal == 0 && $::option_configure_with_prefix == 0,
-	    operation => [ './configure', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::Configure::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::Configure::description,
+	    operation => Neurospaces::Developer::Operations::Release::Configure::implementation,
 	   },
 
 	   # for the luebeck workshop: have a configure prefix different from /usr/local
 
 	   {
-	    condition => $::option_configure_with_prefix && $::option_mac_universal == 0,
-	    operation => [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',],
+	    condition => \&Neurospaces::Developer::Operations::Release::ConfigureLuebeck::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::ConfigureLuebeck::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::ConfigureLuebeck::implementation,
 	   },
 
 	   # everything that is compilation related needs makefiles, so create them.
 
 	   {
-	    condition => $::option_mac_universal || $::option_compile || $::option_check || $::option_install,
-	    operation => [ 'test', '-f', './Makefile', '||', './configure', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile::implementation,
 	   },
 	   {
-	    condition => $::option_clean,
-	    operation => [ 'make', 'clean', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeClean::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::MakeClean::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::MakeClean::implementation,
 	   },
 	   {
 	    condition => \&Neurospaces::Developer::Operations::Workspace::CountCode::condition,
@@ -3453,20 +4062,24 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Workspace::CountCode::implementation,
 	   },
 	   {
-	    condition => $::option_compile,
-	    operation => [ 'make', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::Make::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::Make::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::Make::implementation,
 	   },
 	   {
-	    condition => $::option_check,
-	    operation => [ 'make', 'check', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeCheck::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::MakeCheck::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::MakeCheck::implementation,
 	   },
 	   {
-	    condition => $::option_dist,
-	    operation => [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist'],
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeDist::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::MakeDist::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::MakeDist::implementation,
 	   },
 	   {
-	    condition => $::option_distcheck,
-	    operation => [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeDistCheck::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::MakeDistCheck::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::MakeDistCheck::implementation,
 	   },
 	   {
 	    condition => \&Neurospaces::Developer::Operations::Package::Debian::condition,
@@ -3484,23 +4097,24 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Package::Tar::implementation,
 	   },
 	   {
-	    #! always make as the regular user to avoid cluttering the
-	    #! source directory with root owned files
-
-	    condition => $::option_compile && !$::option_uninstall && $::option_install,
-	    operation => [ 'make', '&&', 'sudo', 'make', 'install', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeInstall::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::MakeInstall::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::MakeInstall::implementation,
 	   },
 	   {
-	    condition => $::option_docs,
-	    operation => [ 'make', 'docs', ],
+	    condition => \&Neurospaces::Developer::Operations::Documentation::MakeDocs::condition,
+	    description => \&Neurospaces::Developer::Operations::Documentation::MakeDocs::description,
+	    operation => \&Neurospaces::Developer::Operations::Documentation::MakeDocs::implementation,
 	   },
 	   {
-	    condition => $::option_website_prepare,
-	    operation => [ 'make', 'website-prepare', ],
+	    condition => \&Neurospaces::Developer::Operations::Documentation::WebSitePrepare::condition,
+	    description => \&Neurospaces::Developer::Operations::Documentation::WebSitePrepare::description,
+	    operation => \&Neurospaces::Developer::Operations::Documentation::WebSitePrepare::implementation,
 	   },
 	   {
-	    condition => $::option_website_upload,
-	    operation => [ 'make', 'html-upload', ],
+	    condition => \&Neurospaces::Developer::Operations::Documentation::WebSiteUpload::condition,
+	    description => \&Neurospaces::Developer::Operations::Documentation::WebSiteUpload::description,
+	    operation => \&Neurospaces::Developer::Operations::Documentation::WebSiteUpload::implementation,
 	   },
 	   {
 	    condition => \&Neurospaces::Developer::Operations::Install::Version::condition,
@@ -3508,8 +4122,9 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Install::Version::implementation,
 	   },
 	   {
-	    condition => $::option_uninstall,
-	    operation => [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ],
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeUninstall::implementation,
+	    description => \&Neurospaces::Developer::Operations::Release::MakeUninstall::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::MakeUninstall::implementation,
 	   },
 	   {
 	    condition => \&Neurospaces::Developer::Operations::Workspace::CheckIn::condition,
@@ -3527,15 +4142,9 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Distribute::Copy::implementation,
 	   },
 	   {
-	    condition => $::option_certification_report,
-
-	    #t MONOTONE
-
-	    operation => [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ],
-
-	    # MERCURIAL cert
-	    # mercurial doesn't yet have it's own cert functionality. 
-	    # It's on a TODO, more info here: http://mercurial.selenic.com/wiki/ArbitraryMetadata
+	    condition => \&Neurospaces::Developer::Operations::Release::Certification::condition,
+	    description => \&Neurospaces::Developer::Operations::Release::Certification::description,
+	    operation => \&Neurospaces::Developer::Operations::Release::Certification::implementation,
 	   },
 	   {
 	    condition => \&Neurospaces::Developer::Operations::Workspace::Status::condition,
