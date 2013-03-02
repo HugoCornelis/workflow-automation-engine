@@ -16,6 +16,502 @@ package Neurospaces::Developer::Operations;
 package Neurospaces::Developer::Operations;
 
 
+package Neurospaces::Developer::Operations::Package::Debian;
+
+
+sub condition
+{
+    return $::option_pkg_deb;
+}
+
+
+sub description
+{
+    return 'Build a debian package';
+}
+
+
+sub implementation
+{
+    my $package_information = shift;
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+   # change the directory
+
+    chdir $directory;
+
+    my $command = parse_release_tags('pkg-deb');
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 $command,
+	);
+
+    # Debian format:
+    #    <name>_<version>-<release>_<architecture>.deb
+
+    # Code isn't needed for now.
+    # 		my $deb_prefix = "$package_name" . "_" . "$major.$minor";
+		
+    # 		if (defined $micro)
+    # 		{
+    # 		  $deb_prefix .= ".$micro";
+    # 		}
+
+    # 		$deb_prefix .= "-$label";
+
+    my $deb = `find $directory | grep $package_name | grep \\\\.deb\$`;
+    chomp($deb);
+
+    my $dsc = `find $directory | grep $package_name | grep \\.dsc\$`;
+    chomp($dsc);
+
+    my $changes = `find $directory | grep $package_name | grep \\.changes\$`;
+    chomp($changes);
+
+    my $build_log = $directory . "/build_debian.log";
+    chomp($build_log);
+
+    if (! -e $deb)
+    {
+	print "Debian package for package $package_name was not created.\n";
+    }
+    else
+    {
+	print "Debian package for package $package_name was created: $deb\n";
+    }
+
+    if ($::option_pkg_deb_dir)
+    {
+	if (!-d $::option_pkg_deb_dir)
+	{
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $::option_pkg_deb_dir,
+		 ],
+		);
+	}
+
+	# Since this produces multiple files we need to place them all into a directory.
+
+	my $deb_dir = $::option_pkg_deb_dir;
+
+	if (!-d $deb_dir)
+	{
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $deb_dir,
+		 ],
+		);
+	}
+
+	# now we copy over each file built in the debian package build.
+	# perform a check for the existence of the file to prevent it from
+	# stopping the neurospaces_build script. The build log should always
+	# be copied over.
+
+	if (-d $deb_dir)
+	{
+	    if (-e $deb)
+	    {
+		operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'cp', '-f', $deb, $deb_dir,
+		     ],
+		    );
+	    }
+
+	    if (-e $dsc)
+	    {
+		operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'cp', '-f', $dsc, $deb_dir,
+		     ],
+		    );
+	    }
+
+	    if (-e $changes)
+	    {
+		operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'cp', '-f', $changes, $deb_dir,
+		     ],
+		    );
+	    }
+
+	    my $target_build_log = $deb_dir . "/build_" . $package_name . ".log";
+
+	    if (-e $build_log)
+	    {
+		operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'cp', '-f', $build_log, $target_build_log,
+		     ],
+		    );
+	    }
+	}
+	else
+	{
+	    print "Error: Directory $deb_dir could not be created.\n";
+
+	    print "Can't copy deb files.\n";
+	}
+
+    }
+}
+
+
+package Neurospaces::Developer::Operations::Package::RPM;
+
+
+sub condition
+{
+    return $::option_pkg_rpm;
+}
+
+
+sub description
+{
+    return 'Build an RPM package';
+}
+
+
+sub implementation
+{
+    my $package_information = shift;
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+    # change the directory
+
+    chdir $directory;
+
+    my $command = parse_release_tags('pkg-rpm');
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 $command,
+	);
+
+    my $pkgdir = $directory . "/RPM_BUILD";
+
+    my @rpmfiles = `find $pkgdir/RPMS | grep $package_name | grep \\.rpm\$`;
+    chomp(@rpmfiles);
+		
+    my $srpmfile = `find $pkgdir/SRPMS | grep $package_name | grep \\.rpm\$`;
+    chomp($srpmfile);
+
+    my $build_log = $directory . "/build_rpm.log";
+    chomp($build_log);
+
+    if ( @rpmfiles > 0 )
+    {
+
+	if (! -e $rpmfiles[0])
+	{
+	    print "RPM file for package $package_name was not created.\n";
+
+	    return;
+	}
+	else
+	{
+	    print "RPM file for package $package_name was created: $rpmfiles[0]\n";
+	}
+    }
+
+    if ($::option_pkg_rpm_dir)
+    {
+	# Since this produces multiple files we need to place them all into a directory.
+
+	my $rpm_dir = $::option_pkg_rpm_dir;
+		
+	if (! -d $rpm_dir)
+	{
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $rpm_dir,
+		 ],
+		);
+	}
+
+	# copy over each rpm file.
+
+	if (-d $rpm_dir)
+	{
+	    foreach my $rpmfile(@rpmfiles)
+	    {
+		if (-e $rpmfile)
+		{
+		    operation_execute
+			(
+			 $operations,
+			 {
+			  description => $description,
+			  keywords => 0,
+			  package_name => $package_name,
+			 },
+			 [
+			  'cp', '-f', $rpmfile, $rpm_dir,
+			 ],
+			);
+		}
+	    }
+
+	    # Assuming we only have one source rpm.
+
+	    if (-e $srpmfile)
+	    {
+		operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'cp', '-f', $srpmfile, $rpm_dir,
+		     ],
+		    );
+	    }
+
+	    my $target_build_log = $rpm_dir . "/build_" . $package_name . ".log";
+
+	    if (-e $build_log)
+	    {
+		operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'cp', '-f', $build_log, $target_build_log,
+		     ],
+		    );
+	    }
+	}
+	else
+	{
+	    print "Error: Directory $rpm_dir could not be created.\n";
+
+	    print "Can't copy RPM files.\n";
+	}
+    }
+}
+
+
+package Neurospaces::Developer::Operations::Package::Tar;
+
+
+sub condition
+{
+    return $::option_pkg_tar;
+}
+
+
+sub description
+{
+    return 'build a source tarball';
+}
+
+
+sub implementation
+{
+    my $package_information = shift;
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+    # change the directory
+
+    chdir $directory;
+
+    my $command = parse_release_tags('dist');
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 $command,
+	);
+
+    # May reuse this code later.
+    # 		my $tarball = "$package_name-$major.$minor";
+		
+    # 		if(defined $micro)
+    # 		{
+    # 		  $tarball .= ".$micro";
+    # 		}
+
+    # 		$tarball .= "-$label.tar.gz";
+
+    #t this type of test cannot work reliably: fi what if multiple tarballs are found?
+
+    # mando 9/17/2010: Added a '-' to the end of the package name to narrow
+    # down the hits, only thing that should meet the criteria is a developer tarball.
+    # Also added the maxdepth option to ensure it only searched the top level directory.
+    # Only way it can fail is if there is more than one developer tarball in the top
+    # level directory. Should not happen on cron runs alone since it performs a clean.
+
+    my $tarball = `find $directory -maxdepth 1| grep $package_name- | grep \.tar\.gz\$`;
+
+    chomp($tarball);
+
+    if (! -e $tarball)
+    {
+	print "Source dist for package $package_name was not created.\n";
+
+	return;
+    }
+    else
+    {
+	print "Source dist for package $package_name was created: $tarball\n";
+    }
+
+    if ($::option_pkg_tar_dir)
+    {
+	if (! -d $::option_pkg_tar_dir)
+	{
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $::option_pkg_tar_dir,
+		 ],
+		);
+	}
+
+	if (-d $::option_pkg_tar_dir)
+	{
+	    # At this point the tarball exists so we
+	    # delete the old tarball before copying over
+	    # the new.
+
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'rm', '-f', "$::option_pkg_tar_dir/$package_name-*.tar.gz",
+		 ],
+		);
+
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'cp', '-f', $tarball, $::option_pkg_tar_dir,
+		 ],
+		);
+	}
+	else
+	{
+	    print "Error: Directory $::option_pkg_tar_dir could not be created.\n";
+	}
+    }
+}
+
+
 package Neurospaces::Developer::Operations::Repository::Init;
 
 
@@ -1450,7 +1946,7 @@ sub description
 }
 
 
-sub operation
+sub implementation
 {
     my $package_information = shift;
 
@@ -1481,6 +1977,134 @@ sub operation
 	  'mkdir', '-p', $directory,
 	 ],
 	);
+}
+
+
+package Neurospaces::Developer::Operations::Workspace::CountCode;
+
+
+sub condition
+{
+    return $::option_countcode;
+}
+
+
+sub description
+{
+    return "count lines, words, characters in the implementation files";
+}
+
+
+sub implementation
+{
+    my $package_information = shift;
+
+    # get specific arguments
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $filename = $package_information->{filename};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+    # change the directory
+
+    chdir $directory;
+
+    # countcode on C implementation files
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'wc', '</dev/null', '2>/dev/null', '`', 'find', '.', '-type', 'f', '-iname', '"*.c"', '-o', '-iname', '"*.h"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
+	 ],
+	);
+
+    # countcode on perl implementation files
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'wc', '</dev/null', '2>/dev/null', '`', '(', 'find', '.', '-type', 'f', '-iname', '"*.pm"', '&&', 'find', '2>/dev/null', 'perl', '-type', 'f', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
+	 ],
+	);
+
+    # countcode on python implementation files
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'wc', '</dev/null', '2>/dev/null', '`', '(', 'find', '.', '-type', 'f', '-iname', '"*.py"', '&&', 'find', '2>/dev/null', 'python', '-type', 'f', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
+	 ],
+	);
+
+    # countcode on script files
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'wc', '</dev/null', '2>/dev/null', '2>/dev/null', '`', '(', 'find', '2>/dev/null', 'bin', '-type', 'f', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
+	 ],
+	);
+
+    # countcode on ndf implementation files
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'wc', '</dev/null', '2>/dev/null', '`', '(', 'find', '.', '-type', 'f', '-iname', '"*.ndf"', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
+	 ],
+	);
+
 }
 
 
@@ -2355,7 +2979,7 @@ sub construct_all
 	    },
 	   },
 
-	       # everything that is compilation related needs a configure script, so create it.
+	   # everything that is compilation related needs a configure script, so create it.
 
 
 	   {
@@ -2378,14 +3002,14 @@ sub construct_all
 	    operation => [ './configure', ],
 	   },
 
-	       # for the luebeck workshop: have a configure prefix different from /usr/local
+	   # for the luebeck workshop: have a configure prefix different from /usr/local
 
 	   {
 	    condition => $::option_configure_with_prefix && $::option_mac_universal == 0,
 	    operation => [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',],
 	   },
 
-	       # everything that is compilation related needs makefiles, so create them.
+	   # everything that is compilation related needs makefiles, so create them.
 
 	   {
 	    condition => $::option_mac_universal || $::option_compile || $::option_check || $::option_install,
@@ -2396,165 +3020,10 @@ sub construct_all
 	    operation => [ 'make', 'clean', ],
 	   },
 	   {
-	    condition => $::option_countcode,
-	    description => "count lines, words, characters in the implementation files",
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		# get specific arguments
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $filename = $package_information->{filename};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		# change the directory
-
-		chdir $directory;
-
-		# countcode on C implementation files
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'wc', '</dev/null', '2>/dev/null', '`', 'find', '.', '-type', 'f', '-iname', '"*.c"', '-o', '-iname', '"*.h"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
-		     ],
-		    );
-
-		# countcode on perl implementation files
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'wc', '</dev/null', '2>/dev/null', '`', '(', 'find', '.', '-type', 'f', '-iname', '"*.pm"', '&&', 'find', '2>/dev/null', 'perl', '-type', 'f', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
-		     ],
-		    );
-
-		# countcode on python implementation files
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'wc', '</dev/null', '2>/dev/null', '`', '(', 'find', '.', '-type', 'f', '-iname', '"*.py"', '&&', 'find', '2>/dev/null', 'python', '-type', 'f', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
-		     ],
-		    );
-
-		# countcode on script files
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'wc', '</dev/null', '2>/dev/null', '2>/dev/null', '`', '(', 'find', '2>/dev/null', 'bin', '-type', 'f', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
-		     ],
-		    );
-
-		# countcode on ndf implementation files
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'wc', '</dev/null', '2>/dev/null', '`', '(', 'find', '.', '-type', 'f', '-iname', '"*.ndf"', ')', '|', 'sort', '|', 'uniq', '|', 'grep', '-v', '"~$"', '|', 'grep', '-v', '"_Inline"', '`', '||', 'true',
-		     ],
-		    );
-
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Workspace::CountCode::condition,
+	    description => \&Neurospaces::Developer::Operations::Workspace::CountCode::description,
+	    operation => \&Neurospaces::Developer::Operations::Workspace::CountCode::implementation,
 	   },
-       {
-	condition => 0,		# $::option_describe,
-	description => "describe the function of a package",
-	operation =>
-	sub
-	{
-	    my $package_information = shift;
-
-	    # get specific arguments
-
-	    my $description = $package_information->{description};
-
-	    my $directory = $package_information->{directory};
-
-	    my $filename = $package_information->{filename};
-
-	    my $operations = $package_information->{operations};
-
-	    my $package_name = $package_information->{package_name};
-
-	    # change the directory
-
-	    chdir $directory;
-
-	    # describe the package
-
-	    # 		operation_execute
-	    # 		    (
-	    # 		     $operations,
-	    # 		     {
-	    # 		      description => $description,
-
-	    # 		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	    # 		      keywords => 0,
-	    # 		      package_name => $package_name,
-	    # 		     },
-	    # 		     [
-	    system join " ", 'echo', "---", "&&", 'echo', "$package_name:", "&&", "echo", "  description: ", $package_information->{package}->{description} || "no description available for this package",
-		# 		     ],
-		# 		    );
-
-	},
-       },
 	   {
 	    condition => $::option_compile,
 	    operation => [ 'make', ],
@@ -2572,493 +3041,19 @@ sub construct_all
 	    operation => [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ],
 	   },
 	   {
-	    condition => $::option_pkg_deb,
-	    description => 'Build debian packages with release tags',
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		
-		# change the directory
-
-		chdir $directory;
-
-		my $command = parse_release_tags('pkg-deb');
-		
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     $command,
-		    );
-
-		# Debian format:
-		#    <name>_<version>-<release>_<architecture>.deb
-
-		# Code isn't needed for now. 
-		# 		my $deb_prefix = "$package_name" . "_" . "$major.$minor";
-		
-		# 		if(defined $micro)
-		# 		{
-		# 		  $deb_prefix .= ".$micro";
-		# 		}
-
-		# 		$deb_prefix .= "-$label";
-
-		my $deb = `find $directory | grep $package_name | grep \\\\.deb\$`;
-		chomp($deb);
-		my $dsc = `find $directory | grep $package_name | grep \\.dsc\$`;
-		chomp($dsc);
-		my $changes = `find $directory | grep $package_name | grep \\.changes\$`;
-		chomp($changes);
-		my $build_log = $directory . "/build_debian.log";
-		chomp($build_log);
-
-
-		if(!-e $deb)
-		{
-		    print "Debian package for package $package_name was not created.\n";
-		}
-		else
-		{
-		    print "Debian package for package $package_name was created: $deb\n";
-		}
-
-
-
-		if($::option_pkg_deb_dir)
-		{
-
-		    if(!-d $::option_pkg_deb_dir)
-		    {
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'mkdir', '-p', $::option_pkg_deb_dir,
-			     ],
-			    );
- 
-		    }
-
-		    #
-		    # Since this produces multiple files we need to place them all into a directory. 
-		    my $deb_dir = $::option_pkg_deb_dir;
-
-
-		    if(!-d $deb_dir)
-		    {
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'mkdir', '-p', $deb_dir,
-			     ],
-			    );
-		    }
-
-		    # now we copy over each file built in the debian package build. 
-		    # perform a check for the existence of the file to prevent it from
-		    # stopping the neurospaces_build script. The build log should always
-		    # be copied over. 
-		    if(-d $deb_dir)
-		    {
-
-
-			if(-e $deb)
-			{
-			    operation_execute
-				(
-				 $operations,
-				 {
-				  description => $description,
-				  keywords => 0,
-				  package_name => $package_name,
-				 },
-				 [
-				  'cp', '-f', $deb, $deb_dir,
-				 ],
-				);
-			}
-
-
-			if(-e $dsc)
-			{
-			    operation_execute
-				(
-				 $operations,
-				 {
-				  description => $description,
-				  keywords => 0,
-				  package_name => $package_name,
-				 },
-				 [
-				  'cp', '-f', $dsc, $deb_dir,
-				 ],
-				);
-			}
-
-
-
-			if(-e $changes)
-			{
-			    operation_execute
-				(
-				 $operations,
-				 {
-				  description => $description,
-				  keywords => 0,
-				  package_name => $package_name,
-				 },
-				 [
-				  'cp', '-f', $changes, $deb_dir,
-				 ],
-				);
-			}
-
-			my $target_build_log = $deb_dir . "/build_" . $package_name . ".log";
-		    
-			if(-e $build_log)
-			{
-			    operation_execute
-				(
-				 $operations,
-				 {
-				  description => $description,
-				  keywords => 0,
-				  package_name => $package_name,
-				 },
-				 [
-				  'cp', '-f', $build_log, $target_build_log,
-				 ],
-				);
-			}
-
-
-
-		    }
-		    else
-		    {
-			print "Error: Directory $deb_dir could not be created.\n";
-			print "Can't copy deb files.\n";
-		    }
-
-		}
-
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Package::Debian::condition,
+	    description => \&Neurospaces::Developer::Operations::Package::Debian::description,
+	    operation => \&Neurospaces::Developer::Operations::Package::Debian::implementation,
 	   },
-
 	   {
-	    condition => $::option_pkg_rpm,
-	    description => 'Build RPM packages with release tags',
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		
-		# change the directory
-
-		chdir $directory;
-
-		my $command = parse_release_tags('pkg-rpm');
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     $command,
-		    );
-
-		my $pkgdir = $directory . "/RPM_BUILD";
-
-		my @rpmfiles = `find $pkgdir/RPMS | grep $package_name | grep \\.rpm\$`;
-		chomp(@rpmfiles);
-		
-		my $srpmfile = `find $pkgdir/SRPMS | grep $package_name | grep \\.rpm\$`;
-		chomp($srpmfile);
-
-		my $build_log = $directory . "/build_rpm.log";
-		chomp($build_log);
-
-		if( @rpmfiles > 0 )
-		{
-
-		    if(!-e $rpmfiles[0])
-		    {
-			print "RPM file for package $package_name was not created.\n";
-			return;
-		    }
-		    else
-		    {
-			print "RPM file for package $package_name was created: $rpmfiles[0]\n";
-		    }
-
-		}
-
-		if($::option_pkg_rpm_dir)
-		{
-		    #
-		    # Since this produces multiple files we need to place them all into a directory. 
-		    my $rpm_dir = $::option_pkg_rpm_dir;
-		
-		    if(!-d $rpm_dir)
-		    {
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'mkdir', '-p', $rpm_dir,
-			     ],
-			    );
-		    }
-
-		    # copy over each rpm file. 
-		    if(-d $rpm_dir)
-		    {
-
-			foreach my $rpmfile(@rpmfiles)
-			{
-			    if(-e $rpmfile)
-			    {
-				operation_execute
-				    (
-				     $operations,
-				     {
-				      description => $description,
-				      keywords => 0,
-				      package_name => $package_name,
-				     },
-				     [
-				      'cp', '-f', $rpmfile, $rpm_dir,
-				     ],
-				    );
-			    }
-
-			}
-
-
-			# Assuming we only have one source rpm.
-			if(-e $srpmfile)
-			{
-			    operation_execute
-				(
-				 $operations,
-				 {
-				  description => $description,
-				  keywords => 0,
-				  package_name => $package_name,
-				 },
-				 [
-				  'cp', '-f', $srpmfile, $rpm_dir,
-				 ],
-				);
-			}
-
-		
-			my $target_build_log = $rpm_dir . "/build_" . $package_name . ".log";
-
-			if(-e $build_log)
-			{
-			    operation_execute
-				(
-				 $operations,
-				 {
-				  description => $description,
-				  keywords => 0,
-				  package_name => $package_name,
-				 },
-				 [
-				  'cp', '-f', $build_log, $target_build_log,
-				 ],
-				);
-			}
-
-
-		    }
-		    else
-		    {
-			print "Error: Directory $rpm_dir could not be created.\n";
-			print "Can't copy RPM files.\n";
-		    }
-
-		}
-
-	    }
+	    condition => \&Neurospaces::Developer::Operations::Package::RPM::condition,
+	    description => \&Neurospaces::Developer::Operations::Package::RPM::description,
+	    operation => \&Neurospaces::Developer::Operations::Package::RPM::implementation,
 	   },
-
 	   {
-	    condition => $::option_pkg_tar,
-	    description => 'Build source tarballs with release tags',
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		
-		# change the directory
-
-		chdir $directory;
-
-		my $command = parse_release_tags('dist');
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     $command,
-		    );
-
-		# May reuse this code later. 
-		# 		my $tarball = "$package_name-$major.$minor";
-		
-		# 		if(defined $micro)
-		# 		{
-		# 		  $tarball .= ".$micro";
-		# 		}
-
-		# 		$tarball .= "-$label.tar.gz";
-
-		#t this type of test cannot work reliably: fi what if multiple tarballs are found?r
-		
-		# mando 9/17/2010: Added a '-' to the end of the package name to narrow
-		# down the hits, only thing that should meet the criteria is a developer tarball.
-		# Also added the maxdepth option to ensure it only searched the top level directory.
-		# Only way it can fail is if there is more than one developer tarball in the top
-		# level directory. Should not happen on cron runs alone since it performs a clean.
-
-		my $tarball = `find $directory -maxdepth 1| grep $package_name- | grep \.tar\.gz\$`;
-		chomp($tarball);
-
-
-		if(!-e $tarball)
-		{
-
-		    print "Source dist for package $package_name was not created.\n";
-		    return;
-
-		}
-		else
-		{
-		    print "Source dist for package $package_name was created: $tarball\n";
-
-		}
-
-
-		if($::option_pkg_tar_dir)
-		{
-
-		    if(!-d $::option_pkg_tar_dir)
-		    {
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'mkdir', '-p', $::option_pkg_tar_dir,
-			     ],
-			    );
- 
-		    }
-
-		    if(-d $::option_pkg_tar_dir)
-		    {
-
-			#
-			# At this point the tarball exists so we 
-			# delete the old tarball before copying over
-			# the new.
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'rm', '-f', "$::option_pkg_tar_dir/$package_name-*.tar.gz",
-			     ],
-			    );
-
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'cp', '-f', $tarball, $::option_pkg_tar_dir,
-			     ],
-			    );
-		    }
-		    else
-		    {
-			print "Error: Directory $::option_pkg_tar_dir could not be created.\n";
-		    }
-
-		}
-
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Package::Tar::condition,
+	    description => \&Neurospaces::Developer::Operations::Package::Tar::description,
+	    operation => \&Neurospaces::Developer::Operations::Package::Tar::implementation,
 	   },
 	   {
 	    #! always make as the regular user to avoid cluttering the
