@@ -648,7 +648,7 @@ sub package_list_update
 {
     my $active_tags = shift;
 
-    my $active_packages = Neurospaces::Developer::packages_by_tags($active_tags);
+    my $active_packages = Neurospaces::Developer::Packages::packages_by_tags($active_tags);
 
     # note: working with references would be disconnecting the gtk2
     # internal list from its perl equivalent.  we must use direct
