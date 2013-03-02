@@ -16,6 +16,595 @@ package Neurospaces::Developer::Operations;
 package Neurospaces::Developer::Operations;
 
 
+package Neurospaces::Developer::Operations::Distribute::Copy;
+
+
+sub condition
+{
+    return (scalar @$::option_dist_dir);
+}
+
+
+sub description
+{
+    return "copying files to the distribution directories";
+}
+
+
+sub operation
+{
+    my $package_information = shift;
+
+    # get specific arguments
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $filename = $package_information->{filename};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+    my $url = $package_information->{url};
+
+    if (!$filename)
+    {
+	die "$0: *** Error: no filename defined to copy to the distribution directories";
+    }
+
+    # change the directory
+
+    chdir $directory;
+
+    foreach my $dist_dir (@$::option_dist_dir)
+    {
+	# create directory
+
+	if (!-d $dist_dir)
+	{
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+
+		  #t always zero here, but I guess this simply depends on working in client mode ?
+
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $dist_dir,
+		 ],
+		);
+	}
+
+	# copy the package
+
+	operation_execute
+	    (
+	     $operations,
+	     {
+	      description => $description,
+
+	      #t always zero here
+
+	      keywords => 0,
+	      package_name => $package_name,
+	     },
+	     [
+	      'cp', $filename, $dist_dir,
+	     ],
+	    );
+    }
+}
+
+
+package Neurospaces::Developer::Operations::Distribute::Download;
+
+
+sub condition
+{
+    return $::option_download_server;
+}
+
+
+sub description
+{
+    return "downloading";
+}
+
+
+sub operation
+{
+    my $package_information = shift;
+
+    # get specific arguments
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $operations = $package_information->{operations};
+
+    my $filename = $package_information->{filename};
+
+    my $package_name = $package_information->{package_name};
+
+    my $url = $package_information->{url};
+
+    # create the directory
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'mkdir', '-p', $directory,
+	 ],
+	);
+
+    if ($::option_verbose > 1)
+    {
+	print "$0: package $package_name [$description from $url to $filename] executing\n";
+    }
+
+    if ($::option_download_server =~ m(^file://))
+    {
+	# create the directory
+
+	operation_execute
+	    (
+	     $operations,
+	     {
+	      description => $description,
+
+	      #t always zero here, but I guess this simply depends on working in client mode ?
+
+	      keywords => 0,
+	      package_name => $package_name,
+	     },
+	     [
+	      'mkdir', '-p', $directory,
+	     ],
+	    );
+
+	# copy the tarball
+
+	operation_execute
+	    (
+	     $operations,
+	     {
+	      description => $description,
+
+	      #t always zero here, but I guess this simply depends on working in client mode ?
+
+	      keywords => 0,
+	      package_name => $package_name,
+	     },
+	     [
+	      'cp', $filename, $directory . $filename,
+	     ],
+	    );
+    }
+    else
+    {
+	# download the package
+
+	use LWP::Simple;
+
+	my $http_response = getstore($url, $directory . '/' . $filename);
+
+	if (!is_success($http_response))
+	{
+	    warn "$0: *** Warning: $description from $::option_download_server: $http_response";
+	}
+    }
+}
+
+
+package Neurospaces::Developer::Operations::Distribute::TagDatabase;
+
+
+our $tag_set_in_tag_database = 0;
+
+
+sub condition
+{
+    return $::option_tag;
+}
+
+
+sub description
+{
+    return "putting the tag in the tag database";
+}
+
+
+sub operation
+{
+    my $package_information = shift;
+
+    # get specific arguments
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $filename = $package_information->{filename};
+
+    my $package_name = $package_information->{package_name};
+
+    my $url = $package_information->{url};
+
+    # if the tag has already been added for this run
+
+    if ($tag_set_in_tag_database)
+    {
+	# return
+
+	return;
+    }
+
+    use YAML;
+
+    my $tag_database_filename = '/etc/neurospaces/tag_database.yml';
+
+    my $tag_database = YAML::LoadFile($tag_database_filename);
+
+    if (!$tag_database)
+    {
+	die "$0: *** Error: cannot read $tag_database_filename";
+    }
+
+    if ($::option_verbose > 1)
+    {
+	print "$0: package $package_name [$description ($::option_tag)] executing\n";
+    }
+
+    my $tags = $tag_database->{tags};
+
+    push
+	@$tags,
+	{
+	 'date' => `date`,
+	 'regex-selector' => $::option_regex_selector,
+	 'label' => $::option_tag,
+	};
+
+    YAML::DumpFile($tag_database_filename, $tag_database);
+
+    # we do this at most once per run
+
+    $tag_set_in_tag_database = 1;
+
+    #t do a checkin of the configuration package (contains
+    #t the tag_database).
+}
+
+
+package Neurospaces::Developer::Operations::Distribute::Unpack;
+
+
+sub condition
+{
+    return $::option_download_server || $::option_unpack;
+}
+
+
+sub description
+{
+    return "unpacking";
+}
+
+
+sub operation
+{
+    my $package_information = shift;
+
+    # get specific arguments
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $filename = $package_information->{filename};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+    # change the directory
+
+    chdir $directory;
+
+    # unpack the package
+
+    operation_execute
+	(
+	 $operations,
+	 {
+	  description => $description,
+
+	  #t always zero here, but I guess this simply depends on working in client mode ?
+
+	  keywords => 0,
+	  package_name => $package_name,
+	 },
+	 [
+	  'tar', 'xfvz', $filename,
+	 ],
+	);
+}
+
+
+package Neurospaces::Developer::Operations::Distribute::Upload;
+
+
+sub condition
+{
+    return $::option_upload_server;
+}
+
+
+sub description
+{
+    return "uploading";
+}
+
+
+sub operation
+{
+    my $package_information = shift;
+
+    # get specific arguments
+
+    my $description = $package_information->{description};
+
+    my $directory = $package_information->{directory};
+
+    my $filename = $package_information->{filename};
+
+    my $operations = $package_information->{operations};
+
+    my $package_name = $package_information->{package_name};
+
+    my $url = $package_information->{url};
+
+    if (!$filename)
+    {
+	die "$0: *** Error: no filename defined for uploading";
+    }
+
+    if ($::option_verbose)
+    {
+	print "$0: package $package_name [$description $filename to $::option_upload_server] executing\n";
+    }
+
+    # change the directory
+
+    chdir $directory;
+
+    # upload the package
+
+    $::option_upload_server =~ m(((.*)://)?([^/]+)(.*));
+
+    my $upload_protocol = $2 || 'https';
+
+    my $upload_host = $3;
+
+    my $upload_directory = $4;
+
+    my $module_names
+	= {
+	   file => '-1',
+	   ftp => 'Net::FTP',
+	   https => 'HTTP::DAV',
+	   sftp => 'Net::SFTP',
+	  };
+
+    my $module_name = $module_names->{$upload_protocol};
+
+    my $login_info = YAML::LoadFile("$ENV{HOME}/.sourceforge_login");
+
+    my $user = $login_info->{user};
+
+    my $password = $login_info->{password};
+
+    my $try_something_very_sophisticated_with_broken_libraries = 'no';
+
+    if ($try_something_very_sophisticated_with_broken_libraries eq 'yes')
+    {
+	my $loaded_protocol_module = eval "require $module_name";
+
+	if ($@)
+	{
+	    no strict "refs";
+
+	    if (exists ${"::"}{verbose} && $::option_verbose)
+	    {
+		print STDERR "$0: cannot load protocol module $module_name because of: $@\n";
+		print STDERR "$0: continuing.\n";
+	    }
+	}
+
+	my $ftp;
+
+	if ($upload_protocol =~ /^s?ftp$/)
+	{
+	    $ftp
+		= eval "$module_name->new('$upload_host', Debug => 0, user => '$user', password => '$password', )"
+		    or die "$0: *** Error: for $filename: cannot connect to $upload_host: $@";
+	}
+	else
+	{
+	    $ftp
+		= eval "HTTP::DAV->new()"
+		    or die "$0: *** Error: for $filename: cannot connect to $upload_host: $@";
+
+	    $ftp->credentials
+		(
+		 -user=> $user,
+		 -pass => $password,
+		 -url => $::option_upload_server,
+		);
+
+	    $ftp->open( -url=> $::option_upload_server, )
+		or die("$0: *** Error: cannot open $::option_upload_server: " . $ftp->message() . "\n");
+	}
+
+	# 		    $ftp->login("anonymous", '-anonymous@')
+	# 			or die "$0: *** Error: for $filename: cannot login to $upload_host", $ftp->message();
+
+	$ftp->cwd($upload_directory)
+	    or die "$0: *** Error: for $filename: cannot change working directory to $upload_directory", $ftp->message();
+
+	if ($upload_protocol =~ /^s?ftp$/)
+	{
+	    $ftp->binary()
+		or die "$0: *** Error: for $filename: cannot switch to binary ftp mode", $ftp->message();
+
+	    $ftp->hash()
+		or die "$0: *** Error: for $filename: cannot enable hash printing", $ftp->message();
+	}
+
+	$ftp->put($filename)
+	    or die "$0: *** Error: for $filename: Net::FTP::put() failed ", $ftp->message();
+
+	if ($upload_protocol =~ /^s?ftp$/)
+	{
+	    $ftp->quit();
+	}
+	else
+	{
+	    $ftp->unlock();
+	}
+    }
+
+    # else we are trying a hardcoded solution that should work
+
+    else
+    {
+	if ($upload_protocol eq 'sftp')
+	{
+	    use Expect;
+
+	    my $expector = Expect->new();
+
+	    #! see the expect manual for this one
+
+	    $expector->raw_pty(1);
+
+	    $expector->spawn('sftp', "$user\@$upload_host",)
+		or die "$0: cannot spawn 'sftp': $!\n";
+
+	    my ($matched_pattern_position,
+		$error,
+		$successfully_matching_string,
+		$before_match,
+		$after_match)
+		= $expector->expect(15, "word:", );
+
+	    $expector->send("$password\n");
+
+	    my $prompt = "sftp>";
+
+	    ($matched_pattern_position,
+	     $error,
+	     $successfully_matching_string,
+	     $before_match,
+	     $after_match)
+		= $expector->expect(5, $prompt, );
+
+	    $upload_directory =~ s|^/||;
+
+	    $expector->send("cd $upload_directory\n");
+
+	    ($matched_pattern_position,
+	     $error,
+	     $successfully_matching_string,
+	     $before_match,
+	     $after_match)
+		= $expector->expect(5, $prompt, );
+
+	    $expector->send("put '$filename'\n");
+
+	    ($matched_pattern_position,
+	     $error,
+	     $successfully_matching_string,
+	     $before_match,
+	     $after_match)
+		= $expector->expect(600, $prompt, );
+
+	    $expector->send("quit\n");
+	}
+	elsif ($upload_protocol eq 'file')
+	{
+	    # construct the target directory
+
+	    my $target_directory = $upload_host . $upload_directory;
+
+	    # make sure the target directory is rooted
+
+	    if ($target_directory !~ /^\//)
+	    {
+		$target_directory = "/$target_directory";
+	    }
+
+	    # create the directory
+
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+
+		  #t always zero here, but I guess this simply depends on working in client mode ?
+
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $target_directory,
+		 ],
+		);
+
+	    # copy the tarball
+
+	    operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+
+		  #t always zero here, but I guess this simply depends on working in client mode ?
+
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'cp', $filename, $target_directory,
+		 ],
+		);
+
+	}
+	else
+	{
+	    die "$0: *** Error: unknown upload protocol $upload_protocol";
+	}
+    }
+}
+
+
 package Neurospaces::Developer::Operations::Package::Debian;
 
 
@@ -2648,9 +3237,6 @@ sub monotone_version
 }
 
 
-my $tag_set_in_tag_database = 0;
-
-
 sub construct_all
 {
     my $all_operations
@@ -2772,215 +3358,22 @@ sub construct_all
 
 	   },
 	   {
-	    condition => $::option_tag,
-	    description => "putting the tag in the tag database",
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		# get specific arguments
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $filename = $package_information->{filename};
-
-		my $package_name = $package_information->{package_name};
-
-		my $url = $package_information->{url};
-
-		# if the tag has already been added for this run
-
-		if ($tag_set_in_tag_database)
-		{
-		    # return
-
-		    return;
-		}
-
-		use YAML;
-
-		my $tag_database_filename = '/etc/neurospaces/tag_database.yml';
-
-		my $tag_database = YAML::LoadFile($tag_database_filename);
-
-		if (!$tag_database)
-		{
-		    die "$0: *** Error: cannot read $tag_database_filename";
-		}
-
-		if ($::option_verbose > 1)
-		{
-		    print "$0: package $package_name [$description ($::option_tag)] executing\n";
-		}
-
-		my $tags = $tag_database->{tags};
-
-		push
-		    @$tags,
-		    {
-		     'date' => `date`,
-		     'regex-selector' => $::option_regex_selector,
-		     'label' => $::option_tag,
-		    };
-
-		YAML::DumpFile($tag_database_filename, $tag_database);
-
-		# we do this at most once per run
-
-		$tag_set_in_tag_database = 1;
-
-		#t do a checkin of the configuration package (contains
-		#t the tag_database).
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::condition,
+	    description => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::description,
+	    operation => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::implementation,
 	   },
 	   {
-	    condition => $::option_download_server,
-	    description => "downloading",
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		# get specific arguments
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $operations = $package_information->{operations};
-
-		my $filename = $package_information->{filename};
-
-		my $package_name = $package_information->{package_name};
-
-		my $url = $package_information->{url};
-
-		# create the directory
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'mkdir', '-p', $directory,
-		     ],
-		    );
-
-		if ($::option_verbose > 1)
-		{
-		    print "$0: package $package_name [$description from $url to $filename] executing\n";
-		}
-
-		if ($::option_download_server =~ m(^file://))
-		{
-		    # create the directory
-
-		    operation_execute
-			(
-			 $operations,
-			 {
-			  description => $description,
-
-			  #t always zero here, but I guess this simply depends on working in client mode ?
-
-			  keywords => 0,
-			  package_name => $package_name,
-			 },
-			 [
-			  'mkdir', '-p', $directory,
-			 ],
-			);
-
-		    # copy the tarball
-
-		    operation_execute
-			(
-			 $operations,
-			 {
-			  description => $description,
-
-			  #t always zero here, but I guess this simply depends on working in client mode ?
-
-			  keywords => 0,
-			  package_name => $package_name,
-			 },
-			 [
-			  'cp', $filename, $directory . $filename,
-			 ],
-			);
-
-		}
-		else
-		{
-		    # download the package
-
-		    use LWP::Simple;
-
-		    my $http_response = getstore($url, $directory . '/' . $filename);
-
-		    if (!is_success($http_response))
-		    {
-			warn "$0: *** Warning: $description from $::option_download_server: $http_response";
-		    }
-		}
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Distribute::Download::condition,
+	    description => \&Neurospaces::Developer::Operations::Distribute::Download::description,
+	    operation => \&Neurospaces::Developer::Operations::Distribute::Download::implementation,
 	   },
 	   {
-	    condition => $::option_download_server || $::option_unpack,
-	    description => "unpacking",
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		# get specific arguments
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $filename = $package_information->{filename};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		# change the directory
-
-		chdir $directory;
-
-		# unpack the package
-
-		operation_execute
-		    (
-		     $operations,
-		     {
-		      description => $description,
-
-		      #t always zero here, but I guess this simply depends on working in client mode ?
-
-		      keywords => 0,
-		      package_name => $package_name,
-		     },
-		     [
-		      'tar', 'xfvz', $filename,
-		     ],
-		    );
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Distribute::Unpack::condition,
+	    description => \&Neurospaces::Developer::Operations::Distribute::Unpack::description,
+	    operation => \&Neurospaces::Developer::Operations::Distribute::Unpack::implementation,
 	   },
 
 	   # everything that is compilation related needs a configure script, so create it.
-
 
 	   {
 	    condition => $::option_configure || $::option_compile || $::option_check || $::option_install,
@@ -3107,324 +3500,14 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Workspace::CheckIn::implementation,
 	   },
 	   {
-	    condition => $::option_upload_server,
-	    description => "uploading",
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		# get specific arguments
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $filename = $package_information->{filename};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		my $url = $package_information->{url};
-
-		if (!$filename)
-		{
-		    die "$0: *** Error: no filename defined for uploading";
-		}
-
-		if ($::option_verbose)
-		{
-		    print "$0: package $package_name [$description $filename to $::option_upload_server] executing\n";
-		}
-
-		# change the directory
-
-		chdir $directory;
-
-		# upload the package
-
-		$::option_upload_server =~ m(((.*)://)?([^/]+)(.*));
-
-		my $upload_protocol = $2 || 'https';
-
-		my $upload_host = $3;
-
-		my $upload_directory = $4;
-
-		my $module_names
-		    = {
-		       file => '-1',
-		       ftp => 'Net::FTP',
-		       https => 'HTTP::DAV',
-		       sftp => 'Net::SFTP',
-		      };
-
-		my $module_name = $module_names->{$upload_protocol};
-
-		my $login_info = YAML::LoadFile("$ENV{HOME}/.sourceforge_login");
-
-		my $user = $login_info->{user};
-
-		my $password = $login_info->{password};
-
-		my $try_something_very_sophisticated_with_broken_libraries = 'no';
-
-		if ($try_something_very_sophisticated_with_broken_libraries eq 'yes')
-		{
-		    my $loaded_protocol_module = eval "require $module_name";
-
-		    if ($@)
-		    {
-			no strict "refs";
-
-			if (exists ${"::"}{verbose} && $::option_verbose)
-			{
-			    print STDERR "$0: cannot load protocol module $module_name because of: $@\n";
-			    print STDERR "$0: continuing.\n";
-			}
-		    }
-
-		    my $ftp;
-
-		    if ($upload_protocol =~ /^s?ftp$/)
-		    {
-			$ftp
-			    = eval "$module_name->new('$upload_host', Debug => 0, user => '$user', password => '$password', )"
-				or die "$0: *** Error: for $filename: cannot connect to $upload_host: $@";
-		    }
-		    else
-		    {
-			$ftp
-			    = eval "HTTP::DAV->new()"
-				or die "$0: *** Error: for $filename: cannot connect to $upload_host: $@";
-
-			$ftp->credentials
-			    (
-			     -user=> $user,
-			     -pass => $password,
-			     -url => $::option_upload_server,
-			    );
-
-			$ftp->open( -url=> $::option_upload_server, )
-			    or die("$0: *** Error: cannot open $::option_upload_server: " . $ftp->message() . "\n");
-		    }
-
-		    # 		    $ftp->login("anonymous", '-anonymous@')
-		    # 			or die "$0: *** Error: for $filename: cannot login to $upload_host", $ftp->message();
-
-		    $ftp->cwd($upload_directory)
-			or die "$0: *** Error: for $filename: cannot change working directory to $upload_directory", $ftp->message();
-
-		    if ($upload_protocol =~ /^s?ftp$/)
-		    {
-			$ftp->binary()
-			    or die "$0: *** Error: for $filename: cannot switch to binary ftp mode", $ftp->message();
-
-			$ftp->hash()
-			    or die "$0: *** Error: for $filename: cannot enable hash printing", $ftp->message();
-		    }
-
-		    $ftp->put($filename)
-			or die "$0: *** Error: for $filename: Net::FTP::put() failed ", $ftp->message();
-
-		    if ($upload_protocol =~ /^s?ftp$/)
-		    {
-			$ftp->quit();
-		    }
-		    else
-		    {
-			$ftp->unlock();
-		    }
-		}
-
-		# else we are trying a hardcoded solution that should work
-
-		else
-		{
-		    if ($upload_protocol eq 'sftp')
-		    {
-			use Expect;
-
-			my $expector = Expect->new();
-
-			#! see the expect manual for this one
-
-			$expector->raw_pty(1);
-
-			$expector->spawn('sftp', "$user\@$upload_host",)
-			    or die "$0: cannot spawn 'sftp': $!\n";
-
-			my ($matched_pattern_position,
-			    $error,
-			    $successfully_matching_string,
-			    $before_match,
-			    $after_match)
-			    = $expector->expect(15, "word:", );
-
-			$expector->send("$password\n");
-
-			my $prompt = "sftp>";
-
-			($matched_pattern_position,
-			 $error,
-			 $successfully_matching_string,
-			 $before_match,
-			 $after_match)
-			    = $expector->expect(5, $prompt, );
-
-			$upload_directory =~ s|^/||;
-
-			$expector->send("cd $upload_directory\n");
-
-			($matched_pattern_position,
-			 $error,
-			 $successfully_matching_string,
-			 $before_match,
-			 $after_match)
-			    = $expector->expect(5, $prompt, );
-
-			$expector->send("put '$filename'\n");
-
-			($matched_pattern_position,
-			 $error,
-			 $successfully_matching_string,
-			 $before_match,
-			 $after_match)
-			    = $expector->expect(600, $prompt, );
-
-			$expector->send("quit\n");
-		    }
-		    elsif ($upload_protocol eq 'file')
-		    {
-			# construct the target directory
-
-			my $target_directory = $upload_host . $upload_directory;
-
-			# make sure the target directory is rooted
-
-			if ($target_directory !~ /^\//)
-			{
-			    $target_directory = "/$target_directory";
-			}
-
-			# create the directory
-
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-
-			      #t always zero here, but I guess this simply depends on working in client mode ?
-
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'mkdir', '-p', $target_directory,
-			     ],
-			    );
-
-			# copy the tarball
-
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-
-			      #t always zero here, but I guess this simply depends on working in client mode ?
-
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'cp', $filename, $target_directory,
-			     ],
-			    );
-
-		    }
-		    else
-		    {
-			die "$0: *** Error: unknown upload protocol $upload_protocol";
-		    }
-		}
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Distribute::Upload::condition,
+	    description => \&Neurospaces::Developer::Operations::Distribute::Upload::description,
+	    operation => \&Neurospaces::Developer::Operations::Distribute::Upload::implementation,
 	   },
 	   {
-	    condition => (scalar @$::option_dist_dir),
-	    description => "copying files to the distribution directories",
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		# get specific arguments
-
-		my $description = $package_information->{description};
-
-		my $directory = $package_information->{directory};
-
-		my $filename = $package_information->{filename};
-
-		my $operations = $package_information->{operations};
-
-		my $package_name = $package_information->{package_name};
-
-		my $url = $package_information->{url};
-
-		if (!$filename)
-		{
-		    die "$0: *** Error: no filename defined to copy to the distribution directories";
-		}
-
-		# change the directory
-
-		chdir $directory;
-
-		foreach my $dist_dir (@$::option_dist_dir)
-		{
-		    # create directory
-
-		    if (!-d $dist_dir)
-		    {
-			operation_execute
-			    (
-			     $operations,
-			     {
-			      description => $description,
-
-			      #t always zero here, but I guess this simply depends on working in client mode ?
-
-			      keywords => 0,
-			      package_name => $package_name,
-			     },
-			     [
-			      'mkdir', '-p', $dist_dir,
-			     ],
-			    );
-		    }
-
-		    # copy the package
-
-		    operation_execute
-			(
-			 $operations,
-			 {
-			  description => $description,
-
-			  #t always zero here
-
-			  keywords => 0,
-			  package_name => $package_name,
-			 },
-			 [
-			  'cp', $filename, $dist_dir,
-			 ],
-			);
-		}
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Distribute::Copy::condition,
+	    description => \&Neurospaces::Developer::Operations::Distribute::Copy::description,
+	    operation => \&Neurospaces::Developer::Operations::Distribute::Copy::implementation,
 	   },
 	   {
 	    condition => $::option_certification_report,
