@@ -605,6 +605,41 @@ sub implementation
 }
 
 
+package Neurospaces::Developer::Operations::Install::Version;
+
+
+sub condition
+{
+    return $::option_installed_versions;
+}
+
+
+sub description
+{
+    return 'installed version';
+}
+
+
+sub operation
+{
+    my $package_information = shift;
+
+    my $package = $package_information->{package};
+
+    my $version_script = $package->{version_script};
+
+    if (!defined $version_script)
+    {
+	$version_script = "$package_information->{package_name} --version";
+    }
+
+    if ($version_script ne 0)
+    {
+	system $version_script;
+    }
+}
+
+
 package Neurospaces::Developer::Operations::Package::Debian;
 
 
@@ -3468,27 +3503,9 @@ sub construct_all
 	    operation => [ 'make', 'html-upload', ],
 	   },
 	   {
-	    condition => $::option_installed_versions,
-	    description => 'installed versions',
-	    operation =>
-	    sub
-	    {
-		my $package_information = shift;
-
-		my $package = $package_information->{package};
-
-		my $version_script = $package->{version_script};
-
-		if (!defined $version_script)
-		{
-		    $version_script = "$package_information->{package_name} --version";
-		}
-
-		if ($version_script ne 0)
-		{
-		    system $version_script;
-		}
-	    },
+	    condition => \&Neurospaces::Developer::Operations::Install::Version::condition,
+	    description => \&Neurospaces::Developer::Operations::Install::Version::description,
+	    operation => \&Neurospaces::Developer::Operations::Install::Version::implementation,
 	   },
 	   {
 	    condition => $::option_uninstall,
