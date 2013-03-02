@@ -657,21 +657,21 @@ sub default_packages_read()
 }
 
 
-#
-# extended_bubble_sort()
-#
-# Sort the items in the given list using the given comparator, that is
-# assumed to implement a partial order.
-#
-# The algorithm is stable at a cost of performance.  Stability is not
-# always guaranteed with arbitrary topological sorting algorithms.
-#
-# Difference with a regular bubble sort : assumes the order
-# implemented by the comparator is a partial order, so the last entry
-# must be checked too.  If we don't, we actually assume the order to
-# be fully transitive and full comparable, which is of course not
-# always the case for a _partial_ order.
-#
+=head4 sub extended_bubble_sort()
+
+Sort the items in the given list using the given comparator, that is
+assumed to implement a partial order.
+
+The algorithm is stable at a cost of performance.  Stability is not
+always guaranteed with arbitrary topological sorting algorithms.
+
+Difference with a regular bubble sort : assumes the order implemented
+by the comparator is a partial order, so the last entry must be
+checked too.  If we don''t, we actually assume the order to be fully
+transitive and full comparable, which is of course not always the case
+for a _partial_ order.
+
+=cut
 
 sub extended_bubble_sort(&@);
 
@@ -712,6 +712,13 @@ sub extended_bubble_sort(&@)
     return @array;
 }
 
+
+=head4 sub package_comparator()
+
+Implements a partial order on the packages using the dependencies
+(which must not be cyclic).
+
+=cut
 
 sub package_comparator
 {
@@ -760,6 +767,14 @@ sub package_comparator
     return 0;
 }
 
+
+=head4 sub packages_sort()
+
+Assign order numbers to packages by using their dependencies.  Sorting
+on order number sorts the packages on their dependencies such that the
+first in the list has no dependencies.
+
+=cut
 
 sub packages_sort
 {
@@ -970,6 +985,24 @@ sub transifier(&&&@)
     }
 }
 
+
+=head4 sub packages_validate()
+
+Validate packages as follows:
+
+=over 4
+
+=item Check for double port numbers.
+
+=item Fill in the workspace directory of each package using a default
+where necessary.
+
+=item Fill in the name of local repository of each package using a
+default where necessary.
+
+=back
+
+=cut
 
 sub packages_validate
 {
