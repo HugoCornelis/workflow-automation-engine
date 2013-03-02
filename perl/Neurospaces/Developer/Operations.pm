@@ -31,7 +31,7 @@ sub description
 }
 
 
-sub operation
+sub implementation
 {
     my $package_information = shift;
 
@@ -117,7 +117,7 @@ sub description
 }
 
 
-sub operation
+sub implementation
 {
     my $package_information = shift;
 
@@ -230,7 +230,7 @@ sub description
 }
 
 
-sub operation
+sub implementation
 {
     my $package_information = shift;
 
@@ -307,7 +307,7 @@ sub description
 }
 
 
-sub operation
+sub implementation
 {
     my $package_information = shift;
 
@@ -362,7 +362,7 @@ sub description
 }
 
 
-sub operation
+sub implementation
 {
     my $package_information = shift;
 
