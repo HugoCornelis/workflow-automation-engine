@@ -3927,248 +3927,187 @@ sub monotone_version
 
 sub construct_all
 {
-    my $all_operations
+    my $all_operations = [];
+
+    my $all_operation_packages
 	= [
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Init::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Init::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Init::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Init",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Keys::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Keys::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Keys::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Keys",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::Migrate::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::Migrate::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::Migrate::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::Migrate",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Serve::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Serve::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Serve::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Serve",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::Directory::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::Directory::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::Directory::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::Directory",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Pull::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Pull::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Pull::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Pull",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Push::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Push::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Push::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Push",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::Setup::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::Setup::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::Setup::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::Setup",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Clone::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Clone::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Clone::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Clone",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::CheckOut::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::CheckOut::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::CheckOut::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::CheckOut",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::Difference::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::Difference::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::Difference::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::Difference",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::DistClean::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::DistClean::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::DistClean::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::DistClean",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::Keywords::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::Keywords::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::Keywords::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::Keywords",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::ReleaseExpand::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::ReleaseExpand::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::ReleaseExpand::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::ReleaseExpand",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::SetTag::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::SetTag::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::SetTag::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::SetTag",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::condition,
-	    description => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::description,
-	    operation => \&Neurospaces::Developer::Operations::Distribute::TagDatabase::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Distribute::TagDatabase",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Distribute::Download::condition,
-	    description => \&Neurospaces::Developer::Operations::Distribute::Download::description,
-	    operation => \&Neurospaces::Developer::Operations::Distribute::Download::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Distribute::Download",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Distribute::Unpack::condition,
-	    description => \&Neurospaces::Developer::Operations::Distribute::Unpack::description,
-	    operation => \&Neurospaces::Developer::Operations::Distribute::Unpack::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Distribute::Unpack",
 	   },
 
 	   # everything that is compilation related needs a configure script, so create it.
 
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::AutoGen::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::AutoGen::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::AutoGen::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::AutoGen",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::ConfigureWithUniversal::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::ConfigureWithUniversal::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::ConfigureWithUniversal::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::ConfigureWithUniversal",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::Configure::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::Configure::description,
-	    operation => Neurospaces::Developer::Operations::Release::Configure::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::Configure",
 	   },
 
 	   # for the luebeck workshop: have a configure prefix different from /usr/local
 
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::ConfigureLuebeck::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::ConfigureLuebeck::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::ConfigureLuebeck::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::ConfigureLuebeck",
 	   },
 
 	   # everything that is compilation related needs makefiles, so create them.
 
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::ConfigureIfNoMakefile",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeClean::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::MakeClean::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::MakeClean::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::MakeClean",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::CountCode::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::CountCode::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::CountCode::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::CountCode",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::Make::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::Make::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::Make::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::Make",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeCheck::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::MakeCheck::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::MakeCheck::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::MakeCheck",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeDist::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::MakeDist::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::MakeDist::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::MakeDist",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeDistCheck::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::MakeDistCheck::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::MakeDistCheck::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::MakeDistCheck",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Package::Debian::condition,
-	    description => \&Neurospaces::Developer::Operations::Package::Debian::description,
-	    operation => \&Neurospaces::Developer::Operations::Package::Debian::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Package::Debian",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Package::RPM::condition,
-	    description => \&Neurospaces::Developer::Operations::Package::RPM::description,
-	    operation => \&Neurospaces::Developer::Operations::Package::RPM::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Package::RPM",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Package::Tar::condition,
-	    description => \&Neurospaces::Developer::Operations::Package::Tar::description,
-	    operation => \&Neurospaces::Developer::Operations::Package::Tar::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Package::Tar",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeInstall::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::MakeInstall::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::MakeInstall::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::MakeInstall",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Documentation::MakeDocs::condition,
-	    description => \&Neurospaces::Developer::Operations::Documentation::MakeDocs::description,
-	    operation => \&Neurospaces::Developer::Operations::Documentation::MakeDocs::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Documentation::MakeDocs",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Documentation::WebSitePrepare::condition,
-	    description => \&Neurospaces::Developer::Operations::Documentation::WebSitePrepare::description,
-	    operation => \&Neurospaces::Developer::Operations::Documentation::WebSitePrepare::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Documentation::WebSitePrepare",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Documentation::WebSiteUpload::condition,
-	    description => \&Neurospaces::Developer::Operations::Documentation::WebSiteUpload::description,
-	    operation => \&Neurospaces::Developer::Operations::Documentation::WebSiteUpload::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Documentation::WebSiteUpload",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Install::Version::condition,
-	    description => \&Neurospaces::Developer::Operations::Install::Version::description,
-	    operation => \&Neurospaces::Developer::Operations::Install::Version::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Install::Version",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeUninstall::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::MakeUninstall::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::MakeUninstall::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::MakeUninstall",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::CheckIn::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::CheckIn::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::CheckIn::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::CheckIn",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Distribute::Upload::condition,
-	    description => \&Neurospaces::Developer::Operations::Distribute::Upload::description,
-	    operation => \&Neurospaces::Developer::Operations::Distribute::Upload::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Distribute::Upload",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Distribute::Copy::condition,
-	    description => \&Neurospaces::Developer::Operations::Distribute::Copy::description,
-	    operation => \&Neurospaces::Developer::Operations::Distribute::Copy::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Distribute::Copy",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::Certification::condition,
-	    description => \&Neurospaces::Developer::Operations::Release::Certification::description,
-	    operation => \&Neurospaces::Developer::Operations::Release::Certification::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Release::Certification",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::Status::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::Status::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::Status::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::Status",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::History::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::History::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::History::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::History",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Workspace::Revert::condition,
-	    description => \&Neurospaces::Developer::Operations::Workspace::Revert::description,
-	    operation => \&Neurospaces::Developer::Operations::Workspace::Revert::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Workspace::Revert",
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Repository::Synchronize::condition,
-	    description => \&Neurospaces::Developer::Operations::Repository::Synchronize::description,
-	    operation => \&Neurospaces::Developer::Operations::Repository::Synchronize::implementation,
+	    package_name => "Neurospaces::Developer::Operations::Repository::Synchronize",
 	   },
 	  ];
+
+    foreach my $operation (@$all_operation_packages)
+    {
+	no strict "refs";
+
+# 	if (exists ((\%{"::"})->{"$operation->{package_name}::"}))
+	{
+	    my $command
+		= "
+	    push
+		\@\$all_operations,
+		{
+		 condition => \\&$operation->{package_name}::condition,
+		 description => \\&$operation->{package_name}::description,
+		 implementation => \\&$operation->{package_name}::implementation,
+                 package_name => '$operation->{package_name}',
+		};
+";
+
+	    eval $command;
+
+# 	    print "$command\n---\nresulted in:\n$@";
+	}
+
+    }
+
+#     use Data::Dumper;
+
+#     print Dumper($all_operations);
 
     return $all_operations;
 }
