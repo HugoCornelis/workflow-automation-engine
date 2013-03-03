@@ -64,7 +64,7 @@ sub implementation
 
 	if (!-d $dist_dir)
 	{
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -83,7 +83,7 @@ sub implementation
 
 	# copy the package
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -137,7 +137,7 @@ sub implementation
 
     # create the directory
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -162,7 +162,7 @@ sub implementation
     {
 	# create the directory
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -180,7 +180,7 @@ sub implementation
 
 	# copy the tarball
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -329,7 +329,7 @@ sub implementation
 
     # unpack the package
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -562,7 +562,7 @@ sub implementation
 
 	    # create the directory
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -580,7 +580,7 @@ sub implementation
 
 	    # copy the tarball
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -616,19 +616,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'docs', ]
-	};
+    return [ 'make', 'docs', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'docs', ],
-	};
+    return [ 'make', 'docs', ],
 }
 
 
@@ -643,19 +637,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'website-prepare', ]
-	};
+    return [ 'make', 'website-prepare', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'website-prepare', ],
-	};
+    return [ 'make', 'website-prepare', ],
 }
 
 
@@ -670,19 +658,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'html-upload', ]
-	};
+    return [ 'make', 'html-upload', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'html-upload', ],
-	};
+    return [ 'make', 'html-upload', ],
 }
 
 
@@ -754,7 +736,7 @@ sub implementation
 
     my $command = parse_release_tags('pkg-deb');
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -803,7 +785,7 @@ sub implementation
     {
 	if (!-d $::option_pkg_deb_dir)
 	{
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -823,7 +805,7 @@ sub implementation
 
 	if (!-d $deb_dir)
 	{
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -846,7 +828,7 @@ sub implementation
 	{
 	    if (-e $deb)
 	    {
-		operation_execute
+		Neurospaces::Developer::Operations::operation_execute
 		    (
 		     $operations,
 		     {
@@ -862,7 +844,7 @@ sub implementation
 
 	    if (-e $dsc)
 	    {
-		operation_execute
+		Neurospaces::Developer::Operations::operation_execute
 		    (
 		     $operations,
 		     {
@@ -878,7 +860,7 @@ sub implementation
 
 	    if (-e $changes)
 	    {
-		operation_execute
+		Neurospaces::Developer::Operations::operation_execute
 		    (
 		     $operations,
 		     {
@@ -896,7 +878,7 @@ sub implementation
 
 	    if (-e $build_log)
 	    {
-		operation_execute
+		Neurospaces::Developer::Operations::operation_execute
 		    (
 		     $operations,
 		     {
@@ -954,7 +936,7 @@ sub implementation
 
     my $command = parse_release_tags('pkg-rpm');
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -999,7 +981,7 @@ sub implementation
 		
 	if (! -d $rpm_dir)
 	{
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -1021,7 +1003,7 @@ sub implementation
 	    {
 		if (-e $rpmfile)
 		{
-		    operation_execute
+		    Neurospaces::Developer::Operations::operation_execute
 			(
 			 $operations,
 			 {
@@ -1040,7 +1022,7 @@ sub implementation
 
 	    if (-e $srpmfile)
 	    {
-		operation_execute
+		Neurospaces::Developer::Operations::operation_execute
 		    (
 		     $operations,
 		     {
@@ -1058,7 +1040,7 @@ sub implementation
 
 	    if (-e $build_log)
 	    {
-		operation_execute
+		Neurospaces::Developer::Operations::operation_execute
 		    (
 		     $operations,
 		     {
@@ -1115,7 +1097,7 @@ sub implementation
 
     my $command = parse_release_tags('dist');
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -1163,7 +1145,7 @@ sub implementation
     {
 	if (! -d $::option_pkg_tar_dir)
 	{
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -1183,7 +1165,7 @@ sub implementation
 	    # delete the old tarball before copying over
 	    # the new.
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -1196,7 +1178,7 @@ sub implementation
 		 ],
 		);
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -1229,7 +1211,6 @@ sub condition
 sub description
 {
     return
-	@{
 	    #
 	    # If a change is made to the automake files (Makefile.am and confgiure.ac) that changes
 	    # file paths then autogen.sh must be rerun. A previously existing configure file may exist
@@ -1240,16 +1221,12 @@ sub description
 	    #	    operation => [ 'test', '-f', './configure', '||', './autogen.sh', ],
 
 	    [ './autogen.sh', ],
-	};
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ './autogen.sh', ],
-	};
+    return [ './autogen.sh', ],
 }
 
 
@@ -1264,10 +1241,7 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ]
-	};
+    return [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ]
 }
 
 
@@ -1275,10 +1249,7 @@ sub implementation
 {
     #t only for monotone
 
-    return
-	@{
-	    [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ],
-	};
+    return [ 'mtn', 'cert', '\'%version\'', '--', 'build_report', '\'%report\'', ],
 
     # MERCURIAL cert
     # mercurial doesn't yet have it's own cert functionality.
@@ -1297,19 +1268,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ './configure', ]
-	};
+    return [ './configure', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ './configure', ],
-	};
+    return [ './configure', ],
 }
 
 
@@ -1324,19 +1289,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',]
-	};
+    return [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',],
-	};
+    return [ './configure', '--prefix', '/usr/local/poolsoft/genesis3',],
 }
 
 
@@ -1351,19 +1310,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'test', '-f', './Makefile', '||', './configure', ]
-	};
+    return [ 'test', '-f', './Makefile', '||', './configure', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'test', '-f', './Makefile', '||', './configure', ],
-	};
+    return [ 'test', '-f', './Makefile', '||', './configure', ],
 }
 
 
@@ -1378,19 +1331,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ './configure', '--with-universal', '--disable-dependency-tracking',]
-	};
+    return [ './configure', '--with-universal', '--disable-dependency-tracking',]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ './configure', '--with-universal', '--disable-dependency-tracking',],
-	};
+    return [ './configure', '--with-universal', '--disable-dependency-tracking',],
 }
 
 
@@ -1405,19 +1352,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'distclean', ]
-	};
+    return [ 'make', 'distclean', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'distclean', ],
-	};
+    return [ 'make', 'distclean', ],
 }
 
 
@@ -1433,7 +1374,6 @@ sub condition
 sub description
 {
     return
-	@{
 	    [
 	     #! after keyword expansion, regenerate the
 	     #! autotool related files that perhaps are
@@ -1443,14 +1383,12 @@ sub description
 	     ( '&&', 'make', 'clean', ),
 	     ( '&&', 'make', 'clean', ),
 	    ]
-	};
 }
 
 
 sub implementation
 {
     return
-	@{
 	    [
 	     #! after keyword expansion, regenerate the
 	     #! autotool related files that perhaps are
@@ -1460,7 +1398,6 @@ sub implementation
 	     ( '&&', 'make', 'clean', ),
 	     ( '&&', 'make', 'clean', ),
 	    ],
-	};
 }
 
 
@@ -1475,19 +1412,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', ]
-	};
+    return [ 'make', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', ],
-	};
+    return [ 'make', ],
 }
 
 
@@ -1502,19 +1433,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'check', ]
-	};
+    return [ 'make', 'check', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'check', ],
-	};
+    return [ 'make', 'check', ],
 }
 
 
@@ -1529,19 +1454,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'clean', ]
-	};
+    return [ 'make', 'clean', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'clean', ],
-	};
+    return [ 'make', 'clean', ],
 }
 
 
@@ -1556,19 +1475,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist']
-	};
+    return [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist']
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist'],
-	};
+    return [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'dist'],
 }
 
 
@@ -1583,19 +1496,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ]
-	};
+    return [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ],
-	};
+    return [ 'export', 'NEUROSPACES_RELEASE=1', '&&', 'make', 'distcheck', ],
 }
 
 
@@ -1613,10 +1520,7 @@ sub description
     #! always make as the regular user to avoid cluttering the
     #! source directory with root owned files
 
-    return
-	@{
-	    [ 'make', '&&', 'sudo', 'make', 'install', ]
-	};
+    return [ 'make', '&&', 'sudo', 'make', 'install', ]
 }
 
 
@@ -1625,10 +1529,7 @@ sub implementation
     #! always make as the regular user to avoid cluttering the
     #! source directory with root owned files
 
-    return
-	@{
-	    [ 'make', '&&', 'sudo', 'make', 'install', ],
-	};
+    return [ 'make', '&&', 'sudo', 'make', 'install', ],
 }
 
 
@@ -1643,19 +1544,13 @@ sub condition
 
 sub description
 {
-    return
-	@{
-	    [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ]
-	};
+    return [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ]
 }
 
 
 sub implementation
 {
-    return
-	@{
-	    [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ],
-	};
+    return [ 'make', 'clean', '&&', 'sudo', 'make', 'uninstall', ],
 }
 
 
@@ -1671,7 +1566,6 @@ sub condition
 sub description
 {
     return
-	@{
 	    [
 	     #t only for monotone
 
@@ -1694,14 +1588,12 @@ sub description
 	     # 			  ( "&&", 'mtn', 'ci', "-m", "'1. Keywords only: $::option_tag\n'", ),
 	     ( "&&", "test", "!", '"`mtn ls unknown && mtn ls missing`"', ),
 	    ]
-	};
 }
 
 
 sub implementation
 {
     return
-	@{
 	    [
 	     #t only for monotone
 
@@ -1724,7 +1616,6 @@ sub implementation
 	     # 			  ( "&&", 'mtn', 'ci', "-m", "'1. Keywords only: $::option_tag\n'", ),
 	     ( "&&", "test", "!", '"`mtn ls unknown && mtn ls missing`"', ),
 	    ],
-	};
 }
 
 
@@ -1739,16 +1630,17 @@ sub condition
 
 sub description
 {
+    my $tag = $::option_tag || '';
+
     return
-	@{
 	    [
 	     #t only for monotone
 
 	     #! in a separate operation such that we have the correct %version
 	     #! gets replaced by `mtn automate get_base_revision_id`
-	     #! during build variable substitution in sub operation_execute()
+	     #! during build variable substitution in sub Neurospaces::Developer::Operations::operation_execute()
 
-	      ( 'mtn', 'tag', '\'%version\'', "'$::option_tag'", ),
+	      ( 'mtn', 'tag', '\'%version\'', "'$tag'", ),
 	     ],
 
 	    # MERCURIAL
@@ -1757,21 +1649,18 @@ sub description
 	    # branch so this may not be what we need here. The arbitrary metadata
 	    # system described earlier is probably more in line with what monotone
 	    # uses as tags.
-
-	 };
 }
 
 
 sub implementation
 {
     return
-	@{
 	    [
 	     #t only for monotone
 
 	     #! in a separate operation such that we have the correct %version
 	     #! gets replaced by `mtn automate get_base_revision_id`
-	     #! during build variable substitution in sub operation_execute()
+	     #! during build variable substitution in sub Neurospaces::Developer::Operations::operation_execute()
 
 	     ( 'mtn', 'tag', '\'%version\'', "'$::option_tag'", ),
 	    ],
@@ -1782,8 +1671,6 @@ sub implementation
 	    # branch so this may not be what we need here. The arbitrary metadata
 	    # system described earlier is probably more in line with what monotone
 	    # uses as tags.
-
-	};
 }
 
 
@@ -1834,7 +1721,7 @@ sub implementation
     {
 	# initialize the repository if necessary
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -1852,7 +1739,7 @@ sub implementation
     }
     else
     {
-	# 		    my $repo_server = version_control_translate_server($package_information, 'default');
+	# 		    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, 'default');
 
 	# MERCURIAL init
 
@@ -1862,7 +1749,7 @@ sub implementation
 	#
 	# Initializes an empty repository
 	#
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -1927,7 +1814,7 @@ sub implementation
     {
 	# initialize the repository if necessary
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -1945,7 +1832,7 @@ sub implementation
     }
     else
     {
-	# 		    my $repo_server = version_control_translate_server($package_information, 'default');
+	# 		    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, 'default');
 
 	# MERCURIAL init
 
@@ -1955,7 +1842,7 @@ sub implementation
 	#
 	# Initializes an empty repository
 	#
-	# 		    operation_execute
+	# 		    Neurospaces::Developer::Operations::operation_execute
 	# 			(
 	# 			 $operations,
 	# 			 {
@@ -2048,7 +1935,7 @@ sub implementation
 
 	if (Neurospaces::Developer::Configurator::whole_build_configuration_automated_merges())
 	{
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -2067,7 +1954,7 @@ sub implementation
 
 	# checkout code
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2095,7 +1982,7 @@ sub implementation
 	    $upstream_version_options = [ split /\s/, $::option_upstream_version, ];
 	}
 
-	my $monotone_version = monotone_version();
+	my $monotone_version = Neurospaces::Developer::Operations::monotone_version();
 
 	if ($monotone_version >= 0.45)
 	{
@@ -2118,7 +2005,7 @@ sub implementation
 			   ];
 	}
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2156,7 +2043,7 @@ sub implementation
 
 	# note: mercurial aborts if there is nothing to merge
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2179,7 +2066,7 @@ sub implementation
 	       ? $package_information->{package}->{version_control}->{branch_name}
 	       : $package_name);
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2203,7 +2090,7 @@ sub implementation
 	# You simply update to a particular revision number.
 	# hg update [-r revision]
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2301,7 +2188,7 @@ sub implementation
 
 	# translate well known names to a routable address
 
-	my $repo_server = version_control_translate_server($package_information, $::option_repo_clone);
+	my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_clone);
 
 	my $branch_name
 	    = (exists $package_information->{package}->{version_control}->{branch_name}
@@ -2312,7 +2199,7 @@ sub implementation
 
 	# monotone
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2421,7 +2308,7 @@ sub implementation
 				   status
 				   log
 			      )
-					)
+			    )
 		{
 		    # and overwrite with specific commands for this package if applicable
 
@@ -2449,7 +2336,7 @@ sub implementation
 		    {
 			# execute the history_set command
 
-			operation_execute
+			Neurospaces::Developer::Operations::operation_execute
 			    (
 			     $operations,
 			     {
@@ -2502,7 +2389,7 @@ sub implementation
 	= $package_information->{package}->{version_control}->{repository}
 	    || $directory . '/' . $package_name . '/' . 'mtn';
 
-    my $repo_server = version_control_translate_server($package_information, $::option_repo_pull);
+    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_pull);
 
     #
     # Check to see if the repository name ends with .mtn, if not we assume it ends
@@ -2521,7 +2408,7 @@ sub implementation
 
 	$repository_directory =~ s((.*)/.*)($1);
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2537,7 +2424,7 @@ sub implementation
 	     ],
 	    );
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2574,7 +2461,7 @@ sub implementation
 
 	# pull the repository
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2603,7 +2490,7 @@ sub implementation
 	if(not -d $repository_name)
 	{
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -2625,7 +2512,7 @@ sub implementation
 
 	my $mercurial_server = "http://" . $repo_server . "/hg/" . $package_name;
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2685,7 +2572,7 @@ sub implementation
 
     $repository_directory =~ s((.*)/.*)($1);
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -2705,7 +2592,7 @@ sub implementation
 
     # monotone
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -2735,7 +2622,7 @@ sub implementation
 
     # translate well known names to a routable address
 
-    my $repo_server = version_control_translate_server($package_information, $::option_repo_push);
+    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_push);
 
     my $branch_name
 	= (exists $package_information->{package}->{version_control}->{branch_name}
@@ -2744,7 +2631,7 @@ sub implementation
 
     # push the repository
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -2772,6 +2659,118 @@ package Neurospaces::Developer::Operations::Repository::Serve;
 sub condition
 {
     return $::option_repo_serve;
+}
+
+
+#
+# daemonize()
+#
+# Daemonize the running process by setting a session id, optionally close
+# shared resources between child and parent (files), and print a diagnostic
+# message on STDOUT.  '$pid' is replaced with the child process id in the
+# diagnostic message.
+#
+# returns the created process id if $options->{return} is set, otherwise
+# exits.
+#
+
+sub daemonize
+{
+    my $close_files = shift;
+
+    my $options = shift;
+
+    my $message = $options->{message} || '';
+
+    my $pid;
+
+#     mlog("daemonize ($$)", "forking");
+
+    if ($pid = fork())
+    {
+# 	mlog("daemonize ($$)", "forked");
+
+        # parent : print optional message and exit or return
+
+	if ($message)
+	{
+	    $message =~ s/\$pid/$pid/g;
+
+	    print($message);
+	}
+
+	if ($options->{return})
+	{
+# 	    mlog("daemonize ($$)", "forked : return");
+
+	    return $pid;
+	}
+	else
+	{
+# 	    mlog("daemonize ($$)", "forked : exit");
+
+	    exit(0);
+	}
+    }
+
+    # child : create session, optionally close shared resources.
+
+    # set default result
+
+    my $result = 1;
+
+#     mlog("daemonize ($$)", "forked : cd");
+
+    use POSIX;
+
+    POSIX::setsid();
+    chdir('/');
+
+    if ($close_files)
+    {
+# 	mlog("daemonize ($$)", "closing files");
+
+	# unlock shared resources : close all file descriptors.
+
+	use FileHandle;
+
+	my $closed = FileHandle->new(">/tmp/closed.txt");
+
+	my $files = POSIX::sysconf(POSIX::_SC_OPEN_MAX);
+
+	if ($closed)
+	{
+	    print $closed "Closing $files file handles.\n";
+	}
+
+	if ($close_files > 0)
+	{
+	    $files = $close_files;
+	}
+
+	while ($files > -1)
+	{
+	    my $result = "not done";
+
+	    if (!defined $closed || $closed->fileno() != $files)
+	    {
+		$result = POSIX::close($files) || -1;
+	    }
+
+	    if (defined $closed)
+	    {
+		print $closed "Closed file handle $files : $result\n";
+	    }
+
+	    $files--;
+	}
+
+	$closed->close();
+    }
+
+#     mlog("daemonize ($$)", "done");
+
+    return $result;
 }
 
 
@@ -2817,13 +2816,13 @@ sub implementation
 
     # 		# translate well krnown names to a routable address
 
-    # 		my $repo_server = version_control_translate_server($package_information, $::option_repo_serve);
+    # 		my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_serve);
 
     # initialize the repository if necessary
 
     # monotone
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -2863,7 +2862,7 @@ sub implementation
 
 	# monotone
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2924,7 +2923,7 @@ sub implementation
 
     # translate well known names to a routable address
 
-    my $repo_server = version_control_translate_server($package_information, $::option_repo_sync);
+    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_sync);
 
     #
     # Check to see if the repository name ends with .mtn, if not we assume it ends
@@ -2951,7 +2950,7 @@ sub implementation
 
 	# initialize the repository if necessary
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -2976,7 +2975,7 @@ sub implementation
 
 	# monotone
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3008,7 +3007,7 @@ sub implementation
 	    die "$0: *** Error: cannot sync mercurial repository, $repository_name doesn't exist";
 	}
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3026,7 +3025,7 @@ sub implementation
 	# This should work if the user has properly set up 
 	# mercurial and their ssh key.
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3108,7 +3107,7 @@ sub implementation
     #t MERCURIAL merge
     # command: hg merge
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3136,7 +3135,7 @@ sub implementation
 	   ? $package_information->{package}->{version_control}->{branch_name}
 	   : $package_name);
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3177,7 +3176,7 @@ sub implementation
 	$upstream_version_options = [ split /\s/, $::option_upstream_version, ];
     }
 
-    my $monotone_version = monotone_version();
+    my $monotone_version = Neurospaces::Developer::Operations::monotone_version();
 
     if ($monotone_version >= 0.45)
     {
@@ -3190,7 +3189,7 @@ sub implementation
 			 '&&', 'mtn', '--db', $repository_name, @$upstream_version_options, 'update', ];
     }
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3237,7 +3236,7 @@ sub implementation
 
     # create directory
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3292,7 +3291,7 @@ sub implementation
 
     # countcode on C implementation files
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3310,7 +3309,7 @@ sub implementation
 
     # countcode on perl implementation files
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3328,7 +3327,7 @@ sub implementation
 
     # countcode on python implementation files
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3346,7 +3345,7 @@ sub implementation
 
     # countcode on script files
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3364,7 +3363,7 @@ sub implementation
 
     # countcode on ndf implementation files
 
-    operation_execute
+    Neurospaces::Developer::Operations::operation_execute
 	(
 	 $operations,
 	 {
@@ -3490,7 +3489,7 @@ sub implementation
 	{
 	    # execute the information_set command
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -3552,7 +3551,7 @@ sub implementation
     {
 	# initialize the repository if necessary
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3630,7 +3629,7 @@ sub implementation
 	    die "$0: *** Error: cannot revert repository, $repository_name doesn't exist";
 	}
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3650,7 +3649,7 @@ sub implementation
 	    die "$0: *** Error: cannot revert mercurial repository, $repository_name doesn't exist";
 	}
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3735,7 +3734,7 @@ sub implementation
 
     # 		# translate well krnown names to a routable address
 
-    # 		my $repo_server = version_control_translate_server($package_information, $::option_repo_serve);
+    # 		my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_serve);
 
     # initialize the interface if necessary
 
@@ -3748,7 +3747,7 @@ sub implementation
 	       ? $package_information->{package}->{version_control}->{branch_name}
 	       : $package_name);
 
-	operation_execute
+	Neurospaces::Developer::Operations::operation_execute
 	    (
 	     $operations,
 	     {
@@ -3886,7 +3885,7 @@ sub implementation
 	{
 	    # execute the information_set command
 
-	    operation_execute
+	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
@@ -3905,6 +3904,9 @@ sub implementation
 
 
 package Neurospaces::Developer::Operations;
+
+
+use YAML;
 
 
 #
@@ -4122,7 +4124,7 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Install::Version::implementation,
 	   },
 	   {
-	    condition => \&Neurospaces::Developer::Operations::Release::MakeUninstall::implementation,
+	    condition => \&Neurospaces::Developer::Operations::Release::MakeUninstall::condition,
 	    description => \&Neurospaces::Developer::Operations::Release::MakeUninstall::description,
 	    operation => \&Neurospaces::Developer::Operations::Release::MakeUninstall::implementation,
 	   },
@@ -4167,7 +4169,293 @@ sub construct_all
 	    operation => \&Neurospaces::Developer::Operations::Repository::Synchronize::implementation,
 	   },
 	  ];
-   }
+
+    return $all_operations;
+}
+
+
+sub operation_execute
+{
+    my $operations = shift;
+
+    my $environment = shift;
+
+    my $arguments = shift;
+
+    my $description = $environment->{description};
+
+    my $keywords = defined $environment->{keywords} ? $environment->{keywords} : 1;
+
+    my $package_name = $environment->{package_name};
+
+    my $reported_arguments = [ @$arguments, ];
+
+    # if keyword expansions
+
+    if ($keywords)
+    {
+	# get monotone id
+
+	#t MONOTONE
+
+	my $monotone_id = `mtn automate get_base_revision_id`;
+
+	chomp $monotone_id;
+
+	# define release labels
+
+	#! copied from release-extract
+
+	my $log = [ `mtn log --last 1`, ];
+
+# 	my $monotone_id
+# 	    = [
+# 	       map
+# 	       {
+# 		   s/.*Revision:\s*//;
+
+# 		   s/\s*//g;
+
+# 		   $_;
+# 	       }
+# 	       grep
+# 	       {
+# 		   m'Revision:';
+# 	       }
+# 	       @$log,
+# 	      ];
+
+	my $release_label = $::option_tag;
+
+	$release_label =~ m/([^-]+)-([^-]+)?(?:-([^-]+))?/;
+
+	my $release_major = $1 || $monotone_id;
+
+	my $release_minor = $2 || 0;
+
+	my $release_micro = $3 || 0;
+
+	$arguments
+	    = [
+	       map
+	       {
+		   s/%package/$package_name/g;
+		   s/%release_major/$release_major/g;
+		   s/%release_micro/$release_micro/g;
+		   s/%release_minor/$release_minor/g;
+		   s/%version/$monotone_id/g;
+
+		   $_;
+	       }
+	       @$arguments,
+	      ];
+
+	#! to prevent monotone from interpreting the yaml as an option,
+	#! we prefix the report with something that does not look like an
+	#! option.
+
+	my $report_text = Dump( { build_report => $::build_report, }, ) . "\n";
+
+	$reported_arguments
+	    = [
+	       map
+	       {
+		   my $argument = $_;
+
+		   $argument =~ s/%report/$report_text/g;
+
+		   # replace non-LDH characters: underscores
+
+		   $argument =~ s/_/-/g;
+
+		   $argument;
+	       }
+	       @$arguments,
+	      ];
+    }
+
+    # register that we are about to do this operation for this package
+
+    push @$operations, { description => $description, package_name => $package_name, operations => $reported_arguments, };
+
+    if (!$::option_dry_run)
+    {
+	print "$0: package $package_name [" . (join ' ', map { /\s/ ? "\"$_\"" : $_ } @$arguments) . "] executing\n";
+
+	system join " ", map { /\s/ ? "\"$_\"" : $_ } @$arguments;
+
+	if ($?)
+	{
+	    # the tester -- the check makefile target -- may be allowed to fail
+
+	    if ($::option_keep_going and ((join " ", map { /\s/ ? "\"$_\"" : $_ } @$arguments) =~ /check/))
+	    {
+		#! assume system has given a good error message
+
+		print "$0: *** Error: package $package_name: $?\n";
+		print "$0: option_keep_going is set to $::option_keep_going, continuing.\n";
+	    }
+	    else
+	    {
+		#! assume system has given a good error message
+
+		die "$0: *** Error: package $package_name: $?";
+	    }
+	}
+
+	if ($::option_verbose)
+	{
+	    print "$0: package $package_name [" . (join ' ', map { /\s/ ? "\"$_\"" : $_ } @$arguments ) . "] executed \n";
+	}
+    }
+    else
+    {
+	if ($::option_verbose)
+	{
+	    print "$0: package $package_name [" . (join ' ', map { /\s/ ? "\"$_\"" : $_ } @$arguments ) . "] not executed, dry_run is $::option_dry_run\n";
+	}
+    }
+}
+
+
+# sub parse_release_tags()
+#
+# subroutine parses the version and release tags and returns them in
+# an array for executing via
+# Neurospaces::Developer::Operations::operation_execute.  The argument
+# for the make target is use to ensure that the code can be used for
+# packaging tars, rpms and debs.
+
+sub parse_release_tags
+{
+    my $make_target = shift;
+    my $major;
+    my $minor;
+    my $micro;
+    my $label;
+    my $email;
+
+    my $command;
+
+    push @$command, 'release-expand';
+
+    if ($::option_version_tag)
+    {
+	my @ver = split(/\./, $::option_version_tag);
+
+	$major = $ver[0];
+	$minor = $ver[1];
+
+	push @$command, '--major';
+	push @$command, $major;
+	push @$command, '--minor';
+	push @$command, $minor;
+
+	if ($#ver == 2)
+	{
+	    $micro = $ver[2];
+
+	    push @$command, '--micro';
+	    push @$command, $micro;
+	}
+    }
+    else
+    {
+	if ($::option_version_major)
+	{
+	    push @$command, '--major';
+	    push @$command, $::option_version_major;
+	}
+
+	if ($::option_version_minor)
+	{
+	    push @$command, '--minor';
+	    push @$command, $::option_version_minor;
+	}
+
+	if ($::option_version_micro)
+	{
+	    push @$command, '--micro';
+	    push @$command, $::option_version_micro;
+	}
+    }
+
+    if ($::option_release_tag)
+    {
+	push @$command, '--label';
+	push @$command, $::option_release_tag;
+    }
+
+    push @$command, '&&';
+    push @$command, 'make';
+    push @$command, $make_target;
+
+    return $command;
+}
+
+
+sub version_control_translate_server
+{
+    my $package_information = shift;
+
+    my $server_name = shift;
+
+    my $package_version_control_servers
+	= [
+	   {
+	    name => 'default',
+	    address => $package_information->{package}->{version_control}->{server} || 'repo-genesis3.cbi.utsa.edu',
+	   },
+	   {
+	    name => 'default2',
+	    address => $package_information->{package}->{version_control}->{backup_server} || 'repo.cbi.utsa.edu',
+	   },
+	  ];
+
+    my $global_version_control_servers
+	= [
+	   {
+	    name => 'backup_server',
+	    address => '84.193.227.151',
+	   },
+	   {
+	    name => 'mercurial_server',
+	    address => 'http://repo-genesis3.cbi.utsa.edu/hg/',
+	   },
+	  ];
+
+    my $version_control_servers
+	= [
+	   @$package_version_control_servers,
+	   @$global_version_control_servers,
+	  ];
+
+    # by default, the result is the given name
+
+    my $result = $server_name;
+
+    # loop over all known global servers
+
+    foreach my $version_control_server (@$version_control_servers)
+    {
+	# if the server name matches
+
+	if ($server_name eq $version_control_server->{name})
+	{
+	    # translate
+
+	    $result = $version_control_server->{address};
+
+	    # break loop
+
+	    last;
+	}
+    }
+
+    # return result
+
+    return $result;
+}
 
 
 1;
