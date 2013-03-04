@@ -2889,6 +2889,11 @@ sub implementation
 package Neurospaces::Developer::Operations::Repository::Synchronize;
 
 
+# sync should be converted to pull for read-only repositories / packages.
+
+# the read-only flag can be set from /etc/neurospaces/developer/build.yml
+
+
 sub condition
 {
     return $::option_repo_sync;
@@ -2897,13 +2902,33 @@ sub condition
 
 sub description
 {
-    return 'syncing repository';
+    my $package_information = shift;
+
+    if ($package_information->{package}->{read_only})
+    {
+	return 'syncing repository (note: this package is marked as read_only because ' . $package_information->{package}->{read_only} . ')';
+    }
+    else
+    {
+	return 'syncing repository';
+    }
 }
 
 
 sub implementation
 {
     my $package_information = shift;
+
+    # for read_only packages convert a sync to a pull
+
+    if ($package_information->{package}->{read_only})
+    {
+	# first make sure that the pull repository is the same as the sync repository
+
+	local $::option_repo_pull = $::option_repo_sync;
+
+	return Neurospaces::Developer::Operations::Repository::Pull::implementation($package_information);
+    }
 
     # get specific arguments
 

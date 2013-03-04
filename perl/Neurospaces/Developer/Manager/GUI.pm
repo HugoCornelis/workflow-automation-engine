@@ -728,6 +728,12 @@ sub show_dialog_new_package
 
     $ck_server->set_active(0);
 
+    my $ck_developer = Gtk2::CheckButton->new_with_label("Are you a developer of this package?");
+
+    $ck_developer->show();
+
+    $ck_developer->set_active(0);
+
     my $ck_heterarch = Gtk2::CheckButton->new_with_label("Is a Heterarch Package?");
 
     $ck_heterarch->show();
@@ -748,7 +754,8 @@ sub show_dialog_new_package
     $tbl_name->attach_defaults($hbox_server, 1,2,1,2);
 
     $tbl_name->attach_defaults($ck_server, 1,2,2,3);
-    $tbl_name->attach_defaults($ck_heterarch, 1,2,3,4);
+    $tbl_name->attach_defaults($ck_developer, 1,2,3,4);
+    $tbl_name->attach_defaults($ck_heterarch, 1,2,4,5);
 
 
 
@@ -824,6 +831,14 @@ sub show_dialog_new_package
 		 if ($ck_heterarch->get_active())
 		 {
 		     $command .= "--heterarch-set ";
+		 }
+		 else
+		 {
+		 }
+
+		 if ($ck_developer->get_active())
+		 {
+		     $command .= "--read-only 'You are not a developer of this package' ";
 		 }
 		 else
 		 {
