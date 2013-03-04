@@ -2889,11 +2889,6 @@ sub implementation
 package Neurospaces::Developer::Operations::Repository::Synchronize;
 
 
-# sync should be converted to pull for read-only repositories / packages.
-
-# the read-only flag can be set from /etc/neurospaces/developer/build.yml
-
-
 sub condition
 {
     return $::option_repo_sync;
@@ -2919,17 +2914,6 @@ sub implementation
 {
     my $package_information = shift;
 
-    # for read_only packages convert a sync to a pull
-
-    if ($package_information->{package}->{read_only})
-    {
-	# first make sure that the pull repository is the same as the sync repository
-
-	local $::option_repo_pull = $::option_repo_sync;
-
-	return Neurospaces::Developer::Operations::Repository::Pull::implementation($package_information);
-    }
-
     # get specific arguments
 
     my $description = $package_information->{description};
@@ -2939,6 +2923,22 @@ sub implementation
     my $operations = $package_information->{operations};
 
     my $package_name = $package_information->{package_name};
+
+    # for read_only packages convert a sync to a pull
+
+    if ($package_information->{package}->{read_only})
+    {
+	if ($::option_verbose > -1)
+	{
+	    print "$0: note: for package $package_name the sync operation is converted to a pull operation because " . $package_information->{package}->{read_only} . "\n";
+	}
+
+	# first make sure that the pull repository is the same as the sync repository
+
+	local $::option_repo_pull = $::option_repo_sync;
+
+	return Neurospaces::Developer::Operations::Repository::Pull::implementation($package_information);
+    }
 
     #t where does this default value come from?  Cannot work correctly?
 

@@ -838,7 +838,7 @@ sub show_dialog_new_package
 
 		 if ($ck_developer->get_active())
 		 {
-		     $command .= "--read-only 'You are not a developer of this package' ";
+		     $command .= "--read-only 'you are not a developer of this package' ";
 		 }
 		 else
 		 {
