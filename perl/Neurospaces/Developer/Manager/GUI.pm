@@ -12,15 +12,22 @@ use Gtk2::SimpleList;
 
 
 our $gtk2_package_list;
+
 our $gtk2_tb_package_information;
+
 our $tooltips = Gtk2::Tooltips->new();
 
 our $window_main;
 
 
+my $remote_server = 'localhost';
+
+my $remote_login;
+
+
 sub create
 {
-    my $packages_tags = shift;
+    my $packages_tags = Neurospaces::Developer::Packages::package_tags();
 
     my $assigned_role = $Neurospaces::Developer::Manager::assigned_role;
 
@@ -36,6 +43,7 @@ sub create
     # by the window manager, usually by the "close" option, or on the
     # titlebar), we ask it to call the delete_event () functio
     # as defined above. No data is passed to the callback function.
+
     $window->signal_connect
 	(
 	 delete_event =>
@@ -53,7 +61,8 @@ sub create
 #     # anonymous subs, so we can use one of them for one line callbacks.
 #     $window->signal_connect(destroy => sub { Gtk2->main_quit(); });
 
-    # Sets the border width of the window.
+    # sets the border width of the window.
+
     $window->set_border_width(10);
 
     my $vbox = Gtk2::VBox->new();
@@ -61,47 +70,71 @@ sub create
     $window->add($vbox);
 
     my $menubar = new Gtk2::MenuBar();
+
     $vbox->pack_start($menubar, 0,0,2 );
+
     $menubar->show();
 
-    my $file_menu = new Gtk2::Menu();
-    $file_menu->set_tearoff_state(0);
+    my $management_menu = new Gtk2::Menu();
+
+    $management_menu->set_tearoff_state(0);
 
     my $help_menu = new Gtk2::Menu();
+
     $help_menu->set_tearoff_state(0);
 
+    # create the management menu items
 
-    # Create the file menu
-    my $file_menu_new = new Gtk2::MenuItem( "Configure a _New or Foreign Package" );
-    my $file_menu_quit = new Gtk2::MenuItem( "_Quit" );
+    my $management_menu_remote = new Gtk2::MenuItem( "Connect to a _Remote Neurospaces Server" );
 
-    # Add them to the menu
-    $file_menu->append( $file_menu_new );
-    $file_menu->append( $file_menu_quit );
+    my $management_menu_new = new Gtk2::MenuItem( "Configure a _New or Foreign Package" );
 
-    # Attach the callback functions to the activate signal
-    $file_menu_new->signal_connect( 'activate', \&show_dialog_new_package );
-    $file_menu_quit->signal_connect( 'activate', sub { Gtk2->main_quit(); } );
+    my $management_menu_quit = new Gtk2::MenuItem( "_Quit" );
 
-    # We do not need the show the menu, but we do need to show the menu items
-    $file_menu_new->show();
-    $file_menu_quit->show();
+    # add them to the management menu
 
-    my $file_item = new Gtk2::MenuItem( "_File" );
-    $file_item->show();
-    $file_item->set_submenu( $file_menu );
+    $management_menu->append( $management_menu_remote );
 
-    $menubar->append( $file_item );
+    $management_menu->append( $management_menu_new );
 
-    # Create the help menu
+    $management_menu->append( $management_menu_quit );
+
+    # attach the callback functions to the activate signal
+
+    $management_menu_remote->signal_connect( 'activate', \&show_dialog_remote );
+
+    $management_menu_new->signal_connect( 'activate', \&show_dialog_new_package );
+
+    $management_menu_quit->signal_connect( 'activate', sub { Gtk2->main_quit(); } );
+
+    # we do not need the show the menu, but we do need to show the menu items
+
+    $management_menu_new->show();
+
+    $management_menu_quit->show();
+
+    my $management_item = new Gtk2::MenuItem( "_Management" );
+
+    $management_item->show();
+
+    $management_item->set_submenu( $management_menu );
+
+    $menubar->append( $management_item );
+
+    # create the help menu
+
     my $help_menu_help = new Gtk2::MenuItem( "H_elp" );
+
     my $help_menu_about = new Gtk2::MenuItem( "_About" );
 
     # add help items to the menu
+
     $help_menu->append( $help_menu_help );
+
     $help_menu->append( $help_menu_about );
 
-    #attach the callback of the menu
+    # attach the callback of the menu
+
     $help_menu_help->signal_connect
 	(
 	 'activate',
@@ -110,6 +143,7 @@ sub create
 	     &show_dialog('Help', 'See http://www.genesis-sim.org/');
 	 },
 	);
+
     $help_menu_about->signal_connect
 	(
 	 'activate',
@@ -128,11 +162,15 @@ Written in perl/Gtk
 	);
 
     # show the items
+
     $help_menu_help->show();
+
     $help_menu_about->show();
 
     my $help_item = new Gtk2::MenuItem( "_Help" );
+
     $help_item->show();
+
     $help_item->set_submenu( $help_menu );
 
     $menubar->append( $help_item );
@@ -385,7 +423,7 @@ satisfying one or more of the selected tags";
 
     $hbox->pack_start($vbox_package_information, 0, 1, 0);
 
-    my $package_information_label = Gtk2::Label->new("Package Information");
+    my $package_information_label = Gtk2::Label->new("Local Package Information and Status");
 
     my $tooltip_label = "information of a single selected package";
 
@@ -497,7 +535,14 @@ satisfying one or more of the selected tags";
 
 	    # 		 print Dumper($packages);
 
-	    my $command = "neurospaces_$operation_name " . (join ' ', @$packages) . "\n";
+	    my $server_prefix = "";
+
+	    if ($remote_server ne 'localhost')
+	    {
+		$server_prefix = "ssh " . $remote_login . '@' . $remote_server . ' ';
+	    }
+
+	    my $command = $server_prefix . "neurospaces_$operation_name " . (join ' ', @$packages) . "\n";
 
 	    print "$command\n";
 
@@ -685,9 +730,94 @@ sub show_dialog
 }
 
 
+sub show_dialog_remote
+{
+    my $dlg_remote = Gtk2::Dialog->new("Connect to a Remote Neurospaces Server", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
+
+    my $lbl_login = Gtk2::Label->new("Login Name: ");
+
+    $lbl_login->show();
+
+    my $tb_login = Gtk2::Entry->new();
+
+    $tb_login->show();
+
+    my $lbl_server = Gtk2::Label->new("Server Name: ");
+
+    $lbl_server->show();
+
+    my $tb_server = Gtk2::Entry->new();
+
+    $tb_server->show();
+
+    my $tbl_server = Gtk2::Table->new(4, 2, 1);
+
+    $tbl_server->show();
+
+    $dlg_remote->vbox->add($tbl_server);
+
+    $tbl_server->attach_defaults($lbl_login, 0,1,0,1);
+    $tbl_server->attach_defaults($tb_login, 1,2,0,1);
+
+    $tbl_server->attach_defaults($lbl_server, 0,1,1,2);
+    $tbl_server->attach_defaults($tb_server, 1,2,1,2);
+
+    $dlg_remote->signal_connect
+	(
+	 'response',
+	 sub
+	 {
+	     # $data will be the third argument given to ->signal_connect()
+
+	     my ($dlg, $response, $data) = @_;
+
+	     if ($response eq 'ok')
+	     {
+		 $remote_login = $tb_login->get_text();
+
+		 $remote_server = $tb_server->get_text();
+
+		 my $error = '';
+
+		 if ($error)
+		 {
+		     print "*** $0: *** Error: $error\n";
+		 }
+		 else
+		 {
+# 		     $command .= "--verbose ";
+
+# 		     print "*** $0: executing: $command\n";
+
+# 		     system "$command";
+
+# 		     if ($?)
+# 		     {
+# 			 print "*** $0: *** Error: Could not create component, check terminal for error messages\n";
+# 		     }
+# 		     else
+		     {
+			 $dlg->destroy();
+		     }
+		 }
+	     }
+	     else
+	     {
+		 $dlg->destroy();
+	     }
+	 },
+	 [],
+	);
+
+    $dlg_remote->run();
+
+#     $dlg_remote->destroy();
+}
+
+
 sub show_dialog_new_package
 {
-    my $dlg_package = Gtk2::Dialog->new("Create a Neurospaces Package", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
+    my $dlg_package = Gtk2::Dialog->new("Configure a New or Foreign Package", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
 
     my $lbl_name = Gtk2::Label->new("Package Name: ");
 
@@ -948,6 +1078,7 @@ sub show_dialog_new_package
 	);
 
     $dlg_package->run();
+
 #     $dlg_package->destroy();
 }
 
