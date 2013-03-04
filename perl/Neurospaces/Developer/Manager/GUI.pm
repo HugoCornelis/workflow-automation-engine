@@ -656,7 +656,11 @@ sub package_list_update
 
     @{$gtk2_package_list->{data}} = ();
 
-    foreach my $active_package (@$active_packages)
+    foreach my $active_package (sort
+				{
+				    $a->{package} cmp $b->{package}
+				}
+				@$active_packages)
     {
 	push
 	    @{$gtk2_package_list->{data}},
