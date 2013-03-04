@@ -732,7 +732,7 @@ sub package_dependency_creator
 
     if (not exists $package->{dependencies}->{$dependency})
     {
-	$package->{dependencies}->{$dependency} = 1;
+	$package->{dependencies}->{$dependency} = 'transitive closure';
     }
 }
 
