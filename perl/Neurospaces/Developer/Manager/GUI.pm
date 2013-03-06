@@ -24,10 +24,12 @@ my $remote_server = 'localhost';
 
 my $remote_login;
 
+my $packages_tags;
+
 
 sub create
 {
-    my $packages_tags = Neurospaces::Developer::Packages::package_tags();
+    $packages_tags = Neurospaces::Developer::Packages::package_tags();
 
     my $assigned_role = $Neurospaces::Developer::Manager::assigned_role;
 
@@ -906,7 +908,7 @@ sub package_dialog_show
 
 			     $build_database->{all_packages}->{$package_name}
 				 = {
-				    ($ck_developer->get_active() ? ( read_only => "set from $0" ) : ()),
+				    ($ck_developer->get_active() ? () : ( read_only => "set from $0" ) ),
 				    (scalar @$tags ? (tags => $tags) : ()),
 				    (($tb_server->get_text()
 				      or $tb_port->get_text()) ?
@@ -957,10 +959,10 @@ sub package_dialog_show
 
 		     if ($ck_developer->get_active())
 		     {
-			 $command .= "--read-only 'you are not a developer of this package' ";
 		     }
 		     else
 		     {
+			 $command .= "--read-only 'you are not a developer of this package' ";
 		     }
 
 		     if ($ck_server->get_active())
@@ -1042,7 +1044,7 @@ sub package_dialog_show
 
 			 print "*** $0: executing: $command\n";
 
-			 # 		     system "$command";
+			 system "$command";
 
 			 if ($?)
 			 {
@@ -1059,6 +1061,18 @@ sub package_dialog_show
 	     {
 		 $dlg->destroy();
 	     }
+
+	     my $active_tags = [];
+
+	     foreach my $package_tag (keys %$packages_tags)
+	     {
+		 if ($packages_tags->{$package_tag}->{checkbox}->get_active())
+		 {
+		     push @$active_tags, $package_tag;
+		 }
+	     }
+
+	     package_list_update($active_tags);
 	 },
 	 [],
 	);
