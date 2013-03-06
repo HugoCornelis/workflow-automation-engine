@@ -661,9 +661,9 @@ sub package_dialog_show
 
     if (defined $package_name)
     {
-# 	my $server = Neurospaces::Developer::Operations::version_control_translate_server( { package => $package }, '');
+	my $server = Neurospaces::Developer::Operations::version_control_translate_server( { package => $package }, 'default');
 
-	my $server = $package->{version_control}->{server};
+# 	my $server = $package->{version_control}->{server};
 
 	$tb_server->set_text($server);
     }
