@@ -101,9 +101,9 @@ sub create
 
     # attach the callback functions to the activate signal
 
-    $management_menu_remote->signal_connect( 'activate', \&show_dialog_remote );
+    $management_menu_remote->signal_connect( 'activate', \&remote_dialog_show );
 
-    $management_menu_new->signal_connect( 'activate', \&show_dialog_new_package );
+    $management_menu_new->signal_connect( 'activate', \&package_dialog_show );
 
     $management_menu_quit->signal_connect( 'activate', sub { Gtk2->main_quit(); } );
 
@@ -617,6 +617,458 @@ satisfying one or more of the selected tags";
 }
 
 
+sub package_dialog_show
+{
+    my $menu_item = shift;
+
+    my $package_name = shift;
+
+    my $package;
+
+    if (defined $package_name)
+    {
+	my $active_packages = Neurospaces::Developer::Packages::packages_all();
+
+	$package = $active_packages->{$package_name};
+    }
+
+    my $dlg_package = Gtk2::Dialog->new("Configure a New or Foreign Package", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
+
+    my $lbl_name = Gtk2::Label->new("Package Name: ");
+
+    $lbl_name->show();
+
+    my $tb_name = Gtk2::Entry->new();
+
+    $tb_name->show();
+
+    if (defined $package_name)
+    {
+	$tb_name->set_text($package_name . " (package name is read only)");
+
+	$tb_name->set_editable(0);
+    }
+
+    my $lbl_server = Gtk2::Label->new("Package Server: ");
+
+    $lbl_server->show();
+
+    my $tb_server = Gtk2::Entry->new();
+
+    $tb_server->show();
+
+    if (defined $package_name)
+    {
+	my $server = Neurospaces::Developer::Operations::version_control_translate_server( { package => $package }, '');
+
+	$tb_server->set_text($server);
+    }
+
+
+    my $lbl_port = Gtk2::Label->new(" : ");
+
+    $lbl_port->show();
+
+    my $tb_port = Gtk2::Entry->new();
+
+    $tb_port->show();
+
+    if (defined $package_name)
+    {
+	my $port = $package->{version_control}->{port_number};
+
+	$tb_port->set_text($port);
+
+	$tb_port->set_editable(0);
+    }
+
+
+    my $hbox_server = Gtk2::HBox->new();
+
+    $hbox_server->pack_start($tb_server, 0, 1, 0);
+
+    $hbox_server->pack_start($lbl_port, 0, 1, 0);
+
+    $hbox_server->pack_start($tb_port, 0, 1, 0);
+
+    $hbox_server->show();
+
+
+    my $ck_server = Gtk2::CheckButton->new_with_label("Is this PC the Main Repository Server?");
+
+#     $ck_server->show();
+
+#     $ck_server->set_editable(0);
+
+    if (defined $package_name)
+    {
+	$ck_server->set_active(0);
+    }
+    else
+    {
+	$ck_server->set_active(0);
+    }
+
+    my $ck_developer = Gtk2::CheckButton->new_with_label("Are you a developer of this package?");
+
+    $ck_developer->show();
+
+    $ck_developer->set_active(0);
+
+    if (defined $package_name)
+    {
+	$ck_developer->set_active(not $package->{read_only});
+    }
+    else
+    {
+	$ck_developer->set_active(0);
+    }
+
+    my $ck_heterarch = Gtk2::CheckButton->new_with_label("Is a Heterarch Package?");
+
+    if (defined $package_name)
+    {
+# 	$ck_heterarch->show();
+
+# 	$ck_heterarch->set_editable(0);
+    }
+    else
+    {
+	$ck_heterarch->show();
+
+	$ck_heterarch->set_active(1);
+    }
+
+    my $ck_enabled = Gtk2::CheckButton->new_with_label("Should this package be enabled?");
+
+    $ck_enabled->show();
+
+    $ck_enabled->set_active(1);
+
+    if (defined $package_name)
+    {
+	$ck_enabled->set_active(not $package->{disabled});
+    }
+    else
+    {
+	$ck_enabled->set_active(1);
+    }
+
+    my $tbl_name = Gtk2::Table->new(5, 2, 1);
+
+    $tbl_name->show();
+
+    $dlg_package->vbox->add($tbl_name);
+
+    $tbl_name->attach_defaults($lbl_name, 0,1,0,1);
+    $tbl_name->attach_defaults($tb_name, 1,2,0,1);
+
+    $tbl_name->attach_defaults($lbl_server, 0,1,1,2);
+    $tbl_name->attach_defaults($hbox_server, 1,2,1,2);
+
+    $tbl_name->attach_defaults($ck_server, 1,2,2,3);
+    $tbl_name->attach_defaults($ck_developer, 1,2,3,4);
+    $tbl_name->attach_defaults($ck_heterarch, 1,2,4,5);
+    $tbl_name->attach_defaults($ck_enabled, 1,2,5,6);
+
+
+
+    my $lbl_tag1 = Gtk2::Label->new("Package Tag 1: ");
+
+    $lbl_tag1->show();
+
+    my $tb_tag1 = Gtk2::Entry->new();
+
+    $tb_tag1->show();
+
+    if (defined $package_name)
+    {
+	$tb_tag1->set_text(defined $package->{tags}->[0] ? $package->{tags}->[0] : '');
+    }
+
+    my $lbl_tag2 = Gtk2::Label->new("Optional Package Tag 2: ");
+
+    $lbl_tag2->show();
+
+    my $tb_tag2 = Gtk2::Entry->new();
+
+    $tb_tag2->show();
+
+    if (defined $package_name)
+    {
+	$tb_tag2->set_text(defined $package->{tags}->[1] ? $package->{tags}->[1] : '');
+    }
+
+    my $lbl_tag3 = Gtk2::Label->new("Optional Package Tag 3: ");
+
+    $lbl_tag3->show();
+
+    my $tb_tag3 = Gtk2::Entry->new();
+
+    $tb_tag3->show();
+
+    if (defined $package_name)
+    {
+	$tb_tag3->set_text(defined $package->{tags}->[2] ? $package->{tags}->[2] : '');
+    }
+
+    my $tbl_tags = Gtk2::Table->new(3, 2, 1);
+
+    $dlg_package->vbox->add($tbl_tags);
+
+    $tbl_tags->show();
+
+    $tbl_tags->attach_defaults($lbl_tag1, 0,1,0,1);
+    $tbl_tags->attach_defaults($tb_tag1, 1,2,0,1);
+
+    $tbl_tags->attach_defaults($lbl_tag2, 0,1,1,2);
+    $tbl_tags->attach_defaults($tb_tag2, 1,2,1,2);
+
+    $tbl_tags->attach_defaults($lbl_tag3, 0,1,2,3);
+    $tbl_tags->attach_defaults($tb_tag3, 1,2,2,3);
+
+
+    $dlg_package->signal_connect
+	(
+	 'response',
+	 sub
+	 {
+	     # $data will be the third argument given to ->signal_connect()
+
+	     my ($dlg, $response, $data) = @_;
+
+	     if ($response eq 'ok')
+	     {
+		 if ($package)
+		 {
+		     print "$0: reconfiguring existing package $package_name\n";
+
+		     # assume we don't have to overwrite the local configuration
+
+		     my $write_configuration = '';
+
+		     # first use the standard developer APIs to check if this configuration is valid
+
+		     my $all_packages = $Neurospaces::Developer::Configurator::default_packages;
+
+		     $all_packages->{$package_name}
+			 = {
+			    ($ck_heterarch->get_active() ? (dependencies => { heterarch => 'configured using $0', }) : ()),
+			    version_control => {
+						port_number => $tb_port->get_text(),
+						server => $tb_server->get_text(),
+					       },
+			   };
+
+		     my $error = Neurospaces::Developer::Configurator::packages_validate($all_packages);
+
+		     if (defined $error)
+		     {
+			 print "$0: *** Error: for component $package_name: $error";
+		     }
+		     else
+		     {
+			 #t note: copied from
+			 #t neurospaces_new_component, the functionality
+			 #t to reconfigure a package should be moved to
+			 #t the neurospaces_new_component script to
+			 #t allow for remote reconfiguration.
+
+			 # this configuration is valid, register that we have to write the new configuration
+
+			 $write_configuration = " option_repository_server";
+
+			 # if the package was marked as read-only
+
+			 if ($ck_developer->get_active())
+			 {
+			     # make sure the configuration is overwritten.
+
+			     $write_configuration .= " option_read_only";
+			 }
+
+			 if ($write_configuration)
+			 {
+			     # write the new configuration to the global configuration file
+
+			     my $build_database_filename = "/etc/neurospaces/developer/build.yml";
+
+			     use YAML;
+
+			     my $build_database = YAML::LoadFile($build_database_filename);
+
+			     my $tags
+				 = [
+				    $tb_tag1->get_text() ? $tb_tag1->get_text() : (),
+				    $tb_tag2->get_text() ? $tb_tag2->get_text() : (),
+				    $tb_tag3->get_text() ? $tb_tag3->get_text() : (),
+				   ];
+
+			     $build_database->{all_packages}->{$package_name}
+				 = {
+				    ($ck_developer->get_active() ? ( read_only => "set from $0" ) : ()),
+				    (scalar @$tags ? (tags => $tags) : ()),
+				    (($tb_server->get_text()
+				      or $tb_port->get_text()) ?
+				     (
+				      version_control => {
+							  port_number => $tb_server->get_text(),
+							  server => $tb_port->get_text(),
+							 },
+				     )
+				     : ()),
+				   };
+
+			     YAML::DumpFile($build_database_filename, $build_database);
+			 }
+		     }
+
+		     $dlg->destroy();
+		 }
+		 else
+		 {
+		     print "$0: configuring a new package $package_name\n";
+
+		     my $error;
+
+		     my $command = "neurospaces_new_component ";
+
+		     my $package_name = $tb_name->get_text();
+
+		     if (not $package_name)
+		     {
+			 if (not $error)
+			 {
+			     $error = "no package name given";
+			 }
+		     }
+		     else
+		     {
+			 $command .= "--component-name '$package_name' ";
+		     }
+
+		     if ($ck_heterarch->get_active())
+		     {
+			 $command .= "--heterarch-set ";
+		     }
+		     else
+		     {
+		     }
+
+		     if ($ck_developer->get_active())
+		     {
+			 $command .= "--read-only 'you are not a developer of this package' ";
+		     }
+		     else
+		     {
+		     }
+
+		     if ($ck_server->get_active())
+		     {
+			 $command .= "--as-server ";
+		     }
+		     else
+		     {
+		     }
+
+		     my $server = $tb_server->get_text();
+
+		     if (not $server)
+		     {
+			 if (not $error)
+			 {
+			     $error = "no server name given";
+			 }
+		     }
+		     else
+		     {
+		     }
+
+		     my $port = $tb_port->get_text();
+
+		     if (not $port)
+		     {
+			 if (not $error)
+			 {
+			     $error = "no server port given";
+			 }
+		     }
+		     else
+		     {
+			 $command .= "--repository-server '$server:$port' ";
+		     }
+
+		     my $tag1 = $tb_tag1->get_text();
+
+		     if (not $tag1)
+		     {
+			 if (not $error)
+			 {
+			     $error = "the first tag name must be defined";
+			 }
+		     }
+		     else
+		     {
+			 $command .= "--package-tags '$tag1' ";
+		     }
+
+		     my $tag2 = $tb_tag2->get_text();
+
+		     if (not $tag2)
+		     {
+		     }
+		     else
+		     {
+			 $command .= "--package-tags '$tag2' ";
+		     }
+
+		     my $tag3 = $tb_tag3->get_text();
+
+		     if (not $tag3)
+		     {
+		     }
+		     else
+		     {
+			 $command .= "--package-tags '$tag3' ";
+		     }
+
+		     if ($error)
+		     {
+			 print "*** $0: *** Error: $error\n";
+		     }
+		     else
+		     {
+			 $command .= "--verbose ";
+
+			 print "*** $0: executing: $command\n";
+
+			 # 		     system "$command";
+
+			 if ($?)
+			 {
+			     print "*** $0: *** Error: Could not create component, check terminal for error messages\n";
+			 }
+			 else
+			 {
+			     $dlg->destroy();
+			 }
+		     }
+		 }
+	     }
+	     else
+	     {
+		 $dlg->destroy();
+	     }
+	 },
+	 [],
+	);
+
+    $dlg_package->run();
+
+#     $dlg_package->destroy();
+}
+
+
 =head4 sub package_list_cursor_changed()
 
 Update the gtk2_tb_package_information widget with information about
@@ -674,9 +1126,9 @@ sub package_list_row_activated
 
     my $package_name = $row_ref->[0];
 
-    system "cd '$ENV{HOME}/neurospaces_project/$package_name/source/snapshots/0' && mtn-browse & ";
+#     system "cd '$ENV{HOME}/neurospaces_project/$package_name/source/snapshots/0' && mtn-browse & ";
 
-#     window_package_create($package_name);
+    package_dialog_show(undef, $package_name);
 }
 
 
@@ -716,21 +1168,7 @@ sub package_list_update
 }
 
 
-sub show_dialog
-{
-    my ($title, $message) = @_;
-
-    my $dialog = Gtk2::MessageDialog->new($window_main, 'destroy-with-parent', 'info', 'ok', $message);
-
-    $dialog->set_title($title);
-
-    $dialog->run();
-
-    $dialog->destroy();
-}
-
-
-sub show_dialog_remote
+sub remote_dialog_show
 {
     my $dlg_remote = Gtk2::Dialog->new("Connect to a Remote Neurospaces Server", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
 
@@ -815,271 +1253,17 @@ sub show_dialog_remote
 }
 
 
-sub show_dialog_new_package
+sub show_dialog
 {
-    my $dlg_package = Gtk2::Dialog->new("Configure a New or Foreign Package", $window_main, 'destroy-with-parent','gtk-ok' => 'ok', 'gtk-cancel' => 'cancel');
+    my ($title, $message) = @_;
 
-    my $lbl_name = Gtk2::Label->new("Package Name: ");
+    my $dialog = Gtk2::MessageDialog->new($window_main, 'destroy-with-parent', 'info', 'ok', $message);
 
-    $lbl_name->show();
+    $dialog->set_title($title);
 
-    my $tb_name = Gtk2::Entry->new();
+    $dialog->run();
 
-    $tb_name->show();
-
-
-    my $lbl_server = Gtk2::Label->new("Package Server: ");
-
-    $lbl_server->show();
-
-    my $tb_server = Gtk2::Entry->new();
-
-    $tb_server->show();
-
-
-    my $lbl_port = Gtk2::Label->new(" : ");
-
-    $lbl_port->show();
-
-    my $tb_port = Gtk2::Entry->new();
-
-    $tb_port->show();
-
-    my $hbox_server = Gtk2::HBox->new();
-
-    $hbox_server->pack_start($tb_server, 0, 1, 0);
-
-    $hbox_server->pack_start($lbl_port, 0, 1, 0);
-
-    $hbox_server->pack_start($tb_port, 0, 1, 0);
-
-    $hbox_server->show();
-
-
-    my $ck_server = Gtk2::CheckButton->new_with_label("Is this PC the Main Repository Server?");
-
-    $ck_server->show();
-
-    $ck_server->set_active(0);
-
-    my $ck_developer = Gtk2::CheckButton->new_with_label("Are you a developer of this package?");
-
-    $ck_developer->show();
-
-    $ck_developer->set_active(0);
-
-    my $ck_heterarch = Gtk2::CheckButton->new_with_label("Is a Heterarch Package?");
-
-    $ck_heterarch->show();
-
-    $ck_heterarch->set_active(1);
-
-
-    my $tbl_name = Gtk2::Table->new(4, 2, 1);
-
-    $tbl_name->show();
-
-    $dlg_package->vbox->add($tbl_name);
-
-    $tbl_name->attach_defaults($lbl_name, 0,1,0,1);
-    $tbl_name->attach_defaults($tb_name, 1,2,0,1);
-
-    $tbl_name->attach_defaults($lbl_server, 0,1,1,2);
-    $tbl_name->attach_defaults($hbox_server, 1,2,1,2);
-
-    $tbl_name->attach_defaults($ck_server, 1,2,2,3);
-    $tbl_name->attach_defaults($ck_developer, 1,2,3,4);
-    $tbl_name->attach_defaults($ck_heterarch, 1,2,4,5);
-
-
-
-    my $lbl_tag1 = Gtk2::Label->new("Package Tag 1: ");
-
-    $lbl_tag1->show();
-
-    my $tb_tag1 = Gtk2::Entry->new();
-
-    $tb_tag1->show();
-
-    my $lbl_tag2 = Gtk2::Label->new("Optional Package Tag 2: ");
-
-    $lbl_tag2->show();
-
-    my $tb_tag2 = Gtk2::Entry->new();
-
-    $tb_tag2->show();
-
-    my $lbl_tag3 = Gtk2::Label->new("Optional Package Tag 3: ");
-
-    $lbl_tag3->show();
-
-    my $tb_tag3 = Gtk2::Entry->new();
-
-    $tb_tag3->show();
-
-    my $tbl_tags = Gtk2::Table->new(3, 2, 1);
-
-    $dlg_package->vbox->add($tbl_tags);
-
-    $tbl_tags->show();
-
-    $tbl_tags->attach_defaults($lbl_tag1, 0,1,0,1);
-    $tbl_tags->attach_defaults($tb_tag1, 1,2,0,1);
-
-    $tbl_tags->attach_defaults($lbl_tag2, 0,1,1,2);
-    $tbl_tags->attach_defaults($tb_tag2, 1,2,1,2);
-
-    $tbl_tags->attach_defaults($lbl_tag3, 0,1,2,3);
-    $tbl_tags->attach_defaults($tb_tag3, 1,2,2,3);
-
-
-    $dlg_package->signal_connect
-	(
-	 'response',
-	 sub
-	 {
-	     # $data will be the third argument given to ->signal_connect()
-
-	     my ($dlg, $response, $data) = @_;
-
-	     if ($response eq 'ok')
-	     {
-		 my $error;
-
-		 my $command = "neurospaces_new_component ";
-
-		 my $package_name = $tb_name->get_text();
-
-		 if (not $package_name)
-		 {
-		     if (not $error)
-		     {
-			 $error = "no package name given";
-		     }
-		 }
-		 else
-		 {
-		     $command .= "--component-name '$package_name' ";
-		 }
-
-		 if ($ck_heterarch->get_active())
-		 {
-		     $command .= "--heterarch-set ";
-		 }
-		 else
-		 {
-		 }
-
-		 if ($ck_developer->get_active())
-		 {
-		     $command .= "--read-only 'you are not a developer of this package' ";
-		 }
-		 else
-		 {
-		 }
-
-		 if ($ck_server->get_active())
-		 {
-		     $command .= "--as-server ";
-		 }
-		 else
-		 {
-		 }
-
-		 my $server = $tb_server->get_text();
-
-		 if (not $server)
-		 {
-		     if (not $error)
-		     {
-			 $error = "no server name given";
-		     }
-		 }
-		 else
-		 {
-		 }
-
-		 my $port = $tb_port->get_text();
-
-		 if (not $port)
-		 {
-		     if (not $error)
-		     {
-			 $error = "no server port given";
-		     }
-		 }
-		 else
-		 {
-		     $command .= "--repository-server '$server:$port' ";
-		 }
-
-		 my $tag1 = $tb_tag1->get_text();
-
-		 if (not $tag1)
-		 {
-		     if (not $error)
-		     {
-			 $error = "the first tag name must be defined";
-		     }
-		 }
-		 else
-		 {
-		     $command .= "--package-tags '$tag1' ";
-		 }
-
-		 my $tag2 = $tb_tag2->get_text();
-
-		 if (not $tag2)
-		 {
-		 }
-		 else
-		 {
-		     $command .= "--package-tags '$tag2' ";
-		 }
-
-		 my $tag3 = $tb_tag3->get_text();
-
-		 if (not $tag3)
-		 {
-		 }
-		 else
-		 {
-		     $command .= "--package-tags '$tag3' ";
-		 }
-
-		 if ($error)
-		 {
-		     print "*** $0: *** Error: $error\n";
-		 }
-		 else
-		 {
-		     $command .= "--verbose ";
-
-		     print "*** $0: executing: $command\n";
-
-		     system "$command";
-
-		     if ($?)
-		     {
-			 print "*** $0: *** Error: Could not create component, check terminal for error messages\n";
-		     }
-		     else
-		     {
-			 $dlg->destroy();
-		     }
-		 }
-	     }
-	     else
-	     {
-		 $dlg->destroy();
-	     }
-	 },
-	 [],
-	);
-
-    $dlg_package->run();
-
-#     $dlg_package->destroy();
+    $dialog->destroy();
 }
 
 
@@ -1132,53 +1316,6 @@ sub show_dialog_tree
     $list->show();
     $dlg_tree->run();
     $dlg_tree->destroy();
-}
-
-
-=head4 sub window_package_create()
-
-Open a window with detailed information about the package that was
-activated in the package list.
-
-=cut
-
-sub window_package_create
-{
-    my $package_name = shift;
-
-    my $window = Gtk2::Window->new('toplevel');
-
-    $window->set_title("Neurospaces Developer Management Console: package $package_name");
-
-    $window->set_default_size(800, 550);
-
-    # When the window is given the "delete_event" signal (this is given
-    # by the window manager, usually by the "close" option, or on the
-    # titlebar), we ask it to call the delete_event () functio
-    # as defined above. No data is passed to the callback function.
-    $window->signal_connect
-	(
-	 delete_event =>
-	 sub
-	 {
-	     $window->destroy();
-	 },
-	);
-
-    # Sets the border width of the window.
-    $window->set_border_width(10);
-
-    my $hbox = Gtk2::HBox->new();
-
-    $window->add($hbox);
-
-    # left: tag check boxes
-
-    my $vbox_tags = Gtk2::VBox->new(0, 6);
-
-    $hbox->pack_start($vbox_tags, 0, 1, 0);
-
-    $window->show_all();
 }
 
 
