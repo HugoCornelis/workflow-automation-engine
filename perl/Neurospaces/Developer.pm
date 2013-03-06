@@ -967,6 +967,14 @@ our $operations
 		   },
        },
        {
+	name => 'create_directories',
+	targets => {
+		    content_developer => 1,
+		    content_user => 1,
+		    software_developer => 1,
+		   },
+       },
+       {
 	name => 'upgrade',
 	targets => {
 		    content_developer => 1,
