@@ -496,7 +496,7 @@ satisfying one or more of the selected tags";
 		{
 		    print "$command\n";
 
-		    system "$command";
+		    try_command("$command", { verbose => $::option_verbose, }, );
 
 		    # 		 my $output = `$command >/tmp/output 2>&1 &`;
 
@@ -537,18 +537,11 @@ satisfying one or more of the selected tags";
 
 	    # 		 print Dumper($packages);
 
-	    my $server_prefix = "";
-
-	    if ($remote_server ne 'localhost')
-	    {
-		$server_prefix = "ssh " . $remote_login . '@' . $remote_server . ' ';
-	    }
-
-	    my $command = $server_prefix . "neurospaces_$operation_name " . (join ' ', @$packages) . "\n";
+	    my $command = "neurospaces_$operation_name " . (join ' ', @$packages) . "\n";
 
 	    print "$command\n";
 
-	    system "$command";
+	    try_command("$command", { verbose => $::option_verbose, }, );
 
 	    # 		 my $output = `$command >/tmp/output 2>&1 &`;
 
@@ -613,7 +606,7 @@ satisfying one or more of the selected tags";
 
     package_list_update($active_tags);
 
-#     system "touch /tmp/output && tail -f /tmp/output &";
+#     try_command("touch /tmp/output && tail -f /tmp/output &", { verbose => $::option_verbose, }, );
 
     Gtk2->main();
 }
@@ -1046,7 +1039,7 @@ sub package_dialog_show
 
 			 print "*** $0: executing: $command\n";
 
-			 system "$command";
+			 try_command("$command", { verbose => $::option_verbose, }, );
 
 			 if ($?)
 			 {
@@ -1142,7 +1135,7 @@ sub package_list_row_activated
 
     my $package_name = $row_ref->[0];
 
-#     system "cd '$ENV{HOME}/neurospaces_project/$package_name/source/snapshots/0' && mtn-browse & ";
+#     try_command("cd '$ENV{HOME}/neurospaces_project/$package_name/source/snapshots/0' && mtn-browse & ", { verbose => $::option_verbose, }, );
 
     package_dialog_show(undef, $package_name);
 }
@@ -1243,7 +1236,7 @@ sub remote_dialog_show
 
 # 		     print "*** $0: executing: $command\n";
 
-# 		     system "$command";
+#  		     try_command("$command", { verbose => $::option_verbose, }, );
 
 # 		     if ($?)
 # 		     {
@@ -1333,6 +1326,70 @@ sub show_dialog_tree
     $dlg_tree->run();
     $dlg_tree->destroy();
 }
+
+
+sub try_command
+{
+    my $command = shift;
+
+    my $server_prefix = "";
+
+    if ($remote_server ne 'localhost')
+    {
+	$server_prefix = "ssh " . $remote_login . '@' . $remote_server . ' ';
+    }
+
+    $command = $server_prefix . $command;
+
+    system "$command";
+
+    return;
+
+    my $options = shift;
+
+    my $verbose = $options->{verbose};
+
+    my $allow_fail = $options->{allow_fail};
+
+    if ($verbose)
+    {
+	print "---\n";
+	print "$0: trying to $command\n";
+    }
+
+    my $output_path = $::option_output_path || "/tmp/$::program_name.log";
+
+    #! $command executed in a subshell such that redirection applies
+    #! to all commands.
+
+    my $date_time = localtime();
+
+    system "( echo '---\\n$date_time:\\n' && $command ) >>$output_path 2>&1";
+
+    if ($?)
+    {
+	if ($allow_fail)
+	{
+	    system "echo >>$output_path 2>&1 $0: *** Error: $command failed with $?\n";
+	}
+	else
+	{
+# 	    report_error($command, $?);
+	}
+    }
+}
+
+
+# sub report_error
+# {
+#     my $command = shift;
+
+#     my $error_code = shift;
+
+#     try_mail("$::program_name: *** Error", "$0: $command returned $error_code");
+
+#     die "$0: $command returned $error_code";
+# }
 
 
 1;
