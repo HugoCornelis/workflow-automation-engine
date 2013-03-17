@@ -851,6 +851,7 @@ sub package_dialog_show
 		     $all_packages->{$package_name}
 			 = {
 			    ($ck_heterarch->get_active() ? (dependencies => { heterarch => 'configured using $0', }) : ()),
+			    ($ck_enabled->get_active() ? (disabled => { 'configured from $0', }) : ()),
 			    version_control => {
 						port_number => $tb_port->get_text(),
 						server => $tb_server->get_text(),
