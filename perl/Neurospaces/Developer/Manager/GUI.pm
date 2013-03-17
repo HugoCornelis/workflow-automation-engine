@@ -115,7 +115,7 @@ sub create
 
     $management_menu_quit->show();
 
-    my $management_item = new Gtk2::MenuItem( "_Management" );
+    my $management_item = new Gtk2::MenuItem( "_Manager" );
 
     $management_item->show();
 
