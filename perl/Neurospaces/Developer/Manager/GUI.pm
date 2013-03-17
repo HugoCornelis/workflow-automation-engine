@@ -26,6 +26,8 @@ my $remote_login;
 
 my $packages_tags;
 
+my $package_include_disabled;
+
 
 sub create
 {
@@ -270,6 +272,40 @@ Written in perl/Gtk
     $tooltips->set_tip($tags_none_button, $tooltip_tags_none);
 
     $vbox_tags->pack_start($tags_none_button, 0, 1, 0);
+
+    my $cb_disabled = Gtk2::CheckButton->new('Show Packages that are currently Disabled');
+
+    $cb_disabled->set_active(0);
+
+    $cb_disabled->signal_connect
+	(
+	 toggled =>
+	 sub
+	 {
+	     my $self = shift;
+
+	     $package_include_disabled = $cb_disabled->get_active();
+
+	     my $active_tags = [];
+
+	     foreach my $package_tag (keys %$packages_tags)
+	     {
+		 if ($packages_tags->{$package_tag}->{checkbox}->get_active())
+		 {
+		     push @$active_tags, $package_tag;
+		 }
+	     }
+
+	     package_list_update($active_tags);
+	 },
+	 $cb_disabled,
+	);
+
+    my $tooltip = "include disabled packages";
+
+    $tooltips->set_tip($cb_disabled, $tooltip);
+
+    $vbox_tags->pack_start($cb_disabled, 0, 1, 0);
 
     foreach my $tag (sort keys %$packages_tags)
     {
@@ -738,7 +774,7 @@ sub package_dialog_show
 
     my $ck_enabled = Gtk2::CheckButton->new_with_label("Should this package be enabled?");
 
-    $ck_enabled->show();
+#     $ck_enabled->show();
 
     $ck_enabled->set_active(1);
 
@@ -768,6 +804,20 @@ sub package_dialog_show
     $tbl_name->attach_defaults($ck_heterarch, 1,2,4,5);
     $tbl_name->attach_defaults($ck_enabled, 1,2,5,6);
 
+
+
+    my $lbl_disabled = Gtk2::Label->new("Disabled because: ");
+
+    $lbl_disabled->show();
+
+    my $tb_disabled = Gtk2::Entry->new();
+
+    $tb_disabled->show();
+
+    if (defined $package_name)
+    {
+	$tb_disabled->set_text($package->{disabled});
+    }
 
 
     my $lbl_tag1 = Gtk2::Label->new("Package Tag 1: ");
@@ -809,20 +859,23 @@ sub package_dialog_show
 	$tb_tag3->set_text(defined $package->{tags}->[2] ? $package->{tags}->[2] : '');
     }
 
-    my $tbl_tags = Gtk2::Table->new(3, 2, 1);
+    my $tbl_tags = Gtk2::Table->new(5, 2, 1);
 
     $dlg_package->vbox->add($tbl_tags);
 
     $tbl_tags->show();
 
-    $tbl_tags->attach_defaults($lbl_tag1, 0,1,0,1);
-    $tbl_tags->attach_defaults($tb_tag1, 1,2,0,1);
+    $tbl_tags->attach_defaults($lbl_disabled, 0,1,0,1);
+    $tbl_tags->attach_defaults($tb_disabled, 1,2,0,1);
 
-    $tbl_tags->attach_defaults($lbl_tag2, 0,1,1,2);
-    $tbl_tags->attach_defaults($tb_tag2, 1,2,1,2);
+    $tbl_tags->attach_defaults($lbl_tag1, 0,1,2,3);
+    $tbl_tags->attach_defaults($tb_tag1, 1,2,2,3);
 
-    $tbl_tags->attach_defaults($lbl_tag3, 0,1,2,3);
-    $tbl_tags->attach_defaults($tb_tag3, 1,2,2,3);
+    $tbl_tags->attach_defaults($lbl_tag2, 0,1,3,4);
+    $tbl_tags->attach_defaults($tb_tag2, 1,2,3,4);
+
+    $tbl_tags->attach_defaults($lbl_tag3, 0,1,4,5);
+    $tbl_tags->attach_defaults($tb_tag3, 1,2,4,5);
 
 
     $dlg_package->signal_connect
@@ -851,7 +904,7 @@ sub package_dialog_show
 		     $all_packages->{$package_name}
 			 = {
 			    ($ck_heterarch->get_active() ? (dependencies => { heterarch => 'configured using $0', }) : ()),
-			    ($ck_enabled->get_active() ? () : ( disabled => "disabled from $0", )),
+			    ($tb_disabled->get_text() ? ( disabled => "disabled from $0, " . $tb_disabled->get_text(), ) : ()),
 			    version_control => {
 						port_number => $tb_port->get_text(),
 						server => $tb_server->get_text(),
@@ -905,7 +958,7 @@ sub package_dialog_show
 			     $build_database->{all_packages}->{$package_name}
 				 = {
 				    ($ck_developer->get_active() ? () : ( read_only => "set from $0" ) ),
-				    ($ck_enabled->get_active() ? () : ( disabled => "disabled from $0" )),
+				    ($tb_disabled->get_text() ? ( disabled => "disabled from $0, " . $tb_disabled->get_text(), ) : ()),
 				    (scalar @$tags ? (tags => $tags) : ()),
 				    (($tb_server->get_text()
 				      or $tb_port->get_text()) ?
@@ -1156,7 +1209,7 @@ sub package_list_update
 {
     my $active_tags = shift;
 
-    my $active_packages = Neurospaces::Developer::Packages::packages_by_tags($active_tags);
+    my $active_packages = Neurospaces::Developer::Packages::packages_by_tags($active_tags, $package_include_disabled);
 
     # note: working with references would be disconnecting the gtk2
     # internal list from its perl equivalent.  we must use direct

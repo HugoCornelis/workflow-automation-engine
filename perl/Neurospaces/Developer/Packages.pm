@@ -32,6 +32,8 @@ sub packages_by_tags
 {
     my $active_tags = shift;
 
+    my $package_include_disabled = shift;
+
     if (scalar @$active_tags)
     {
     }
@@ -40,7 +42,7 @@ sub packages_by_tags
 	push @$active_tags, "ZZZZZZZZ";
     }
 
-    my $command = "neurospaces_repositories " . (join ' ', map  { '--package-tags "' . $_ . '"' } @$active_tags);
+    my $command = "neurospaces_repositories " . (join ' ', map  { '--package-tags "' . $_ . '"' } @$active_tags) . ($package_include_disabled ? " --package-disabled-included" : "");
 
     print "$command\n";
 
