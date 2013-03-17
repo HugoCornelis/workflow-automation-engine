@@ -301,9 +301,9 @@ Written in perl/Gtk
 	 $cb_disabled,
 	);
 
-    my $tooltip = "include disabled packages";
+    my $tooltip_disabled = "Show disabled packages in the available packages list";
 
-    $tooltips->set_tip($cb_disabled, $tooltip);
+    $tooltips->set_tip($cb_disabled, $tooltip_disabled);
 
     $vbox_tags->pack_start($cb_disabled, 0, 1, 0);
 
@@ -497,9 +497,9 @@ satisfying one or more of the selected tags";
 
     my $operations_label = Gtk2::Label->new("Package Operations");
 
-    my $tooltip = "run operations on selected packages";
+    my $tooltip_operations = "run operations on selected packages";
 
-    $tooltips->set_tip($operations_label, $tooltip);
+    $tooltips->set_tip($operations_label, $tooltip_operations);
 
     $vbox_operations->pack_start($operations_label, 0, 1, 0);
 
