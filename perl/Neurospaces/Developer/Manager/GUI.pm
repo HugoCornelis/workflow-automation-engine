@@ -964,8 +964,8 @@ sub package_dialog_show
 				      or $tb_port->get_text()) ?
 				     (
 				      version_control => {
-							  port_number => $tb_server->get_text(),
-							  server => $tb_port->get_text(),
+							  port_number => $tb_port->get_text(),
+							  server => $tb_server->get_text(),
 							 },
 				     )
 				     : ()),
