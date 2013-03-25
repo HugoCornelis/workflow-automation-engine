@@ -816,7 +816,7 @@ sub package_dialog_show
 
     if (defined $package_name)
     {
-	$tb_disabled->set_text($package->{disabled});
+	$tb_disabled->set_text($package->{disabled} || '');
     }
 
 
