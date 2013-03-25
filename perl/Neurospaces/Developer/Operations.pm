@@ -2806,12 +2806,12 @@ sub implementation
 
     if (not -f $repository_name and not -d $repository_name)
     {
-	die "$0: *** Error: cannot serve repository, repository_name not set";
+	die "$0: *** Error: cannot serve repository of package $package_name, repository_name not set";
     }
 
     if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
     {
-	die "$0: *** Error: cannot serve repository, port_number not set";
+	die "$0: *** Error: cannot serve repository of package $package_name, port_number not set";
     }
 
     # 		# translate well krnown names to a routable address
