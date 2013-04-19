@@ -241,6 +241,7 @@ sub default_packages_read()
 	   heccer => {
 		      dependencies => {
 				       'model-container' => 'only for compilation',
+				       experiment => 'perfectclamp is needed for running the python tests',
 				      },
 		      description => 'a single neuron solver',
 		      directory => "$ENV{HOME}/neurospaces_project/heccer/source/snapshots/0",
