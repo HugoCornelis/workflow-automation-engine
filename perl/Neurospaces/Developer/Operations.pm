@@ -1454,13 +1454,13 @@ sub condition
 
 sub description
 {
-    return [ 'make', 'clean', ]
+    return 'cleaning the workspace, clean-local target called first to make sure that catalyst derived packages have all the required makefiles.';
 }
 
 
 sub implementation
 {
-    return [ 'make', 'clean', ],
+    return [ 'make', 'clean-local', '&&', 'make', 'clean', ]
 }
 
 
