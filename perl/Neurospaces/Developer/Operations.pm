@@ -2564,92 +2564,119 @@ sub implementation
 	= $package_information->{package}->{version_control}->{repository}
 	    || $directory . '/' . $package_name . '/' . 'mtn';
 
-    my $port_number = $package_information->{package}->{version_control}->{port_number};
-
-    # create repository directory
-
-    my $repository_directory = $repository_name;
-
-    $repository_directory =~ s((.*)/.*)($1);
-
-    Neurospaces::Developer::Operations::operation_execute
-	(
-	 $operations,
-	 {
-	  description => "$description (creating repository directory)",
-
-	  #t always zero here, but I guess this simply depends on working in client mode ?
-
-	  keywords => 0,
-	  package_name => $package_name,
-	 },
-	 [
-	  'mkdir', '-p', $repository_directory,
-	 ],
-	);
-
-    # initialize the repository if necessary
-
-    # monotone
-
-    Neurospaces::Developer::Operations::operation_execute
-	(
-	 $operations,
-	 {
-	  description => "$description: (initializing the repository)",
-
-	  #t always zero here, but I guess this simply depends on working in client mode ?
-
-	  keywords => 0,
-	  package_name => $package_name,
-	 },
-	 [
-	  'test', '-f', $repository_name, '||', 'mtn', '--db', $repository_name, 'db', 'init',
-	 ],
-	);
-
-    # if not enough information for pushing
-
-    if (not -f $repository_name and not -d $repository_name)
-    {
-	die "$0: *** Error: cannot push repository, repository_name not set";
-    }
-
-    if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
-    {
-	die "$0: *** Error: cannot push repository, port_number not set";
-    }
-
     # translate well known names to a routable address
 
     my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_push);
 
-    my $branch_name
-	= (exists $package_information->{package}->{version_control}->{branch_name}
-	   ? $package_information->{package}->{version_control}->{branch_name}
-	   : $package_name);
+    if ($repository_name =~ m/^.*\.mtn$/)
+    {
+	my $port_number = $package_information->{package}->{version_control}->{port_number};
 
-    # push the repository
+	# create repository directory
 
-    Neurospaces::Developer::Operations::operation_execute
-	(
-	 $operations,
-	 {
-	  description => $description,
+	my $repository_directory = $repository_name;
 
-	  #t always zero here, but I guess this simply depends on working in client mode ?
+	$repository_directory =~ s((.*)/.*)($1);
 
-	  keywords => 0,
-	  package_name => $package_name,
-	 },
-	 [
-	  'mtn', '--db', $repository_name, 'push', '--ticker=count', "$repo_server:$port_number", "'$branch_name'",
-	 ],
-	);
+	Neurospaces::Developer::Operations::operation_execute
+		(
+		 $operations,
+		 {
+		  description => "$description (creating repository directory)",
 
-    # MERCURIAL 
-    # hg push http://repo-genesis3.cbi.utsa.edu/hg/g-tube
+		  #t always zero here, but I guess this simply depends on working in client mode ?
 
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mkdir', '-p', $repository_directory,
+		 ],
+		);
+
+	# initialize the repository if necessary
+
+	# monotone
+
+	Neurospaces::Developer::Operations::operation_execute
+		(
+		 $operations,
+		 {
+		  description => "$description: (initializing the repository)",
+
+		  #t always zero here, but I guess this simply depends on working in client mode ?
+
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'test', '-f', $repository_name, '||', 'mtn', '--db', $repository_name, 'db', 'init',
+		 ],
+		);
+
+	# if not enough information for pushing
+
+	if (not -f $repository_name and not -d $repository_name)
+	{
+	    die "$0: *** Error: cannot push repository, repository_name not set";
+	}
+
+	if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
+	{
+	    die "$0: *** Error: cannot push repository, port_number not set";
+	}
+
+	my $branch_name
+	    = (exists $package_information->{package}->{version_control}->{branch_name}
+	       ? $package_information->{package}->{version_control}->{branch_name}
+	       : $package_name);
+
+	# push the repository
+
+	Neurospaces::Developer::Operations::operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+
+		  #t always zero here, but I guess this simply depends on working in client mode ?
+
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'mtn', '--db', $repository_name, 'push', '--ticker=count', "$repo_server:$port_number", "'$branch_name'",
+		 ],
+		);
+    }
+    else
+    {
+	# MERCURIAL
+	# hg push http://repo-genesis3.cbi.utsa.edu/hg/g-tube
+
+	# performs a clone of a repository if the project workspace isn't present.
+
+	my $mercurial_server = "http://" . $repo_server . "/hg/" . $package_name;
+
+	if (not -d $repository_name)
+	{
+	    die "$0: *** Error: cannot sync mercurial repository, $repository_name doesn't exist";
+	}
+
+	Neurospaces::Developer::Operations::operation_execute
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'hg', 'push', '-R', $directory,
+		 ],
+		);
+
+    }
 }
 
 
@@ -3047,7 +3074,7 @@ sub implementation
 
 	# then perform a push, a sync must be done in two operations.
 	# note: repo-genesis3 uses ssh authentication.
-	# This should work if the user has properly set up 
+	# This should work if the user has properly set up
 	# mercurial and their ssh key.
 
 	Neurospaces::Developer::Operations::operation_execute

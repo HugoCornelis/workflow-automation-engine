@@ -187,7 +187,7 @@ Written in perl/Gtk
 
     my $tooltip_tags = "These are tags found on your local system";
 
-    my $vframe_tags = Gtk2::Frame->new("Locally Available Package Tags");
+    my $vframe_tags = Gtk2::Frame->new("Locally Available Domains");
 
     #t this seems to be doing nothing
 
@@ -209,7 +209,7 @@ Written in perl/Gtk
 
     $vframe_tags->add($vbox_tags);
 
-    my $label_tags = Gtk2::Label->new("Locally Available Package Tags");
+    my $label_tags = Gtk2::Label->new("Locally Available Domains");
 
     $tooltips->set_tip($label_tags, $tooltip_tags);
 
@@ -301,7 +301,7 @@ Written in perl/Gtk
 	 $cb_disabled,
 	);
 
-    my $tooltip_disabled = "Show disabled packages in the available packages list";
+    my $tooltip_disabled = "Show disabled packages / components in the available packages list";
 
     $tooltips->set_tip($cb_disabled, $tooltip_disabled);
 
@@ -358,10 +358,10 @@ Written in perl/Gtk
 
     # aside the tag checkboxes: available packages
 
-    my $tooltip_packages = "these are the packages found on your system
-satisfying one or more of the selected tags";
+    my $tooltip_packages = "these are the packages and components found on your system
+in one or more of the selected domains";
 
-    my $vframe_packages = Gtk2::Frame->new("Locally Available Packages");
+    my $vframe_packages = Gtk2::Frame->new("Locally Available Packages / Components");
 
     $tooltips->set_tip($vframe_packages, $tooltip_packages);
 
@@ -371,7 +371,7 @@ satisfying one or more of the selected tags";
 
     $vframe_packages->add($vbox_packages);
 
-    my $label_packages = Gtk2::Label->new("Locally Available Packages");
+    my $label_packages = Gtk2::Label->new("Locally Available Packages / Components");
 
 #     $tooltips->set_tip($label_packages, $tooltip_packages);
 
@@ -461,7 +461,7 @@ satisfying one or more of the selected tags";
 
     $hbox->pack_start($vbox_package_information, 0, 1, 0);
 
-    my $package_information_label = Gtk2::Label->new("Local Package Information and Status");
+    my $package_information_label = Gtk2::Label->new("Package or Component Information and Status");
 
     my $tooltip_label = "information of a single selected package";
 
