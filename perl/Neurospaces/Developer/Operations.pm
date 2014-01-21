@@ -3654,6 +3654,8 @@ sub implementation
 
     # change the directory
 
+    use Cwd;
+
     my $current_directory = getcwd();
 
     if ($::option_verbose > 1)

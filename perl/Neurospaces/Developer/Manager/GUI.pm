@@ -159,7 +159,7 @@ sub create
 		  "
 The neurospaces-manager-gui manages your local Neurospaces configuration.
 
-Written in perl/Gtk
+Written in perl/Gtk+
 (C) Hugo Cornelis, 2012 -- 2013",
 		 );
 	 }
