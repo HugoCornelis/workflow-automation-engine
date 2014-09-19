@@ -1975,12 +1975,12 @@ sub implementation
 
 	my @update_args;
 
-	my $upstream_version_options = [ '--branch', $branch_name, ];
+# 	my $upstream_version_options = [ '--branch', $branch_name, ];
 
-	if ($::option_upstream_version)
-	{
-	    $upstream_version_options = [ split /\s/, $::option_upstream_version, ];
-	}
+# 	if ($::option_upstream_version)
+# 	{
+# 	    $upstream_version_options = [ split /\s/, $::option_upstream_version, ];
+# 	}
 
 	my $monotone_version = Neurospaces::Developer::Operations::monotone_version();
 
@@ -1989,7 +1989,7 @@ sub implementation
 	    @update_args = [
 			    '/bin/echo', '-n', 'from', 'base_revision_id', ' ',
 			    '&&', 'mtn', 'automate', 'get_base_revision_id',
-			    '&&', 'mtn', '--db', $repository_name, @$upstream_version_options, 'update','--move-conflicting-paths',
+			    '&&', 'mtn', '--db', $repository_name, "--revision=h:$branch_name", 'update','--move-conflicting-paths',
 			    '&&', '/bin/echo', '-n', 'to', 'base_revision_id', ' ',
 			    '&&', 'mtn', 'automate', 'get_base_revision_id',
 			   ];
@@ -1999,7 +1999,7 @@ sub implementation
 	    @update_args = [
 			    '/bin/echo', '-n', 'from', 'base_revision_id', ' ',
 			    '&&', 'mtn', 'automate', 'get_base_revision_id',
-			    '&&', 'mtn', '--db', $repository_name, @$upstream_version_options, 'update',
+			    '&&', 'mtn', '--db', $repository_name, "--revision=h:$branch_name", 'update',
 			    '&&', '/bin/echo', '-n', 'to', 'base_revision_id', ' ',
 			    '&&', 'mtn', 'automate', 'get_base_revision_id',
 			   ];
@@ -3223,10 +3223,10 @@ sub implementation
 
     my $upstream_version_options = [ '--branch', $branch_name, ];
 
-    if ($::option_upstream_version)
-    {
-	$upstream_version_options = [ split /\s/, $::option_upstream_version, ];
-    }
+#     if ($::option_upstream_version)
+#     {
+# 	$upstream_version_options = [ split /\s/, $::option_upstream_version, ];
+#     }
 
     my $monotone_version = Neurospaces::Developer::Operations::monotone_version();
 
