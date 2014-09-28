@@ -1,3 +1,4 @@
+#!/usr/bin/perl -d:ptkdb
 #!/usr/bin/perl -w
 #!/usr/bin/perl -d:ptkdb
 #
@@ -325,6 +326,8 @@ sub main
     my $running_command_definition;
 
     my $test_startup;
+
+    $DB::single = 1;
 
     # randomize order if required
 
