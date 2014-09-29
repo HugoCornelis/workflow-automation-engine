@@ -778,6 +778,10 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			    = ($result eq $read
 			       ? ""
 			       : "$last_method returned $result, expected $read");
+
+			$before_match = $result;
+
+			$expected = $read;
 		    }
 		}
 		elsif (ref $command eq 'CODE')
