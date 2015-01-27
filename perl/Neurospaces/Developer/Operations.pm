@@ -2937,6 +2937,15 @@ sub description
 }
 
 
+# Valid examples of URIs monotone accepts are:
+#
+# mtn://my.server:4690?my.branch
+# mtn://my.server/project?my.other.branch*;-my.other.branch.test
+# mtn://my.server/project?one.branch;-one.branch.test;another.branch;-another.branch.test
+# mtn://my.server/project?{one.branch,another.branch};-{one.branch.test,another.branch.test}
+# file:///path/to/database.mtn?my.branch
+# ssh://joe@my.server/~/db.mtn?joes.branch
+
 sub implementation
 {
     my $package_information = shift;
