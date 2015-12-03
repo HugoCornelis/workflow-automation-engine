@@ -824,6 +824,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    my $shell = $command_test->{shell};
 
+		    my $tester = $command_test->{tester};
+
 		    my $wait = $command_test->{wait};
 
 		    my $write = $command_test->{write};
@@ -868,9 +870,46 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			system $shell;
 		    }
 
+		    # if there is a test external to the application
+
+		    if ($tester)
+		    {
+			my $shell = $tester->{shell};
+
+			# there must be a shell command we should run
+
+			if ($shell)
+			{
+			    my $produced = `$shell`;
+
+			    my $expected = $tester->{expected};
+
+			    if ($expected)
+			    {
+#				$expected = quotemeta $tester->{expected};
+
+				if ($produced =~ /$expected/)
+				{
+				}
+				else
+				{
+				    $error = "external tester produces output that is different from what is expected";
+				}
+			    }
+			    else
+			    {
+				die "$0: *** Error: external testers must have expected output";
+			    }
+			}
+			else
+			{
+			    die "$0: *** Error: external testers must have a shell command";
+			}
+		    }
+
 		    # read
 
-		    if (defined $read)
+		    elsif (defined $read)
 		    {
 			# substitute variables
 
@@ -927,8 +966,13 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 				 $after_match)
 				    = $exp->expect($timeout, "-re", $expected, );
 			    }
+
+			    # if an application output file is expected
+
 			    elsif ($read->{application_output_file})
 			    {
+				# read it
+
 				my $application_output_file
 				    = $read->{application_output_file};
 
@@ -937,6 +981,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 				chomp $pwd;
 
  				print "*** Application output file: $application_output_file (in $pwd)\n";
+
+				# and compare it with an expected output file
 
 				my $expected_output_file
 				    = $read->{expected_output_file};
@@ -973,11 +1019,18 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 				    $error = 'expected_output does not match application_output';
 				}
 			    }
+
+			    # if there is a shell command given
+
 			    elsif ($read->{shell})
 			    {
+				# run it
+
 				my $shell = $read->{shell};
 
 				my $expected = `$shell`;
+
+				# and compare its output with the output of the application
 
 				($matched_pattern_position,
 				 $error,
