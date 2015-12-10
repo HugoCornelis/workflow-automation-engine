@@ -882,24 +882,35 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			{
 			    my $produced = `$shell`;
 
-			    my $expected = $tester->{expected};
+			    $expected = defined $tester->{expected} ? $tester->{expected} : '';
 
-			    if ($expected)
+#			    if ($expected)
 			    {
 #				$expected = quotemeta $tester->{expected};
 
-				if ($produced =~ /$expected/)
+				if (($produced eq ''
+				     and $expected ne '')
+				    or ($produced ne ''
+					and $expected eq ''))
+				{
+				    $error = "external tester produces output that is different from what is expected, one is empty, the other is not";
+
+				    $before_match = $produced;
+				}
+				elsif ($produced =~ /$expected/)
 				{
 				}
 				else
 				{
 				    $error = "external tester produces output that is different from what is expected";
+
+				    $before_match = $produced;
 				}
 			    }
-			    else
-			    {
-				die "$0: *** Error: external testers must have expected output";
-			    }
+# 			    else
+# 			    {
+# 				die "$0: *** Error: external testers must have expected output";
+# 			    }
 			}
 			else
 			{
@@ -1341,7 +1352,7 @@ sub report_error_add
 
     $error_count++;
 
-    print STDERR "*** Error: $error ($description, package $package_name, $module_name, error_count $error_count)\n";
+    print STDERR "*** Error $error_count: $error ($description, package $package_name, $module_name, error_count $error_count)\n";
 
     # fill in the error report
 
@@ -1373,13 +1384,13 @@ sub report_error_add
     {
 	my $processed_expected = [ split "\n", $expected, ];
 
-	$processed_expected = join "\n*** Error: expected: ", "", @$processed_expected, "\n";
+	$processed_expected = join "\n*** Error $error_count: expected: ", "", @$processed_expected, "\n";
 
 	print STDERR $processed_expected;
 
 	my $processed_seen = [ split "\n", $seen, ];
 
-	$processed_seen = join "\n*** Error: seen: ", "", @$processed_seen, "\n";
+	$processed_seen = join "\n*** Error $error_count: seen: ", "", @$processed_seen, "\n";
 
 	print STDERR $processed_seen;
 
@@ -1434,7 +1445,7 @@ sub report_error_add
 
 	my $processed_diff = [ split "\n", $diff, ];
 
-	$processed_diff = join "\n*** Error: diff: ", "", @$processed_diff, "\n";
+	$processed_diff = join "\n*** Error $error_count: diff: ", "", @$processed_diff, "\n";
 
 	print STDERR $processed_diff;
 
