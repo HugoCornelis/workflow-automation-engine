@@ -227,7 +227,7 @@ sub default_packages_read()
 					},
 			description => 'GENESIS GUI',
 			directory => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0",
-			#		   disabled => 'g-tube is not complete yet',
+			disabled => 'g-tube is not complete yet',
 			order => 30,
 			tags => [
 				 'genesis3',

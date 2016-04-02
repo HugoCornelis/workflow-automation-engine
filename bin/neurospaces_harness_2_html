@@ -457,7 +457,8 @@ options :
 			};
 		}
 
-		if ($command_definition->{command} =~ /CODE/)
+		if (exists $command_definition->{command}
+		    and $command_definition->{command} =~ /CODE/)
 		{
 		    # embedded perl code
 
