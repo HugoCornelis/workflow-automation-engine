@@ -4406,7 +4406,7 @@ sub version_control_translate_server
 	= [
 	   {
 	    name => 'default',
-	    address => $package_information->{package}->{version_control}->{server} || 'repo-genesis3.cbi.utsa.edu',
+	    address => $package_information->{package}->{version_control}->{server} || 'dream-dome.com' # || 'repo-genesis3.cbi.utsa.edu',
 	   },
 	   {
 	    name => 'default2',
