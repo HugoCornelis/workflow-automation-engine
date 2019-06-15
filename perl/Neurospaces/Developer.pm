@@ -125,7 +125,7 @@ sub default_packages_read()
 					   'model-container' => 'required during linking, for storing the model in computer memory',
 					  },
 			  description => 'Experimental protocols',
-			  directory => "$ENV{HOME}/$new_projects_directory/experiment/source/snapshots/0",
+			  directory => "$ENV{HOME}/$new_projects_directory/experiment/source/snapshots/master",
 			  operations => {
 					 './configure' => {
 							   debug => [
@@ -141,6 +141,9 @@ sub default_packages_read()
 				   'genesis3',
 				  ],
 			  version_control => {
+					      git => {
+						      remote => 'github',
+						     },
 					      branch_name => 0,
 					      port_number => 4703,
 					     },
@@ -318,12 +321,15 @@ sub default_packages_read()
 					 'model-container' => 'for storing the model in computer memory',
 					},
 			description => 'model exchange using common standars such as NeuroML and NineML',
-			directory => "$ENV{HOME}/$new_projects_directory/exchange/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/exchange/source/snapshots/master",
 			order => 6.5,
 			tags => [
 				 'genesis3',
 				],
 			version_control => {
+					    git => {
+						    remote => 'github',
+						   },
 					    branch_name => 0,
 					    port_number => 4701,
 					   },
