@@ -306,6 +306,9 @@ sub default_packages_read()
 					  'neurospaces',
 					 ],
 				 version_control => {
+						     git => {
+							     remote => 'github',
+							    },
 						     branch_name => 0,
 						     port_number => 4693,
 						    },
