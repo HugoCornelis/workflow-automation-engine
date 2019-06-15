@@ -252,7 +252,7 @@ sub default_packages_read()
 				       experiment => 'perfectclamp is needed for running the python tests',
 				      },
 		      description => 'a single neuron solver',
-		      directory => "$ENV{HOME}/$new_projects_directory/heccer/source/snapshots/0",
+		      directory => "$ENV{HOME}/$new_projects_directory/heccer/source/snapshots/master",
 		      disabled => 0,
 		      operations => {
 				     './configure' => {
