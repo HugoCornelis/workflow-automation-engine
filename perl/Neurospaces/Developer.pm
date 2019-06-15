@@ -272,7 +272,7 @@ sub default_packages_read()
 		     },
 	   developer => {
 			 description => 'developer utilities that comply for GENESIS 3',
-			 directory => "$ENV{HOME}/$new_projects_directory/developer/source/snapshots/0",
+			 directory => "$ENV{HOME}/$new_projects_directory/developer/source/snapshots/master",
 			 order => 0,
 			 tags => [
 				  'genesis3',
