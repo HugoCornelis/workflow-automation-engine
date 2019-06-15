@@ -45,6 +45,9 @@ our $whole_build_configuration;
 
 our $personal_build_configuration;
 
+our $new_projects_directory = 'projects';
+
+
 =head4 $default_packages
 
 A hash reference consisting of hashes that describe each package.  The
@@ -113,6 +116,8 @@ packages.  Use the $default_packages variables instead.
 
 sub default_packages_read()
 {
+    my $legacy_directory = 'neurospaces_project';
+
     my $result
 	= {
 	   experiment => {
@@ -120,7 +125,7 @@ sub default_packages_read()
 					   'model-container' => 'required during linking, for storing the model in computer memory',
 					  },
 			  description => 'Experimental protocols',
-			  directory => "$ENV{HOME}/neurospaces_project/experiment/source/snapshots/0",
+			  directory => "$ENV{HOME}/$new_projects_directory/experiment/source/snapshots/0",
 			  operations => {
 					 './configure' => {
 							   debug => [
@@ -181,7 +186,7 @@ sub default_packages_read()
 			   },
 	   dash => {
 		    description => 'a single neuron solver that uses dual exponential equations to model channel currents',
-		    directory => "$ENV{HOME}/neurospaces_project/dash/source/snapshots/0",
+		    directory => "$ENV{HOME}/$new_projects_directory/dash/source/snapshots/0",
 		    disabled => 1,
 		    order => 2,
 		    tags => [
@@ -191,7 +196,7 @@ sub default_packages_read()
 		   },
 	   geometry => {
 			description => 'a collection of algorithms in computational geometry useful for the conversion of EM image stacks ao.',
-			directory => "$ENV{HOME}/neurospaces_project/geometry/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/geometry/source/snapshots/0",
 			disabled => 'far from finished.',
 			order => 4,
 			tags => [
@@ -210,7 +215,7 @@ sub default_packages_read()
 				       ssp => 'to schedule the solvers',
 				      },
 		      description => 'an interactive GENESIS shell environment developed in perl',
-		      directory => "$ENV{HOME}/neurospaces_project/gshell/source/snapshots/0",
+		      directory => "$ENV{HOME}/$new_projects_directory/gshell/source/snapshots/0",
 		      order => 13,
 		      tags => [
 			       'genesis3',
@@ -226,7 +231,7 @@ sub default_packages_read()
 					 gshell => 'as an interface',
 					},
 			description => 'GENESIS GUI',
-			directory => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/g-tube/source/snapshots/0",
 			disabled => 'g-tube is not complete yet',
 			order => 30,
 			tags => [
@@ -234,7 +239,7 @@ sub default_packages_read()
 				],
 			version_control => {
 					    branch_name => 0,
-					    repository => "$ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0/.hg",
+					    repository => "$ENV{HOME}/$new_projects_directory/g-tube/source/snapshots/0/.hg",
 					   },
 			version_script => 0,
 		       },
@@ -244,7 +249,7 @@ sub default_packages_read()
 				       experiment => 'perfectclamp is needed for running the python tests',
 				      },
 		      description => 'a single neuron solver',
-		      directory => "$ENV{HOME}/neurospaces_project/heccer/source/snapshots/0",
+		      directory => "$ENV{HOME}/$new_projects_directory/heccer/source/snapshots/0",
 		      disabled => 0,
 		      operations => {
 				     './configure' => {
@@ -267,7 +272,7 @@ sub default_packages_read()
 		     },
 	   developer => {
 			 description => 'developer utilities that comply for GENESIS 3',
-			 directory => "$ENV{HOME}/neurospaces_project/developer/source/snapshots/0",
+			 directory => "$ENV{HOME}/$new_projects_directory/developer/source/snapshots/0",
 			 order => 0,
 			 tags => [
 				  'genesis3',
@@ -281,7 +286,7 @@ sub default_packages_read()
 			},
 	   'model-container' => {
 				 description => 'backend independent model storage',
-				 directory => "$ENV{HOME}/neurospaces_project/model-container/source/snapshots/0",
+				 directory => "$ENV{HOME}/$new_projects_directory/model-container/source/snapshots/0",
 				 operations => {
 						'./configure' => {
 								  debug => [
@@ -307,7 +312,7 @@ sub default_packages_read()
 					 'model-container' => 'for storing the model in computer memory',
 					},
 			description => 'model exchange using common standars such as NeuroML and NineML',
-			directory => "$ENV{HOME}/neurospaces_project/exchange/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/exchange/source/snapshots/0",
 			order => 6.5,
 			tags => [
 				 'genesis3',
@@ -320,7 +325,7 @@ sub default_packages_read()
 		       },
 	   neurospaces_prcs => {
 				description => 'backend independent model storage -- OLD',
-				directory => "$ENV{HOME}/neurospaces_project/model-container/source/snapshots/prcs.0",
+				directory => "$ENV{HOME}/$new_projects_directory/model-container/source/snapshots/prcs.0",
 				disabled => 'obsoleted by the model-container under mtn control rather than prcs',
 				order => 0.5,
 				tags => [
@@ -349,7 +354,7 @@ sub default_packages_read()
 					 ssp => 'for some of the tests',
 					},
 			description => 'GENESIS-2 Backward Compatibility',
-			directory => "$ENV{HOME}/neurospaces_project/ns-sli/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/ns-sli/source/snapshots/0",
 			order => 6,
 			operations => {
 				       './configure' => {
@@ -377,7 +382,7 @@ sub default_packages_read()
 						  ssp => 'to schedule the solvers',
 						 },
 				 description => 'inspect and compare simulation output',
-				 directory => "$ENV{HOME}/neurospaces_project/project-browser/source/snapshots/0",
+				 directory => "$ENV{HOME}/$new_projects_directory/project-browser/source/snapshots/0",
 				 disabled => 'parts working, only for experts who are familiar with the Sesa internals',
 				 order => 7,
 				 tags => [
@@ -386,13 +391,13 @@ sub default_packages_read()
 				 version_control => {
 						     branch_name => 0,
 						     port_number => 4697,
-						     repository => "$ENV{HOME}/neurospaces_project/MTN/neurospacesweb.mtn",
+						     repository => "$ENV{HOME}/$new_projects_directory/MTN/neurospacesweb.mtn",
 						    },
 				 version_script => 'pb-version',
 				},
 	   publications => {
 			    description => 'prototyping the publication framework',
-			    directory => "$ENV{HOME}/neurospaces_project/publications/source/snapshots/0",
+			    directory => "$ENV{HOME}/$new_projects_directory/publications/source/snapshots/0",
 			    disabled => 'Allan\'s experiment working area',
 			    order => 32,
 			    tags => [
@@ -406,7 +411,7 @@ sub default_packages_read()
 			   },
 	   rtxi => {
 		    description => 'interface with the RTXI dynamic clamp software',
-		    directory => "$ENV{HOME}/neurospaces_project/rtxi/source/snapshots/0",
+		    directory => "$ENV{HOME}/$new_projects_directory/rtxi/source/snapshots/0",
 		    disabled => 'slow progress, yet important',
 		    order => 29,
 		    tags => [
@@ -424,7 +429,7 @@ sub default_packages_read()
 				    heccer => 'for solving single neurons',
 				   },
 		   description => 'simple scheduler in perl',
-		   directory => "$ENV{HOME}/neurospaces_project/ssp/source/snapshots/0",
+		   directory => "$ENV{HOME}/$new_projects_directory/ssp/source/snapshots/0",
 		   disabled => 0,
 		   order => 3,
 		   tags => [
@@ -441,7 +446,7 @@ sub default_packages_read()
 				     heccer => 'for solving single neurons',
 				    },
 		    description => 'simple scheduler in python',
-		    directory => "$ENV{HOME}/neurospaces_project/sspy/source/snapshots/0",
+		    directory => "$ENV{HOME}/$new_projects_directory/sspy/source/snapshots/0",
 		    order => 3.1,
 		    tags => [
 			     'genesis3',
@@ -456,7 +461,7 @@ sub default_packages_read()
 				       'model-container' => 'for storing the model in computer memory',
 				      },
 		      description => 'visualizes and explores models in the model-container',
-		      directory => "$ENV{HOME}/neurospaces_project/studio/source/snapshots/0",
+		      directory => "$ENV{HOME}/$new_projects_directory/studio/source/snapshots/0",
 		      disabled => 0,
 		      order => 5,
 		      tags => [
@@ -471,7 +476,7 @@ sub default_packages_read()
 		     },
 	   system => {
 		      description => 'system data',
-		      directory => "$ENV{HOME}/neurospaces_project/.",
+		      directory => "$ENV{HOME}/$new_projects_directory/.",
 		      disabled => 1,
 		      order => 129,
 		      tags => [
@@ -481,7 +486,7 @@ sub default_packages_read()
 		     },
 	   userdocs => {
 			description => 'all you need to know about installing, using and simulating using GENESIS 3. ',
-			directory => "$ENV{HOME}/neurospaces_project/userdocs/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/userdocs/source/snapshots/0",
 			disabled => 0,
 			order => 31,
 			tags => [
@@ -898,13 +903,15 @@ sub packages_validate
 
 	# if the directory of the package is not set
 
+	my $repository_technology = 'git'; # 'monotone';
+
 	if (not exists $first_package->{directory})
 	{
 	    # set default
 
-	    my $configurator_branch = '0';
+	    my $configurator_branch = $repository_technology eq 'git' ? 'master' : '0';
 
-	    $first_package->{directory} = $ENV{HOME} . "/neurospaces_project/$first_package_name/source/snapshots/$configurator_branch";
+	    $first_package->{directory} = $ENV{HOME} . "/$new_projects_directory/$first_package_name/source/snapshots/$configurator_branch";
 
 	    $first_package->{directory} =~ s(//)(/)g;
 	}
@@ -913,11 +920,20 @@ sub packages_validate
 
 	if (not exists $first_package->{version_control}->{repository})
 	{
-	    # set default
+	    # set up a default repository configuration
 
-	    $first_package->{version_control}->{repository} = $ENV{HOME} . "/neurospaces_project/MTN/$first_package_name.mtn";
+	    if ($repository_technology eq 'git')
+	    {
+		$first_package->{version_control}->{repository} = $ENV{HOME} . "/$new_projects_directory/$first_package_name/source/repository";
 
-	    $first_package->{version_control}->{repository} =~ s(//)(/)g;
+		$first_package->{version_control}->{repository} =~ s(//)(/)g;
+	    }
+	    else
+	    {
+		$first_package->{version_control}->{repository} = $ENV{HOME} . "/neurospaces_project/MTN/$first_package_name.mtn";
+
+		$first_package->{version_control}->{repository} =~ s(//)(/)g;
+	    }
 	}
     }
 
