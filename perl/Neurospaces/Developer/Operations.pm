@@ -2582,7 +2582,7 @@ sub implementation
 		  package_name => $package_name,
 		 },
 		 [
-		  'git', 'push', '-q', $remote_name, # --set-upstream <branch-name> --force-with-lease
+		  'git', '-C', "$directory", 'push', "$remote_name", # --set-upstream <branch-name> --force-with-lease
 		 ],
 		);
     }
