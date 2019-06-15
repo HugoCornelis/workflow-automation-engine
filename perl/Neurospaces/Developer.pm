@@ -289,7 +289,7 @@ sub default_packages_read()
 			},
 	   'model-container' => {
 				 description => 'backend independent model storage',
-				 directory => "$ENV{HOME}/$new_projects_directory/model-container/source/snapshots/0",
+				 directory => "$ENV{HOME}/$new_projects_directory/model-container/source/snapshots/master",
 				 operations => {
 						'./configure' => {
 								  debug => [
