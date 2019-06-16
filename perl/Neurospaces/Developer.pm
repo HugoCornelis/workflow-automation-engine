@@ -168,6 +168,9 @@ sub default_packages_read()
 				 ],
 			 order => 2.5,
 			 version_control => {
+					     git => {
+						     remote => 'github',
+						    },
 					     branch_name => 0,
 					     port_number => 4706,
 					     #server => '91.183.94.6',
@@ -218,12 +221,15 @@ sub default_packages_read()
 				       ssp => 'to schedule the solvers',
 				      },
 		      description => 'an interactive GENESIS shell environment developed in perl',
-		      directory => "$ENV{HOME}/$new_projects_directory/gshell/source/snapshots/0",
+		      directory => "$ENV{HOME}/$new_projects_directory/gshell/source/snapshots/master",
 		      order => 13,
 		      tags => [
 			       'genesis3',
 			      ],
 		      version_control => {
+					  git => {
+						  remote => 'github',
+						 },
 					  branch_name => 0,
 					  port_number => 4699,
 					 },
@@ -369,7 +375,7 @@ sub default_packages_read()
 					 ssp => 'for some of the tests',
 					},
 			description => 'GENESIS-2 Backward Compatibility',
-			directory => "$ENV{HOME}/$new_projects_directory/ns-sli/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/ns-sli/source/snapshots/master",
 			order => 6,
 			operations => {
 				       './configure' => {
@@ -385,6 +391,9 @@ sub default_packages_read()
 				 'genesis3',
 				],
 			version_control => {
+					    git => {
+						    remote => 'github',
+						   },
 					    branch_name => 0,
 					    port_number => 4692,
 					   },
@@ -444,13 +453,16 @@ sub default_packages_read()
 				    heccer => 'for solving single neurons',
 				   },
 		   description => 'simple scheduler in perl',
-		   directory => "$ENV{HOME}/$new_projects_directory/ssp/source/snapshots/0",
+		   directory => "$ENV{HOME}/$new_projects_directory/ssp/source/snapshots/master",
 		   disabled => 0,
 		   order => 3,
 		   tags => [
 			    'genesis3',
 			   ],
 		   version_control => {
+				       git => {
+					       remote => 'github',
+					      },
 				       branch_name => 0,
 				       port_number => 4695,
 				      },
@@ -461,12 +473,15 @@ sub default_packages_read()
 				     heccer => 'for solving single neurons',
 				    },
 		    description => 'simple scheduler in python',
-		    directory => "$ENV{HOME}/$new_projects_directory/sspy/source/snapshots/0",
+		    directory => "$ENV{HOME}/$new_projects_directory/sspy/source/snapshots/master",
 		    order => 3.1,
 		    tags => [
 			     'genesis3',
 			    ],
 		    version_control => {
+					git => {
+						remote => 'github',
+					       },
 					branch_name => 0,
 					port_number => 4705,
 				       },
@@ -476,7 +491,7 @@ sub default_packages_read()
 				       'model-container' => 'for storing the model in computer memory',
 				      },
 		      description => 'visualizes and explores models in the model-container',
-		      directory => "$ENV{HOME}/$new_projects_directory/studio/source/snapshots/0",
+		      directory => "$ENV{HOME}/$new_projects_directory/studio/source/snapshots/master",
 		      disabled => 0,
 		      order => 5,
 		      tags => [
@@ -484,6 +499,9 @@ sub default_packages_read()
 			       'neurospaces',
 			      ],
 		      version_control => {
+					  git => {
+						  remote => 'github',
+						 },
 					  branch_name => 0,
 					  port_number => 4698,
 					 },
@@ -501,13 +519,16 @@ sub default_packages_read()
 		     },
 	   userdocs => {
 			description => 'all you need to know about installing, using and simulating using GENESIS 3. ',
-			directory => "$ENV{HOME}/$new_projects_directory/userdocs/source/snapshots/0",
+			directory => "$ENV{HOME}/$new_projects_directory/userdocs/source/snapshots/master",
 			disabled => 0,
 			order => 31,
 			tags => [
 				 'genesis3',
 				],
 			version_control => {
+					    git => {
+						    remote => 'github',
+						   },
 					    branch_name => 0,
 					    port_number => 4700,
 					   },
