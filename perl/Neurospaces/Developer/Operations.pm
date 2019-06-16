@@ -2396,7 +2396,7 @@ sub implementation
 	    die "$0: *** Error: cannot fetch to a git repository, remote repository is not set";
 	}
 
-	# git pull github
+	# git fetch github
 
 	Neurospaces::Developer::Operations::operation_execute
 		(
@@ -3035,128 +3035,174 @@ sub implementation
 	return Neurospaces::Developer::Operations::Repository::Pull::implementation($package_information);
     }
 
-    #t where does this default value come from?  Cannot work correctly?
+    # git repositories take precedence over anything else
 
-    my $repository_name
-	= $package_information->{package}->{version_control}->{repository}
-	    || $directory . '/' . $package_name . '/' . 'mtn';
-
-    # translate well known names to a routable address
-
-    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_sync);
-
-    #
-    # Check to see if the repository name ends with .mtn, if not we assume it ends
-    # in .hg, in which case we don't need the port number since mercurial serves over http.
-    #
-
-    if ($repository_name =~ m/^.*\.mtn$/)
+    if (exists $package_information->{package}->{version_control}->{git})
     {
-	# monotone
+	my $repository_configuration = $package_information->{package}->{version_control}->{git};
 
-	my $port_number = $package_information->{package}->{version_control}->{port_number};
+	my $remote_name = $repository_configuration->{remote};
 
-	# if not enough information for syncing for monotone
-
-	if (not -f $repository_name)
+	if (!defined $remote_name)
 	{
-	    die "$0: *** Error: cannot sync repository, repository not found in the filesystem";
+	    die "$0: *** Error: cannot push to a git repository, remote repository is not set";
 	}
 
-	if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
-	{
-	    die "$0: *** Error: cannot sync repository, port_number not set";
-	}
-
-	# initialize the repository if necessary
+	# git push github
 
 	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'git', '-C', "$directory", 'push', "$remote_name", # --set-upstream <branch-name> --force-with-lease
+		 ],
+		);
 
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'test', '-f', $repository_name, '||', 'mtn', '--db', $repository_name, 'db', 'init',
-	     ],
-	    );
-
-	# sync the repository
-
-	my $branch_name
-	    = (exists $package_information->{package}->{version_control}->{branch_name}
-	       ? $package_information->{package}->{version_control}->{branch_name}
-	       : $package_name);
-
-	# monotone
+	# git fetch github
 
 	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'mtn', '--db', $repository_name, 'sync', '--ticker=count', "$repo_server:$port_number", $branch_name,
-	     ],
-	    );
+		(
+		 $operations,
+		 {
+		  description => $description,
+		  keywords => 0,
+		  package_name => $package_name,
+		 },
+		 [
+		  'git', '-C', "$directory", 'fetch', "$remote_name", # --set-upstream <branch-name> --force-with-lease
+		 ],
+		);
     }
     else
     {
-	# MERCURIAL sync
+	#t where does this default value come from?  Cannot work correctly?
 
-	# operations:
-	#      hg pull http://repo-genesis3.cbi.utsa.edu/hg/g-tube -R $ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0/ --update
-	#   hg push -R $ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0/
+	my $repository_name
+	    = $package_information->{package}->{version_control}->{repository}
+		|| $directory . '/' . $package_name . '/' . 'mtn';
 
-	# performs a clone of a repository if the project workspace isn't present.
-	my $mercurial_server = "http://" . $repo_server . "/hg/" . $package_name;
+	# translate well known names to a routable address
 
-	if (not -d $repository_name)
+	my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_sync);
+
+	#
+	# Check to see if the repository name ends with .mtn, if not we assume it ends
+	# in .hg, in which case we don't need the port number since mercurial serves over http.
+	#
+
+	if ($repository_name =~ m/^.*\.mtn$/)
 	{
-	    die "$0: *** Error: cannot sync mercurial repository, $repository_name doesn't exist";
+	    # monotone
+
+	    my $port_number = $package_information->{package}->{version_control}->{port_number};
+
+	    # if not enough information for syncing for monotone
+
+	    if (not -f $repository_name)
+	    {
+		die "$0: *** Error: cannot sync repository, repository not found in the filesystem";
+	    }
+
+	    if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
+	    {
+		die "$0: *** Error: cannot sync repository, port_number not set";
+	    }
+
+	    # initialize the repository if necessary
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'test', '-f', $repository_name, '||', 'mtn', '--db', $repository_name, 'db', 'init',
+		     ],
+		    );
+
+	    # sync the repository
+
+	    my $branch_name
+		= (exists $package_information->{package}->{version_control}->{branch_name}
+		   ? $package_information->{package}->{version_control}->{branch_name}
+		   : $package_name);
+
+	    # monotone
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'mtn', '--db', $repository_name, 'sync', '--ticker=count', "$repo_server:$port_number", $branch_name,
+		     ],
+		    );
 	}
+	else
+	{
+	    # MERCURIAL sync
 
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'test', '-f', $repository_name, '||', 'hg', 'pull', $mercurial_server, '-R', $directory, '--update'
-	     ],
-	    );
+	    # operations:
+	    #      hg pull http://repo-genesis3.cbi.utsa.edu/hg/g-tube -R $ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0/ --update
+	    #   hg push -R $ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0/
 
-	# then perform a push, a sync must be done in two operations.
-	# note: repo-genesis3 uses ssh authentication.
-	# This should work if the user has properly set up
-	# mercurial and their ssh key.
+	    # performs a clone of a repository if the project workspace isn't present.
+	    my $mercurial_server = "http://" . $repo_server . "/hg/" . $package_name;
 
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'hg', 'push', '-R', $directory,
-	     ],
-	    );
+	    if (not -d $repository_name)
+	    {
+		die "$0: *** Error: cannot sync mercurial repository, $repository_name doesn't exist";
+	    }
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'test', '-f', $repository_name, '||', 'hg', 'pull', $mercurial_server, '-R', $directory, '--update'
+		     ],
+		    );
+
+	    # then perform a push, a sync must be done in two operations.
+	    # note: repo-genesis3 uses ssh authentication.
+	    # This should work if the user has properly set up
+	    # mercurial and their ssh key.
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'hg', 'push', '-R', $directory,
+		     ],
+		    );
+	}
     }
 }
 
