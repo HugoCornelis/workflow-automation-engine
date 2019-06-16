@@ -406,14 +406,16 @@ sub default_packages_read()
 						  ssp => 'to schedule the solvers',
 						 },
 				 description => 'inspect and compare simulation output',
-				 directory => "$ENV{HOME}/$new_projects_directory/project-browser/source/snapshots/0",
+				 directory => "$ENV{HOME}/$new_projects_directory/project-browser/source/snapshots/master",
 				 disabled => 'parts working, only for experts who are familiar with the Sesa internals',
 				 order => 7,
 				 tags => [
 					  'neurospaces',
 					 ],
 				 version_control => {
-						     branch_name => 0,
+						     git => {
+							     remote => 'github',
+							    },
 						     port_number => 4697,
 						     repository => "$ENV{HOME}/$new_projects_directory/MTN/neurospacesweb.mtn",
 						    },
