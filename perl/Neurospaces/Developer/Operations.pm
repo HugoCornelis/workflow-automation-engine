@@ -2365,7 +2365,7 @@ sub condition
 
 sub description
 {
-    return "pulling repository";
+    return "pulling from repository";
 }
 
 
@@ -2383,148 +2383,177 @@ sub implementation
 
     my $package_name = $package_information->{package_name};
 
-    #t where does this default value come from?  Cannot work correctly?
+    # git repositories take precedence over anything else
 
-    my $repository_name
-	= $package_information->{package}->{version_control}->{repository}
-	    || $directory . '/' . $package_name . '/' . 'mtn';
-
-    my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_pull);
-
-    #
-    # Check to see if the repository name ends with .mtn, if not we assume it ends
-    # in .hg, in which case we don't need the port number since mercurial serves over http.
-    #
-
-    if ($repository_name =~ m/^.*\.mtn$/)
+    if (exists $package_information->{package}->{version_control}->{git})
     {
-	# initialize the repository if necessary
+	my $repository_configuration = $package_information->{package}->{version_control}->{git};
 
-	my $port_number = $package_information->{package}->{version_control}->{port_number};
+	my $remote_name = $repository_configuration->{remote};
 
-	# create repository directory
-
-	my $repository_directory = $repository_name;
-
-	$repository_directory =~ s((.*)/.*)($1);
-
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => "$description (creating repository directory)",
-
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'mkdir', '-p', $repository_directory,
-	     ],
-	    );
-
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => "$description: (initializing the repository)",
-
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'test', '-f', $repository_name, '||', 'mtn', '--db', $repository_name, 'db', 'init',
-	     ],
-	    );
-
-	# if not enough information for pulling
-
-	if (not -f $repository_name)
+	if (!defined $remote_name)
 	{
-	    die "$0: *** Error: cannot pull repository, repository_name not set";
+	    die "$0: *** Error: cannot fetch to a git repository, remote repository is not set";
 	}
 
-	if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
-	{
-	    die "$0: *** Error: cannot pull repository, port_number not set";
-	}
-
-	my $branch_name
-	    = (exists $package_information->{package}->{version_control}->{branch_name}
-	       ? $package_information->{package}->{version_control}->{branch_name}
-	       : $package_name);
-
-	# translate well known names to a routable address
-
-	# pull the repository
+	# git pull github
 
 	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'mtn', '--db', $repository_name, 'pull', '--ticker=count', "$repo_server:$port_number", "'$branch_name'",
-	     ],
-	    );
-
-    }
-    else
-    {
-	# MERCURIAL PULL
-
-	# mercurial server is  http://repo-genesis3.cbi.utsa.edu/hg/g-tube
-	# command:
-	#   hg pull http://$repo_server/hg/$package_name -R $ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0 --update
-	#
-		
-	if(not -d $repository_name)
-	{
-
-	    Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
-		  description => "$description: (initializing the repository)",
+		  description => $description,
 		  keywords => 0,
 		  package_name => $package_name,
 		 },
 		 [
-		  'hg', 'init', $directory,
+		  'git', '-C', "$directory", 'fetch', "$remote_name", # --set-upstream <branch-name> --force-with-lease
 		 ],
 		);
-	}
+    }
+    else
+    {
+	#t where does this default value come from?  Cannot work correctly?
 
+	my $repository_name
+	    = $package_information->{package}->{version_control}->{repository}
+		|| $directory . '/' . $package_name . '/' . 'mtn';
 
-	if (not -d $repository_name)
+	my $repo_server = Neurospaces::Developer::Operations::version_control_translate_server($package_information, $::option_repo_pull);
+
+	#
+	# Check to see if the repository name ends with .mtn, if not we assume it ends
+	# in .hg, in which case we don't need the port number since mercurial serves over http.
+	#
+
+	if ($repository_name =~ m/^.*\.mtn$/)
 	{
-	    die "$0: *** Error: cannot pull repository, $repository_name doesn't exist";
+	    # initialize the repository if necessary
+
+	    my $port_number = $package_information->{package}->{version_control}->{port_number};
+
+	    # create repository directory
+
+	    my $repository_directory = $repository_name;
+
+	    $repository_directory =~ s((.*)/.*)($1);
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => "$description (creating repository directory)",
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'mkdir', '-p', $repository_directory,
+		     ],
+		    );
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => "$description: (initializing the repository)",
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'test', '-f', $repository_name, '||', 'mtn', '--db', $repository_name, 'db', 'init',
+		     ],
+		    );
+
+	    # if not enough information for pulling
+
+	    if (not -f $repository_name)
+	    {
+		die "$0: *** Error: cannot pull repository, repository_name not set";
+	    }
+
+	    if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
+	    {
+		die "$0: *** Error: cannot pull repository, port_number not set";
+	    }
+
+	    my $branch_name
+		= (exists $package_information->{package}->{version_control}->{branch_name}
+		   ? $package_information->{package}->{version_control}->{branch_name}
+		   : $package_name);
+
+	    # translate well known names to a routable address
+
+	    # pull the repository
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'mtn', '--db', $repository_name, 'pull', '--ticker=count', "$repo_server:$port_number", "'$branch_name'",
+		     ],
+		    );
+
 	}
+	else
+	{
+	    # MERCURIAL PULL
 
-	my $mercurial_server = "http://" . $repo_server . "/hg/" . $package_name;
+	    # mercurial server is  http://repo-genesis3.cbi.utsa.edu/hg/g-tube
+	    # command:
+	    #   hg pull http://$repo_server/hg/$package_name -R $ENV{HOME}/neurospaces_project/g-tube/source/snapshots/0 --update
+	    #
+		
+	    if(not -d $repository_name)
+	    {
 
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'hg', 'pull', $mercurial_server, '-R', $directory, '--update',
-	     ],
-	    );
+		Neurospaces::Developer::Operations::operation_execute
+			(
+			 $operations,
+			 {
+			  description => "$description: (initializing the repository)",
+			  keywords => 0,
+			  package_name => $package_name,
+			 },
+			 [
+			  'hg', 'init', $directory,
+			 ],
+			);
+	    }
 
+	    if (not -d $repository_name)
+	    {
+		die "$0: *** Error: cannot pull repository, $repository_name doesn't exist";
+	    }
+
+	    my $mercurial_server = "http://" . $repo_server . "/hg/" . $package_name;
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'hg', 'pull', $mercurial_server, '-R', $directory, '--update',
+		     ],
+		    );
+	}
     }
 }
 
