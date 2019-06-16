@@ -184,6 +184,9 @@ sub default_packages_read()
 				     'neurospaces',
 				    ],
 			    version_control => {
+						git => {
+							remote => 'github',
+						       },
 						branch_name => 0,
 						port_number => 4707,
 						server => '91.183.94.6',
@@ -423,13 +426,16 @@ sub default_packages_read()
 				},
 	   publications => {
 			    description => 'prototyping the publication framework',
-			    directory => "$ENV{HOME}/$new_projects_directory/publications/source/snapshots/0",
+			    directory => "$ENV{HOME}/$new_projects_directory/publications/source/snapshots/master",
 			    disabled => 'Allan\'s experiment working area',
 			    order => 32,
 			    tags => [
 				     'genesis3',
 				    ],
 			    version_control => {
+						git => {
+							remote => 'github',
+						       },
 						branch_name => 0,
 						port_number => 4702,
 					       },
@@ -437,13 +443,16 @@ sub default_packages_read()
 			   },
 	   rtxi => {
 		    description => 'interface with the RTXI dynamic clamp software',
-		    directory => "$ENV{HOME}/$new_projects_directory/rtxi/source/snapshots/0",
-		    disabled => 'slow progress, yet important',
+		    directory => "$ENV{HOME}/$new_projects_directory/rtxi/source/snapshots/master",
+		    disabled => 'slow progress',
 		    order => 29,
 		    tags => [
 			     'genesis3',
 			    ],
 		    version_control => {
+					git => {
+						remote => 'github',
+					       },
 					branch_name => 0,
 					port_number => 4704,
 				       },
