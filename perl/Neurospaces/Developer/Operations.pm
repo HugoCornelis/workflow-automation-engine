@@ -1890,149 +1890,99 @@ sub implementation
 
     my $package_name = $package_information->{package_name};
 
-    #t where does this default value come from?  Cannot work correctly?
+    # git repositories take precedence over anything else
 
-    my $repository_name
-	= $package_information->{package}->{version_control}->{repository}
-	    || $directory . '/' . $package_name . '/' . 'mtn';
-
-    my $port_number = $package_information->{package}->{version_control}->{port_number};
-
-    # if not enough information for checkout
-
-    if (not -f $repository_name and not -d $repository_name)
+    if (exists $package_information->{package}->{version_control}->{git})
     {
-	die "$0: *** Error: cannot checkout from repository, repository_name not set";
-    }
+	my $repository_configuration = $package_information->{package}->{version_control}->{git};
 
-    #t port number commented out, impedes the automated
-    #t addition of new software components
+	my $remote_name = $repository_configuration->{remote};
 
-    # 		if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
-    # 		{
-    # 		    die "$0: *** Error: cannot checkout from repository, port_number not set";
-    # 		}
-
-    # change the directory
-
-    if (not chdir $directory)
-    {
-	die "$0: *** Error: cannot change to directory $directory";
-    }
-
-    # merge code
-
-    if ($repository_name =~ m/^.*\.mtn$/)
-    {
-	my $branch_name
-	    = (exists $package_information->{package}->{version_control}->{branch_name}
-	       ? $package_information->{package}->{version_control}->{branch_name}
-	       : $package_name);
-
-	# but only if allowed by the configuration, default is yes
-
-	my $automated_merges = Neurospaces::Developer::Configurator::whole_build_configuration_automated_merges();
-
-	if (Neurospaces::Developer::Configurator::whole_build_configuration_automated_merges())
+	if (!defined $remote_name)
 	{
+	    die "$0: *** Error: cannot fetch to a git repository, remote repository is not set";
+	}
+
+	# if the repository does not exist yet
+
+	if (not -d "$directory/.git")
+	{
+	    # create it
+
 	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'git', '-C', "$directory", 'init',
+		     ],
+		    );
+
+	    # add the default git remote
+
+	    my $remote_user = 'git@github.com';
+
+	    my $remote_url = "HugoCornelis";
+
+	    my $extension = ".git";
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'git', '-C', "$directory", 'remote', 'add', $remote_name, "$remote_user:$remote_url/$package_name$extension",
+		     ],
+		    );
+	}
+
+	# git checkout master
+
+	Neurospaces::Developer::Operations::operation_execute
 		(
 		 $operations,
 		 {
 		  description => $description,
-
-		  #t always zero here, but I guess this simply depends on working in client mode ?
-
 		  keywords => 0,
 		  package_name => $package_name,
 		 },
 		 [
-		  'mtn', '--db', $repository_name, '--branch', $branch_name, 'merge',
+		  'git', '-C', "$directory", 'checkout', "master",
 		 ],
 		);
-	}
-
-	# checkout code
-
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'test', '-d', '_MTN',
-	      '||', 'mtn', '--db', $repository_name, '--branch', $branch_name, 'co', '.',
-	     ],
-	    );
-
-	# update code
-
-	my @update_args;
-
-# 	my $upstream_version_options = [ '--branch', $branch_name, ];
-
-# 	if ($::option_upstream_version)
-# 	{
-# 	    $upstream_version_options = [ split /\s/, $::option_upstream_version, ];
-# 	}
-
-	my $monotone_version = Neurospaces::Developer::Operations::monotone_version();
-
-	if ($monotone_version >= 0.45)
-	{
-	    @update_args = [
-			    '/bin/echo', '-n', 'from', 'base_revision_id', ' ',
-			    '&&', 'mtn', 'automate', 'get_base_revision_id',
-			    '&&', 'mtn', '--db', $repository_name, "--revision=h:$branch_name", 'update','--move-conflicting-paths',
-			    '&&', '/bin/echo', '-n', 'to', 'base_revision_id', ' ',
-			    '&&', 'mtn', 'automate', 'get_base_revision_id',
-			   ];
-	}
-	else
-	{
-	    @update_args = [
-			    '/bin/echo', '-n', 'from', 'base_revision_id', ' ',
-			    '&&', 'mtn', 'automate', 'get_base_revision_id',
-			    '&&', 'mtn', '--db', $repository_name, "--revision=h:$branch_name", 'update',
-			    '&&', '/bin/echo', '-n', 'to', 'base_revision_id', ' ',
-			    '&&', 'mtn', 'automate', 'get_base_revision_id',
-			   ];
-	}
-
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
-
-	      #t always zero here, but I guess this simply depends on working in client mode ?
-
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     @update_args,
-	    );
-
     }
     else
     {
-	# MERCURIAL merge
-	# command: hg merge
+	#t where does this default value come from?  Cannot work correctly?
 
-	#t check first for outstanding changes in the workspace
-	#t   if found, die
-	#t
-	#t then hg merge (as below, puts the result in the workspace)
-	#t
-	#t automated hg commit (with -C option for checkin comment?)
-	#t
-	#t then continue with test -d .hg
+	my $repository_name
+	    = $package_information->{package}->{version_control}->{repository}
+		|| $directory . '/' . $package_name . '/' . 'mtn';
+
+	my $port_number = $package_information->{package}->{version_control}->{port_number};
+
+	# if not enough information for checkout
+
+	if (not -f $repository_name and not -d $repository_name)
+	{
+	    die "$0: *** Error: cannot checkout from repository, repository_name not set";
+	}
+
+	#t port number commented out, impedes the automated
+	#t addition of new software components
+
+	# 		if (not $port_number and $repository_name =~ m/^.*\.mtn$/)
+	# 		{
+	# 		    die "$0: *** Error: cannot checkout from repository, port_number not set";
+	# 		}
 
 	# change the directory
 
@@ -2041,71 +1991,192 @@ sub implementation
 	    die "$0: *** Error: cannot change to directory $directory";
 	}
 
-	# note: mercurial aborts if there is nothing to merge
+	# merge code
 
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
+	if ($repository_name =~ m/^.*\.mtn$/)
+	{
+	    my $branch_name
+		= (exists $package_information->{package}->{version_control}->{branch_name}
+		   ? $package_information->{package}->{version_control}->{branch_name}
+		   : $package_name);
 
-	      #t always zero here, but I guess this simply depends on working in client mode ?
+	    # but only if allowed by the configuration, default is yes
 
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'hg', 'merge', '||', 'true',
-	     ],
-	    );
+	    my $automated_merges = Neurospaces::Developer::Configurator::whole_build_configuration_automated_merges();
 
-	# checkout code
+	    if (Neurospaces::Developer::Configurator::whole_build_configuration_automated_merges())
+	    {
+		Neurospaces::Developer::Operations::operation_execute
+			(
+			 $operations,
+			 {
+			  description => $description,
 
-	my $branch_name
-	    = (exists $package_information->{package}->{version_control}->{branch_name}
-	       ? $package_information->{package}->{version_control}->{branch_name}
-	       : $package_name);
+			  #t always zero here, but I guess this simply depends on working in client mode ?
 
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
+			  keywords => 0,
+			  package_name => $package_name,
+			 },
+			 [
+			  'mtn', '--db', $repository_name, '--branch', $branch_name, 'merge',
+			 ],
+			);
+	    }
 
-	      #t always zero here, but I guess this simply depends on working in client mode ?
+	    # checkout code
 
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'test', '-d', '.hg',
-	      '||', 'hg', 'checkout', '-r', $branch_name,
-	     ],
-	    );
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
 
-	# update code
+		      #t always zero here, but I guess this simply depends on working in client mode ?
 
-	# MERCURIAL update checkout
-	# these two are actually aliased to each other because of how it pulls a workspace.
-	# You simply update to a particular revision number.
-	# hg update [-r revision]
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'test', '-d', '_MTN',
+		      '||', 'mtn', '--db', $repository_name, '--branch', $branch_name, 'co', '.',
+		     ],
+		    );
 
-	Neurospaces::Developer::Operations::operation_execute
-	    (
-	     $operations,
-	     {
-	      description => $description,
+	    # update code
 
-	      #t always zero here, but I guess this simply depends on working in client mode ?
+	    my @update_args;
 
-	      keywords => 0,
-	      package_name => $package_name,
-	     },
-	     [
-	      'hg', 'update',
-	     ],
-	    );
+	    # 	my $upstream_version_options = [ '--branch', $branch_name, ];
 
+	    # 	if ($::option_upstream_version)
+	    # 	{
+	    # 	    $upstream_version_options = [ split /\s/, $::option_upstream_version, ];
+	    # 	}
+
+	    my $monotone_version = Neurospaces::Developer::Operations::monotone_version();
+
+	    if ($monotone_version >= 0.45)
+	    {
+		@update_args = [
+				'/bin/echo', '-n', 'from', 'base_revision_id', ' ',
+				'&&', 'mtn', 'automate', 'get_base_revision_id',
+				'&&', 'mtn', '--db', $repository_name, "--revision=h:$branch_name", 'update','--move-conflicting-paths',
+				'&&', '/bin/echo', '-n', 'to', 'base_revision_id', ' ',
+				'&&', 'mtn', 'automate', 'get_base_revision_id',
+			       ];
+	    }
+	    else
+	    {
+		@update_args = [
+				'/bin/echo', '-n', 'from', 'base_revision_id', ' ',
+				'&&', 'mtn', 'automate', 'get_base_revision_id',
+				'&&', 'mtn', '--db', $repository_name, "--revision=h:$branch_name", 'update',
+				'&&', '/bin/echo', '-n', 'to', 'base_revision_id', ' ',
+				'&&', 'mtn', 'automate', 'get_base_revision_id',
+			       ];
+	    }
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     @update_args,
+		    );
+
+	}
+	else
+	{
+	    # MERCURIAL merge
+	    # command: hg merge
+
+	    #t check first for outstanding changes in the workspace
+	    #t   if found, die
+	    #t
+	    #t then hg merge (as below, puts the result in the workspace)
+	    #t
+	    #t automated hg commit (with -C option for checkin comment?)
+	    #t
+	    #t then continue with test -d .hg
+
+	    # change the directory
+
+	    if (not chdir $directory)
+	    {
+		die "$0: *** Error: cannot change to directory $directory";
+	    }
+
+	    # note: mercurial aborts if there is nothing to merge
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'hg', 'merge', '||', 'true',
+		     ],
+		    );
+
+	    # checkout code
+
+	    my $branch_name
+		= (exists $package_information->{package}->{version_control}->{branch_name}
+		   ? $package_information->{package}->{version_control}->{branch_name}
+		   : $package_name);
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'test', '-d', '.hg',
+		      '||', 'hg', 'checkout', '-r', $branch_name,
+		     ],
+		    );
+
+	    # update code
+
+	    # MERCURIAL update checkout
+	    # these two are actually aliased to each other because of how it pulls a workspace.
+	    # You simply update to a particular revision number.
+	    # hg update [-r revision]
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+
+		      #t always zero here, but I guess this simply depends on working in client mode ?
+
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'hg', 'update',
+		     ],
+		    );
+	}
     }
 
 }
