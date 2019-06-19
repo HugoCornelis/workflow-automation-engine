@@ -2396,6 +2396,47 @@ sub implementation
 	    die "$0: *** Error: cannot fetch to a git repository, remote repository is not set";
 	}
 
+	# if the repository does not exist yet
+
+	if (not -d "$directory/.git")
+	{
+	    # create it
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'git', '-C', "$directory", 'init',
+		     ],
+		    );
+
+	    # add the default git remote
+
+	    my $remote_user = 'git@github.com';
+
+	    my $remote_url = "HugoCornelis";
+
+	    my $extension = ".git";
+
+	    Neurospaces::Developer::Operations::operation_execute
+		    (
+		     $operations,
+		     {
+		      description => $description,
+		      keywords => 0,
+		      package_name => $package_name,
+		     },
+		     [
+		      'git', '-C', "$directory", 'remote', 'add', $remote_name, "$remote_user:$remote_url/$package_name$extension",
+		     ],
+		    );
+	}
+
 	# git fetch github
 
 	Neurospaces::Developer::Operations::operation_execute
