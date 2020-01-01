@@ -558,12 +558,14 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 # 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
 # 		-f $core_directory . $command and print "Found core $core_directory$command\n";
 
-		    my $test_command
-			= -f $command
-			    ? $command
-				: -f $built_exe_directory . $command
-				    ? $built_exe_directory . $command
-					: $core_directory . $command;
+		    my $test_command = $command;
+                       # = (-f $command
+                       #    ? $command
+                       #    : (defined $built_exe_directory
+                       #       ? (-f $built_exe_directory . $command
+                       #        ? $built_exe_directory . $command
+                       #        : $core_directory . $command)
+                       #       : $command));
 
 		    # find differences between how to run this command and
 		    # the one already running
@@ -606,7 +608,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    # if the command can be executed
 
-		    if (-x $command)
+# 		    if (-x $command)
 		    {
 			if ($spawn_new)
 			{
@@ -664,21 +666,21 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			    $test_startup = 0;
 			}
 		    }
-		    else
-		    {
-			my $error = "$command is not executable";
+		    # else
+		    # {
+		    # 	my $error = "$command is not executable";
 
-			report_error_add
-			    (
-			     {
-			      description => $description,
-			      error => $error,
-			      module_name => $module_name,
-			     },
-			    );
+		    # 	report_error_add
+		    # 	    (
+		    # 	     {
+		    # 	      description => $description,
+		    # 	      error => $error,
+		    # 	      module_name => $module_name,
+		    # 	     },
+		    # 	    );
 
-			next;
-		    }
+		    # 	next;
+		    # }
 		}
 	    }
 
@@ -740,6 +742,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		my $time_elapsed;
 
 		print "*** Test: $description\n";
+
+		# if the command_definition instantiated an object
 
 		if ($object
 		    and (ref $command_test->{write} eq 'ARRAY'))
@@ -854,11 +858,14 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    # shell command
 
-		    if ($shell)
+		    if (ref $shell eq 'HASH')
 		    {
-			print "*** Shell: $shell\n";
+		    }
+		    elsif (defined $shell)
+		    {
+			print "*** Shell: timeout $timeout $shell\n";
 
-			system $shell;
+			system "timeout $timeout $shell";
 		    }
 
 		    # if there is a test external to the application
