@@ -16,40 +16,40 @@ our $built_exe_directory;
 our $config;
 
 
-BEGIN
-{
-    #! make check
+# BEGIN
+# {
+#     #! make check
 
-    push @INC, '../perl';
+#     push @INC, '../perl';
 
-    #! make distcheck
+#     #! make distcheck
 
-    push @INC, '../../perl';
+#     push @INC, '../../perl';
 
-    #! normal run
+#     #! normal run
 
-    push @INC, './perl';
+#     push @INC, './perl';
 
-    #! after install
+#     #! after install
 
-    push @INC, '/usr/local/glue/swig/perl';
+#     push @INC, '/usr/local/glue/swig/perl';
 
-    # check for ".genesis3" directory. If not present we create
-    # it and set a directory for perl inline code. 
-    my $inline_path = "$ENV{HOME}/.genesis3/ssp/InlineCode";
-    if(! -e $inline_path)
-    {
-      use File::Path;
+#     # check for ".genesis3" directory. If not present we create
+#     # it and set a directory for perl inline code. 
+#     my $inline_path = "$ENV{HOME}/.genesis3/ssp/InlineCode";
+#     if(! -e $inline_path)
+#     {
+#       use File::Path;
 
-      &File::Path::mkpath($inline_path);
-    }
+#       &File::Path::mkpath($inline_path);
+#     }
 
-    $ENV{PERL_INLINE_DIRECTORY} = $inline_path;
+#     $ENV{PERL_INLINE_DIRECTORY} = $inline_path;
 
-}
+# }
 
 
-BEGIN
+sub initialize_running_mode
 {
     # default : running stand-alone
 
@@ -57,7 +57,7 @@ BEGIN
 
     # find the package core directory
 
-    $config = do 'tests.config';
+    $config = do './tests.config';
 
     if (!defined $config)
     {
@@ -106,27 +106,6 @@ BEGIN
     }
 
     unshift @INC, $config->{tests_directory};
-
-#     # find the perl modules directory
-
-#     $perl_modules_directory = $core_directory;
-
-#     $perl_modules_directory .= "perl";
-
-#     # add to include path
-
-#     unshift @INC, $perl_modules_directory;
-
-    # more automake hacking : if there is a special _build directory
-    # that separates sources and derived files, we assume that the
-    # _build directory will contain the executables.
-
-    $built_exe_directory = $core_directory . "_build/";
-
-    if (!-d $built_exe_directory)
-    {
-	$built_exe_directory = $core_directory;
-    }
 }
 
 
@@ -160,110 +139,118 @@ my $option_trace;
 my $option_verbose;
 
 
-print "Executable is $0,\n";
-print "core_directory is $core_directory\n";
-
-my $environment_settings = $config->{environment_settings};
-
-foreach my $environment_setting_name (keys %$environment_settings)
+sub initialize_environment
 {
-    my $environment_setting = $environment_settings->{$environment_setting_name};
+    print "Executable is $0,\n";
+    print "core_directory is $core_directory\n";
 
-    # if simply setting values in the environment
+    my $environment_settings = $config->{environment_settings};
 
-    if (!ref $environment_setting)
+    foreach my $environment_setting_name (keys %$environment_settings)
     {
-	# set the value in the environment
+	my $environment_setting = $environment_settings->{$environment_setting_name};
 
-	$ENV{$environment_setting_name} = $environment_setting;
-    }
+	# if simply setting values in the environment
 
-    # if additional initialization required
-
-    elsif (ref $environment_setting eq 'HASH')
-    {
-	# get environment_setting value
-
-	my $value = $environment_setting->{value};
-
-	# set the value in the environment
-
-	$ENV{$environment_setting_name} = $value;
-
-	# give feedback
-
-	my $description = $environment_setting->{description};
-
-	$description =~ s/%value/$value/g;
-
-	print $description;
-
-	# loop over shell commands for initialization
-
-	my $shell_commands = $environment_setting->{initialization}->{shell};
-
-	foreach my $shell_command (@$shell_commands)
+	if (!ref $environment_setting)
 	{
-	    # replace value
+	    # set the value in the environment
 
-	    $shell_command =~ s/%value/$value/g;
+	    $ENV{$environment_setting_name} = $environment_setting;
+	}
 
-	    # execute command
+	# if additional initialization required
 
-	    print "$0: executing ($shell_command)\n";
+	elsif (ref $environment_setting eq 'HASH')
+	{
+	    # get environment_setting value
 
-	    system $shell_command;
+	    my $value = $environment_setting->{value};
+
+	    # set the value in the environment
+
+	    $ENV{$environment_setting_name} = $value;
+
+	    # give feedback
+
+	    my $description = $environment_setting->{description};
+
+	    $description =~ s/%value/$value/g;
+
+	    print $description;
+
+	    # loop over shell commands for initialization
+
+	    my $shell_commands = $environment_setting->{initialization}->{shell};
+
+	    foreach my $shell_command (@$shell_commands)
+	    {
+		# replace value
+
+		$shell_command =~ s/%value/$value/g;
+
+		# execute command
+
+		print "$0: executing ($shell_command)\n";
+
+		system $shell_command;
+	    }
+	}
+	else
+	{
+	    die "$0: illegal environment_settings, was processing $environment_setting";
 	}
     }
-    else
-    {
-	die "$0: illegal environment_settings, was processing $environment_setting";
-    }
-}
 
-if (defined ($config->{environment}))
-{
-    print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
+    if (defined ($config->{environment}))
+    {
+	print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
+    }
 }
 
 
 my $error_count = 0;
 
-my $test_report
-    = {
-       description => {
-		       command => $0,
-		       name => "Test report",
-		       package => $config->{package},
-		      },
-       global => {
-		  config => $config,
-		  error_count => $error_count,
-		  status => 'initializing',
-		  test_count => 0,
-		  time_start => `date`,
-		 },
-       target => {
-		  OS => $^O,
-		  system => {
-			     libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
-			     uname => (join '', `uname -a`),
-			     cpu => (join '', `cat /proc/cpuinfo`),
-			    },
-		  packages => {
-			       '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
-			       autoconf => (join '', `autoconf --version`),
-			       automake => (join '', `automake --version`),
-			       bison => (join '', `bison --version`),
-			       flex => (join '', `flex --version`),
-			       gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
-			       perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
-			       python => (join '', `python 2>&1 --version`),
-			       python_installation => (join '', `./contrib/pythontest 2>&1`),,
-			       swig => (join '', `swig 2>&1 -version`),
-			      },
-		 },
-      };
+my $test_report;
+
+sub initialize_globals
+{
+    my $test_report
+	= {
+	    description => {
+		command => $0,
+		name => "Test report",
+		package => $config->{package},
+	    },
+	    global => {
+		config => $config,
+		error_count => $error_count,
+		status => 'initializing',
+		test_count => 0,
+		time_start => `date`,
+	    },
+	    target => {
+		OS => $^O,
+		system => {
+		    libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
+		    uname => (join '', `uname -a`),
+		    cpu => (join '', `cat /proc/cpuinfo`),
+		},
+		packages => {
+		    '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
+		    autoconf => (join '', `autoconf --version`),
+		    automake => (join '', `automake --version`),
+		    bison => (join '', `bison --version`),
+		    flex => (join '', `flex --version`),
+		    gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
+		    perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
+		    python => (join '', `python 2>&1 --version`),
+		    python_installation => (join '', `./contrib/pythontest 2>&1`),,
+		    swig => (join '', `swig 2>&1 -version`),
+		},
+	    },
+    };
+}
 
 
 $SIG{'__DIE__'}
@@ -290,7 +277,13 @@ $SIG{'INT'}
 
 sub main
 {
-    read_cmd_line();
+    parse_options();
+
+    initialize_running_mode();
+
+    initialize_environment();
+
+    initialize_globals();
 
     my $test_modules = test_library_construct();
 
@@ -325,8 +318,6 @@ sub main
     my $running_command_definition;
 
     my $test_startup;
-
-    $DB::single = 1;
 
     # randomize order if required
 
@@ -1263,7 +1254,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 }
 
 
-sub read_cmd_line
+sub parse_options
 {
     my $result
 	= GetOptions
