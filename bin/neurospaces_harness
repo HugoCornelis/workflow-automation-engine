@@ -840,7 +840,10 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    my $time_start = [ gettimeofday(), ];
 
-		    if (defined $write)
+		    if (ref $write eq 'HASH')
+		    {
+		    }
+		    elsif (defined $write)
 		    {
 			print "*** Write: $write\n";
 
