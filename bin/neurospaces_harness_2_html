@@ -34,7 +34,7 @@ BEGIN
 
     # find the package core directory
 
-    $config = do 'tests.config';
+    $config = do './tests.config';
 
     if (!defined $config)
     {
