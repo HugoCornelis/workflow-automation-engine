@@ -2460,12 +2460,14 @@ sub implementation
     {
 	my $repository_configuration = $package_information->{package}->{version_control}->{git};
 
-	my $remote_name = $repository_configuration->{remote};
+	my $remote = $repository_configuration->{remote};
 
-	if (!defined $remote_name)
+	if (!defined $remote)
 	{
 	    die "$0: *** Error: cannot fetch to a git repository, remote repository is not set";
 	}
+
+	my $remote_name = $remote->{name};
 
 	# if the repository does not exist yet
 
@@ -2488,11 +2490,11 @@ sub implementation
 
 	    # add the default git remote
 
-	    my $remote_user = 'git@github.com';
+	    my $user = $remote->{user};
 
-	    my $remote_url = "HugoCornelis";
+	    my $url = $remote->{url};
 
-	    my $extension = ".git";
+	    my $protocol = $remote->{protocol};
 
 	    Neurospaces::Developer::Operations::operation_execute
 		    (
@@ -2503,12 +2505,12 @@ sub implementation
 		      package_name => $package_name,
 		     },
 		     [
-		      'git', '-C', "$directory", 'remote', 'add', $remote_name, "$remote_user:$remote_url/$package_name$extension",
+		      'git', '-C', "$directory", 'remote', 'add', $remote_name, "$protocol://$user/$url",
 		     ],
 		    );
 	}
 
-	# git fetch github
+	# git fetch
 
 	Neurospaces::Developer::Operations::operation_execute
 		(
