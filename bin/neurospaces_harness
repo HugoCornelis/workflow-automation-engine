@@ -275,6 +275,134 @@ $SIG{'INT'}
       };
 
 
+sub command_preparation
+{
+    my $command_definition = shift;
+
+    my $module_definition = shift;
+
+    my $preparation = $command_definition->{preparation};
+
+    my $preparation_result;
+
+    if ($preparation)
+    {
+	print "*** Preparing ($preparation->{description})\n";
+
+	my $preparer = $preparation->{preparer};
+
+	$preparation_result = &$preparer();
+    }
+
+    return $preparation_result;
+}
+
+
+sub command_reparation
+{
+    my $command_definition = shift;
+
+    my $module_definition = shift;
+
+    my $preparation_result = shift;
+
+    my $reparation = $command_definition->{reparation};
+
+    if ($reparation)
+    {
+	print "*** Reparing ($reparation->{description})\n";
+
+	my $reparer = $reparation->{reparer};
+
+	my $reparation_error = &$reparer($preparation_result);
+
+	# process errors
+
+	if ($reparation_error)
+	{
+	    my $module_name = $module_definition->{name};
+
+	    my $description = $reparation_error;
+
+	    my $command_definition_description = $command_definition->{description};
+
+	    report_error_add
+		(
+		 {
+		     description => $description,
+		     error => $reparation_error,
+		     module_name => $module_name,
+		     subdescription => $command_definition_description,
+		 },
+		);
+	}
+    }
+}
+
+
+sub module_reparation
+{
+    my $module_definition = shift;
+
+    my $module_preparation_result = shift;
+
+    my $reparation = $module_definition->{reparation};
+
+    if ($reparation)
+    {
+	my $module_name = $module_definition->{name};
+
+	print "*** Reparing Module $module_name ($reparation->{description})\n";
+
+	my $reparer = $reparation->{reparer};
+
+	my $reparation_error = &$reparer($module_preparation_result);
+
+	# process errors
+
+	if ($reparation_error)
+	{
+	    my $description = $reparation_error;
+
+	    my $module_definition_description = $module_definition->{description};
+
+	    report_error_add
+		(
+		 {
+		     description => $description,
+		     error => $reparation_error,
+		     module_name => $module_name,
+		     subdescription => $module_definition_description,
+		 },
+		);
+	}
+    }
+}
+
+
+sub module_preparation
+{
+    my $module_definition = shift;
+
+    my $preparation = $module_definition->{preparation};
+
+    my $module_preparation_result;
+
+    if ($preparation)
+    {
+	my $module_name = $module_definition->{name};
+
+	print "*** Preparing Module $module_name ($preparation->{description})\n";
+
+	my $preparer = $preparation->{preparer};
+
+	$module_preparation_result = &$preparer();
+    }
+
+    return $module_preparation_result;
+}
+
+
 sub main
 {
     parse_options();
@@ -428,18 +556,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    print "*** Comment: $comment\n";
 	}
 
-	my $preparation = $module_definition->{preparation};
+	# prepare the module test environment
 
-	my $module_preparation_result;
-
-	if ($preparation)
-	{
-	    print "*** Preparing Module $module_name ($preparation->{description})\n";
-
-	    my $preparer = $preparation->{preparer};
-
-	    $module_preparation_result = &$preparer();
-	}
+	my $module_preparation_result = module_preparation($module_definition);
 
 	# loop over commands for this module
 
@@ -511,18 +630,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		}
 	    }
 
-	    my $preparation = $command_definition->{preparation};
+	    # prepare the command test environment
 
-	    my $preparation_result;
-
-	    if ($preparation)
-	    {
-		print "*** Preparing ($preparation->{description})\n";
-
-		my $preparer = $preparation->{preparer};
-
-		$preparation_result = &$preparer();
-	    }
+	    my $preparation_result = command_preparation($command_definition, $module_definition);
 
 	    my $command = $command_definition->{command};
 
@@ -598,7 +708,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 					# or if we had to prepare this command
 
-					|| $preparation;
+					|| $command_definition->{preparation};
 
 		    # prefix the command with the core directory
 
@@ -1149,35 +1259,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		$test_report->{global}->{test_count}++;
 	    }
 
-	    my $reparation = $command_definition->{reparation};
+	    # repair the command test environment
 
-	    if ($reparation)
-	    {
-		print "*** Reparing ($reparation->{description})\n";
-
-		my $reparer = $reparation->{reparer};
-
-		my $reparation_error = &$reparer($preparation_result);
-
-		# process errors
-
-		if ($reparation_error)
-		{
-		    my $description = $reparation_error;
-
-		    my $command_definition_description = $command_definition->{description};
-
-		    report_error_add
-			(
-			 {
-			  description => $description,
-			  error => $reparation_error,
-			  module_name => $module_name,
-			  subdescription => $command_definition_description,
-			 },
-			);
-		}
-	    }
+	    command_reparation($command_definition, $module_definition, $preparation_result);
 
 	    if (@$command_definitions > 1)
 	    {
@@ -1192,35 +1276,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    $previous_side_effects ||= $command_definition->{side_effects} || 0;
 	}
 
-	my $reparation = $module_definition->{reparation};
+	# repair the test environment
 
-	if ($reparation)
-	{
-	    print "*** Reparing Module $module_name ($reparation->{description})\n";
-
-	    my $reparer = $reparation->{reparer};
-
-	    my $reparation_error = &$reparer($module_preparation_result);
-
-	    # process errors
-
-	    if ($reparation_error)
-	    {
-		my $description = $reparation_error;
-
-		my $module_definition_description = $module_definition->{description};
-
-		report_error_add
-		    (
-		     {
-		      description => $description,
-		      error => $reparation_error,
-		      module_name => $module_name,
-		      subdescription => $module_definition_description,
-		     },
-		    );
-	    }
-	}
+	module_reparation($module_definition, $module_preparation_result);
 
 	# if library checksum mismatch
 
