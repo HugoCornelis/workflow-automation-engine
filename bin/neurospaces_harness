@@ -566,7 +566,11 @@ sub main
 
     initialize_globals();
 
+    # find all the test module files
+
     my $test_modules = test_library_construct();
+
+    # read the test module files
 
     $test_modules = test_library_expand($test_modules);
 
