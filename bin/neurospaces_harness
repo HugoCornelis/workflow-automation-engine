@@ -433,7 +433,7 @@ sub main
 
     # the previous command had no side effects on the loaded model (since there is no model yet)
 
-    my $previous_side_effects = 0;
+    my $previous_command_side_effects = 0;
 
     # set status: running
 
@@ -475,6 +475,8 @@ sub main
     {
 	$test_report->{random_seed} = 'not randomized';
     }
+
+    # loop over all module definitions
 
     foreach my $module_definition (@$test_modules)
     {
@@ -636,7 +638,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    my $command = $command_definition->{command};
 
-	    my $object;
+	    my $command_object;
 
 	    my $spawn_new;
 
@@ -650,7 +652,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		require $filename;
 
-		$object = eval "$class->new()";
+		$command_object = eval "$class->new()";
 	    }
 	    else
 	    {
@@ -694,7 +696,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    $spawn_new
 			=
-			    # if we did not have any command yet
+			    # if we do not have a previous command
 
 			    !$exp
 
@@ -704,7 +706,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 				# or if the previous command had side effects
 
-				    || $previous_side_effects
+				    || $previous_command_side_effects
 
 					# or if we had to prepare this command
 
@@ -767,7 +769,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 			    # there were no side effects yet
 
-			    $previous_side_effects = 0;
+			    $previous_command_side_effects = 0;
 			}
 			else
 			{
@@ -855,7 +857,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		# if the command_definition instantiated an object
 
-		if ($object
+		if ($command_object
 		    and (ref $command_test->{write} eq 'ARRAY'))
 		{
 		    my $result;
@@ -872,7 +874,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 			my $arguments = $write->{arguments};
 
-			$result = $object->$method(@$arguments);
+			$result = $command_object->$method(@$arguments);
 		    }
 
 		    if (exists $command_test->{read})
@@ -1252,7 +1254,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		# register if this command had side effects
 
-		$previous_side_effects ||= $command_test->{side_effects} || 0;
+		$previous_command_side_effects ||= $command_test->{side_effects} || 0;
 
 		# increment total test count
 
@@ -1273,7 +1275,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    #! e.g. using a preparer/reparer combination
 
-	    $previous_side_effects ||= $command_definition->{side_effects} || 0;
+	    $previous_command_side_effects ||= $command_definition->{side_effects} || 0;
 	}
 
 	# repair the test environment
@@ -1305,9 +1307,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	# register if this command had side effects
 
-	#! don't think that make sense, but anyway ...
+	#! don't think this make sense, but anyway ...
 
-	$previous_side_effects ||= $module_definition->{side_effects} || 0;
+	$previous_command_side_effects ||= $module_definition->{side_effects} || 0;
 
 	report_message(1, 2, "End of tests of module $module_definition->{description}
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
