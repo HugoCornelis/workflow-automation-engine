@@ -512,8 +512,11 @@ sub main
 
 	if ($module_definition->{disabled})
 	{
-	    report_message(1, 2, "Module $module_definition->{description} is disabled ($module_definition->{disabled}).
+	    if (not $option_show)
+	    {
+		report_message(1, 2, "Module $module_definition->{description} is disabled ($module_definition->{disabled}).
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+	    }
 
 	    $test_report->{disabled}->{modules}->{$module_name} = $module_definition->{disabled};
 
@@ -572,10 +575,13 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    if ($command_definition->{disabled})
 	    {
-		report_message(1, 2, "Tests of $description are disabled ($command_definition->{disabled})
+		if (not $option_show)
+		{
+		    report_message(1, 2, "Tests of $description are disabled ($command_definition->{disabled})
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-		$test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
+		    $test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
+		}
 
 		next;
 	    }
@@ -1311,8 +1317,11 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	$previous_command_side_effects ||= $module_definition->{side_effects} || 0;
 
-	report_message(1, 2, "End of tests of module $module_definition->{description}
+	if (not $option_show)
+	{
+	    report_message(1, 2, "End of tests of module $module_definition->{description}
 Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+	}
     }
 
     # if there is a command running
