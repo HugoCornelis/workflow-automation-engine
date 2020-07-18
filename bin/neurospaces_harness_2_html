@@ -26,93 +26,9 @@ my $option_introduction;
 my $option_verbose;
 
 
-BEGIN
-{
-    # default : running stand-alone
+my $global_tests_dir;
 
-    my $test_mode = 'stand-alone';
-
-    # find the package core directory
-
-    $config = do './tests.config';
-
-    if (!defined $config)
-    {
-	if ($ENV{srcdir})
-	{
-	    $config = do "$ENV{srcdir}/tests.config";
-
-	    # register that we are running from automake
-
-	    $test_mode = 'automake';
-	}
-    }
-
-    if (!defined $config)
-    {
-	die "No test configuration found";
-    }
-
-    # protect for automake
-
-    if ($test_mode eq 'stand-alone')
-    {
-	$core_directory = $config->{core_directory};
-    }
-    else
-    {
-	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
-    }
-
-    # remove parent and current directories
-
-    $core_directory =~ s(([^\.])\./)($1)g;
-
-    $core_directory =~ s([^/\.]+/\.\./)()g;
-
-    print "$0: core_directory is $core_directory\n";
-
-    # add to tests directory to include paths
-
-    if (!exists $config->{tests_directory})
-    {
-	$config->{tests_directory} = "${core_directory}tests/specifications";
-    }
-
-    unshift @INC, $config->{tests_directory};
-
-#     # find the perl modules directory
-
-#     $perl_modules_directory = $core_directory;
-
-#     $perl_modules_directory .= "perl";
-
-#     # add to include path
-
-#     unshift @INC, $perl_modules_directory;
-
-#     #! this one is for distcheck, second run of the disthook
-
-#     unshift @INC, '../../../perl';
-
-    # more automake hacking : if there is a special _build directory
-    # that separates sources and derived files, we assume that the
-    # _build directory will contain the executables.
-
-    $built_exe_directory = $core_directory . "_build/";
-
-    if (!-d $built_exe_directory)
-    {
-	$built_exe_directory = $core_directory;
-    }
-}
-
-
-$ENV{NEUROSPACES_NMC_MODELS} = ${core_directory} . '/library';
-
-my $tests_dir = $config->{tests_directory};
-
-my $outputs_dir = $config->{outputs_dir};
+my $global_outputs_dir;
 
 
 use CGI;
@@ -236,39 +152,21 @@ sub html_table_code
 
 sub main
 {
+    # read the configuration file and set the directory variables
+
+    parse_configuration_and_directories();
+
     my $total_tests = 0;
 
-    my $result
-	= GetOptions
-	    (
-	     "help!" => \$option_help,
-	     "header=s" => \$option_header,
-	     "introduction=s" => \$option_introduction,
-	     "v|verbose+" => \$option_verbose,
-	    );
+    # parse the command line
 
-    if ($option_help)
-    {
-	print
-	    "
-$0: convert test definitions to html.
-
-options :
-    header         header to insert before any titles.
-    help           print usage information.
-    introduction   optional introduction file (literal HTML).
-    v|verbose      tell what is being done, specify multiple times to get
-                   more feedback.
-";
-
-	exit 1;
-    }
+    parse_command_line_options();
 
     my $cgi = CGI->new();
 
-    # produce list of all directories
+    # produce a list of all directories
 
-    my $directories = [ sort split '\n', `find $tests_dir -type d`, ];
+    my $directories = [ sort split '\n', `find $global_tests_dir -type d`, ];
 
     my $directory_2_files
 	= {
@@ -927,7 +825,7 @@ sub output_content
 
     # compute real output filename
 
-    my $output_file = "$outputs_dir/$filename";
+    my $output_file = "$global_outputs_dir/$filename";
 
     output_prepare($output_file);
 
@@ -1034,7 +932,7 @@ sub output_source
 
 	#! at most five levels deep
 
-	$result->{result_text_file} = "$outputs_dir/sources/a/b/c/d/e/$source_text_file.source.html";
+	$result->{result_text_file} = "$global_outputs_dir/sources/a/b/c/d/e/$source_text_file.source.html";
 
 	#! this does not look good to me, it is a reversed parent
 	#! directory removal, there must be something wrong with the data
@@ -1071,6 +969,124 @@ sub output_source
     # return result: source information
 
     return $result;
+}
+
+
+sub parse_command_line_options
+{
+    my $result
+	= GetOptions
+	    (
+	     "help!" => \$option_help,
+	     "header=s" => \$option_header,
+	     "introduction=s" => \$option_introduction,
+	     "v|verbose+" => \$option_verbose,
+	    );
+
+    if ($option_help)
+    {
+	print
+	    "
+$0: convert test definitions to html.
+
+options :
+    header         header to insert before any titles.
+    help           print usage information.
+    introduction   optional introduction file (literal HTML).
+    v|verbose      tell what is being done, specify multiple times to get
+                   more feedback.
+";
+
+	exit 0;
+    }
+}
+
+
+sub parse_configuration_and_directories
+{
+    # default : running stand-alone
+
+    my $test_mode = 'stand-alone';
+
+    # find the package core directory
+
+    $config = do './tests.config';
+
+    if (!defined $config)
+    {
+	if ($ENV{srcdir})
+	{
+	    $config = do "$ENV{srcdir}/tests.config";
+
+	    # register that we are running from automake
+
+	    $test_mode = 'automake';
+	}
+    }
+
+    if (!defined $config)
+    {
+	die "No test configuration found";
+    }
+
+    # protect for automake
+
+    if ($test_mode eq 'stand-alone')
+    {
+	$core_directory = $config->{core_directory};
+    }
+    else
+    {
+	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
+    }
+
+    # remove parent and current directories
+
+    $core_directory =~ s(([^\.])\./)($1)g;
+
+    $core_directory =~ s([^/\.]+/\.\./)()g;
+
+    print "$0: core_directory is $core_directory\n";
+
+    # add to tests directory to include paths
+
+    if (!exists $config->{tests_directory})
+    {
+	$config->{tests_directory} = "${core_directory}tests/specifications";
+    }
+
+    unshift @INC, $config->{tests_directory};
+
+#     # find the perl modules directory
+
+#     $perl_modules_directory = $core_directory;
+
+#     $perl_modules_directory .= "perl";
+
+#     # add to include path
+
+#     unshift @INC, $perl_modules_directory;
+
+#     #! this one is for distcheck, second run of the disthook
+
+#     unshift @INC, '../../../perl';
+
+    # more automake hacking : if there is a special _build directory
+    # that separates sources and derived files, we assume that the
+    # _build directory will contain the executables.
+
+    $built_exe_directory = $core_directory . "_build/";
+
+    if (!-d $built_exe_directory)
+    {
+	$built_exe_directory = $core_directory;
+    }
+
+    $ENV{NEUROSPACES_NMC_MODELS} = ${core_directory} . '/library';
+
+    $global_tests_dir = $config->{tests_directory};
+
+    $global_outputs_dir = $config->{outputs_dir};
 }
 
 
