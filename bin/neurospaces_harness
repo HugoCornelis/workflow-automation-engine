@@ -403,6 +403,159 @@ sub module_preparation
 }
 
 
+my $global_exp;
+
+my $global_previous_command_side_effects;
+
+my $global_running_command_definition;
+
+sub command_spawn_new
+{
+    my $command_definition = shift;
+
+    # a command can be an absolute pathname,
+    # can come from the _build directory
+    # or from the sources for a script
+
+# 		-f $command and print "Found command $command\n";
+# 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
+# 		-f $core_directory . $command and print "Found core $core_directory$command\n";
+
+    my $command = $command_definition->{command};
+
+    my $test_command = $command;
+    # = (-f $command
+    #    ? $command
+    #    : (defined $built_exe_directory
+    #       ? (-f $built_exe_directory . $command
+    #        ? $built_exe_directory . $command
+    #        : $core_directory . $command)
+    #       : $command));
+
+    # find differences between how to run this command and
+    # the one already running
+
+    my $new_command_definition
+	= {
+	    arguments => $command_definition->{arguments},
+	    command => $test_command,
+    };
+
+    my $differences
+	= data_comparator
+	($new_command_definition, $global_running_command_definition);
+
+    # remember to spawn a new command
+
+    my $spawn_new;
+
+    $spawn_new =
+	(
+	 # if we do not have a previous command
+
+	 !$global_exp
+
+	 # or if there were differences with the previous command
+
+	 || !$differences->is_empty()
+
+	 # or if the previous command had side effects
+
+	 || $global_previous_command_side_effects
+
+	 # or if we had to prepare this command
+
+	 || $command_definition->{preparation}
+	);
+
+    # prefix the command with the core directory
+
+    $command = $new_command_definition->{command};
+
+    my $arguments = $command_definition->{arguments};
+
+    # if the command can be executed
+
+    my $test_startup;
+
+# 		    if (-x $command)
+    {
+	if ($spawn_new)
+	{
+	    if ($global_exp)
+	    {
+		# terminate the previous command
+
+		#t could be that the hard_close() call is needed because
+		#t neurospaces uses readline, not sure needs investigation,
+		#t perhaps.
+
+		$global_exp->hard_close();
+	    }
+
+	    # create a new Expect object by spawning a new process with the new command
+
+	    $global_exp = Expect->new();
+
+	    #! see the expect manual for this one
+
+	    $global_exp->raw_pty(1);
+
+	    # 		    $exp->slave->stty(qw(raw -echo));
+
+	    $global_exp->spawn
+		(
+		 (
+		  $option_trace
+		  ? ("strace", "-f")
+		  : ()
+		 ),
+		 $command,
+		 @$arguments
+		)
+		or die "$0: cannot spawn $command: $!\n";
+
+	    # set the running_command_definition
+
+	    $global_running_command_definition = $new_command_definition;
+
+	    print "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+	    # remember to do startup testing
+
+	    $test_startup = 1;
+
+	    # there were no side effects yet
+
+	    $global_previous_command_side_effects = 0;
+	}
+	else
+	{
+	    print "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+	    $test_startup = 0;
+	}
+    }
+    # else
+    # {
+    # 	my $error = "$command is not executable";
+
+    # 	report_error_add
+    # 	    (
+    # 	     {
+    # 	      description => $description,
+    # 	      error => $error,
+    # 	      module_name => $module_name,
+    # 	     },
+    # 	    );
+
+    # 	next;
+    # }
+
+    return $global_exp, $test_startup;
+}
+
+
 sub main
 {
     parse_options();
@@ -439,15 +592,7 @@ sub main
 
     $test_report->{global}->{status} = 'Running';
 
-    # loop over all test modules
-
-    my $exp;
-
-    my $running_command_definition;
-
-    my $test_startup;
-
-    # randomize order if required
+    # randomize test module order if requested
 
     if (defined $option_random_order)
     {
@@ -646,7 +791,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    my $command_object;
 
-	    my $spawn_new;
+	    my ($exp, $test_startup);
 
 	    if ($command_definition->{class})
 	    {
@@ -662,143 +807,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    }
 	    else
 	    {
-		if (ref $command eq 'CODE')
+		if (ref $command ne 'CODE')
 		{
-		    $spawn_new = 0;
-		}
-		else
-		{
-		    # a command can be an absolute pathname,
-		    # can come from the _build directory
-		    # or from the sources for a script
-
-# 		-f $command and print "Found command $command\n";
-# 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
-# 		-f $core_directory . $command and print "Found core $core_directory$command\n";
-
-		    my $test_command = $command;
-                       # = (-f $command
-                       #    ? $command
-                       #    : (defined $built_exe_directory
-                       #       ? (-f $built_exe_directory . $command
-                       #        ? $built_exe_directory . $command
-                       #        : $core_directory . $command)
-                       #       : $command));
-
-		    # find differences between how to run this command and
-		    # the one already running
-
-		    my $new_command_definition
-			= {
-			   arguments => $command_definition->{arguments},
-			   command => $test_command,
-			  };
-
-		    my $differences
-			= data_comparator
-			    ($new_command_definition, $running_command_definition);
-
-		    # remember to spawn a new command
-
-		    $spawn_new
-			=
-			    # if we do not have a previous command
-
-			    !$exp
-
-				# or if there were differences with the previous command
-
-				|| !$differences->is_empty()
-
-				# or if the previous command had side effects
-
-				    || $previous_command_side_effects
-
-					# or if we had to prepare this command
-
-					|| $command_definition->{preparation};
-
-		    # prefix the command with the core directory
-
-		    $command = $new_command_definition->{command};
-
-		    my $arguments = $command_definition->{arguments};
-
-		    # if the command can be executed
-
-# 		    if (-x $command)
-		    {
-			if ($spawn_new)
-			{
-			    if ($exp)
-			    {
-				# terminate the previous command
-
-				#t could be that the hard_close() call is needed because
-				#t neurospaces uses readline, not sure needs investigation,
-				#t perhaps.
-
-				$exp->hard_close();
-			    }
-
-			    # create a new Expect object by spawning a new process with the new command
-
-			    $exp = Expect->new();
-
-			    #! see the expect manual for this one
-
-			    $exp->raw_pty(1);
-
-			    # 		    $exp->slave->stty(qw(raw -echo));
-
-			    $exp->spawn
-				(
-				 (
-				  $option_trace
-				  ? ("strace", "-f")
-				  : ()
-				 ),
-				 $command,
-				 @$arguments
-				)
-				    or die "$0: cannot spawn $command: $!\n";
-
-			    # set the running_command_definition
-
-			    $running_command_definition = $new_command_definition;
-
-			    print "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-			    # remember to do startup testing
-
-			    $test_startup = 1;
-
-			    # there were no side effects yet
-
-			    $previous_command_side_effects = 0;
-			}
-			else
-			{
-			    print "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-			    $test_startup = 0;
-			}
-		    }
-		    # else
-		    # {
-		    # 	my $error = "$command is not executable";
-
-		    # 	report_error_add
-		    # 	    (
-		    # 	     {
-		    # 	      description => $description,
-		    # 	      error => $error,
-		    # 	      module_name => $module_name,
-		    # 	     },
-		    # 	    );
-
-		    # 	next;
-		    # }
+		    ($exp, $test_startup) = command_spawn_new($command_definition);
 		}
 	    }
 
@@ -948,7 +959,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		    my $timeout
 			= defined $command_test->{timeout}
 			    ? $command_test->{timeout} * $option_timeout_multiplier
-				: $spawn_new
+				: $test_startup
 				    ? 4 * $option_timeout_multiplier
 					: 2 * $option_timeout_multiplier;
 
@@ -1326,7 +1337,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
     # if there is a command running
 
-    if ($exp)
+    if ($global_exp)
     {
 	# terminate the command
 
@@ -1334,7 +1345,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	#t neurospaces uses readline, not sure needs investigation,
 	#t perhaps.
 
-	$exp->hard_close();
+	$global_exp->hard_close();
     }
 
     $test_report->{global}->{status} = 'Finished';
