@@ -990,10 +990,10 @@ sub parse_command_line_options
 $0: convert test definitions to html.
 
 options :
-    header         header to insert before any titles.
-    help           print usage information.
-    introduction   optional introduction file (literal HTML).
-    v|verbose      tell what is being done, specify multiple times to get
+    --header         header to insert before any titles.
+    --help           print usage information.
+    --introduction   optional introduction file (literal HTML).
+    --v|verbose      tell what is being done, specify multiple times to get
                    more feedback.
 ";
 
