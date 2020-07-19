@@ -705,6 +705,14 @@ sub main
 	  title => "Main Index",
 	 },
 	);
+
+    print "Done\n";
+
+    print "Inspect the HTML version of the test specifications with:
+
+\$ firefox --new-window ./html_output/index.html
+";
+
 }
 
 
@@ -1086,7 +1094,7 @@ sub parse_configuration_and_directories
 
     $global_tests_dir = $config->{tests_directory};
 
-    $global_outputs_dir = $config->{outputs_dir};
+    $global_outputs_dir = $config->{html_output_directory}; # $config->{outputs_dir};
 }
 
 
