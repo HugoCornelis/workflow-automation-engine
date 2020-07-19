@@ -1094,7 +1094,7 @@ sub parse_configuration_and_directories
 
     $global_tests_dir = $config->{tests_directory};
 
-    $global_outputs_dir = $config->{html_output_directory}; # $config->{outputs_dir};
+    $global_outputs_dir = $config->{html_output_directory} || $config->{outputs_dir};
 }
 
 
