@@ -395,11 +395,9 @@ sub command_spawn_new
 	= {
 	    arguments => $command_definition->{arguments},
 	    command => $test_command,
-    };
+	  };
 
-    my $differences
-	= data_comparator
-	($new_command_definition, $global_running_command_definition);
+    my $differences = data_comparator($new_command_definition, $global_running_command_definition);
 
     # remember to spawn a new command
 
@@ -435,6 +433,7 @@ sub command_spawn_new
     my $test_startup;
 
 # 		    if (-x $command)
+    if (defined $command)
     {
 	if ($spawn_new)
 	{
@@ -580,6 +579,8 @@ sub main
     {
 	$test_report->{random_seed} = 'not randomized';
     }
+
+    $test_report->{global}->{test_count} = 0;
 
     # loop over all module definitions
 
@@ -753,6 +754,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    my ($exp, $test_startup);
 
+	    # we have to either instantiate an object that produces output ...
+
 	    if ($command_definition->{class})
 	    {
 		my $class = $command_definition->{class};
@@ -765,12 +768,18 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		$command_object = eval "$class->new()";
 	    }
+
+	    # ... or run perl code that produces output
+
+	    elsif (ref $command eq 'CODE')
+	    {
+	    }
+
+	    # ... or run a command that produces output
+
 	    else
 	    {
-		if (ref $command ne 'CODE')
-		{
-		    ($exp, $test_startup) = command_spawn_new($command_definition);
-		}
+		($exp, $test_startup) = command_spawn_new($command_definition);
 	    }
 
 	    # loop over all tests for this command
@@ -868,6 +877,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			$expected = $read;
 		    }
 		}
+
+		# if the command_definition has executable perl code
+
 		elsif (ref $command eq 'CODE')
 		{
 		    $error
@@ -881,6 +893,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			     },
 			    );
 		}
+
+		# else the command definition runs a shell command
+
 		else
 		{
 		    if ($description =~ /startup successful \?$/)
@@ -1795,25 +1810,11 @@ sub test_library_expand
 	    next;
 	}
 
-	my $module_definition = do $test_module;
+	my $module_definition = test_library_readfile($test_module);
 
-	if ($@)
+	if ($module_definition)
 	{
-	    report_error_add
-		(
-		 {
-		  description => $@,
-		  error => $@,
-		  module_name => $test_module,
-		 },
-		);
-	}
-	else
-	{
-# 	    if (!$module_definition->{disabled})
-	    {
-		push @$result, $module_definition;
-	    }
+	    push @$result, $module_definition;
 	}
     }
 
@@ -1948,6 +1949,85 @@ sub test_library_expand
     }
 
     # return result
+
+    return $result;
+}
+
+
+sub test_library_is_yaml
+{
+    my $filename = shift;
+
+    my $result;
+
+    use IO::File;
+
+    my $fh = IO::File->new();
+
+    if ($fh->open("< $filename"))
+    {
+	my $first_line = <$fh>;
+
+	$first_line =~ s/(\s)*//g;
+
+	if ($first_line eq '---')
+	{
+	    $result = 'is_yaml';
+	}
+
+	$fh->close;
+    }
+
+    return $result;
+}
+
+
+sub test_library_readfile
+{
+    my $pathname = shift;
+
+    my $result;
+
+    use YAML;
+
+    if (test_library_is_yaml($pathname))
+    {
+	$result = YAML::LoadFile($pathname);
+
+	if ($@)
+	{
+	    report_error_add
+	    (
+	     {
+	      description => $@,
+	      error => $@,
+	      module_name => $pathname,
+	     },
+	    );
+	}
+    }
+    else
+    {
+	$result = do $pathname;
+
+	if ($@)
+	{
+	    report_error_add
+	    (
+	     {
+	      description => $@,
+	      error => $@,
+	      module_name => $pathname,
+	     },
+	    );
+	}
+
+	$pathname =~ m((.*)/(.*));
+
+	my $filename = $2;
+
+	YAML::DumpFile("/tmp/$filename", $result);
+    }
 
     return $result;
 }
