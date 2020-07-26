@@ -1142,7 +1142,7 @@ sub test_library_readfile
 
 	my $filename = $2;
 
-	YAML::DumpFile("/tmp/$filename", $result);
+# 	YAML::DumpFile("/tmp/$filename", $result);
     }
 
     return $result;
