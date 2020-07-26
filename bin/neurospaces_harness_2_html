@@ -214,7 +214,7 @@ sub main
 	       sort { $a->{source} cmp $b->{source} }
 	       map
 	       {
-		   my $content = do "$_.t";
+		   my $content = test_library_readfile("$_.t");
 
 		   my $description = $content->{description};
 
@@ -255,7 +255,7 @@ sub main
 
 	    # read the file data
 
-	    my $content = do "$file.t";
+	    my $content = test_library_readfile("$file.t");
 
 	    my $html = '';
 
@@ -1095,6 +1095,85 @@ sub parse_configuration_and_directories
     $global_tests_dir = $config->{tests_directory};
 
     $global_outputs_dir = $config->{html_output_directory} || $config->{outputs_dir};
+}
+
+
+sub test_library_is_yaml
+{
+    my $filename = shift;
+
+    my $result;
+
+    use IO::File;
+
+    my $fh = IO::File->new();
+
+    if ($fh->open("< $filename"))
+    {
+	my $first_line = <$fh>;
+
+	$first_line =~ s/(\s)*//g;
+
+	if ($first_line eq '---')
+	{
+	    $result = 'is_yaml';
+	}
+
+	$fh->close;
+    }
+
+    return $result;
+}
+
+
+sub test_library_readfile
+{
+    my $pathname = shift;
+
+    my $result;
+
+    use YAML;
+
+    if (test_library_is_yaml($pathname))
+    {
+	$result = YAML::LoadFile($pathname);
+
+	if ($@)
+	{
+	    report_error_add
+	    (
+	     {
+	      description => $@,
+	      error => $@,
+	      module_name => $pathname,
+	     },
+	    );
+	}
+    }
+    else
+    {
+	$result = do $pathname;
+
+	if ($@)
+	{
+	    report_error_add
+	    (
+	     {
+	      description => $@,
+	      error => $@,
+	      module_name => $pathname,
+	     },
+	    );
+	}
+
+	$pathname =~ m((.*)/(.*));
+
+	my $filename = $2;
+
+	YAML::DumpFile("/tmp/$filename", $result);
+    }
+
+    return $result;
 }
 
 
