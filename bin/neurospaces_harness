@@ -758,6 +758,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    if ($command_definition->{class})
 	    {
+		# instantiate the object
+
 		my $class = $command_definition->{class};
 
 		my $filename = $class . ".pm";
@@ -773,12 +775,18 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    elsif (ref $command eq 'CODE')
 	    {
+		# code is already instantiated, nothing to do here
 	    }
 
 	    # ... or run a command that produces output
 
 	    else
 	    {
+		# start the command and connect with its I/O channels
+
+		#! this is similar to having a class name 'Expect' and calling Expect->new()
+		#! but with optimization to prevent spawning new commands unnecessarily
+
 		($exp, $test_startup) = command_spawn_new($command_definition);
 	    }
 
@@ -846,6 +854,10 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		if ($command_object
 		    and (ref $command_test->{write} eq 'ARRAY'))
 		{
+		    # write data to the object using the given methods
+		    # and arguments and obtain a result from the
+		    # object
+
 		    my $result;
 
 		    my $last_method;
@@ -862,6 +874,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 			$result = $command_object->$method(@$arguments);
 		    }
+
+		    # comopare the read data with what is expected
 
 		    if (exists $command_test->{read})
 		    {
@@ -882,6 +896,8 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		elsif (ref $command eq 'CODE')
 		{
+		    # execute the perl code
+
 		    $error
 			= &$command
 			    (
@@ -921,13 +937,15 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		    my $read = $command_test->{read};
 
-		    my $shell = $command_test->{shell};
-
-		    my $tester = $command_test->{tester};
-
 		    my $wait = $command_test->{wait};
 
 		    my $write = $command_test->{write};
+
+		    # set the external tester that tests the generated output with what should be expected
+
+		    #! the external tester runs an executable shell command
+
+		    my $tester = $command_test->{tester};
 
 		    # set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
 
@@ -963,13 +981,18 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			select(undef, undef, undef, $wait);
 		    }
 
-		    # shell command
+		    # check the shell command that will be executed with a timeout
+
+		    my $shell = $command_test->{shell};
 
 		    if (ref $shell eq 'HASH')
 		    {
+			#! not sure what this can be
 		    }
 		    elsif (defined $shell)
 		    {
+			# run the shell command for a maximum of $timeout seconds
+
 			print "*** Shell: timeout $timeout $shell\n";
 
 			system "timeout $timeout $shell";
@@ -1071,7 +1094,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			    $expected = $read->[1];
 			}
 
-			# else, hash, one of several alternatives expected
+			# else, hash: one of several alternatives expected
 
 			else
 			{
@@ -1168,7 +1191,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			    }
 			    else
 			    {
-				die "test not understood by $0, aborting";
+				die "test not understood by $0, aborting (illegal read clause for $description)";
 			    }
 			}
 
