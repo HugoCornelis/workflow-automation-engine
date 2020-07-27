@@ -420,7 +420,8 @@ sub command_spawn_new
 	 # or if we had to prepare this command
 
 	 || $command_definition->{preparation}
-	);
+	)
+	&& (not $command_definition->{recycle});
 
     # prefix the command with the core directory
 
