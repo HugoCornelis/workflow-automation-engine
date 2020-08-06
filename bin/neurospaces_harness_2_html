@@ -429,7 +429,7 @@ sub main
 		}
 		else
 		{
-		    my $model = [ $command_definition->{command}, @{$command_definition->{arguments} || []}, ];
+		    my $model = [ $command_definition->{command} || [], @{$command_definition->{arguments} || []}, ];
 
 		    if (@$model)
 		    {
@@ -441,7 +441,7 @@ sub main
 
 			my $source_information = output_source($file, $model, { guessing => $guessing, }, );
 
-			my $source_anchor = defined $source_information->{result_anchor} ? " href=\"$source_information->{result_anchor}\"" . $source_information->{result_anchor} : "" ;
+			my $source_anchor = (defined $source_information->{result_anchor}) ? " href=\"$source_information->{result_anchor}\"" . $source_information->{result_anchor} : "" ;
 
 			my $command .= "<a$source_anchor>" . (join ' ', @$model) . "</a>";
 
@@ -849,6 +849,11 @@ sub output_source
     my $options = shift;
 
     my $result = {};
+
+    if (!defined $source or !defined $source->[0])
+    {
+	return $result;
+    }
 
     # guess the tester source
 

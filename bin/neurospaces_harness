@@ -132,6 +132,7 @@ my $option_regex_selector = ".*";
 my $option_report_disabled;
 my $option_report_target;
 my $option_show;
+my $option_tags = [];
 my $option_timeout_multiplier = 1;
 my $option_timings;
 my $option_trace;
@@ -211,45 +212,45 @@ sub initialize_environment
 
 my $error_count = 0;
 
-my $test_report;
+my $global_test_report;
 
 sub initialize_globals
 {
-    my $test_report
+    $global_test_report
 	= {
-	    description => {
-		command => $0,
-		name => "Test report",
-		package => $config->{package},
-	    },
-	    global => {
-		config => $config,
-		error_count => $error_count,
-		status => 'initializing',
-		test_count => 0,
-		time_start => `date`,
-	    },
-	    target => {
-		OS => $^O,
-		system => {
-		    libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
-		    uname => (join '', `uname -a`),
-		    cpu => (join '', `cat /proc/cpuinfo`),
-		},
-		packages => {
-		    '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
-		    autoconf => (join '', `autoconf --version`),
-		    automake => (join '', `automake --version`),
-		    bison => (join '', `bison --version`),
-		    flex => (join '', `flex --version`),
-		    gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
-		    perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
-		    python => (join '', `python 2>&1 --version`),
-		    python_installation => (join '', `./contrib/pythontest 2>&1`),,
-		    swig => (join '', `swig 2>&1 -version`),
-		},
-	    },
-    };
+	   description => {
+			   command => $0,
+			   name => "Test report",
+			   package => $config->{package},
+			  },
+	   global => {
+		      config => $config,
+		      error_count => $error_count,
+		      status => 'initializing',
+		      test_count => 0,
+		      time_start => `date`,
+		     },
+	   target => {
+		      OS => $^O,
+		      system => {
+				 libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
+				 uname => (join '', `uname -a`),
+				 cpu => (join '', `cat /proc/cpuinfo`),
+				},
+		      packages => {
+				   '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
+				   autoconf => (join '', `autoconf --version`),
+				   automake => (join '', `automake --version`),
+				   bison => (join '', `bison --version`),
+				   flex => (join '', `flex --version`),
+				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
+				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
+				   python => (join '', `python 2>&1 --version`),
+				   python_installation => (join '', `./contrib/pythontest 2>&1`),,
+				   swig => (join '', `swig 2>&1 -version`),
+				  },
+		     },
+	  };
 }
 
 
@@ -260,7 +261,7 @@ $SIG{'__DIE__'}
 
 	  print STDERR Carp::longmess(@_);
 
-	  $test_report->{global}->{status} = 'Died';
+	  $global_test_report->{global}->{status} = 'Died';
 
 	  report_exit(3, @_);
       };
@@ -269,7 +270,7 @@ $SIG{'__DIE__'}
 $SIG{'INT'}
     = sub
       {
-	  $test_report->{global}->{status} = 'Interrupted';
+	  $global_test_report->{global}->{status} = 'Interrupted';
 
 	  report_exit(2);
       };
@@ -281,12 +282,54 @@ sub general_preparation
 
     my $command_definition = shift;
 
-    my $preparation
-	= ($command_definition
-	   ? $command_definition->{preparation}
-	   : $module_definition->{preparation});
+    if ($command_definition)
+    {
+	if (exists $command_definition->{preparation}
+	    and exists $command_definition->{harnessing})
+	{
+	    die "$0: command_definition ($command_definition->{description}) has both a preparation and harnessing clause\n";
+	}
+    }
+    else
+    {
+	if (exists $module_definition->{preparation}
+	    and exists $module_definition->{harnessing})
+	{
+	    die "$0: module_definition ($module_definition->{description}) has both a preparation and harnessing clause\n";
+	}
+    }
 
     my $preparation_result;
+
+    my $definition = defined $command_definition ? $command_definition : $module_definition;
+
+    # convert the old format preparation / reparation to the new format of harnessing
+
+    if (not exists $definition->{harnessing})
+    {
+	if (exists $definition->{preparation})
+	{
+	    $definition->{harnessing}->{preparation} = $definition->{preparation};
+
+	    delete $definition->{preparation};
+	}
+
+	if (exists $definition->{reparation})
+	{
+	    $definition->{harnessing}->{reparation} = $definition->{reparation};
+
+	    delete $definition->{reparation};
+	}
+    }
+
+    # process the harnessing preparation clause
+
+    my $harnessing
+	= ($command_definition
+	   ? $command_definition->{harnessing}
+	   : $module_definition->{harnessing});
+
+    my $preparation = $harnessing->{preparation};
 
     if ($preparation)
     {
@@ -379,15 +422,24 @@ sub general_reparation
 
     my $preparation_result = shift;
 
-    my $reparation
+    # process the harnessing reparation clause
+
+    my $harnessing
 	= ($command_definition
-	   ? $command_definition->{reparation}
-	   : $module_definition->{reparation});
+	   ? $command_definition->{harnessing}
+	   : $module_definition->{harnessing});
+
+    my $reparation = $harnessing->{reparation};
 
     my $reparation_name
-	= ($command_definition
-	   ? "command '$command_definition->{command}'"
-	   : "module '$module_definition->{name}'");
+        = ($command_definition
+	    ? ($command_definition->{command}
+		? "command '$command_definition->{command}'"
+		: "module '$module_definition->{name}'")
+	    : ($command_definition->{recycle}
+		? "these tests use the previous running command ($command_definition->{recycle})"
+		: "*** Error: this command definition is incomplete")
+	);
 
     my $reparation_error;
 
@@ -617,7 +669,7 @@ sub main
 
     # set status: running
 
-    $test_report->{global}->{status} = 'Running';
+    $global_test_report->{global}->{status} = 'Running';
 
     # randomize test module order if requested
 
@@ -637,7 +689,7 @@ sub main
 
 	srand($seed);
 
-	$test_report->{random_seed} = $seed;
+	$global_test_report->{random_seed} = $seed;
 
 	# and shuffle the modules
 
@@ -645,10 +697,10 @@ sub main
     }
     else
     {
-	$test_report->{random_seed} = 'not randomized';
+	$global_test_report->{random_seed} = 'not randomized';
     }
 
-    $test_report->{global}->{test_count} = 0;
+    $global_test_report->{global}->{test_count} = 0;
 
     # loop over all module definitions
 
@@ -684,15 +736,28 @@ sub main
 		);
 	}
 
+	if (not module_is_selected_by_tag($module_definition))
+	{
+	    if (not $option_show)
+	    {
+		report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+	    }
+
+	    $global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = $module_definition->{disabled};
+
+	    next;
+	}
+
 	if ($module_definition->{disabled})
 	{
 	    if (not $option_show)
 	    {
 		report_message(1, 2, "Module $module_definition->{description} is disabled ($module_definition->{disabled}).
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
-	    $test_report->{disabled}->{modules}->{$module_name} = $module_definition->{disabled};
+	    $global_test_report->{disabled}->{modules}->{$module_name} = $module_definition->{disabled};
 
 	    next;
 	}
@@ -701,9 +766,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 # 	if ($module_definition->{mac_report})
 # 	{
 # 	    report_message(1, 2, "Module $module_definition->{description} is disabled on Mac OSX: ($module_definition->{mac_report}).
-# Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+# Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-# 	    $test_report->{mac_report}->{modules}->{$module_name} = $module_definition->{mac_report};
+# 	    $global_test_report->{mac_report}->{modules}->{$module_name} = $module_definition->{mac_report};
 
 # 	    next;
 # 	}
@@ -752,9 +817,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		if (not $option_show)
 		{
 		    report_message(1, 2, "Tests of $description are disabled ($command_definition->{disabled})
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-		    $test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
+		    $global_test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
 		}
 
 		next;
@@ -764,9 +829,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 # 	    if ($command_definition->{mac_report})
 # 	    {
 # 		report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_definition->{mac_report})
-# Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+# Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-# 		$test_report->{mac_report}->{command_definitions}->{$module_name}->{$description} = $command_definition->{mac_report};
+# 		$global_test_report->{mac_report}->{command_definitions}->{$module_name}->{$description} = $command_definition->{mac_report};
 
 # 		next;
 # 	    }
@@ -786,14 +851,22 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		next;
 	    }
 
+	    my $selected_command_definition;
+
 	    if ($option_show)
 	    {
-		if (!$test_report->{selected}->{$module_name}->{$description})
+		if (not $global_test_report->{selected}->{$module_name})
 		{
-		    $test_report->{selected}->{$module_name}->{$description} = 1;
+		    $global_test_report->{selected}->{$module_name} = [];
 		}
 
-		next;
+		my $selected = $global_test_report->{selected}->{$module_name};
+
+		push @$selected, { description => $description, tests => [], };
+
+		$selected_command_definition = $selected->[$#$selected]->{tests};
+
+		# next;
 	    }
 
 	    # give some diagnostics
@@ -820,42 +893,47 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    my $command_object;
 
-	    my ($exp, $test_startup);
+	    my $test_startup;
 
-	    # we have to either instantiate an object that produces output ...
+	    my $exp;
 
-	    if ($command_definition->{class})
+	    if (not $option_show)
 	    {
-		# instantiate the object
+		# we have to either instantiate an object that produces output ...
 
-		my $class = $command_definition->{class};
+		if ($command_definition->{class})
+		{
+		    # instantiate the object
 
-		my $filename = $class . ".pm";
+		    my $class = $command_definition->{class};
 
-		$filename =~ s(::)(/)g;
+		    my $filename = $class . ".pm";
 
-		require $filename;
+		    $filename =~ s(::)(/)g;
 
-		$command_object = eval "$class->new()";
-	    }
+		    require $filename;
 
-	    # ... or run perl code that produces output
+		    $command_object = eval "$class->new()";
+		}
 
-	    elsif (ref $command eq 'CODE')
-	    {
-		# code is already instantiated, nothing to do here
-	    }
+		# ... or run perl code that produces output
 
-	    # ... or run a command that produces output
+		elsif (ref $command eq 'CODE')
+		{
+		    # code is already instantiated, nothing to do here
+		}
 
-	    else
-	    {
-		# start the command and connect with its I/O channels
+		# ... or run a command that produces output
 
-		#! this is similar to having a class name 'Expect' and calling Expect->new()
-		#! but with optimization to prevent spawning new commands unnecessarily
+		else
+		{
+		    # start the command and connect with its I/O channels
 
-		($exp, $test_startup) = command_spawn_new($command_definition);
+		    #! this is similar to having a class name 'Expect' and calling Expect->new()
+		    #! but with optimization to prevent spawning new commands unnecessarily
+
+		    ($exp, $test_startup) = command_spawn_new($command_definition);
+		}
 	    }
 
 	    # loop over all tests for this command
@@ -871,9 +949,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 		if ($command_test->{disabled})
 		{
 		    report_message(1, 2, "Tests of $description are disabled ($command_test->{disabled})
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-		    $test_report->{disabled}->{command_tests}->{$module_name}->{$description} = $command_test->{disabled};
+		    $global_test_report->{disabled}->{command_tests}->{$module_name}->{$description} = $command_test->{disabled};
 
 		    next;
 		}
@@ -881,9 +959,9 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 # 		if ($command_test->{mac_report})
 # 		{
 # 		    report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_test->{mac_report})
-# Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+# Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
-# 		    $test_report->{mac_report}->{command_tests}->{$module_name}->{$description} = $command_test->{mac_report};
+# 		    $global_test_report->{mac_report}->{command_tests}->{$module_name}->{$description} = $command_test->{mac_report};
 
 # 		    next;
 # 		}
@@ -899,6 +977,13 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			  subdescription => $command_test->{error},
 			 },
 			);
+
+		    next;
+		}
+
+		if ($option_show)
+		{
+		    push @$selected_command_definition, $description;
 
 		    next;
 		}
@@ -1269,7 +1354,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 			if ($option_timings)
 			{
-			    $test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
+			    $global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
 			}
 
 			# if things don't match
@@ -1289,7 +1374,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 			    {
 				# compare numerically
 
-				push @{$test_report->{numerical_compare}}, $command_test->{description};
+				push @{$global_test_report->{numerical_compare}}, $command_test->{description};
 
 				$error
 				    = Neurospaces::Tester::Comparators::numerical
@@ -1341,7 +1426,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 		# increment total test count
 
-		$test_report->{global}->{test_count}++;
+		$global_test_report->{global}->{test_count}++;
 	    }
 
 	    # repair the command test environment
@@ -1351,7 +1436,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	    if (@$command_definitions > 1)
 	    {
 		report_message(1, 2, "End for tests of $description
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
 	    # register if this command had side effects
@@ -1397,7 +1482,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	if (not $option_show)
 	{
 	    report_message(1, 2, "End of tests of module $module_definition->{description}
-Total of $test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	}
     }
 
@@ -1414,7 +1499,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 	$global_exp->hard_close();
     }
 
-    $test_report->{global}->{status} = 'Finished';
+    $global_test_report->{global}->{status} = 'Finished';
 
     report_exit(0);
 }
@@ -1434,6 +1519,7 @@ sub parse_options
 	     "report-disabled!" => \$option_report_disabled,
 	     "report-target!" => \$option_report_target,
 	     "show!" => \$option_show,
+	     "tags=s" => $option_tags,
 	     "timeout-multiplier=s" => \$option_timeout_multiplier,
 	     "timings!" => \$option_timings,
 	     "trace!" => \$option_trace,
@@ -1446,7 +1532,7 @@ sub parse_options
 	die "$0: Error in option processing";
     }
 
-    $test_report->{options}
+    $global_test_report->{options}
 	= {
 	   email => $option_email,
 	   flattenout => $option_flattenout,
@@ -1457,6 +1543,7 @@ sub parse_options
 	   report_disabled => $option_report_disabled,
 	   report_target => $option_report_target,
 	   show => $option_show,
+	   tags => $option_tags,
 	   timeout_multiplier => $option_timeout_multiplier,
 	   timings => $option_timings,
 	   trace => $option_trace,
@@ -1482,6 +1569,7 @@ options:
     --report-disabled    include information of disabled tests in the test report.
     --report-mac         include information of disabled tests on Mac OSX.
     --show               show tests that would be run using the current configuration.
+    --tags               only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier multiply all timeout values with this constant.
     --timings            add timing information about the tests to the report.
     --trace              enable tracing using the strace unix shell command.
@@ -1507,7 +1595,7 @@ sub report_error_add
     my $seen = $arguments->{seen};
     my $subdescription = $arguments->{subdescription};
 
-    my $package_name = $test_report->{description}->{package}->{name};
+    my $package_name = $global_test_report->{description}->{package}->{name};
 
     $error_count++;
 
@@ -1515,18 +1603,18 @@ sub report_error_add
 
     # fill in the error report
 
-    $test_report->{global}->{error_count} = $error_count;
+    $global_test_report->{global}->{error_count} = $error_count;
 
     if ($subdescription)
     {
-	$test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{description} = $description;
+	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{description} = $description;
     }
     else
     {
-	$test_report->{errors}->{modules}->{$module_name}->{$error_count}->{description} = $description;
+	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{description} = $description;
     }
 
-    $test_report->{errors}->{modules}->{$module_name}->{$error_count}->{error} = $error;
+    $global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{error} = $error;
 
     if (defined $message)
     {
@@ -1535,7 +1623,7 @@ sub report_error_add
 	#! running in verbose mode seems, allows to track regex
 	#! problems ... I think.
 
-	$test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{report} = $message;
+	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{report} = $message;
     }
 
     if (defined $expected
@@ -1619,7 +1707,7 @@ sub report_exit
 
     my $description = shift;
 
-    $test_report->{global}->{time_end} = `date`;
+    $global_test_report->{global}->{time_end} = `date`;
 
     if (defined $description
         && $exit_code eq 3)
@@ -1635,16 +1723,16 @@ sub report_exit
 	= "\n"
 	    . Dump(
 		   {
-		    description => $test_report->{description},
-		    ($option_report_disabled ? (disabled => $test_report->{disabled}) : ()),
-		    ($option_show ? () : (errors => $test_report->{errors})),
-		    ($option_show ? () : (global => $test_report->{global})),
-		    ($report_target ? (target => $test_report->{target}) : ()),
-		    ($option_show ? (selected => $test_report->{selected}) : ()),
+		    description => $global_test_report->{description},
+		    ($option_report_disabled ? (disabled => $global_test_report->{disabled}) : ()),
+		    ($option_show ? () : (errors => $global_test_report->{errors})),
+		    ($option_show ? () : (global => $global_test_report->{global})),
+# 		    ($report_target ? (target => $global_test_report->{target}) : ()),
+		    ($option_show ? (selected => $global_test_report->{selected}) : ()),
 		   },
 		  );
 
-    print($report_text);
+    print($report_text . "\n");
 
     # and write the full report to a file
 
@@ -1652,12 +1740,16 @@ sub report_exit
 
     eval
     {
-	YAML::DumpFile($report_filename, $test_report);
+	YAML::DumpFile($report_filename, $global_test_report);
     };
 
     if ($@)
     {
 	print STDERR "*** Error: Failed to write output report to $report_filename\n";
+    }
+    else
+    {
+	print "*** Info: See '$report_filename' for the detailed test report\n";
     }
 
     # if email enabled by the options
@@ -1709,7 +1801,7 @@ sub report_exit
 			   "neurospaces_harness test report\n"
 			   . "Generated on " . `date` . "\n"
 			   . "\n========\n"
-			   . Dump($test_report)
+			   . Dump($global_test_report)
 			   . "\n========\n"
 			  );
 
@@ -1725,7 +1817,7 @@ sub report_exit
 		    # 	    $sender->Attach
 		    # 		(
 		    # 		 {
-		    # 		  description => 'test_report',
+		    # 		  description => 'global_test_report',
 		    # 		 },
 		    # 		);
 
@@ -1784,7 +1876,7 @@ Email was not sent.
 
 	$exit_code ||= 1;
 
-	print "$0: $test_report->{global}->{test_count} test(s), $error_count error(s)\n";
+	print "$0: $global_test_report->{global}->{test_count} test(s), $error_count error(s)\n";
 
 	print "$0: exit_code $exit_code\n\n";
 
@@ -2150,6 +2242,61 @@ sub model_library_sha
     my $sha = sha1_hex(join ', ', @$shas);
 
     return $sha;
+}
+
+
+sub module_is_selected_by_tag
+{
+    my $module_definition = shift;
+
+    if (not scalar @$option_tags)
+    {
+	return ":all";
+    }
+
+    my $module_definition_tags = $module_definition->{tags};
+
+    # use Array::Util qw(intersect);
+
+    my ( $union, $intersection, $difference ) = array_union_intersection_difference($module_definition_tags, $option_tags);
+
+    if (scalar @$intersection)
+    {
+	return $intersection;
+    }
+
+    return undef;
+}
+
+
+# could also use Array::Util, but it is not always installed
+
+sub array_union_intersection_difference
+{
+    my $array1 = shift;
+
+    my $array2 = shift;
+
+    my (@union, @intersection, @difference);
+
+    my %count = ();
+
+    foreach my $element (@$array1, @$array2)
+    {
+	$count{$element}++
+    }
+
+    foreach my $element (keys %count)
+    {
+	push @union, $element;
+
+	push @{ $count{$element} > 1
+		    ? \@intersection
+		    : \@difference },
+		    $element;
+    }
+
+    return ( \@union, \@intersection, \@difference );
 }
 
 
