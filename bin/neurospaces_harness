@@ -130,7 +130,6 @@ my $option_numerical_compare = $config->{numerical_compare} || 0;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
-my $option_report_mac;
 my $option_report_target;
 my $option_show;
 my $option_timeout_multiplier = 1;
@@ -1365,7 +1364,6 @@ sub parse_options
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
-	     "report-mac!" => \$option_report_mac,
 	     "report-target!" => \$option_report_target,
 	     "show!" => \$option_show,
 	     "timeout-multiplier=s" => \$option_timeout_multiplier,
@@ -1568,7 +1566,6 @@ sub report_exit
 		   {
 		    description => $test_report->{description},
 		    ($option_report_disabled ? (disabled => $test_report->{disabled}) : ()),
-# 		    ($option_report_mac ? (mac_report => $test_report->{mac_report}) : ()),
 		    ($option_show ? () : (errors => $test_report->{errors})),
 		    ($option_show ? () : (global => $test_report->{global})),
 		    ($report_target ? (target => $test_report->{target}) : ()),
