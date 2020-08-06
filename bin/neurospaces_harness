@@ -136,6 +136,7 @@ my $option_timeout_multiplier = 1;
 my $option_timings;
 my $option_trace;
 my $option_verbose;
+my $option_yaml_dump;
 
 
 sub initialize_environment
@@ -1370,6 +1371,7 @@ sub parse_options
 	     "timings!" => \$option_timings,
 	     "trace!" => \$option_trace,
 	     "v|verbose+" => \$option_verbose,
+	     "yaml-dump!" => \$option_yaml_dump,
 	    );
 
     if (!$result)
@@ -1392,6 +1394,7 @@ sub parse_options
 	   timings => $option_timings,
 	   trace => $option_trace,
 	   verbose => $option_verbose,
+	   yaml_dump => $option_yaml_dump,
 	  };
 
     if ($option_help)
@@ -1416,6 +1419,7 @@ options:
     --timings            add timing information about the tests to the report.
     --trace              enable tracing using the strace unix shell command.
     --verbose            set verbosity level.
+    --yaml-dump          dump test specifications to yaml files in /tmp/.
 ";
 
 	exit 1;
@@ -2047,7 +2051,10 @@ sub test_library_readfile
 
 	my $filename = $2;
 
-# 	YAML::DumpFile("/tmp/$filename", $result);
+	if ($option_yaml_dump)
+	{
+	    YAML::DumpFile("/tmp/$filename", $result);
+	}
     }
 
     return $result;
