@@ -286,6 +286,8 @@ sub general_preparation
 	   ? $command_definition->{preparation}
 	   : $module_definition->{preparation});
 
+    my $preparation_result;
+
     if ($preparation)
     {
 	my $preparation_name
@@ -297,14 +299,75 @@ sub general_preparation
 
 	my $preparer = $preparation->{preparer};
 
-	my $preparation_result = &$preparer();
+	if (ref $preparer eq 'CODE')
+	{
+	    $preparation_result = &$preparer();
+	}
+	elsif (exists $preparer->{class})
+	{
+	    # instantiate the object
 
-	return $preparation_result;
+	    my $class = $preparer->{class};
+
+	    my $filename = $class . ".pm";
+
+	    $filename =~ s(::)(/)g;
+
+	    require $filename;
+
+	    my $preparer_object = eval "$class->new()";
+	}
+	elsif (exists $preparer->{system_commands})
+	{
+	    my $system_commands = $preparer->{system_commands};
+
+	    if (ref $system_commands eq 'ARRAY')
+	    {
+		foreach my $system_command (@$system_commands)
+		{
+		    #t import execute_shell_command from cr-build
+
+		    system $system_command;
+		}
+	    }
+
+	}
+
+	# if the preparer returned an error string
+
+	my $preparation_error;
+
+	if (ref $preparation_result eq 'SCALAR')
+	{
+	    # obtain the error string
+
+	    $preparation_error = $$preparation_result;
+	}
+
+	# process errors
+
+	if ($preparation_error)
+	{
+	    my $module_name = $module_definition->{name};
+
+	    my $subdescription
+		= ($command_definition
+		   ? $command_definition->{description}
+		   : $module_definition->{description});
+
+	    report_error_add
+		(
+		 {
+		     description => $preparation_name,
+		     error => $preparation_error,
+		     module_name => $module_name,
+		     subdescription => $subdescription,
+		 },
+		);
+	}
     }
-    else
-    {
-	return undef;
-    }
+
+    return $preparation_result;
 }
 
 
@@ -326,13 +389,15 @@ sub general_reparation
 	   ? "command '$command_definition->{command}'"
 	   : "module '$module_definition->{name}'");
 
+    my $reparation_error;
+
     if ($reparation)
     {
 	print "*** Reparing $reparation_name ($reparation->{description})\n";
 
 	my $reparer = $reparation->{reparer};
 
-	my $reparation_error = &$reparer($preparation_result);
+	$reparation_error = &$reparer($preparation_result);
 
 	# process errors
 
@@ -356,6 +421,8 @@ sub general_reparation
 		);
 	}
     }
+
+    return $reparation_error;
 }
 
 
@@ -1279,7 +1346,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	    # repair the command test environment
 
-	    general_reparation($module_definition, $command_definition, $preparation_result);
+	    my $reparation_error = general_reparation($module_definition, $command_definition, $preparation_result);
 
 	    if (@$command_definitions > 1)
 	    {
@@ -1296,7 +1363,7 @@ Total of $test_report->{global}->{test_count} tests (encountered $error_count er
 
 	# repair the test environment
 
-	general_reparation($module_definition, undef, $module_preparation_result);
+	my $reparation_error = general_reparation($module_definition, undef, $module_preparation_result);
 
 	# if library checksum mismatch
 
