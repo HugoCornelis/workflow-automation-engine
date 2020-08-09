@@ -246,7 +246,7 @@ sub initialize_globals
 				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
 				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
 				   python => (join '', `python 2>&1 --version`),
-				   python_installation => (join '', `./contrib/pythontest 2>&1`),,
+				   python_installation => (join '', `./contrib/pythontest 2>&1`),
 				   swig => (join '', `swig 2>&1 -version`),
 				  },
 		     },
