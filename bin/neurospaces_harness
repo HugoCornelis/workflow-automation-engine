@@ -233,7 +233,7 @@ sub initialize_globals
 	   target => {
 		      OS => $^O,
 		      system => {
-				 libc => (join '', `ls -l /lib/libc-* && ls -l /usr/lib/libc-*`),
+				 libc => (join '', `(ls -l /lib/libc-* && ls -l /usr/lib/libc-*) 2>/dev/null`),
 				 uname => (join '', `uname -a`),
 				 cpu => (join '', `cat /proc/cpuinfo`),
 				},
