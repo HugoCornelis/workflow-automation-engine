@@ -123,6 +123,9 @@ use Neurospaces::Tester;;
 use YAML;
 
 
+my $option_dump_json;
+my $option_dump_perl;
+my $option_dump_yaml;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
 my $option_flattenout;
 my $option_help;
@@ -137,7 +140,6 @@ my $option_timeout_multiplier = 1;
 my $option_timings;
 my $option_trace;
 my $option_verbose;
-my $option_yaml_dump;
 
 
 sub initialize_environment
@@ -1510,6 +1512,9 @@ sub parse_options
     my $result
 	= GetOptions
 	    (
+	     "dump-json!" => \$option_dump_json,
+	     "dump-perl!" => \$option_dump_perl,
+	     "dump-yaml!" => \$option_dump_yaml,
 	     "email" => \$option_email,
 	     "flattenout" => \$option_flattenout,
 	     "help!" => \$option_help,
@@ -1524,7 +1529,6 @@ sub parse_options
 	     "timings!" => \$option_timings,
 	     "trace!" => \$option_trace,
 	     "v|verbose+" => \$option_verbose,
-	     "yaml-dump!" => \$option_yaml_dump,
 	    );
 
     if (!$result)
@@ -1534,6 +1538,9 @@ sub parse_options
 
     $global_test_report->{options}
 	= {
+	   dump_json => $option_dump_json,
+	   dump_perl => $option_dump_perl,
+	   dump_yaml => $option_dump_yaml,
 	   email => $option_email,
 	   flattenout => $option_flattenout,
 	   help => $option_help,
@@ -1548,7 +1555,6 @@ sub parse_options
 	   timings => $option_timings,
 	   trace => $option_trace,
 	   verbose => $option_verbose,
-	   yaml_dump => $option_yaml_dump,
 	  };
 
     if ($option_help)
@@ -1558,6 +1564,9 @@ sub parse_options
 $0: test definition executor
 
 options:
+    --dump-json          dump test specifications to json files in /tmp/.
+    --dump-perl          dump test specifications to perl files in /tmp/.
+    --dump-yaml          dump test specifications to yaml files in /tmp/.
     --email              allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
     --flattenout         flattenout the test definitions before testing,
                          this experimental feature might increase test performance,
@@ -1574,7 +1583,6 @@ options:
     --timings            add timing information about the tests to the report.
     --trace              enable tracing using the strace unix shell command.
     --verbose            set verbosity level.
-    --yaml-dump          dump test specifications to yaml files in /tmp/.
 ";
 
 	exit 1;
@@ -2205,15 +2213,43 @@ sub test_library_readfile
 	     },
 	    );
 	}
+    }
 
-	$pathname =~ m((.*)/(.*));
+    $pathname =~ m((.*)/(.*));
 
-	my $filename = $2;
+    my $filename = $2;
 
-	if ($option_yaml_dump)
-	{
-	    YAML::DumpFile("/tmp/$filename", $result);
-	}
+    if ($option_dump_json)
+    {
+	use JSON;
+
+	my $json = JSON->new();
+
+	#! allow code refs, they are converted to nulls
+
+	$json->allow_unknown(1);
+
+	my $file = IO::File->new(">/tmp/$filename.js");
+
+	print $file $json->encode($result);
+
+	$file->close();
+    }
+
+    if ($option_dump_perl)
+    {
+	use Data::Dumper;
+
+	my $file = IO::File->new(">/tmp/$filename.pl");
+
+	print $file Dumper($result);
+
+	$file->close();
+    }
+
+    if ($option_dump_yaml)
+    {
+	YAML::DumpFile("/tmp/$filename.yml", $result);
     }
 
     return $result;
