@@ -2146,6 +2146,34 @@ sub test_library_expand
 }
 
 
+sub test_library_is_json
+{
+    my $filename = shift;
+
+    my $result;
+
+    use IO::File;
+
+    my $fh = IO::File->new();
+
+    if ($fh->open("< $filename"))
+    {
+	my $first_line = <$fh>;
+
+	$first_line =~ s/(\s)*//g;
+
+	if ($first_line =~ m'^\{')
+	{
+	    $result = 'is_json';
+	}
+
+	$fh->close;
+    }
+
+    return $result;
+}
+
+
 sub test_library_is_yaml
 {
     my $filename = shift;
@@ -2180,11 +2208,44 @@ sub test_library_readfile
 
     my $result;
 
-    use YAML;
-
     if (test_library_is_yaml($pathname))
     {
+	use YAML;
+
 	$result = YAML::LoadFile($pathname);
+
+	if ($@)
+	{
+	    report_error_add
+	    (
+	     {
+	      description => $@,
+	      error => $@,
+	      module_name => $pathname,
+	     },
+	    );
+	}
+    }
+    elsif (test_library_is_json($pathname))
+    {
+
+	local $/; # enable 'slurp' mode
+
+	my $file = IO::File->new("<$pathname");
+
+	my $json_text = <$file>;
+
+	$file->close();
+
+	use JSON;
+
+	my $json = JSON->new();
+
+	#! allow code refs, they are converted to nulls
+
+	$json->allow_unknown(1);
+
+	$result = $json->decode($json_text);
 
 	if ($@)
 	{
