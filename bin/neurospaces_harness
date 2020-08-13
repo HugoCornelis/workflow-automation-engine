@@ -2313,6 +2313,20 @@ sub test_library_readfile
 	YAML::DumpFile("/tmp/$filename.yml", $result);
     }
 
+    # check if the name of the test and the pathname match
+
+    if ($pathname ne "$config->{tests_directory}/$result->{name}")
+    {
+	report_error_add
+	    (
+	     {
+	      description => "the pathname ($pathname) and the test name ($result->{name}) are different",
+	      error => "the pathname ($pathname) and the test name ($result->{name}) are different",
+	      module_name => $pathname,
+	     },
+	    );
+    }
+
     return $result;
 }
 
