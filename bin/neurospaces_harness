@@ -2240,25 +2240,26 @@ sub spawn_new
 
     my $spawn_new;
 
-    $spawn_new =
-	(
-	 # if we do not have a previous command
+    $spawn_new = not $command_definition->{recycle};
 
-	 (not $global_exp)
+    # (
+	#  # if we do not have a previous command
 
-	 # or if there were differences with the previous command
+	#  (not $global_exp)
 
-	 || (not $differences->is_empty())
+	#  # or if there were differences with the previous command
 
-	 # or if the previous command had side effects
+	#  || (not $differences->is_empty())
 
-	 || $global_previous_command_side_effects
+	#  # or if the previous command had side effects
 
-	 # or if we had to prepare this command
+	#  || $global_previous_command_side_effects
 
-	 || $command_definition->{preparation}
-	)
-	&& (not $command_definition->{recycle});
+	#  # or if we had to prepare this command
+
+	#  || $command_definition->{preparation}
+	# )
+	# && (not $command_definition->{recycle});
 
     # prefix the command with the core directory
 
