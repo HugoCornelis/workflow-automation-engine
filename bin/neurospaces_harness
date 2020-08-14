@@ -406,18 +406,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	    next;
 	}
 
-	if ($module_definition->{error})
+	if (TestElement::has_error_flag($module_definition))
 	{
-	    TestReporting::report_error_add
-		(
-		 {
-		  description => $module_definition->{description},
-		  error => "this test was tagged with the error flag",
-		  module_name => $module_name,
-		  subdescription => $module_definition->{error},
-		 },
-		);
-
 	    next;
 	}
 
@@ -449,18 +439,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 		next;
 	    }
 
-	    if ($command_definition->{error})
+	    if (TestElement::has_error_flag($module_definition, $command_definition))
 	    {
-		TestReporting::report_error_add
-		    (
-		     {
-		      description => $description,
-		      error => "this test was tagged with the error flag",
-		      module_name => $module_name,
-		      subdescription => $command_definition->{error},
-		     },
-		    );
-
 		next;
 	    }
 
@@ -564,18 +544,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 		    next;
 		}
 
-		if ($command_test->{error})
+		if (TestElement::has_error_flag($module_definition, $command_definition, $command_test))
 		{
-		    TestReporting::report_error_add
-			(
-			 {
-			  description => $description,
-			  error => "this test was tagged with the error flag",
-			  module_name => $module_name,
-			  subdescription => $command_test->{error},
-			 },
-			);
-
 		    next;
 		}
 
@@ -2150,6 +2120,48 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
 	}
+
+	return 1;
+    }
+    else
+    {
+	return 0;
+    }
+}
+
+
+sub has_error_flag
+{
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $error = $active_element->{error};
+
+    my $description = $active_element->{description};
+
+    if ($error)
+    {
+	TestReporting::report_error_add
+		(
+		 {
+		  description => $description,
+		  error => "this test was tagged with the error flag",
+		  module_name => $module_name,
+		  subdescription => $error,
+		 },
+		);
 
 	return 1;
     }
