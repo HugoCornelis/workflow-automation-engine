@@ -49,66 +49,6 @@ our $config;
 # }
 
 
-sub initialize_running_mode
-{
-    # default : running stand-alone
-
-    my $test_mode = 'stand-alone';
-
-    # find the package core directory
-
-    $config = do './tests.config';
-
-    if (!defined $config)
-    {
-	if ($ENV{srcdir})
-	{
-	    $config = do "$ENV{srcdir}/tests.config";
-
-	    # register that we are running from automake
-
-	    $test_mode = 'automake';
-	}
-    }
-
-    if (!defined $config)
-    {
-	die "No test configuration found";
-    }
-
-    # protect for automake
-
-    if ($test_mode eq 'stand-alone')
-    {
-	$core_directory = $config->{core_directory};
-    }
-    else
-    {
-	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
-
-	$core_directory = $config->{core_directory};
-
-    }
-
-    # remove parent and current directories
-
-    $core_directory =~ s(([^\.])\./)($1)g;
-
-    $core_directory =~ s([^/\.]+/\.\./)()g;
-
-    print "$0: core_directory is $core_directory\n";
-
-    # add to tests directory to include paths
-
-    if (!exists $config->{tests_directory})
-    {
-	$config->{tests_directory} = "${core_directory}tests/specifications";
-    }
-
-    unshift @INC, $config->{tests_directory};
-}
-
-
 my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Comparator qw(data_comparator);
@@ -142,118 +82,9 @@ my $option_trace;
 my $option_verbose;
 
 
-sub initialize_environment
-{
-    print "Executable is $0,\n";
-    print "core_directory is $core_directory\n";
-
-    my $environment_settings = $config->{environment_settings};
-
-    foreach my $environment_setting_name (keys %$environment_settings)
-    {
-	my $environment_setting = $environment_settings->{$environment_setting_name};
-
-	# if simply setting values in the environment
-
-	if (!ref $environment_setting)
-	{
-	    # set the value in the environment
-
-	    $ENV{$environment_setting_name} = $environment_setting;
-	}
-
-	# if additional initialization required
-
-	elsif (ref $environment_setting eq 'HASH')
-	{
-	    # get environment_setting value
-
-	    my $value = $environment_setting->{value};
-
-	    # set the value in the environment
-
-	    $ENV{$environment_setting_name} = $value;
-
-	    # give feedback
-
-	    my $description = $environment_setting->{description};
-
-	    $description =~ s/%value/$value/g;
-
-	    print $description;
-
-	    # loop over shell commands for initialization
-
-	    my $shell_commands = $environment_setting->{initialization}->{shell};
-
-	    foreach my $shell_command (@$shell_commands)
-	    {
-		# replace value
-
-		$shell_command =~ s/%value/$value/g;
-
-		# execute command
-
-		print "$0: executing ($shell_command)\n";
-
-		system $shell_command;
-	    }
-	}
-	else
-	{
-	    die "$0: illegal environment_settings, was processing $environment_setting";
-	}
-    }
-
-    if (defined ($config->{environment}))
-    {
-	print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
-    }
-}
-
-
 my $error_count = 0;
 
 my $global_test_report;
-
-sub initialize_globals
-{
-    $global_test_report
-	= {
-	   description => {
-			   command => $0,
-			   name => "Test report",
-			   package => $config->{package},
-			  },
-	   global => {
-		      config => $config,
-		      error_count => $error_count,
-		      status => 'initializing',
-		      test_count => 0,
-		      time_start => `date`,
-		     },
-	   target => {
-		      OS => $^O,
-		      system => {
-				 libc => (join '', `(ls -l /lib/libc-* && ls -l /usr/lib/libc-*) 2>/dev/null`),
-				 uname => (join '', `uname -a`),
-				 cpu => (join '', `cat /proc/cpuinfo`),
-				},
-		      packages => {
-				   '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
-				   autoconf => (join '', `autoconf --version`),
-				   automake => (join '', `automake --version`),
-				   bison => (join '', `bison --version`),
-				   flex => (join '', `flex --version`),
-				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
-				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
-				   python => (join '', `python 2>&1 --version`),
-				   python_installation => (join '', `./contrib/pythontest 2>&1`),
-				   swig => (join '', `swig 2>&1 -version`),
-				  },
-		     },
-	  };
-}
 
 
 $SIG{'__DIE__'}
@@ -429,6 +260,176 @@ sub command_spawn_new
     # }
 
     return $global_exp, $test_startup;
+}
+
+
+sub initialize_environment
+{
+    print "Executable is $0,\n";
+    print "core_directory is $core_directory\n";
+
+    my $environment_settings = $config->{environment_settings};
+
+    foreach my $environment_setting_name (keys %$environment_settings)
+    {
+	my $environment_setting = $environment_settings->{$environment_setting_name};
+
+	# if simply setting values in the environment
+
+	if (!ref $environment_setting)
+	{
+	    # set the value in the environment
+
+	    $ENV{$environment_setting_name} = $environment_setting;
+	}
+
+	# if additional initialization required
+
+	elsif (ref $environment_setting eq 'HASH')
+	{
+	    # get environment_setting value
+
+	    my $value = $environment_setting->{value};
+
+	    # set the value in the environment
+
+	    $ENV{$environment_setting_name} = $value;
+
+	    # give feedback
+
+	    my $description = $environment_setting->{description};
+
+	    $description =~ s/%value/$value/g;
+
+	    print $description;
+
+	    # loop over shell commands for initialization
+
+	    my $shell_commands = $environment_setting->{initialization}->{shell};
+
+	    foreach my $shell_command (@$shell_commands)
+	    {
+		# replace value
+
+		$shell_command =~ s/%value/$value/g;
+
+		# execute command
+
+		print "$0: executing ($shell_command)\n";
+
+		system $shell_command;
+	    }
+	}
+	else
+	{
+	    die "$0: illegal environment_settings, was processing $environment_setting";
+	}
+    }
+
+    if (defined ($config->{environment}))
+    {
+	print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
+    }
+}
+
+
+sub initialize_globals
+{
+    $global_test_report
+	= {
+	   description => {
+			   command => $0,
+			   name => "Test report",
+			   package => $config->{package},
+			  },
+	   global => {
+		      config => $config,
+		      error_count => $error_count,
+		      status => 'initializing',
+		      test_count => 0,
+		      time_start => `date`,
+		     },
+	   target => {
+		      OS => $^O,
+		      system => {
+				 libc => (join '', `(ls -l /lib/libc-* && ls -l /usr/lib/libc-*) 2>/dev/null`),
+				 uname => (join '', `uname -a`),
+				 cpu => (join '', `cat /proc/cpuinfo`),
+				},
+		      packages => {
+				   '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
+				   autoconf => (join '', `autoconf --version`),
+				   automake => (join '', `automake --version`),
+				   bison => (join '', `bison --version`),
+				   flex => (join '', `flex --version`),
+				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
+				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
+				   python => (join '', `python 2>&1 --version`),
+				   python_installation => (join '', `./contrib/pythontest 2>&1`),
+				   swig => (join '', `swig 2>&1 -version`),
+				  },
+		     },
+	  };
+}
+
+
+sub initialize_running_mode
+{
+    # default : running stand-alone
+
+    my $test_mode = 'stand-alone';
+
+    # find the package core directory
+
+    $config = do './tests.config';
+
+    if (!defined $config)
+    {
+	if ($ENV{srcdir})
+	{
+	    $config = do "$ENV{srcdir}/tests.config";
+
+	    # register that we are running from automake
+
+	    $test_mode = 'automake';
+	}
+    }
+
+    if (!defined $config)
+    {
+	die "No test configuration found";
+    }
+
+    # protect for automake
+
+    if ($test_mode eq 'stand-alone')
+    {
+	$core_directory = $config->{core_directory};
+    }
+    else
+    {
+	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
+
+	$core_directory = $config->{core_directory};
+
+    }
+
+    # remove parent and current directories
+
+    $core_directory =~ s(([^\.])\./)($1)g;
+
+    $core_directory =~ s([^/\.]+/\.\./)()g;
+
+    print "$0: core_directory is $core_directory\n";
+
+    # add to tests directory to include paths
+
+    if (!exists $config->{tests_directory})
+    {
+	$config->{tests_directory} = "${core_directory}tests/specifications";
+    }
+
+    unshift @INC, $config->{tests_directory};
 }
 
 
