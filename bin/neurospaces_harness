@@ -51,7 +51,6 @@ our $config;
 
 my $loaded_mail_sender = eval "require Mail::Sender";
 
-use Data::Comparator qw(data_comparator);
 use Data::Transformator;
 
 use Expect;
@@ -108,8 +107,6 @@ $SIG{'INT'}
 	  report_exit(2);
       };
 
-
-my $global_exp;
 
 my $global_previous_command_side_effects;
 
@@ -1120,20 +1117,15 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	}
     }
 
-    # if there is a command running
+    # close pending commands
 
-    if ($global_exp)
-    {
-	# terminate the command
+    TestCommandDefinition::close_pending();
 
-	#t could be that the hard_close() call is needed because
-	#t neurospaces uses readline, not sure needs investigation,
-	#t perhaps.
-
-	$global_exp->hard_close();
-    }
+    # close the test report
 
     $global_test_report->{global}->{status} = 'Finished';
+
+    # final report
 
     report_exit(0);
 }
@@ -2204,6 +2196,32 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 package TestCommandDefinition;
 
 
+our @ISA = ("TestElement");
+
+
+use Data::Comparator qw(data_comparator);
+
+
+my $global_exp;
+
+
+sub close_pending
+{
+    # if there is a command running
+
+    if ($global_exp)
+    {
+	# terminate the command
+
+	#t could be that the hard_close() call is needed because
+	#t neurospaces uses readline, not sure needs investigation,
+	#t perhaps.
+
+	$global_exp->hard_close();
+    }
+}
+
+
 sub spawn_new
 {
     my $command_definition = shift;
@@ -2352,6 +2370,9 @@ sub spawn_new
 
 
 package TestModule;
+
+
+our @ISA = ("TestElement");
 
 
 sub is_selected_by_tag
