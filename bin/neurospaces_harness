@@ -278,213 +278,12 @@ $SIG{'INT'}
       };
 
 
-sub general_preparation
-{
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    if ($command_definition)
-    {
-	if (exists $command_definition->{preparation}
-	    and exists $command_definition->{harnessing})
-	{
-	    die "$0: command_definition ($command_definition->{description}) has both a preparation and harnessing clause\n";
-	}
-    }
-    else
-    {
-	if (exists $module_definition->{preparation}
-	    and exists $module_definition->{harnessing})
-	{
-	    die "$0: module_definition ($module_definition->{description}) has both a preparation and harnessing clause\n";
-	}
-    }
-
-    my $preparation_result;
-
-    my $definition = defined $command_definition ? $command_definition : $module_definition;
-
-    # convert the old format preparation / reparation to the new format of harnessing
-
-    if (not exists $definition->{harnessing})
-    {
-	if (exists $definition->{preparation})
-	{
-	    $definition->{harnessing}->{preparation} = $definition->{preparation};
-
-	    delete $definition->{preparation};
-	}
-
-	if (exists $definition->{reparation})
-	{
-	    $definition->{harnessing}->{reparation} = $definition->{reparation};
-
-	    delete $definition->{reparation};
-	}
-    }
-
-    # process the harnessing preparation clause
-
-    my $harnessing
-	= ($command_definition
-	   ? $command_definition->{harnessing}
-	   : $module_definition->{harnessing});
-
-    my $preparation = $harnessing->{preparation};
-
-    if ($preparation)
-    {
-	my $preparation_name
-	    = ($command_definition
-	       ? "command '$command_definition->{command}'"
-	       : "module '$module_definition->{name}'");
-
-	print "*** Preparing $preparation_name ($preparation->{description})\n";
-
-	my $preparer = $preparation->{preparer};
-
-	if (ref $preparer eq 'CODE')
-	{
-	    $preparation_result = &$preparer();
-	}
-	elsif (exists $preparer->{class})
-	{
-	    # instantiate the object
-
-	    my $class = $preparer->{class};
-
-	    my $filename = $class . ".pm";
-
-	    $filename =~ s(::)(/)g;
-
-	    require $filename;
-
-	    my $preparer_object = eval "$class->new()";
-	}
-	elsif (exists $preparer->{system_commands})
-	{
-	    my $system_commands = $preparer->{system_commands};
-
-	    if (ref $system_commands eq 'ARRAY')
-	    {
-		foreach my $system_command (@$system_commands)
-		{
-		    #t import execute_shell_command from cr-build
-
-		    system $system_command;
-		}
-	    }
-
-	}
-
-	# if the preparer returned an error string
-
-	my $preparation_error;
-
-	if (ref $preparation_result eq 'SCALAR')
-	{
-	    # obtain the error string
-
-	    $preparation_error = $$preparation_result;
-	}
-
-	# process errors
-
-	if ($preparation_error)
-	{
-	    my $module_name = $module_definition->{name};
-
-	    my $subdescription
-		= ($command_definition
-		   ? $command_definition->{description}
-		   : $module_definition->{description});
-
-	    report_error_add
-		(
-		 {
-		     description => $preparation_name,
-		     error => $preparation_error,
-		     module_name => $module_name,
-		     subdescription => $subdescription,
-		 },
-		);
-	}
-    }
-
-    return $preparation_result;
-}
-
-
-sub general_reparation
-{
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $preparation_result = shift;
-
-    # process the harnessing reparation clause
-
-    my $harnessing
-	= ($command_definition
-	   ? $command_definition->{harnessing}
-	   : $module_definition->{harnessing});
-
-    my $reparation = $harnessing->{reparation};
-
-    my $reparation_name
-        = ($command_definition
-	    ? ($command_definition->{command}
-		? "command '$command_definition->{command}'"
-		: "module '$module_definition->{name}'")
-	    : ($command_definition->{recycle}
-		? "these tests use the previous running command ($command_definition->{recycle})"
-		: "*** Error: this command definition is incomplete")
-	);
-
-    my $reparation_error;
-
-    if ($reparation)
-    {
-	print "*** Reparing $reparation_name ($reparation->{description})\n";
-
-	my $reparer = $reparation->{reparer};
-
-	$reparation_error = &$reparer($preparation_result);
-
-	# process errors
-
-	if ($reparation_error)
-	{
-	    my $module_name = $module_definition->{name};
-
-	    my $subdescription
-		= ($command_definition
-		   ? $command_definition->{description}
-		   : $module_definition->{description});
-
-	    report_error_add
-		(
-		 {
-		     description => $reparation_name,
-		     error => $reparation_error,
-		     module_name => $module_name,
-		     subdescription => $subdescription,
-		 },
-		);
-	}
-    }
-
-    return $reparation_error;
-}
-
-
 my $global_exp;
 
 my $global_previous_command_side_effects;
 
 my $global_running_command_definition;
+
 
 sub command_spawn_new
 {
@@ -617,7 +416,7 @@ sub command_spawn_new
     # {
     # 	my $error = "$command is not executable";
 
-    # 	report_error_add
+    # 	TestReporting::report_error_add
     # 	    (
     # 	     {
     # 	      description => $description,
@@ -645,11 +444,11 @@ sub main
 
     # find all the test module files
 
-    my $test_modules = test_library_construct();
+    my $test_modules = TestLibrary::construct();
 
     # read the test module files
 
-    $test_modules = test_library_expand($test_modules);
+    $test_modules = TestLibrary::expand($test_modules);
 
     # total test count so far is zero
 
@@ -712,7 +511,7 @@ sub main
 	{
 	    $module_definition->{name} = 'unnamed';
 
-	    report_error_add
+	    TestReporting::report_error_add
 		(
 		 {
 		  description => 'unnamed module',
@@ -728,7 +527,7 @@ sub main
 	{
 	    $module_definition->{description} = $module_definition->{name};
 
-	    report_error_add
+	    TestReporting::report_error_add
 		(
 		 {
 		  description => 'no module description',
@@ -738,11 +537,11 @@ sub main
 		);
 	}
 
-	if (not module_is_selected_by_tag($module_definition))
+	if (not TestModule::is_selected_by_tag($module_definition))
 	{
 	    if (not $option_show)
 	    {
-		report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+		TestReporting::report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
@@ -751,7 +550,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	    next;
 	}
 
-	if (element_is_disabled($module_definition))
+	if (TestElement::is_disabled($module_definition))
 	{
 	    next;
 	}
@@ -759,7 +558,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 # 	if ($module_definition->{mac_report})
 # 	{
-# 	    report_message(1, 2, "Module $module_definition->{description} is disabled on Mac OSX: ($module_definition->{mac_report}).
+# 	    TestReporting::report_message(1, 2, "Module $module_definition->{description} is disabled on Mac OSX: ($module_definition->{mac_report}).
 # Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 # 	    $global_test_report->{mac_report}->{modules}->{$module_name} = $module_definition->{mac_report};
@@ -770,7 +569,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	if ($module_definition->{error})
 	{
-	    report_error_add
+	    TestReporting::report_error_add
 		(
 		 {
 		  description => $module_definition->{description},
@@ -783,7 +582,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	    next;
 	}
 
-	report_message(2, 1, "Running tests of module $module_definition->{description} ($module_definition->{name})");
+	TestReporting::report_message(2, 1, "Running tests of module $module_definition->{description} ($module_definition->{name})");
 
 	# emit comment if any
 
@@ -796,7 +595,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	# prepare the module test environment
 
-	my $module_preparation_result = general_preparation($module_definition, undef);
+	my $module_preparation_result = TestElement::preparation($module_definition, undef);
 
 	# loop over commands for this module
 
@@ -806,7 +605,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	{
 	    my $description = $command_definition->{description};
 
-	    if (element_is_disabled($module_definition, $command_definition))
+	    if (TestElement::is_disabled($module_definition, $command_definition))
 	    {
 		next;
 	    }
@@ -814,7 +613,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 # 	    if ($command_definition->{mac_report})
 # 	    {
-# 		report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_definition->{mac_report})
+# 		TestReporting::report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_definition->{mac_report})
 # Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 # 		$global_test_report->{mac_report}->{command_definitions}->{$module_name}->{$description} = $command_definition->{mac_report};
@@ -824,7 +623,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    if ($command_definition->{error})
 	    {
-		report_error_add
+		TestReporting::report_error_add
 		    (
 		     {
 		      description => $description,
@@ -859,7 +658,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    if (@$command_definitions > 1)
 	    {
-		report_message(2, 1, "Running tests of $description");
+		TestReporting::report_message(2, 1, "Running tests of $description");
 
 		# emit comment if any
 
@@ -873,7 +672,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    # prepare the command test environment
 
-	    my $preparation_result = general_preparation($module_definition, $command_definition);
+	    my $preparation_result = TestElement::preparation($module_definition, $command_definition);
 
 	    my $command = $command_definition->{command};
 
@@ -932,14 +731,14 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 		my $description = $command_test->{description};
 
-		if (element_is_disabled($module_definition, $command_definition, $command_test))
+		if (TestElement::is_disabled($module_definition, $command_definition, $command_test))
 		{
 		    next;
 		}
 
 # 		if ($command_test->{mac_report})
 # 		{
-# 		    report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_test->{mac_report})
+# 		    TestReporting::report_message(1, 2, "Tests of $description are disabled on Mac OSX: ($command_test->{mac_report})
 # Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 # 		    $global_test_report->{mac_report}->{command_tests}->{$module_name}->{$description} = $command_test->{mac_report};
@@ -949,7 +748,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 		if ($command_test->{error})
 		{
-		    report_error_add
+		    TestReporting::report_error_add
 			(
 			 {
 			  description => $description,
@@ -1386,7 +1185,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 			$message = $before_match;
 		    }
 
- 		    report_error_add
+ 		    TestReporting::report_error_add
 			(
 			 {
 			  description => $description,
@@ -1412,11 +1211,11 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    # repair the command test environment
 
-	    my $reparation_error = general_reparation($module_definition, $command_definition, $preparation_result);
+	    my $reparation_error = TestElement::reparation($module_definition, $command_definition, $preparation_result);
 
 	    if (@$command_definitions > 1)
 	    {
-		report_message(1, 2, "End for tests of $description
+		TestReporting::report_message(1, 2, "End for tests of $description
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
@@ -1429,7 +1228,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	# repair the test environment
 
-	my $reparation_error = general_reparation($module_definition, undef, $module_preparation_result);
+	my $reparation_error = TestElement::reparation($module_definition, undef, $module_preparation_result);
 
 	# if library checksum mismatch
 
@@ -1443,7 +1242,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 		my $description = $module_definition->{description};
 
-		report_error_add
+		TestReporting::report_error_add
 		    (
 		     {
 		      description => $description,
@@ -1462,7 +1261,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	if (not $option_show)
 	{
-	    report_message(1, 2, "End of tests of module $module_definition->{description}
+	    TestReporting::report_message(1, 2, "End of tests of module $module_definition->{description}
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	}
     }
@@ -1565,124 +1364,6 @@ options:
 ";
 
 	exit 1;
-    }
-
-}
-
-
-sub report_error_add
-{
-    my $arguments = shift;
-
-    my $description = $arguments->{description};
-    my $error = $arguments->{error};
-    my $expected = $arguments->{expected};
-    my $message = $arguments->{message};
-    my $module_name = $arguments->{module_name};
-    my $seen = $arguments->{seen};
-    my $subdescription = $arguments->{subdescription};
-
-    my $package_name = $global_test_report->{description}->{package}->{name};
-
-    $error_count++;
-
-    print STDERR "*** Error $error_count: $error ($description, package $package_name, $module_name, error_count $error_count)\n";
-
-    # fill in the error report
-
-    $global_test_report->{global}->{error_count} = $error_count;
-
-    if ($subdescription)
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{description} = $description;
-    }
-    else
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{description} = $description;
-    }
-
-    $global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{error} = $error;
-
-    if (defined $message)
-    {
-	#! subdescription can be undefined here, in which case
-	#! $message is undefined too.  Both can be defined when
-	#! running in verbose mode seems, allows to track regex
-	#! problems ... I think.
-
-	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{report} = $message;
-    }
-
-    if (defined $expected
-	and defined $seen)
-    {
-	my $processed_expected = [ split "\n", $expected, ];
-
-	$processed_expected = join "\n*** Error $error_count: expected: ", "", @$processed_expected, "\n";
-
-	print STDERR $processed_expected;
-
-	my $processed_seen = [ split "\n", $seen, ];
-
-	$processed_seen = join "\n*** Error $error_count: seen: ", "", @$processed_seen, "\n";
-
-	print STDERR $processed_seen;
-
-	use IO::File;
-
-	my $expected_filename = "/tmp/text_$config->{package}->{name}_$error_count.expected";
-
-	my $expected_file = IO::File->new(">$expected_filename");
-
-	if ($expected_file)
-	{
-	    print $expected_file $expected;
-
-	    $expected_file->close();
-	}
-	else
-	{
-	    print STDERR "*** Warning: cannot open $expected_filename for writing\n";
-	}
-
-	my $seen_filename = "/tmp/text_$config->{package}->{name}_$error_count.seen";
-
-	my $seen_file = IO::File->new(">$seen_filename");
-
-	if ($seen_filename)
-	{
-	    print $seen_file $seen;
-
-	    $seen_file->close();
-	}
-	else
-	{
-	    print STDERR "*** Warning: cannot open $seen_filename for writing\n";
-	}
-
-	my $diff = `diff "$expected_filename" "$seen_filename"`;
-
-	my $diff_filename = "/tmp/text_$config->{package}->{name}_$error_count.diff";
-
-	my $diff_file = IO::File->new(">$diff_filename");
-
-	if ($diff_file)
-	{
-	    print $diff_file $diff;
-
-	    $diff_file->close();
-	}
-	else
-	{
-	    print STDERR "*** Warning: cannot open $diff_filename for writing\n";
-	}
-
-	my $processed_diff = [ split "\n", $diff, ];
-
-	$processed_diff = join "\n*** Error $error_count: diff: ", "", @$processed_diff, "\n";
-
-	print STDERR $processed_diff;
-
     }
 
 }
@@ -1883,6 +1564,127 @@ Email was not sent.
 }
 
 
+package TestReporting;
+
+
+sub report_error_add
+{
+    my $arguments = shift;
+
+    my $description = $arguments->{description};
+    my $error = $arguments->{error};
+    my $expected = $arguments->{expected};
+    my $message = $arguments->{message};
+    my $module_name = $arguments->{module_name};
+    my $seen = $arguments->{seen};
+    my $subdescription = $arguments->{subdescription};
+
+    my $package_name = $global_test_report->{description}->{package}->{name};
+
+    $error_count++;
+
+    print STDERR "*** Error $error_count: $error ($description, package $package_name, $module_name, error_count $error_count)\n";
+
+    # fill in the error report
+
+    $global_test_report->{global}->{error_count} = $error_count;
+
+    if ($subdescription)
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{description} = $description;
+    }
+    else
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{description} = $description;
+    }
+
+    $global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{error} = $error;
+
+    if (defined $message)
+    {
+	#! subdescription can be undefined here, in which case
+	#! $message is undefined too.  Both can be defined when
+	#! running in verbose mode seems, allows to track regex
+	#! problems ... I think.
+
+	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{report} = $message;
+    }
+
+    if (defined $expected
+	and defined $seen)
+    {
+	my $processed_expected = [ split "\n", $expected, ];
+
+	$processed_expected = join "\n*** Error $error_count: expected: ", "", @$processed_expected, "\n";
+
+	print STDERR $processed_expected;
+
+	my $processed_seen = [ split "\n", $seen, ];
+
+	$processed_seen = join "\n*** Error $error_count: seen: ", "", @$processed_seen, "\n";
+
+	print STDERR $processed_seen;
+
+	use IO::File;
+
+	my $expected_filename = "/tmp/text_$config->{package}->{name}_$error_count.expected";
+
+	my $expected_file = IO::File->new(">$expected_filename");
+
+	if ($expected_file)
+	{
+	    print $expected_file $expected;
+
+	    $expected_file->close();
+	}
+	else
+	{
+	    print STDERR "*** Warning: cannot open $expected_filename for writing\n";
+	}
+
+	my $seen_filename = "/tmp/text_$config->{package}->{name}_$error_count.seen";
+
+	my $seen_file = IO::File->new(">$seen_filename");
+
+	if ($seen_filename)
+	{
+	    print $seen_file $seen;
+
+	    $seen_file->close();
+	}
+	else
+	{
+	    print STDERR "*** Warning: cannot open $seen_filename for writing\n";
+	}
+
+	my $diff = `diff "$expected_filename" "$seen_filename"`;
+
+	my $diff_filename = "/tmp/text_$config->{package}->{name}_$error_count.diff";
+
+	my $diff_file = IO::File->new(">$diff_filename");
+
+	if ($diff_file)
+	{
+	    print $diff_file $diff;
+
+	    $diff_file->close();
+	}
+	else
+	{
+	    print STDERR "*** Warning: cannot open $diff_filename for writing\n";
+	}
+
+	my $processed_diff = [ split "\n", $diff, ];
+
+	$processed_diff = join "\n*** Error $error_count: diff: ", "", @$processed_diff, "\n";
+
+	print STDERR $processed_diff;
+
+    }
+
+}
+
+
 sub report_message
 {
     my $header = shift;
@@ -1915,27 +1717,10 @@ sub report_message
 }
 
 
-sub substitute_variables
-{
-    my $string = shift;
-
-    my $variables
-	= [
-	   [ '$(libdir)' => "$core_directory/tests/models", ],
-	  ];
-
-    foreach my $variable (@$variables)
-    {
-	my $searcher = quotemeta($variable->[0]);
-
-	$string =~ s/$searcher/$variable->[1]/g;
-    }
-
-    return $string;
-}
+package TestLibrary;
 
 
-sub test_library_construct
+sub construct
 {
     # define the tests
 
@@ -1966,7 +1751,7 @@ sub test_library_construct
 }
 
 
-sub test_library_expand
+sub expand
 {
     my $library = shift;
 
@@ -1981,7 +1766,7 @@ sub test_library_expand
 	    next;
 	}
 
-	my $module_definition = test_library_readfile($test_module);
+	my $module_definition = readfile($test_module);
 
 	if ($module_definition)
 	{
@@ -2125,7 +1910,7 @@ sub test_library_expand
 }
 
 
-sub test_library_is_json
+sub is_json
 {
     my $filename = shift;
 
@@ -2153,7 +1938,7 @@ sub test_library_is_json
 }
 
 
-sub test_library_is_yaml
+sub is_yaml
 {
     my $filename = shift;
 
@@ -2181,13 +1966,13 @@ sub test_library_is_yaml
 }
 
 
-sub test_library_readfile
+sub readfile
 {
     my $pathname = shift;
 
     my $result;
 
-    if (test_library_is_yaml($pathname))
+    if (is_yaml($pathname))
     {
 	use YAML;
 
@@ -2205,7 +1990,7 @@ sub test_library_readfile
 	    );
 	}
     }
-    elsif (test_library_is_json($pathname))
+    elsif (is_json($pathname))
     {
 
 	local $/; # enable 'slurp' mode
@@ -2296,7 +2081,7 @@ sub test_library_readfile
 
     if ($pathname ne "$config->{tests_directory}/$result->{name}")
     {
-	report_error_add
+	TestReporting::report_error_add
 	    (
 	     {
 	      description => "the pathname ($pathname) and the test name ($result->{name}) are different",
@@ -2307,6 +2092,308 @@ sub test_library_readfile
     }
 
     return $result;
+}
+
+
+package TestElement;
+
+
+sub preparation
+{
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    if ($command_definition)
+    {
+	if (exists $command_definition->{preparation}
+	    and exists $command_definition->{harnessing})
+	{
+	    die "$0: command_definition ($command_definition->{description}) has both a preparation and harnessing clause\n";
+	}
+    }
+    else
+    {
+	if (exists $module_definition->{preparation}
+	    and exists $module_definition->{harnessing})
+	{
+	    die "$0: module_definition ($module_definition->{description}) has both a preparation and harnessing clause\n";
+	}
+    }
+
+    my $preparation_result;
+
+    my $definition = defined $command_definition ? $command_definition : $module_definition;
+
+    # convert the old format preparation / reparation to the new format of harnessing
+
+    if (not exists $definition->{harnessing})
+    {
+	if (exists $definition->{preparation})
+	{
+	    $definition->{harnessing}->{preparation} = $definition->{preparation};
+
+	    delete $definition->{preparation};
+	}
+
+	if (exists $definition->{reparation})
+	{
+	    $definition->{harnessing}->{reparation} = $definition->{reparation};
+
+	    delete $definition->{reparation};
+	}
+    }
+
+    # process the harnessing preparation clause
+
+    my $harnessing
+	= ($command_definition
+	   ? $command_definition->{harnessing}
+	   : $module_definition->{harnessing});
+
+    my $preparation = $harnessing->{preparation};
+
+    if ($preparation)
+    {
+	my $preparation_name
+	    = ($command_definition
+	       ? "command '$command_definition->{command}'"
+	       : "module '$module_definition->{name}'");
+
+	print "*** Preparing $preparation_name ($preparation->{description})\n";
+
+	my $preparer = $preparation->{preparer};
+
+	if (ref $preparer eq 'CODE')
+	{
+	    $preparation_result = &$preparer();
+	}
+	elsif (exists $preparer->{class})
+	{
+	    # instantiate the object
+
+	    my $class = $preparer->{class};
+
+	    my $filename = $class . ".pm";
+
+	    $filename =~ s(::)(/)g;
+
+	    require $filename;
+
+	    my $preparer_object = eval "$class->new()";
+	}
+	elsif (exists $preparer->{system_commands})
+	{
+	    my $system_commands = $preparer->{system_commands};
+
+	    if (ref $system_commands eq 'ARRAY')
+	    {
+		foreach my $system_command (@$system_commands)
+		{
+		    #t import execute_shell_command from cr-build
+
+		    system $system_command;
+		}
+	    }
+
+	}
+
+	# if the preparer returned an error string
+
+	my $preparation_error;
+
+	if (ref $preparation_result eq 'SCALAR')
+	{
+	    # obtain the error string
+
+	    $preparation_error = $$preparation_result;
+	}
+
+	# process errors
+
+	if ($preparation_error)
+	{
+	    my $module_name = $module_definition->{name};
+
+	    my $subdescription
+		= ($command_definition
+		   ? $command_definition->{description}
+		   : $module_definition->{description});
+
+	    TestReporting::report_error_add
+		(
+		 {
+		     description => $preparation_name,
+		     error => $preparation_error,
+		     module_name => $module_name,
+		     subdescription => $subdescription,
+		 },
+		);
+	}
+    }
+
+    return $preparation_result;
+}
+
+
+sub reparation
+{
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    my $preparation_result = shift;
+
+    # process the harnessing reparation clause
+
+    my $harnessing
+	= ($command_definition
+	   ? $command_definition->{harnessing}
+	   : $module_definition->{harnessing});
+
+    my $reparation = $harnessing->{reparation};
+
+    my $reparation_name
+        = ($command_definition
+	    ? ($command_definition->{command}
+		? "command '$command_definition->{command}'"
+		: "module '$module_definition->{name}'")
+	    : ($command_definition->{recycle}
+		? "these tests use the previous running command ($command_definition->{recycle})"
+		: "*** Error: this command definition is incomplete")
+	);
+
+    my $reparation_error;
+
+    if ($reparation)
+    {
+	print "*** Reparing $reparation_name ($reparation->{description})\n";
+
+	my $reparer = $reparation->{reparer};
+
+	$reparation_error = &$reparer($preparation_result);
+
+	# process errors
+
+	if ($reparation_error)
+	{
+	    my $module_name = $module_definition->{name};
+
+	    my $subdescription
+		= ($command_definition
+		   ? $command_definition->{description}
+		   : $module_definition->{description});
+
+	    TestReporting::report_error_add
+		(
+		 {
+		     description => $reparation_name,
+		     error => $reparation_error,
+		     module_name => $module_name,
+		     subdescription => $subdescription,
+		 },
+		);
+	}
+    }
+
+    return $reparation_error;
+}
+
+
+sub is_disabled
+{
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $disabled = $active_element->{disabled};
+
+    if ($disabled)
+    {
+	my $description = $active_element->{description};
+
+	if (not $option_show)
+	{
+	    TestReporting::report_message(1, 2, "Tests of $description are disabled ($disabled)
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+	    my $report_key
+		= (defined $command_test
+		   ? "command_tests"
+		   : (defined $command_definition
+		      ? "command_definitions"
+		      : "modules"));
+
+	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
+	}
+
+	return 1;
+    }
+    else
+    {
+	return 0;
+    }
+}
+
+
+package TestModule;
+
+
+sub is_selected_by_tag
+{
+    my $module_definition = shift;
+
+    if (not scalar @$option_tags)
+    {
+	return ":all";
+    }
+
+    my $module_definition_tags = $module_definition->{tags};
+
+    # use Array::Util qw(intersect);
+
+    my ( $union, $intersection, $difference ) = array_union_intersection_difference($module_definition_tags, $option_tags);
+
+    if (scalar @$intersection)
+    {
+	return $intersection;
+    }
+
+    return undef;
+}
+
+
+package main;
+
+
+sub substitute_variables
+{
+    my $string = shift;
+
+    my $variables
+	= [
+	   [ '$(libdir)' => "$core_directory/tests/models", ],
+	  ];
+
+    foreach my $variable (@$variables)
+    {
+	my $searcher = quotemeta($variable->[0]);
+
+	$string =~ s/$searcher/$variable->[1]/g;
+    }
+
+    return $string;
 }
 
 
@@ -2332,77 +2419,6 @@ sub model_library_sha
     my $sha = sha1_hex(join ', ', @$shas);
 
     return $sha;
-}
-
-
-sub element_is_disabled
-{
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $command_test = shift;
-
-    my $module_name = $module_definition->{name};
-
-    my $active_element
-	= (defined $command_test
-	   ? $command_test
-	   : (defined $command_definition
-	      ? $command_definition
-	      : $module_definition));
-
-    my $disabled = $active_element->{disabled};
-
-    if ($disabled)
-    {
-	my $description = $active_element->{description};
-
-	if (not $option_show)
-	{
-	    report_message(1, 2, "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
-
-	    my $report_key
-		= (defined $command_test
-		   ? "command_tests"
-		   : (defined $command_definition
-		      ? "command_definitions"
-		      : "modules"));
-
-	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
-	}
-
-	return 1;
-    }
-    else
-    {
-	return 0;
-    }
-}
-
-
-sub module_is_selected_by_tag
-{
-    my $module_definition = shift;
-
-    if (not scalar @$option_tags)
-    {
-	return ":all";
-    }
-
-    my $module_definition_tags = $module_definition->{tags};
-
-    # use Array::Util qw(intersect);
-
-    my ( $union, $intersection, $difference ) = array_union_intersection_difference($module_definition_tags, $option_tags);
-
-    if (scalar @$intersection)
-    {
-	return $intersection;
-    }
-
-    return undef;
 }
 
 
