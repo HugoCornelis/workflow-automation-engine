@@ -746,21 +746,13 @@ sub main
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
-	    $global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = $module_definition->{disabled};
+	    $global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = 'not_selected_by_tag';
 
 	    next;
 	}
 
-	if ($module_definition->{disabled})
+	if (element_is_disabled($module_definition))
 	{
-	    if (not $option_show)
-	    {
-		report_message(1, 2, "Module $module_definition->{description} is disabled ($module_definition->{disabled}).
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
-	    }
-
-	    $global_test_report->{disabled}->{modules}->{$module_name} = $module_definition->{disabled};
-
 	    next;
 	}
 
@@ -814,16 +806,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	{
 	    my $description = $command_definition->{description};
 
-	    if ($command_definition->{disabled})
+	    if (element_is_disabled($module_definition, $command_definition))
 	    {
-		if (not $option_show)
-		{
-		    report_message(1, 2, "Tests of $description are disabled ($command_definition->{disabled})
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
-
-		    $global_test_report->{disabled}->{command_definitions}->{$module_name}->{$description} = $command_definition->{disabled};
-		}
-
 		next;
 	    }
 
@@ -948,13 +932,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 		my $description = $command_test->{description};
 
-		if ($command_test->{disabled})
+		if (element_is_disabled($module_definition, $command_definition, $command_test))
 		{
-		    report_message(1, 2, "Tests of $description are disabled ($command_test->{disabled})
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
-
-		    $global_test_report->{disabled}->{command_tests}->{$module_name}->{$description} = $command_test->{disabled};
-
 		    next;
 		}
 
@@ -2353,6 +2332,53 @@ sub model_library_sha
     my $sha = sha1_hex(join ', ', @$shas);
 
     return $sha;
+}
+
+
+sub element_is_disabled
+{
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $disabled = $active_element->{disabled};
+
+    if ($disabled)
+    {
+	my $description = $active_element->{description};
+
+	if (not $option_show)
+	{
+	    report_message(1, 2, "Tests of $description are disabled ($disabled)
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+
+	    my $report_key
+		= (defined $command_test
+		   ? "command_tests"
+		   : (defined $command_definition
+		      ? "command_definitions"
+		      : "modules"));
+
+	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
+	}
+
+	return 1;
+    }
+    else
+    {
+	return 0;
+    }
 }
 
 
