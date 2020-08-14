@@ -13,7 +13,7 @@ our $built_exe_directory;
 
 # our $perl_modules_directory;
 
-our $config;
+our $global_config;
 
 
 # BEGIN
@@ -68,7 +68,7 @@ my $option_dump_yaml;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
 my $option_flattenout;
 my $option_help;
-my $option_numerical_compare = $config->{numerical_compare} || 0;
+my $option_numerical_compare;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -110,15 +110,13 @@ $SIG{'INT'}
 
 my $global_previous_command_side_effects;
 
-my $global_running_command_definition;
-
 
 sub initialize_environment
 {
     print "Executable is $0,\n";
     print "core_directory is $core_directory\n";
 
-    my $environment_settings = $config->{environment_settings};
+    my $environment_settings = $global_config->{environment_settings};
 
     foreach my $environment_setting_name (keys %$environment_settings)
     {
@@ -176,7 +174,7 @@ sub initialize_environment
 	}
     }
 
-    if (defined ($config->{environment}))
+    if (defined ($global_config->{environment}))
     {
 	print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
     }
@@ -190,10 +188,10 @@ sub initialize_globals
 	   description => {
 			   command => $0,
 			   name => "Test report",
-			   package => $config->{package},
+			   package => $global_config->{package},
 			  },
 	   global => {
-		      config => $config,
+		      config => $global_config,
 		      error_count => $error_count,
 		      status => 'initializing',
 		      test_count => 0,
@@ -231,13 +229,13 @@ sub initialize_running_mode
 
     # find the package core directory
 
-    $config = do './tests.config';
+    $global_config = do './tests.config';
 
-    if (!defined $config)
+    if (!defined $global_config)
     {
 	if ($ENV{srcdir})
 	{
-	    $config = do "$ENV{srcdir}/tests.config";
+	    $global_config = do "$ENV{srcdir}/tests.config";
 
 	    # register that we are running from automake
 
@@ -245,7 +243,7 @@ sub initialize_running_mode
 	}
     }
 
-    if (!defined $config)
+    if (!defined $global_config)
     {
 	die "No test configuration found";
     }
@@ -254,13 +252,13 @@ sub initialize_running_mode
 
     if ($test_mode eq 'stand-alone')
     {
-	$core_directory = $config->{core_directory};
+	$core_directory = $global_config->{core_directory};
     }
     else
     {
-	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
+	$core_directory = "$ENV{srcdir}/$global_config->{core_directory}";
 
-	$core_directory = $config->{core_directory};
+	$core_directory = $global_config->{core_directory};
 
     }
 
@@ -274,12 +272,12 @@ sub initialize_running_mode
 
     # add to tests directory to include paths
 
-    if (!exists $config->{tests_directory})
+    if (!exists $global_config->{tests_directory})
     {
-	$config->{tests_directory} = "${core_directory}tests/specifications";
+	$global_config->{tests_directory} = "${core_directory}tests/specifications";
     }
 
-    unshift @INC, $config->{tests_directory};
+    unshift @INC, $global_config->{tests_directory};
 }
 
 
@@ -309,10 +307,9 @@ sub main
 
     my $library_sha_before;
 
-    if (defined ($config->{model_library}))
+    if (defined ($global_config->{model_library}))
     {
-	$library_sha_before = model_library_sha();
-
+	$library_sha_before = ModelLibrary::sha();
     }
 
     # the previous command had no side effects on the loaded model (since there is no model yet)
@@ -358,60 +355,28 @@ sub main
 
     foreach my $module_definition (@$test_modules)
     {
-	if (!defined $module_definition->{name})
-	{
-	    $module_definition->{name} = 'unnamed';
+	bless $module_definition, "TestModule";
 
-	    TestReporting::report_error_add
-		(
-		 {
-		  description => 'unnamed module',
-		  error => 'unnamed module',
-		  module_name => 'unnamed module',
-		 },
-		);
-	}
+	my $module_name = $module_definition->check_name();
 
-	my $module_name = $module_definition->{name};
+	my $module_description = $module_definition->check_description();
 
-	if (!defined $module_definition->{description})
-	{
-	    $module_definition->{description} = $module_definition->{name};
-
-	    TestReporting::report_error_add
-		(
-		 {
-		  description => 'no module description',
-		  error => 'no module description',
-		  module_name => $module_name,
-		 },
-		);
-	}
-
-	if (not TestModule::is_selected_by_tag($module_definition))
-	{
-	    if (not $option_show)
-	    {
-		TestReporting::report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
-	    }
-
-	    $global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = 'not_selected_by_tag';
-
-	    next;
-	}
-
-	if (TestElement::is_disabled($module_definition))
+	if (not $module_definition->is_selected_by_tag())
 	{
 	    next;
 	}
 
-	if (TestElement::has_error_flag($module_definition))
+	if ($module_definition->is_disabled())
 	{
 	    next;
 	}
 
-	TestReporting::report_message(2, 1, "Running tests of module $module_definition->{description} ($module_definition->{name})");
+	if ($module_definition->has_error_flag())
+	{
+	    next;
+	}
+
+	TestReporting::report_message(2, 1, "Running tests of module $module_description ($module_name)");
 
 	# emit comment if any
 
@@ -424,7 +389,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	# prepare the module test environment
 
-	my $module_preparation_result = TestElement::preparation($module_definition, undef);
+	my $module_preparation_result = $module_definition->preparation();
 
 	# loop over commands for this module
 
@@ -432,6 +397,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	foreach my $command_definition (@$command_definitions)
 	{
+	    bless $command_definition, "TestCommandDefinition";
+
 	    my $description = $command_definition->{description};
 
 	    if (TestElement::is_disabled($module_definition, $command_definition))
@@ -525,7 +492,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 		    #! this is similar to having a class name 'Expect' and calling Expect->new()
 		    #! but with optimization to prevent spawning new commands unnecessarily
 
-		    ($exp, $test_startup) = TestCommandDefinition::spawn_new($command_definition);
+		    ($exp, $test_startup) = $command_definition->spawn_new();
 		}
 	    }
 
@@ -535,6 +502,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    foreach my $command_test (@$command_tests)
 	    {
+		bless $command_test, "TestCommandTest";
+
 		# give feedback about this specific test
 
 		my $description = $command_test->{description};
@@ -1020,9 +989,9 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	# if library checksum mismatch
 
-	if (defined ($config->{model_library}))
+	if (defined ($global_config->{model_library}))
 	{
-	    my $library_sha_after = model_library_sha();
+	    my $library_sha_after = ModelLibrary::sha();
 
 	    if ($library_sha_after ne $library_sha_before)
 	    {
@@ -1070,6 +1039,8 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 sub parse_options
 {
+    $option_numerical_compare = $global_config->{numerical_compare} || 0;
+
     my $result
 	= GetOptions
 	    (
@@ -1187,7 +1158,7 @@ sub report_exit
 
     # and write the full report to a file
 
-    my $report_filename = ">/tmp/report_$config->{package}->{name}.yml";
+    my $report_filename = ">/tmp/report_$global_config->{package}->{name}.yml";
 
     eval
     {
@@ -1347,6 +1318,34 @@ Email was not sent.
 }
 
 
+package ModelLibrary;
+
+
+sub sha
+{
+    # find all models
+
+    use File::Find::Rule;
+
+    my $files = [ File::Find::Rule->file()->in( $ENV{NEUROSPACES_NMC_MODELS} ), ];
+
+    my $shas
+	= [
+	   map
+	   {
+	       `sha1sum $_`;
+	   }
+	   @$files,
+	  ];
+
+    use Digest::SHA qw(sha1_hex);
+
+    my $sha = sha1_hex(join ', ', @$shas);
+
+    return $sha;
+}
+
+
 package TestReporting;
 
 
@@ -1410,7 +1409,7 @@ sub report_error_add
 
 	use IO::File;
 
-	my $expected_filename = "/tmp/text_$config->{package}->{name}_$error_count.expected";
+	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$error_count.expected";
 
 	my $expected_file = IO::File->new(">$expected_filename");
 
@@ -1425,7 +1424,7 @@ sub report_error_add
 	    print STDERR "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
-	my $seen_filename = "/tmp/text_$config->{package}->{name}_$error_count.seen";
+	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$error_count.seen";
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
@@ -1442,7 +1441,7 @@ sub report_error_add
 
 	my $diff = `diff "$expected_filename" "$seen_filename"`;
 
-	my $diff_filename = "/tmp/text_$config->{package}->{name}_$error_count.diff";
+	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$error_count.diff";
 
 	my $diff_file = IO::File->new(">$diff_filename");
 
@@ -1527,7 +1526,7 @@ sub construct
 	       chomp; $_;
 	   }
 	   sort
-	   `find $config->{tests_directory} -name "*.t"`,
+	   `find $global_config->{tests_directory} -name "*.t"`,
 	  ];
 
     return $test_modules;
@@ -1862,7 +1861,7 @@ sub readfile
 
     # check if the name of the test and the pathname match
 
-    if ($pathname ne "$config->{tests_directory}/$result->{name}")
+    if ($pathname ne "$global_config->{tests_directory}/$result->{name}")
     {
 	TestReporting::report_error_add
 	    (
@@ -2183,6 +2182,8 @@ use Data::Comparator qw(data_comparator);
 
 my $global_exp;
 
+my $global_running_command_definition;
+
 
 sub close_pending
 {
@@ -2348,15 +2349,69 @@ sub spawn_new
 }
 
 
+package TestCommandTest;
+
+
+our @ISA = ("TestElement");
+
+
 package TestModule;
 
 
 our @ISA = ("TestElement");
 
 
+sub check_description
+{
+    my $module_definition = shift;
+
+    my $module_name = $module_definition->{name};
+
+    if (!defined $module_definition->{description})
+    {
+	$module_definition->{description} = $module_definition->{name};
+
+	TestReporting::report_error_add
+		(
+		 {
+		  description => 'no module description',
+		  error => 'no module description',
+		  module_name => $module_name,
+		 },
+		);
+    }
+
+    return $module_definition->{description};
+}
+
+
+sub check_name
+{
+    my $module_definition = shift;
+
+    if (!defined $module_definition->{name})
+    {
+	$module_definition->{name} = 'unnamed';
+
+	TestReporting::report_error_add
+		(
+		 {
+		  description => 'unnamed module',
+		  error => 'unnamed module',
+		  module_name => 'unnamed module',
+		 },
+		);
+    }
+
+    return $module_definition->{name};
+}
+
+
 sub is_selected_by_tag
 {
     my $module_definition = shift;
+
+    my $module_name = $module_definition->{name};
 
     if (not scalar @$option_tags)
     {
@@ -2373,13 +2428,26 @@ sub is_selected_by_tag
     {
 	return $intersection;
     }
+    else
+    {
+	if (not $option_show) {
+	    TestReporting::report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+	}
 
-    return undef;
+	$global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = 'not_selected_by_tag';
+
+	return undef;
+    }
 }
 
 
 package main;
 
+
+# substitute variables in a read clause
+#
+# variables are hardcoded, this should be removed at some point
 
 sub substitute_variables
 {
@@ -2398,31 +2466,6 @@ sub substitute_variables
     }
 
     return $string;
-}
-
-
-sub model_library_sha
-{
-    # find all models
-
-    use File::Find::Rule;
-
-    my $files = [ File::Find::Rule->file()->in( $ENV{NEUROSPACES_NMC_MODELS} ), ];
-
-    my $shas
-	= [
-	   map
-	   {
-	       `sha1sum $_`;
-	   }
-	   @$files,
-	  ];
-
-    use Digest::SHA qw(sha1_hex);
-
-    my $sha = sha1_hex(join ', ', @$shas);
-
-    return $sha;
 }
 
 

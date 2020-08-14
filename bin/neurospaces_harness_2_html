@@ -13,7 +13,7 @@ our $built_exe_directory;
 
 # our $perl_modules_directory;
 
-our $config;
+our $global_config;
 
 
 my $command_definition_disabled = [];
@@ -857,7 +857,7 @@ sub output_source
 
     # guess the tester source
 
-    my $source_text_file = $config->{core_directory} . $source->[0];
+    my $source_text_file = $global_config->{core_directory} . $source->[0];
 
     #t guessing is ok, but the implementation not so (duplicate code, use a hash instead)
 
@@ -923,7 +923,7 @@ sub output_source
 	#! directory removal, there must be something wrong with the data
 	#! flow design here.
 
-	#! I guess it is somehow related to the global configuration in $config ...
+	#! I guess it is somehow related to the global configuration in $global_config ...
 
 	#! code line coming from the heccer source
 
@@ -995,13 +995,13 @@ sub parse_configuration_and_directories
 
     # find the package core directory
 
-    $config = do './tests.config';
+    $global_config = do './tests.config';
 
-    if (!defined $config)
+    if (!defined $global_config)
     {
 	if ($ENV{srcdir})
 	{
-	    $config = do "$ENV{srcdir}/tests.config";
+	    $global_config = do "$ENV{srcdir}/tests.config";
 
 	    # register that we are running from automake
 
@@ -1009,7 +1009,7 @@ sub parse_configuration_and_directories
 	}
     }
 
-    if (!defined $config)
+    if (!defined $global_config)
     {
 	die "No test configuration found";
     }
@@ -1018,11 +1018,11 @@ sub parse_configuration_and_directories
 
     if ($test_mode eq 'stand-alone')
     {
-	$core_directory = $config->{core_directory};
+	$core_directory = $global_config->{core_directory};
     }
     else
     {
-	$core_directory = "$ENV{srcdir}/$config->{core_directory}";
+	$core_directory = "$ENV{srcdir}/$global_config->{core_directory}";
     }
 
     # remove parent and current directories
@@ -1035,12 +1035,12 @@ sub parse_configuration_and_directories
 
     # add to tests directory to include paths
 
-    if (!exists $config->{tests_directory})
+    if (!exists $global_config->{tests_directory})
     {
-	$config->{tests_directory} = "${core_directory}tests/specifications";
+	$global_config->{tests_directory} = "${core_directory}tests/specifications";
     }
 
-    unshift @INC, $config->{tests_directory};
+    unshift @INC, $global_config->{tests_directory};
 
 #     # find the perl modules directory
 
@@ -1069,9 +1069,9 @@ sub parse_configuration_and_directories
 
     $ENV{NEUROSPACES_NMC_MODELS} = ${core_directory} . '/library';
 
-    $global_tests_dir = $config->{tests_directory};
+    $global_tests_dir = $global_config->{tests_directory};
 
-    $global_outputs_dir = $config->{html_output_directory} || $config->{outputs_dir};
+    $global_outputs_dir = $global_config->{html_output_directory} || $global_config->{outputs_dir};
 }
 
 
