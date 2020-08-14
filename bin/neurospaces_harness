@@ -314,7 +314,7 @@ sub main
 
     # the previous command had no side effects on the loaded model (since there is no model yet)
 
-    my $previous_command_side_effects = 0;
+    $global_previous_command_side_effects = 0;
 
     # set status: running
 
@@ -959,7 +959,7 @@ sub main
 
 		# register if this command had side effects
 
-		$previous_command_side_effects ||= $command_test->{side_effects} || 0;
+		$global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
 
 		# increment total test count
 
@@ -980,7 +980,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	    #! e.g. using a preparer/reparer combination
 
-	    $previous_command_side_effects ||= $command_definition->{side_effects} || 0;
+	    $global_previous_command_side_effects ||= $command_definition->{side_effects} || 0;
 	}
 
 	# repair the test environment
@@ -1014,7 +1014,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	#! don't think this make sense, but anyway ...
 
-	$previous_command_side_effects ||= $module_definition->{side_effects} || 0;
+	$global_previous_command_side_effects ||= $module_definition->{side_effects} || 0;
 
 	if (not $option_show)
 	{
@@ -2244,11 +2244,11 @@ sub spawn_new
 	(
 	 # if we do not have a previous command
 
-	 !$global_exp
+	 (not $global_exp)
 
 	 # or if there were differences with the previous command
 
-	 || !$differences->is_empty()
+	 || (not $differences->is_empty())
 
 	 # or if the previous command had side effects
 
