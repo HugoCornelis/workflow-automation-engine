@@ -1885,6 +1885,92 @@ sub readfile
 package TestElement;
 
 
+sub execute
+{
+    my $executor_element = shift;
+
+    my $description = shift;
+
+    my $previous_result = shift;
+
+    my $result = 'nothing executed';
+
+    # either execute regular perl code
+
+    if (ref $executor_element eq 'CODE')
+    {
+	$result = &$executor_element($previous_result);
+    }
+
+    # ... or instantiate the object that will do the preparation
+
+    elsif (exists $executor_element->{class})
+    {
+	# instantiate the object
+
+	my $class = $executor_element->{class};
+
+	my $filename = $class . ".pm";
+
+	$filename =~ s(::)(/)g;
+
+	require $filename;
+
+	my $executor_element_object = eval "$class->new()";
+
+	# apply all the methods and collect the results
+
+	$result = [];
+
+	my $applicators = $executor_element->{applicators};
+
+	foreach my $applicator (@$applicators)
+	{
+	    my $method = $applicator->{method};
+
+	    my $arguments = $applicator->{arguments};
+
+	    my $applicator_result = $executor_element_object->$method($arguments);
+
+	    if (ref $applicator_result eq 'SCALAR')
+	    {
+		$result = \ "Error: $description failed ($$applicator_result)";
+
+		last;
+	    }
+
+	    push @$result, $applicator_result;
+	}
+    }
+
+    # or execute an array of system shell commands
+
+    elsif (exists $executor_element->{system_commands})
+    {
+	my $system_commands = $executor_element->{system_commands};
+
+	if (ref $system_commands eq 'ARRAY')
+	{
+	    foreach my $system_command (@$system_commands)
+	    {
+		system $system_command;
+
+		if ($? ne 0)
+		{
+		    $result = \ "Error: $description failed ($system_command)";
+
+		    last;
+		}
+	    }
+	}
+    }
+
+    # return result
+
+    return $result;
+}
+
+
 sub preparation
 {
     my $module_definition = shift;
@@ -1907,8 +1993,6 @@ sub preparation
 	    die "$0: module_definition ($module_definition->{description}) has both a preparation and harnessing clause\n";
 	}
     }
-
-    my $preparation_result;
 
     my $definition = defined $command_definition ? $command_definition : $module_definition;
 
@@ -1940,8 +2024,14 @@ sub preparation
 
     my $preparation = $harnessing->{preparation};
 
+    my $preparation_result;
+
+    # if there is a preparation clause
+
     if ($preparation)
     {
+	# give diagnostics
+
 	my $preparation_name
 	    = ($command_definition
 	       ? "command '$command_definition->{command}'"
@@ -1949,41 +2039,11 @@ sub preparation
 
 	print "*** Preparing $preparation_name ($preparation->{description})\n";
 
+	# execute the preparation clause
+
 	my $preparer = $preparation->{preparer};
 
-	if (ref $preparer eq 'CODE')
-	{
-	    $preparation_result = &$preparer();
-	}
-	elsif (exists $preparer->{class})
-	{
-	    # instantiate the object
-
-	    my $class = $preparer->{class};
-
-	    my $filename = $class . ".pm";
-
-	    $filename =~ s(::)(/)g;
-
-	    require $filename;
-
-	    my $preparer_object = eval "$class->new()";
-	}
-	elsif (exists $preparer->{system_commands})
-	{
-	    my $system_commands = $preparer->{system_commands};
-
-	    if (ref $system_commands eq 'ARRAY')
-	    {
-		foreach my $system_command (@$system_commands)
-		{
-		    #t import execute_shell_command from cr-build
-
-		    system $system_command;
-		}
-	    }
-
-	}
+	$preparation_result = execute($preparer, 'preparation');
 
 	# if the preparer returned an error string
 
@@ -2019,6 +2079,8 @@ sub preparation
 	}
     }
 
+    # return result
+
     return $preparation_result;
 }
 
@@ -2052,13 +2114,19 @@ sub reparation
 
     my $reparation_error;
 
+    # if there is a reparation clause
+
     if ($reparation)
     {
+	# give diagnostics
+
 	print "*** Reparing $reparation_name ($reparation->{description})\n";
+
+	# execute the reparation clause
 
 	my $reparer = $reparation->{reparer};
 
-	$reparation_error = &$reparer($preparation_result);
+	$reparation_error = execute($reparer, 'reparation', $preparation_result);
 
 	# process errors
 
