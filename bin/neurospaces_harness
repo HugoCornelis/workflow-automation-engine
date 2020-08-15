@@ -62,6 +62,7 @@ use Neurospaces::Tester;;
 use YAML;
 
 
+my $option_check_test_names;
 my $option_dump_json;
 my $option_dump_perl;
 my $option_dump_yaml;
@@ -1044,6 +1045,7 @@ sub parse_options
     my $result
 	= GetOptions
 	    (
+	     "check-test-names!" => \$option_check_test_names,
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
 	     "dump-yaml!" => \$option_dump_yaml,
@@ -1096,6 +1098,7 @@ sub parse_options
 $0: test definition executor
 
 options:
+    --check-test-names   check the pathnames of the specification files against the names of the tests.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
@@ -1108,7 +1111,6 @@ options:
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
-    --report-mac         include information of disabled tests on Mac OSX.
     --show               show tests that would be run using the current configuration.
     --tags               only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier multiply all timeout values with this constant.
@@ -1861,16 +1863,19 @@ sub readfile
 
     # check if the name of the test and the pathname match
 
-    if ($pathname ne "$global_config->{tests_directory}/$result->{name}")
+    if ($option_check_test_names)
     {
-	TestReporting::report_error_add
-	    (
-	     {
-	      description => "the pathname ($pathname) and the test name ($result->{name}) are different",
-	      error => "the pathname ($pathname) and the test name ($result->{name}) are different",
-	      module_name => $pathname,
-	     },
-	    );
+	if ($pathname ne "$global_config->{tests_directory}/$result->{name}")
+	{
+	    TestReporting::report_error_add
+		(
+		 {
+		     description => "the pathname ($pathname) and the test name ($result->{name}) are different",
+		     error => "the pathname ($pathname) and the test name ($result->{name}) are different",
+		     module_name => $pathname,
+		 },
+		);
+	}
     }
 
     return $result;

@@ -18,6 +18,7 @@ my $test = {
 bin/neurospaces_harness: test definition executor
 
 options:
+    --check-test-names   check the pathnames of the specification files against the names of the tests.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
@@ -30,7 +31,6 @@ options:
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
-    --report-mac         include information of disabled tests on Mac OSX.
     --show               show tests that would be run using the current configuration.
     --tags               only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier multiply all timeout values with this constant.
