@@ -45,7 +45,7 @@ our $whole_build_configuration;
 
 our $personal_build_configuration;
 
-our $new_projects_directory = 'heterarch_projects';
+our $new_projects_directory = 'projects';
 
 
 =head4 $default_packages
