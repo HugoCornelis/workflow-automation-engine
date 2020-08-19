@@ -393,7 +393,7 @@ sub main
 	    next;
 	}
 
-	Heterarch::Test::Reporting::report_message(2, 1, "Running tests of module $module_description ($module_name)");
+	Heterarch::Test::Reporting::report_message_start("Running tests of module $module_description ($module_name)");
 
 	# emit comment if any
 
@@ -450,7 +450,7 @@ sub main
 
 	    if (@$command_definitions > 1)
 	    {
-		Heterarch::Test::Reporting::report_message(2, 1, "Running tests of $description");
+		Heterarch::Test::Reporting::report_message_start("Running tests of $description");
 
 		# emit comment if any
 
@@ -989,7 +989,7 @@ sub main
 
 	    if (@$command_definitions > 1)
 	    {
-		Heterarch::Test::Reporting::report_message(1, 2, "End for tests of $description
+		Heterarch::Test::Reporting::report_message_end("End for tests of $description
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
@@ -1035,7 +1035,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	if (not $option_show)
 	{
-	    Heterarch::Test::Reporting::report_message(1, 2, "End of tests of module $module_definition->{description}
+	    Heterarch::Test::Reporting::report_message_end("End of tests of module $module_definition->{description}
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	}
     }
@@ -1485,11 +1485,42 @@ sub report_error_add
 }
 
 
+my $rulers_not_used
+    = {
+       end => { bottom => 2, top => 1, },
+       info => { bottom => 1, top => 1, },
+       start => { bottom => 1, top => 2, },
+      };
+
+sub report_message_end
+{
+    my $message = shift;
+
+    return report_message(1, 2, $message);
+}
+
+
+sub report_message_info
+{
+    my $message = shift;
+
+    return report_message(1, 1, $message);
+}
+
+
+sub report_message_start
+{
+    my $message = shift;
+
+    return report_message(2, 1, $message);
+}
+
+
 sub report_message
 {
-    my $header = shift;
+    my $top_ruler = shift;
 
-    my $trailer = shift;
+    my $bottom_ruler = shift;
 
     my $message = shift;
 
@@ -1508,10 +1539,10 @@ sub report_message
     if (!$option_show)
     {
 	print "\n";
-	print "$line\n" for 0 .. $header;
+	print "$line\n" for 0 .. $top_ruler;
 	print "\n";
 	print "$message\n\n";
-	print "$line\n" for 0 .. $trailer;
+	print "$line\n" for 0 .. $bottom_ruler;
 	print "\n";
     }
 }
@@ -2221,7 +2252,7 @@ sub is_disabled
 
 	if (not $option_show)
 	{
-	    Heterarch::Test::Reporting::report_message(1, 2, "Tests of $description are disabled ($disabled)
+	    Heterarch::Test::Reporting::report_message_info("Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 	    my $report_key
@@ -2576,8 +2607,9 @@ sub is_selected_by_tag
     }
     else
     {
-	if (not $option_show) {
-	    Heterarch::Test::Reporting::report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+	if (not $option_show)
+	{
+	    Heterarch::Test::Reporting::report_message_info("Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	}
 
