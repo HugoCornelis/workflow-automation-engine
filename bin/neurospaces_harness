@@ -114,8 +114,11 @@ my $global_previous_command_side_effects;
 
 sub initialize_environment
 {
-    print "Executable is $0,\n";
-    print "core_directory is $core_directory\n";
+    if ($option_verbose)
+    {
+	print "Executable is $0,\n";
+	print "core_directory is $core_directory\n";
+    }
 
     my $environment_settings = $global_config->{environment_settings};
 
@@ -150,7 +153,10 @@ sub initialize_environment
 
 	    $description =~ s/%value/$value/g;
 
-	    print $description;
+	    if ($option_verbose)
+	    {
+		print $description;
+	    }
 
 	    # loop over shell commands for initialization
 
@@ -164,7 +170,10 @@ sub initialize_environment
 
 		# execute command
 
-		print "$0: executing ($shell_command)\n";
+		if ($option_verbose)
+		{
+		    print "$0: executing ($shell_command)\n";
+		}
 
 		system $shell_command;
 	    }
@@ -177,7 +186,10 @@ sub initialize_environment
 
     if (defined ($global_config->{environment}))
     {
-	print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
+	if ($option_verbose)
+	{
+	    print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
+	}
     }
 }
 
@@ -269,7 +281,10 @@ sub initialize_running_mode
 
     $core_directory =~ s([^/\.]+/\.\./)()g;
 
-    print "$0: core_directory is $core_directory\n";
+    if ($option_verbose)
+    {
+	print "$0: core_directory is $core_directory\n";
+    }
 
     # add to tests directory to include paths
 
@@ -335,7 +350,10 @@ sub main
 	    $seed = $option_random_order
 	}
 
-	print "Randomizing test specifications, seed is $seed\n";
+	if ($option_verbose)
+	{
+	    print "Randomizing test specifications, seed is $seed\n";
+	}
 
 	srand($seed);
 
