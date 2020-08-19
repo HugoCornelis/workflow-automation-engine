@@ -294,17 +294,17 @@ sub main
 
     # find all the test module files
 
-    my $test_modules = TestLibrary::construct();
+    my $test_modules = Heterarch::Test::Library::construct();
 
     # read the test module files
 
-    $test_modules = TestLibrary::expand($test_modules);
+    $test_modules = Heterarch::Test::Library::expand($test_modules);
 
     # total test count so far is zero
 
     my $test_count = 0;
 
-    # compute the library checksum
+    # compute the model library checksum
 
     my $library_sha_before;
 
@@ -356,7 +356,7 @@ sub main
 
     foreach my $module_definition (@$test_modules)
     {
-	bless $module_definition, "TestModule";
+	bless $module_definition, "Heterarch::Test::Module";
 
 	my $module_name = $module_definition->check_name();
 
@@ -377,7 +377,7 @@ sub main
 	    next;
 	}
 
-	TestReporting::report_message(2, 1, "Running tests of module $module_description ($module_name)");
+	Heterarch::Test::Reporting::report_message(2, 1, "Running tests of module $module_description ($module_name)");
 
 	# emit comment if any
 
@@ -398,16 +398,16 @@ sub main
 
 	foreach my $command_definition (@$command_definitions)
 	{
-	    bless $command_definition, "TestCommandDefinition";
+	    bless $command_definition, "Heterarch::Test::CommandDefinition";
 
 	    my $description = $command_definition->{description};
 
-	    if (TestElement::is_disabled($module_definition, $command_definition))
+	    if (Heterarch::Test::Element::is_disabled($module_definition, $command_definition))
 	    {
 		next;
 	    }
 
-	    if (TestElement::has_error_flag($module_definition, $command_definition))
+	    if (Heterarch::Test::Element::has_error_flag($module_definition, $command_definition))
 	    {
 		next;
 	    }
@@ -434,7 +434,7 @@ sub main
 
 	    if (@$command_definitions > 1)
 	    {
-		TestReporting::report_message(2, 1, "Running tests of $description");
+		Heterarch::Test::Reporting::report_message(2, 1, "Running tests of $description");
 
 		# emit comment if any
 
@@ -448,7 +448,7 @@ sub main
 
 	    # prepare the command test environment
 
-	    my $preparation_result = TestElement::preparation($module_definition, $command_definition);
+	    my $preparation_result = Heterarch::Test::Element::preparation($module_definition, $command_definition);
 
 	    my $command = $command_definition->{command};
 
@@ -503,18 +503,18 @@ sub main
 
 	    foreach my $command_test (@$command_tests)
 	    {
-		bless $command_test, "TestCommandTest";
+		bless $command_test, "Heterarch::Test::CommandTest";
 
 		# give feedback about this specific test
 
 		my $description = $command_test->{description};
 
-		if (TestElement::is_disabled($module_definition, $command_definition, $command_test))
+		if (Heterarch::Test::Element::is_disabled($module_definition, $command_definition, $command_test))
 		{
 		    next;
 		}
 
-		if (TestElement::has_error_flag($module_definition, $command_definition, $command_test))
+		if (Heterarch::Test::Element::has_error_flag($module_definition, $command_definition, $command_test))
 		{
 		    next;
 		}
@@ -943,7 +943,7 @@ sub main
 			$message = $before_match;
 		    }
 
- 		    TestReporting::report_error_add
+ 		    Heterarch::Test::Reporting::report_error_add
 			(
 			 {
 			  description => $description,
@@ -969,11 +969,11 @@ sub main
 
 	    # repair the command test environment
 
-	    my $reparation_error = TestElement::reparation($module_definition, $command_definition, $preparation_result);
+	    my $reparation_error = Heterarch::Test::Element::reparation($module_definition, $command_definition, $preparation_result);
 
 	    if (@$command_definitions > 1)
 	    {
-		TestReporting::report_message(1, 2, "End for tests of $description
+		Heterarch::Test::Reporting::report_message(1, 2, "End for tests of $description
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	    }
 
@@ -986,7 +986,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	# repair the test environment
 
-	my $reparation_error = TestElement::reparation($module_definition, undef, $module_preparation_result);
+	my $reparation_error = Heterarch::Test::Element::reparation($module_definition, undef, $module_preparation_result);
 
 	# if library checksum mismatch
 
@@ -1000,7 +1000,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 		my $description = $module_definition->{description};
 
-		TestReporting::report_error_add
+		Heterarch::Test::Reporting::report_error_add
 		    (
 		     {
 		      description => $description,
@@ -1019,14 +1019,14 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 
 	if (not $option_show)
 	{
-	    TestReporting::report_message(1, 2, "End of tests of module $module_definition->{description}
+	    Heterarch::Test::Reporting::report_message(1, 2, "End of tests of module $module_definition->{description}
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	}
     }
 
     # close pending commands
 
-    TestCommandDefinition::close_pending();
+    Heterarch::Test::CommandDefinition::close_pending();
 
     # close the test report
 
@@ -1348,7 +1348,7 @@ sub sha
 }
 
 
-package TestReporting;
+package Heterarch::Test::Reporting;
 
 
 sub report_error_add
@@ -1501,7 +1501,7 @@ sub report_message
 }
 
 
-package TestLibrary;
+package Heterarch::Test::Library;
 
 
 sub construct
@@ -1867,7 +1867,7 @@ sub readfile
     {
 	if ($pathname ne "$global_config->{tests_directory}/$result->{name}")
 	{
-	    TestReporting::report_error_add
+	    Heterarch::Test::Reporting::report_error_add
 		(
 		 {
 		     description => "the pathname ($pathname) and the test name ($result->{name}) are different",
@@ -1882,7 +1882,7 @@ sub readfile
 }
 
 
-package TestElement;
+package Heterarch::Test::Element;
 
 
 sub execute
@@ -2067,7 +2067,7 @@ sub preparation
 		   ? $command_definition->{description}
 		   : $module_definition->{description});
 
-	    TestReporting::report_error_add
+	    Heterarch::Test::Reporting::report_error_add
 		(
 		 {
 		     description => $preparation_name,
@@ -2139,7 +2139,7 @@ sub reparation
 		   ? $command_definition->{description}
 		   : $module_definition->{description});
 
-	    TestReporting::report_error_add
+	    Heterarch::Test::Reporting::report_error_add
 		(
 		 {
 		     description => $reparation_name,
@@ -2180,7 +2180,7 @@ sub is_disabled
 
 	if (not $option_show)
 	{
-	    TestReporting::report_message(1, 2, "Tests of $description are disabled ($disabled)
+	    Heterarch::Test::Reporting::report_message(1, 2, "Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 
 	    my $report_key
@@ -2225,7 +2225,7 @@ sub has_error_flag
 
     if ($error)
     {
-	TestReporting::report_error_add
+	Heterarch::Test::Reporting::report_error_add
 		(
 		 {
 		  description => $description,
@@ -2244,10 +2244,10 @@ sub has_error_flag
 }
 
 
-package TestCommandDefinition;
+package Heterarch::Test::CommandDefinition;
 
 
-our @ISA = ("TestElement");
+our @ISA = ("Heterarch::Test::Element");
 
 
 use Data::Comparator qw(data_comparator);
@@ -2407,7 +2407,7 @@ sub spawn_new
     # {
     # 	my $error = "$command is not executable";
 
-    # 	TestReporting::report_error_add
+    # 	Heterarch::Test::Reporting::report_error_add
     # 	    (
     # 	     {
     # 	      description => $description,
@@ -2423,16 +2423,16 @@ sub spawn_new
 }
 
 
-package TestCommandTest;
+package Heterarch::Test::CommandTest;
 
 
-our @ISA = ("TestElement");
+our @ISA = ("Heterarch::Test::Element");
 
 
-package TestModule;
+package Heterarch::Test::Module;
 
 
-our @ISA = ("TestElement");
+our @ISA = ("Heterarch::Test::Element");
 
 
 # could also use Array::Util, but it is not always installed
@@ -2476,7 +2476,7 @@ sub check_description
     {
 	$module_definition->{description} = $module_definition->{name};
 
-	TestReporting::report_error_add
+	Heterarch::Test::Reporting::report_error_add
 		(
 		 {
 		  description => 'no module description',
@@ -2498,7 +2498,7 @@ sub check_name
     {
 	$module_definition->{name} = 'unnamed';
 
-	TestReporting::report_error_add
+	Heterarch::Test::Reporting::report_error_add
 		(
 		 {
 		  description => 'unnamed module',
@@ -2536,7 +2536,7 @@ sub is_selected_by_tag
     else
     {
 	if (not $option_show) {
-	    TestReporting::report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+	    Heterarch::Test::Reporting::report_message(1, 2, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
 	}
 
