@@ -340,28 +340,26 @@ sub main
 
     if (defined $option_random_order)
     {
-	require List::Util;
+	if ($option_verbose)
+	{
+	    print "Randomizing test specifications, random seed is $option_random_order\n";
+	}
 
-	my $seed = time() ^ $$ ^ unpack "%L*", `ps axww | gzip`;
+	# by default the randomizer will choose a random_seed
+
+	my $random_seed;
 
 	if ($option_random_order =~ /^[0-9]*$/
 	    and $option_random_order ne 1)
 	{
-	    $seed = $option_random_order
+	    $random_seed = $option_random_order
 	}
 
-	if ($option_verbose)
-	{
-	    print "Randomizing test specifications, seed is $seed\n";
-	}
+	# randomize the test module library
 
-	srand($seed);
+	( $test_modules, $random_seed ) = Heterarch::Test::Library::randomize_order($test_modules, $random_seed);
 
-	$global_test_report->{random_seed} = $seed;
-
-	# and shuffle the modules
-
-	$test_modules = [ List::Util::shuffle(@$test_modules), ];
+	$global_test_report->{random_seed} = $random_seed;
     }
     else
     {
@@ -1765,6 +1763,31 @@ sub is_yaml
     }
 
     return $result;
+}
+
+
+sub randomize_order
+{
+    my $test_modules = shift;
+
+    my $random_seed = shift;
+
+    # by default the randomizer will choose a random_seed
+
+    if (not defined $random_seed)
+    {
+	$random_seed = time() ^ $$ ^ unpack "%L*", `ps axww | gzip`;
+    }
+
+    # set the random_seed
+
+    srand($random_seed);
+
+    # and shuffle the modules
+
+    require List::Util;
+
+    return ( [ List::Util::shuffle(@$test_modules), ], $random_seed );
 }
 
 
