@@ -667,10 +667,6 @@ sub main
 
 		    elsif (defined $read)
 		    {
-			# substitute variables
-
-			$read = substitute_variables($read);
-
 			# if literal text expected
 
 			if (!ref $read)
@@ -2526,30 +2522,6 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 
 package main;
-
-
-# substitute variables in a read clause
-#
-# variables are hardcoded, this should be removed at some point
-
-sub substitute_variables
-{
-    my $string = shift;
-
-    my $variables
-	= [
-	   [ '$(libdir)' => "$global_core_directory/tests/models", ],
-	  ];
-
-    foreach my $variable (@$variables)
-    {
-	my $searcher = quotemeta($variable->[0]);
-
-	$string =~ s/$searcher/$variable->[1]/g;
-    }
-
-    return $string;
-}
 
 
 main();
