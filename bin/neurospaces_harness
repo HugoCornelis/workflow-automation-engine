@@ -7,15 +7,6 @@
 use strict;
 
 
-our $core_directory;
-
-our $built_exe_directory;
-
-# our $perl_modules_directory;
-
-our $global_config;
-
-
 my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
@@ -48,8 +39,11 @@ my $option_trace;
 my $option_verbose;
 
 
-my $global_error_count = 0;
+our $global_config;
+our $global_core_directory;
 
+my $global_error_count = 0;
+my $global_previous_command_side_effects;
 my $global_test_report;
 
 
@@ -73,9 +67,6 @@ $SIG{'INT'}
 
 	  report_exit(2);
       };
-
-
-my $global_previous_command_side_effects;
 
 
 sub initialize_environment
@@ -196,61 +187,20 @@ sub initialize_globals
 
 sub initialize_running_mode
 {
-    # default : running stand-alone
-
-    my $test_mode = 'stand-alone';
-
     # find the package core directory
 
     $global_config = do './tests.config';
 
     if (!defined $global_config)
     {
-	if ($ENV{srcdir})
-	{
-	    $global_config = do "$ENV{srcdir}/tests.config";
-
-	    # register that we are running from automake
-
-	    $test_mode = 'automake';
-	}
-    }
-
-    if (!defined $global_config)
-    {
 	die "No test configuration found";
-    }
-
-    # protect for automake
-
-    if ($test_mode eq 'stand-alone')
-    {
-	$core_directory = $global_config->{core_directory};
-    }
-    else
-    {
-	$core_directory = "$ENV{srcdir}/$global_config->{core_directory}";
-
-	$core_directory = $global_config->{core_directory};
-
-    }
-
-    # remove parent and current directories
-
-    $core_directory =~ s(([^\.])\./)($1)g;
-
-    $core_directory =~ s([^/\.]+/\.\./)()g;
-
-    if ($option_verbose)
-    {
-	print "$0: core_directory is $core_directory\n";
     }
 
     # add to tests directory to include paths
 
     if (!exists $global_config->{tests_directory})
     {
-	$global_config->{tests_directory} = "${core_directory}tests/specifications";
+	$global_config->{tests_directory} = "./tests/specifications";
     }
 
     unshift @INC, $global_config->{tests_directory};
@@ -571,7 +521,7 @@ sub main
 			     $command_test,
 			     {
 			      c_code => {
-					 directory => $core_directory,
+					 directory => $global_core_directory,
 					},
 			     },
 			    );
@@ -2588,7 +2538,7 @@ sub substitute_variables
 
     my $variables
 	= [
-	   [ '$(libdir)' => "$core_directory/tests/models", ],
+	   [ '$(libdir)' => "$global_core_directory/tests/models", ],
 	  ];
 
     foreach my $variable (@$variables)
