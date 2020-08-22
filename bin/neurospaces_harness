@@ -40,7 +40,6 @@ my $option_numerical_compare;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
-my $option_report_target;
 my $option_show;
 my $option_tags = [];
 my $option_timeout_multiplier = 1;
@@ -49,7 +48,7 @@ my $option_trace;
 my $option_verbose;
 
 
-my $error_count = 0;
+my $global_error_count = 0;
 
 my $global_test_report;
 
@@ -166,7 +165,7 @@ sub initialize_globals
 			  },
 	   global => {
 		      config => $global_config,
-		      error_count => $error_count,
+		      error_count => $global_error_count,
 		      status => 'initializing',
 		      test_count => 0,
 		      time_start => `date`,
@@ -951,7 +950,7 @@ sub main
 	    if (@$command_definitions > 1)
 	    {
 		Heterarch::Test::Reporting::report_message_end("End for tests of $description
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 	    }
 
 	    # register if this command had side effects
@@ -997,7 +996,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $error_c
 	if (not $option_show)
 	{
 	    Heterarch::Test::Reporting::report_message_end("End of tests of module $module_definition->{description}
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 	}
     }
 
@@ -1033,7 +1032,6 @@ sub parse_options
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
-	     "report-target!" => \$option_report_target,
 	     "show!" => \$option_show,
 	     "tags=s" => $option_tags,
 	     "timeout-multiplier=s" => \$option_timeout_multiplier,
@@ -1059,7 +1057,6 @@ sub parse_options
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
-	   report_target => $option_report_target,
 	   show => $option_show,
 	   tags => $option_tags,
 	   timeout_multiplier => $option_timeout_multiplier,
@@ -1116,8 +1113,6 @@ sub report_exit
 	print "*** die: $description\n";
     }
 
-    my $report_target = $option_report_target || $error_count;
-
     # yaml out the test report
 
     my $report_text
@@ -1128,7 +1123,6 @@ sub report_exit
 		    ($option_report_disabled ? (disabled => $global_test_report->{disabled}) : ()),
 		    ($option_show ? () : (errors => $global_test_report->{errors})),
 		    ($option_show ? () : (global => $global_test_report->{global})),
-# 		    ($report_target ? (target => $global_test_report->{target}) : ()),
 		    ($option_show ? (selected => $global_test_report->{selected}) : ()),
 		   },
 		  );
@@ -1167,10 +1161,10 @@ sub report_exit
 	{
 	    # ask use if sending an email is ok
 
-	    my $default_answer_prompt = $error_count ? "Y/n" : "y/N";
+	    my $default_answer_prompt = $global_error_count ? "Y/n" : "y/N";
 
-	    print "\n--\n  These tests generated $error_count error(s)";
-	    print ( $error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
+	    print "\n---\n  These tests generated $global_error_count error(s)";
+	    print ( $global_error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
 	    print "\n  Ok to send an email to hugo.cornelis\@gmail.com for this test report,\n  this email will not reveal your identity to the recipient ?  [$default_answer_prompt]";
 
 	    my $answer = readline(*STDIN);
@@ -1271,13 +1265,13 @@ Email was not sent.
 
     # if there were errors
 
-    if ($error_count)
+    if ($global_error_count)
     {
 	# exit with failure
 
 	$exit_code ||= 1;
 
-	print "$0: $global_test_report->{global}->{test_count} test(s), $error_count error(s)\n";
+	print "$0: $global_test_report->{global}->{test_count} test(s), $global_error_count error(s)\n";
 
 	print "$0: exit_code $exit_code\n\n";
 
@@ -1290,7 +1284,7 @@ Email was not sent.
     {
 	# exit, possibly success
 
-	print "$0: $error_count error(s)\n\n";
+	print "$0: $global_error_count error(s)\n\n";
 
 	exit $exit_code;
     }
@@ -1342,24 +1336,24 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    $error_count++;
+    $global_error_count++;
 
-    print STDERR "*** Error $error_count: $error ($description, package $package_name, $module_name, error_count $error_count)\n";
+    print STDERR "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
 
     # fill in the error report
 
-    $global_test_report->{global}->{error_count} = $error_count;
+    $global_test_report->{global}->{error_count} = $global_error_count;
 
     if ($subdescription)
     {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{description} = $description;
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
     }
     else
     {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{description} = $description;
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
     }
 
-    $global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{error} = $error;
+    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
 
     if (defined $message)
     {
@@ -1368,7 +1362,7 @@ sub report_error_add
 	#! running in verbose mode seems, allows to track regex
 	#! problems ... I think.
 
-	$global_test_report->{errors}->{modules}->{$module_name}->{$error_count}->{$subdescription}->{report} = $message;
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
     }
 
     if (defined $expected
@@ -1376,19 +1370,19 @@ sub report_error_add
     {
 	my $processed_expected = [ split "\n", $expected, ];
 
-	$processed_expected = join "\n*** Error $error_count: expected: ", "", @$processed_expected, "\n";
+	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
 
 	print STDERR $processed_expected;
 
 	my $processed_seen = [ split "\n", $seen, ];
 
-	$processed_seen = join "\n*** Error $error_count: seen: ", "", @$processed_seen, "\n";
+	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
 
 	print STDERR $processed_seen;
 
 	use IO::File;
 
-	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$error_count.expected";
+	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
 
 	my $expected_file = IO::File->new(">$expected_filename");
 
@@ -1403,7 +1397,7 @@ sub report_error_add
 	    print STDERR "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
-	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$error_count.seen";
+	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
@@ -1420,7 +1414,7 @@ sub report_error_add
 
 	my $diff = `diff "$expected_filename" "$seen_filename"`;
 
-	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$error_count.diff";
+	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
 
 	my $diff_file = IO::File->new(">$diff_filename");
 
@@ -1437,7 +1431,7 @@ sub report_error_add
 
 	my $processed_diff = [ split "\n", $diff, ];
 
-	$processed_diff = join "\n*** Error $error_count: diff: ", "", @$processed_diff, "\n";
+	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
 
 	print STDERR $processed_diff;
 
@@ -2214,7 +2208,7 @@ sub is_disabled
 	if (not $option_show)
 	{
 	    Heterarch::Test::Reporting::report_message_info("Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 
 	    my $report_key
 		= (defined $command_test
@@ -2571,7 +2565,7 @@ sub is_selected_by_tag
 	if (not $option_show)
 	{
 	    Heterarch::Test::Reporting::report_message_info("Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
-Total of $global_test_report->{global}->{test_count} tests (encountered $error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 	}
 
 	$global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = 'not_selected_by_tag';
