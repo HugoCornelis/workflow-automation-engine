@@ -43,6 +43,7 @@ our $global_config;
 our $global_core_directory;
 
 my $global_error_count = 0;
+my $global_fd_output;
 my $global_previous_command_side_effects;
 my $global_test_report;
 
@@ -213,13 +214,15 @@ sub main
 
     initialize_globals();
 
+    open($global_fd_output, ">&STDOUT");
+
     # find all the test module files
 
     my $test_modules = Heterarch::Test::Library::construct();
 
     # read the test module files
 
-    $test_modules = Heterarch::Test::Library::expand($test_modules);
+    $test_modules = Heterarch::Test::Library::expand($global_fd_output, $test_modules);
 
     # total test count so far is zero
 
@@ -248,7 +251,7 @@ sub main
     {
 	if ($option_verbose)
 	{
-	    print "Randomizing test specifications, random seed is $option_random_order\n";
+	    print $global_fd_output "Randomizing test specifications, random seed is $option_random_order\n";
 	}
 
 	# by default the randomizer will choose a random_seed
@@ -280,26 +283,28 @@ sub main
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
-	my $module_name = $module_definition->check_name();
+	my $fd_module_output = $global_fd_output;
 
-	my $module_description = $module_definition->check_description();
+	my $module_name = $module_definition->check_name($fd_module_output);
 
-	if (not $module_definition->is_selected_by_tag())
+	my $module_description = $module_definition->check_description($fd_module_output);
+
+	if (not $module_definition->is_selected_by_tag($fd_module_output))
 	{
 	    next;
 	}
 
-	if ($module_definition->is_disabled())
+	if ($module_definition->is_disabled($fd_module_output))
 	{
 	    next;
 	}
 
-	if ($module_definition->has_error_flag())
+	if ($module_definition->has_error_flag($fd_module_output))
 	{
 	    next;
 	}
 
-	Heterarch::Test::Reporting::report_message_start("Running tests of module $module_description ($module_name)");
+	Heterarch::Test::Reporting::report_message_start($fd_module_output, "Running tests of module $module_description ($module_name)");
 
 	# emit comment if any
 
@@ -307,12 +312,12 @@ sub main
 
 	if ($comment)
 	{
-	    print "*** Comment: $comment\n";
+	    print $fd_module_output "*** Comment: $comment\n";
 	}
 
 	# prepare the module test environment
 
-	my $module_preparation_result = $module_definition->preparation();
+	my $module_preparation_result = $module_definition->preparation($fd_module_output);
 
 	# loop over commands for this module
 
@@ -324,12 +329,12 @@ sub main
 
 	    my $description = $command_definition->{description};
 
-	    if (Heterarch::Test::Element::is_disabled($module_definition, $command_definition))
+	    if (Heterarch::Test::Element::is_disabled($module_definition, $fd_module_output, $command_definition))
 	    {
 		next;
 	    }
 
-	    if (Heterarch::Test::Element::has_error_flag($module_definition, $command_definition))
+	    if (Heterarch::Test::Element::has_error_flag($module_definition, $fd_module_output, $command_definition))
 	    {
 		next;
 	    }
@@ -356,7 +361,7 @@ sub main
 
 	    if (@$command_definitions > 1)
 	    {
-		Heterarch::Test::Reporting::report_message_start("Running tests of $description");
+		Heterarch::Test::Reporting::report_message_start($fd_module_output, "Running tests of $description");
 
 		# emit comment if any
 
@@ -364,13 +369,13 @@ sub main
 
 		if ($comment)
 		{
-		    print "*** Comment: $comment\n";
+		    print $fd_module_output "*** Comment: $comment\n";
 		}
 	    }
 
 	    # prepare the command test environment
 
-	    my $preparation_result = Heterarch::Test::Element::preparation($module_definition, $command_definition);
+	    my $preparation_result = Heterarch::Test::Element::preparation($module_definition, $fd_module_output, $command_definition);
 
 	    my $command = $command_definition->{command};
 
@@ -415,7 +420,7 @@ sub main
 		    #! this is similar to having a class name 'Expect' and calling Expect->new()
 		    #! but with optimization to prevent spawning new commands unnecessarily
 
-		    ($exp, $test_startup) = $command_definition->spawn_new();
+		    ($exp, $test_startup) = $command_definition->spawn_new($fd_module_output);
 		}
 	    }
 
@@ -431,12 +436,12 @@ sub main
 
 		my $description = $command_test->{description};
 
-		if (Heterarch::Test::Element::is_disabled($module_definition, $command_definition, $command_test))
+		if (Heterarch::Test::Element::is_disabled($module_definition, $fd_module_output, $command_definition, $command_test))
 		{
 		    next;
 		}
 
-		if (Heterarch::Test::Element::has_error_flag($module_definition, $command_definition, $command_test))
+		if (Heterarch::Test::Element::has_error_flag($module_definition, $fd_module_output, $command_definition, $command_test))
 		{
 		    next;
 		}
@@ -460,7 +465,7 @@ sub main
 
 		my $time_elapsed;
 
-		print "*** Test: $description\n";
+		print $fd_module_output "*** Test: $description\n";
 
 		# if the command_definition instantiated an object
 
@@ -531,7 +536,7 @@ sub main
 		    {
 			if (!$test_startup)
 			{
-			    print "*** Skipped: not testing startup tests on a recycled command ($description)\n";
+			    print $fd_module_output "*** Skipped: not testing startup tests on a recycled command ($description)\n";
 
 			    next;
 			}
@@ -543,7 +548,7 @@ sub main
 
 		    if ($comment)
 		    {
-			print "*** Comment: $comment\n";
+			print $fd_module_output "*** Comment: $comment\n";
 		    }
 
 		    # set read, wait and write strings
@@ -580,7 +585,7 @@ sub main
 		    }
 		    elsif (defined $write)
 		    {
-			print "*** Write: $write\n";
+			print $fd_module_output "*** Write: $write\n";
 
 			$exp->send("$write\n");
 		    }
@@ -589,7 +594,7 @@ sub main
 
 		    if ($wait)
 		    {
-			print "*** Wait: $wait\n";
+			print $fd_module_output "*** Wait: $wait\n";
 
 			select(undef, undef, undef, $wait);
 		    }
@@ -606,7 +611,7 @@ sub main
 		    {
 			# run the shell command for a maximum of $timeout seconds
 
-			print "*** Shell: timeout $timeout $shell\n";
+			print $fd_module_output "*** Shell: timeout $timeout $shell\n";
 
 			system "timeout $timeout $shell";
 		    }
@@ -671,7 +676,7 @@ sub main
 			    {
 				if ($command_test->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 				{
-				    print "*** Converting seen 0a to 0d 0a newlines\n";
+				    print $fd_module_output "*** Converting seen 0a to 0d 0a newlines\n";
 
 				    $read =~ s(\x0a)(\x0d\x0a)g;
 				}
@@ -738,7 +743,7 @@ sub main
 
 				chomp $pwd;
 
- 				print "*** Application output file: $application_output_file (in $pwd)\n";
+ 				print $fd_module_output "*** Application output file: $application_output_file (in $pwd)\n";
 
 				# and compare it with an expected output file
 
@@ -753,7 +758,7 @@ sub main
 
 				if ($expected_output_file)
 				{
-				    print "*** Expected output file: $expected_output_file\n";
+				    print $fd_module_output "*** Expected output file: $expected_output_file\n";
 
 				    $expected_output = `cat "$expected_output_file"`;
 				}
@@ -863,6 +868,7 @@ sub main
 
  		    Heterarch::Test::Reporting::report_error_add
 			(
+			 $fd_module_output,
 			 {
 			  description => $description,
 			  error => $error,
@@ -887,11 +893,11 @@ sub main
 
 	    # repair the command test environment
 
-	    my $reparation_error = Heterarch::Test::Element::reparation($module_definition, $command_definition, $preparation_result);
+	    my $reparation_error = Heterarch::Test::Element::reparation($fd_module_output, $module_definition, $command_definition, $preparation_result);
 
 	    if (@$command_definitions > 1)
 	    {
-		Heterarch::Test::Reporting::report_message_end("End for tests of $description
+		Heterarch::Test::Reporting::report_message_end($fd_module_output, "End for tests of $description
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 	    }
 
@@ -904,7 +910,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 	# repair the test environment
 
-	my $reparation_error = Heterarch::Test::Element::reparation($module_definition, undef, $module_preparation_result);
+	my $reparation_error = Heterarch::Test::Element::reparation($fd_module_output, $module_definition, undef, $module_preparation_result);
 
 	# if library checksum mismatch
 
@@ -920,6 +926,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 		Heterarch::Test::Reporting::report_error_add
 		    (
+		     $fd_module_output,
 		     {
 		      description => $description,
 		      error => $error,
@@ -937,7 +944,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 	if (not $option_show)
 	{
-	    Heterarch::Test::Reporting::report_message_end("End of tests of module $module_definition->{description}
+	    Heterarch::Test::Reporting::report_message_end($fd_module_output, "End of tests of module $module_definition->{description}
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 	}
     }
@@ -1052,7 +1059,7 @@ sub report_exit
     if (defined $description
         && $exit_code eq 3)
     {
-	print "*** die: $description\n";
+	print STDERR "*** die: $description\n";
     }
 
     # yaml out the test report
@@ -1069,7 +1076,7 @@ sub report_exit
 		   },
 		  );
 
-    print($report_text . "\n");
+    print $global_fd_output "$report_text\n";
 
     # and write the full report to a file
 
@@ -1086,7 +1093,7 @@ sub report_exit
     }
     else
     {
-	print "*** Info: See '$report_filename' for the detailed test report\n";
+	print $global_fd_output "*** Info: See '$report_filename' for the detailed test report\n";
     }
 
     # if email enabled by the options
@@ -1101,13 +1108,13 @@ sub report_exit
 
 	if (!$no_default_route)
 	{
-	    # ask use if sending an email is ok
+	    # ask if sending an email is ok
 
 	    my $default_answer_prompt = $global_error_count ? "Y/n" : "y/N";
 
-	    print "\n---\n  These tests generated $global_error_count error(s)";
-	    print ( $global_error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
-	    print "\n  Ok to send an email to hugo.cornelis\@gmail.com for this test report,\n  this email will not reveal your identity to the recipient ?  [$default_answer_prompt]";
+	    print $global_fd_output "\n---\n  These tests generated $global_error_count error(s)";
+	    print $global_fd_output ( $global_error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
+	    print $global_fd_output "\n  Ok to send an email to hugo.cornelis\@gmail.com for this test report,\n  this email will not reveal your identity to the recipient ?  [$default_answer_prompt]";
 
 	    my $answer = readline(*STDIN);
 
@@ -1129,8 +1136,7 @@ sub report_exit
 			     },
 			    );
 
-		    print
-			"Sending ... should not take more than 30 seconds
+		    print $global_fd_output "Sending ... should not take more than 30 seconds
 ";
 
 		    my $message
@@ -1162,21 +1168,21 @@ sub report_exit
 
 		    if ($sender->{error})
 		    {
-			print
+			print STDERR
 			    "*** Error: $sender->{error}
 Email was not sent.
 ";
 		    }
 		    else
 		    {
-			print
+			print $global_fd_output
 			    "Email was sent.
 ";
 		    }
 		}
 		else
 		{
-		    print
+		    print STDERR
 			"*** Error: Cannot load the perl module Mail::Sender, contact your sysadmin to install this perl module.
 (use the shell command \"sudo perl -MCPAN -e 'install Mail::Sender'\")
 Email was not sent.
@@ -1185,23 +1191,21 @@ Email was not sent.
 	    }
 	    else
 	    {
-		print
+		print $global_fd_output
 		    "Email was not sent.
 ";
 	    }
 	}
 	else
 	{
-	    print
-		"*** Warning: No default route to the internet found.
+	    print STDERR "*** Warning: No default route to the internet found.
 Email was not sent.
 ";
 	}
     }
     else
     {
-	print
-	    "No email sent.
+	print $global_fd_output "No email sent.
 ";
     }
 
@@ -1213,9 +1217,9 @@ Email was not sent.
 
 	$exit_code ||= 1;
 
-	print "$0: $global_test_report->{global}->{test_count} test(s), $global_error_count error(s)\n";
+	print $global_fd_output "$0: $global_test_report->{global}->{test_count} test(s), $global_error_count error(s)\n";
 
-	print "$0: exit_code $exit_code\n\n";
+	print $global_fd_output "$0: exit_code $exit_code\n\n";
 
 	exit $exit_code;
     }
@@ -1226,7 +1230,7 @@ Email was not sent.
     {
 	# exit, possibly success
 
-	print "$0: $global_error_count error(s)\n\n";
+	print $global_fd_output "$0: $global_error_count error(s)\n\n";
 
 	exit $exit_code;
     }
@@ -1266,6 +1270,8 @@ package Heterarch::Test::Reporting;
 
 sub report_error_add
 {
+    my $fd_output = shift;
+
     my $arguments = shift;
 
     my $description = $arguments->{description};
@@ -1280,7 +1286,7 @@ sub report_error_add
 
     $global_error_count++;
 
-    print STDERR "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
 
     # fill in the error report
 
@@ -1314,13 +1320,13 @@ sub report_error_add
 
 	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
 
-	print STDERR $processed_expected;
+	print $fd_output $processed_expected;
 
 	my $processed_seen = [ split "\n", $seen, ];
 
 	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
 
-	print STDERR $processed_seen;
+	print $fd_output $processed_seen;
 
 	use IO::File;
 
@@ -1336,7 +1342,7 @@ sub report_error_add
 	}
 	else
 	{
-	    print STDERR "*** Warning: cannot open $expected_filename for writing\n";
+	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
 	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
@@ -1351,7 +1357,7 @@ sub report_error_add
 	}
 	else
 	{
-	    print STDERR "*** Warning: cannot open $seen_filename for writing\n";
+	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
 	}
 
 	my $diff = `diff "$expected_filename" "$seen_filename"`;
@@ -1368,15 +1374,14 @@ sub report_error_add
 	}
 	else
 	{
-	    print STDERR "*** Warning: cannot open $diff_filename for writing\n";
+	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
 	}
 
 	my $processed_diff = [ split "\n", $diff, ];
 
 	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
 
-	print STDERR $processed_diff;
-
+	print $fd_output $processed_diff;
     }
 
 }
@@ -1391,30 +1396,38 @@ my $rulers_not_used
 
 sub report_message_end
 {
+    my $fd_output = shift;
+
     my $message = shift;
 
-    return report_message_internal(1, 2, $message);
+    return report_message_internal($fd_output, 1, 2, $message);
 }
 
 
 sub report_message_info
 {
+    my $fd_output = shift;
+
     my $message = shift;
 
-    return report_message_internal(1, 1, $message);
+    return report_message_internal($fd_output, 1, 1, $message);
 }
 
 
 sub report_message_start
 {
+    my $fd_output = shift;
+
     my $message = shift;
 
-    return report_message_internal(2, 1, $message);
+    return report_message_internal($fd_output, 2, 1, $message);
 }
 
 
 sub report_message_internal
 {
+    my $fd_output = shift;
+
     my $top_ruler = shift;
 
     my $bottom_ruler = shift;
@@ -1435,12 +1448,12 @@ sub report_message_internal
 
     if (!$option_show)
     {
-	print "\n";
-	print "$line\n" for 0 .. $top_ruler;
-	print "\n";
-	print "$message\n\n";
-	print "$line\n" for 0 .. $bottom_ruler;
-	print "\n";
+	print $fd_output "\n";
+	print $fd_output "$line\n" for 0 .. $top_ruler;
+	print $fd_output "\n";
+	print $fd_output "$message\n\n";
+	print $fd_output "$line\n" for 0 .. $bottom_ruler;
+	print $fd_output "\n";
     }
 }
 
@@ -1468,6 +1481,8 @@ sub construct
 
 sub expand
 {
+    my $fd_output = shift;;
+
     my $library = shift;
 
     my $result = [];
@@ -1481,7 +1496,7 @@ sub expand
 	    next;
 	}
 
-	my $module_definition = readfile($test_module);
+	my $module_definition = readfile($fd_output, $test_module);
 
 	if ($module_definition)
 	{
@@ -1708,6 +1723,8 @@ sub randomize_order
 
 sub readfile
 {
+    my $fd_output = shift;
+
     my $pathname = shift;
 
     my $result;
@@ -1722,6 +1739,7 @@ sub readfile
 	{
 	    report_error_add
 	    (
+	     $fd_output,
 	     {
 	      description => $@,
 	      error => $@,
@@ -1755,6 +1773,7 @@ sub readfile
 	{
 	    report_error_add
 	    (
+	     $fd_output,
 	     {
 	      description => $@,
 	      error => $@,
@@ -1771,6 +1790,7 @@ sub readfile
 	{
 	    report_error_add
 	    (
+	     $fd_output,
 	     {
 	      description => $@,
 	      error => $@,
@@ -1825,6 +1845,7 @@ sub readfile
 	{
 	    Heterarch::Test::Reporting::report_error_add
 		(
+		 $fd_output,
 		 {
 		     description => "the pathname ($pathname) and the test name ($result->{name}) are different",
 		     error => "the pathname ($pathname) and the test name ($result->{name}) are different",
@@ -1931,6 +1952,8 @@ sub preparation
 {
     my $module_definition = shift;
 
+    my $fd_output = shift;
+
     my $command_definition = shift;
 
     if ($command_definition)
@@ -1993,7 +2016,7 @@ sub preparation
 	       ? "command '$command_definition->{command}'"
 	       : "module '$module_definition->{name}'");
 
-	print "*** Preparing $preparation_name ($preparation->{description})\n";
+	print $fd_output "*** Preparing $preparation_name ($preparation->{description})\n";
 
 	# execute the preparation clause
 
@@ -2025,6 +2048,7 @@ sub preparation
 
 	    Heterarch::Test::Reporting::report_error_add
 		(
+		 $fd_output,
 		 {
 		     description => $preparation_name,
 		     error => $preparation_error,
@@ -2043,6 +2067,8 @@ sub preparation
 
 sub reparation
 {
+    my $fd_output = shift;
+
     my $module_definition = shift;
 
     my $command_definition = shift;
@@ -2076,7 +2102,7 @@ sub reparation
     {
 	# give diagnostics
 
-	print "*** Reparing $reparation_name ($reparation->{description})\n";
+	print $fd_output "*** Reparing $reparation_name ($reparation->{description})\n";
 
 	# execute the reparation clause
 
@@ -2097,6 +2123,7 @@ sub reparation
 
 	    Heterarch::Test::Reporting::report_error_add
 		(
+		 $fd_output,
 		 {
 		     description => $reparation_name,
 		     error => $reparation_error,
@@ -2114,6 +2141,8 @@ sub reparation
 sub is_disabled
 {
     my $module_definition = shift;
+
+    my $fd_output = shift;
 
     my $command_definition = shift;
 
@@ -2136,7 +2165,7 @@ sub is_disabled
 
 	if (not $option_show)
 	{
-	    Heterarch::Test::Reporting::report_message_info("Tests of $description are disabled ($disabled)
+	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 
 	    my $report_key
@@ -2162,6 +2191,8 @@ sub has_error_flag
 {
     my $module_definition = shift;
 
+    my $fd_output = shift;
+
     my $command_definition = shift;
 
     my $command_test = shift;
@@ -2183,6 +2214,7 @@ sub has_error_flag
     {
 	Heterarch::Test::Reporting::report_error_add
 		(
+		 $fd_output,
 		 {
 		  description => $description,
 		  error => "this test was tagged with the error flag",
@@ -2234,6 +2266,8 @@ sub close_pending
 sub spawn_new
 {
     my $command_definition = shift;
+
+    my $fd_output = shift;
 
     # a command can be an absolute pathname,
     # can come from the _build directory
@@ -2342,7 +2376,7 @@ sub spawn_new
 
 	    $global_running_command_definition = $new_command_definition;
 
-	    print "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+	    print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
 
 	    # remember to do startup testing
 
@@ -2354,7 +2388,7 @@ sub spawn_new
 	}
 	else
 	{
-	    print "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+	    print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
 
 	    $test_startup = 0;
 	}
@@ -2426,6 +2460,8 @@ sub check_description
 {
     my $module_definition = shift;
 
+    my $fd_output = shift;
+
     my $module_name = $module_definition->{name};
 
     if (!defined $module_definition->{description})
@@ -2434,6 +2470,7 @@ sub check_description
 
 	Heterarch::Test::Reporting::report_error_add
 		(
+		 $fd_output,
 		 {
 		  description => 'no module description',
 		  error => 'no module description',
@@ -2450,12 +2487,15 @@ sub check_name
 {
     my $module_definition = shift;
 
+    my $fd_output = shift;
+
     if (!defined $module_definition->{name})
     {
 	$module_definition->{name} = 'unnamed';
 
 	Heterarch::Test::Reporting::report_error_add
 		(
+		 $fd_output,
 		 {
 		  description => 'unnamed module',
 		  error => 'unnamed module',
@@ -2471,6 +2511,8 @@ sub check_name
 sub is_selected_by_tag
 {
     my $module_definition = shift;
+
+    my $fd_output = shift;
 
     my $module_name = $module_definition->{name};
 
@@ -2493,7 +2535,7 @@ sub is_selected_by_tag
     {
 	if (not $option_show)
 	{
-	    Heterarch::Test::Reporting::report_message_info("Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+	    Heterarch::Test::Reporting::report_message_info($fd_output, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
 	}
 
