@@ -71,6 +71,10 @@ $SIG{'INT'}
 
 sub initialize_environment
 {
+    my $fd_initialization;
+
+    open($fd_initialization, ">&STDOUT");
+
     my $environment_settings = $global_config->{environment_settings};
 
     foreach my $environment_setting_name (keys %$environment_settings)
@@ -106,7 +110,7 @@ sub initialize_environment
 
 	    if ($option_verbose)
 	    {
-		print $description;
+		print $fd_initialization $description;
 	    }
 
 	    # loop over shell commands for initialization
@@ -123,7 +127,7 @@ sub initialize_environment
 
 		if ($option_verbose)
 		{
-		    print "$0: executing ($shell_command)\n";
+		    print $fd_initialization "$0: executing ($shell_command)\n";
 		}
 
 		system $shell_command;
@@ -132,14 +136,6 @@ sub initialize_environment
 	else
 	{
 	    die "$0: illegal environment_settings, was processing $environment_setting";
-	}
-    }
-
-    if (defined ($global_config->{environment}))
-    {
-	if ($option_verbose)
-	{
-	    print "Your models will be searched for in the directory $ENV{NEUROSPACES_NMC_MODELS}\n\n";
 	}
     }
 }
