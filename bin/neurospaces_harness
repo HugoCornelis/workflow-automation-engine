@@ -1397,7 +1397,7 @@ sub report_message_end
 {
     my $message = shift;
 
-    return report_message(1, 2, $message);
+    return report_message_internal(1, 2, $message);
 }
 
 
@@ -1405,7 +1405,7 @@ sub report_message_info
 {
     my $message = shift;
 
-    return report_message(1, 1, $message);
+    return report_message_internal(1, 1, $message);
 }
 
 
@@ -1413,11 +1413,11 @@ sub report_message_start
 {
     my $message = shift;
 
-    return report_message(2, 1, $message);
+    return report_message_internal(2, 1, $message);
 }
 
 
-sub report_message
+sub report_message_internal
 {
     my $top_ruler = shift;
 
