@@ -40,7 +40,6 @@ my $option_verbose;
 
 
 our $global_config;
-our $global_core_directory;
 
 my $global_error_count = 0;
 my $global_fd_output;
@@ -516,13 +515,17 @@ sub main
 		{
 		    # execute the perl code
 
+		    use Cwd;
+
+		    my $directory = getcwd();
+
 		    $error
 			= &$command
 			    (
 			     $command_test,
 			     {
 			      c_code => {
-					 directory => $global_core_directory,
+					 directory => $directory,
 					},
 			     },
 			    );
