@@ -1450,23 +1450,10 @@ package Heterarch::Test::Library;
 
 sub construct
 {
-    # define the tests
-
-    my $additional_test_modules
-	= [
-	  ];
-
-    my $program_name = $0;
-
-    $program_name =~ s/.*\///;
-
-    my $library = $0;
-
-    $library =~ s/$program_name$/specifications/;
+    # find the test specifications
 
     my $test_modules
 	= [
-	   @$additional_test_modules,
 	   map
 	   {
 	       chomp; $_;
