@@ -331,51 +331,11 @@ sub main
 
 	    my $preparation_result = $execution_context->preparation($command_definition);
 
-	    my $command = $command_definition->{command};
-
-	    my $command_object;
-
-	    my $test_startup;
-
-	    my $exp;
+	    my $executor;
 
 	    if (not $option_show)
 	    {
-		# we have to either instantiate an object that produces output ...
-
-		if ($command_definition->{class})
-		{
-		    # instantiate the object
-
-		    my $class = $command_definition->{class};
-
-		    my $filename = $class . ".pm";
-
-		    $filename =~ s(::)(/)g;
-
-		    require $filename;
-
-		    $command_object = eval "$class->new()";
-		}
-
-		# ... or run perl code that produces output
-
-		elsif (ref $command eq 'CODE')
-		{
-		    # code is already instantiated, nothing to do here
-		}
-
-		# ... or run a command that produces output
-
-		else
-		{
-		    # start the command and connect with its I/O channels
-
-		    #! this is similar to having a class name 'Expect' and calling Expect->new()
-		    #! but with optimization to prevent spawning new commands unnecessarily
-
-		    ($exp, $test_startup) = $command_definition->spawn_new($fd_module_output);
-		}
+		$executor = Heterarch::Test::Executor->new($execution_context, $command_definition);
 	    }
 
 	    # loop over all tests for this command
@@ -402,404 +362,18 @@ sub main
 		    next;
 		}
 
-		# expect this output
+		# run the text executor
 
-		my ($matched_pattern_position,
-		    $error,
-		    $successfully_matching_string,
-		    $before_match,
-		    $after_match);
-
-		my $expected;
-
-		my $time_elapsed;
-
-		# if the command_definition instantiated an object
-
-		if ($command_object
-		    and (ref $command_test->{write} eq 'ARRAY'))
-		{
-		    # write data to the object using the given methods
-		    # and arguments and obtain a result from the
-		    # object
-
-		    my $result;
-
-		    my $last_method;
-
-		    my $writes = $command_test->{write};
-
-		    foreach my $write (@$writes)
-		    {
-			my $method = $write->{method};
-
-			$last_method = $method;
-
-			my $arguments = $write->{arguments};
-
-			$result = $command_object->$method(@$arguments);
-		    }
-
-		    # comopare the read data with what is expected
-
-		    if (exists $command_test->{read})
-		    {
-			my $read = $command_test->{read};
-
-			$error
-			    = ($result eq $read
-			       ? ""
-			       : "$last_method returned $result, expected $read");
-
-			$before_match = $result;
-
-			$expected = $read;
-		    }
-		}
-
-		# if the command_definition has executable perl code
-
-		elsif (ref $command eq 'CODE')
-		{
-		    # execute the perl code
-
-		    use Cwd;
-
-		    my $directory = getcwd();
-
-		    $error
-			= &$command
-			    (
-			     $command_test,
-			     {
-			      c_code => {
-					 directory => $directory,
-					},
-			     },
-			    );
-		}
-
-		# else the command definition runs a shell command
-
-		else
-		{
-		    # my $description = $command_test->{description};
-
-		    # if ($description =~ /startup successful \?$/)
-		    # {
-		    # 	if (!$test_startup)
-		    # 	{
-		    # 	    print $fd_module_output "*** Skipped: not testing startup tests on a recycled command ($description)\n";
-
-		    # 	    next;
-		    # 	}
-		    # }
-
-		    # set read, wait and write strings
-
-		    my $read = $command_test->{read};
-
-		    my $wait = $command_test->{wait};
-
-		    my $write = $command_test->{write};
-
-		    # set the external tester that tests the generated output with what should be expected
-
-		    #! the external tester runs an executable shell command
-
-		    my $tester = $command_test->{tester};
-
-		    # set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
-
-		    my $timeout
-			= defined $command_test->{timeout}
-			    ? $command_test->{timeout} * $option_timeout_multiplier
-				: $test_startup
-				    ? 4 * $option_timeout_multiplier
-					: 2 * $option_timeout_multiplier;
-
-		    use Time::HiRes qw(gettimeofday tv_interval);
-
-		    # write
-
-		    my $time_start = [ gettimeofday(), ];
-
-		    if (ref $write eq 'HASH')
-		    {
-		    }
-		    elsif (defined $write)
-		    {
-			print $fd_module_output "*** Write: $write\n";
-
-			$exp->send("$write\n");
-		    }
-
-		    # wait
-
-		    if ($wait)
-		    {
-			print $fd_module_output "*** Wait: $wait\n";
-
-			select(undef, undef, undef, $wait);
-		    }
-
-		    # check the shell command that will be executed with a timeout
-
-		    my $shell = $command_test->{shell};
-
-		    if (ref $shell eq 'HASH')
-		    {
-			#! not sure what this can be
-		    }
-		    elsif (defined $shell)
-		    {
-			# run the shell command for a maximum of $timeout seconds
-
-			print $fd_module_output "*** Shell: timeout $timeout $shell\n";
-
-			system "timeout $timeout $shell";
-		    }
-
-		    # if there is a test external to the application
-
-		    if ($tester)
-		    {
-			my $shell = $tester->{shell};
-
-			# there must be a shell command we should run
-
-			if ($shell)
-			{
-			    my $produced = `$shell`;
-
-			    $expected = defined $tester->{expected} ? $tester->{expected} : '';
-
-#			    if ($expected)
-			    {
-#				$expected = quotemeta $tester->{expected};
-
-				if (($produced eq ''
-				     and $expected ne '')
-				    or ($produced ne ''
-					and $expected eq ''))
-				{
-				    $error = "external tester produces output that is different from what is expected, one is empty, the other is not";
-
-				    $before_match = $produced;
-				}
-				elsif ($produced =~ /$expected/)
-				{
-				}
-				else
-				{
-				    $error = "external tester produces output that is different from what is expected";
-
-				    $before_match = $produced;
-				}
-			    }
-# 			    else
-# 			    {
-# 				die "$0: *** Error: external testers must have expected output";
-# 			    }
-			}
-			else
-			{
-			    die "$0: *** Error: external testers must have a shell command";
-			}
-		    }
-
-		    # read
-
-		    elsif (defined $read)
-		    {
-			# if literal text expected
-
-			if (!ref $read)
-			{
-			    if (exists $command_test->{white_space})
-			    {
-				if ($command_test->{white_space} eq 'convert seen 0a to 0d 0a newlines')
-				{
-				    print $fd_module_output "*** Converting seen 0a to 0d 0a newlines\n";
-
-				    $read =~ s(\x0a)(\x0d\x0a)g;
-				}
-			    }
-
-			    ($matched_pattern_position,
-			     $error,
-			     $successfully_matching_string,
-			     $before_match,
-			     $after_match)
-				= $exp->expect($timeout, $read, );
-
-			    $expected = $read;
-			}
-
-			# if array, means regex match
-
-			elsif (ref $read eq 'ARRAY')
-			{
-			    ($matched_pattern_position,
-			     $error,
-			     $successfully_matching_string,
-			     $before_match,
-			     $after_match)
-				= $exp->expect($timeout, @$read, );
-
-			    #! skip the expect '-re' flag
-
-			    $expected = $read->[1];
-			}
-
-			# else, hash: one of several alternatives expected
-
-			else
-			{
-			    # compose the alternatives regex
-
-			    if ($read->{alternatives})
-			    {
-				my $alternatives = $read->{alternatives};
-
-				$expected = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
-
-				# read from the application
-
-				($matched_pattern_position,
-				 $error,
-				 $successfully_matching_string,
-				 $before_match,
-				 $after_match)
-				    = $exp->expect($timeout, "-re", $expected, );
-			    }
-
-			    # if an application output file is expected
-
-			    elsif ($read->{application_output_file})
-			    {
-				# read it
-
-				my $application_output_file
-				    = $read->{application_output_file};
-
-				my $pwd = `pwd`;
-
-				chomp $pwd;
-
- 				print $fd_module_output "*** Application output file: $application_output_file (in $pwd)\n";
-
-				# and compare it with an expected output file
-
-				my $expected_output_file
-				    = $read->{expected_output_file};
-
-				local $/;
-
-				my $application_output = `cat "$application_output_file"`;
-
-				my $expected_output;
-
-				if ($expected_output_file)
-				{
-				    print $fd_module_output "*** Expected output file: $expected_output_file\n";
-
-				    $expected_output = `cat "$expected_output_file"`;
-				}
-				elsif (defined $read->{expected_output})
-				{
-				    $expected_output = $read->{expected_output};
-				}
-
-				$expected = $expected_output;
-
-				if ($expected_output eq $application_output)
-				{
-				    $before_match = $application_output;
-				}
-				else
-				{
-				    $before_match = $application_output;
-
-				    $read = $expected_output;
-
-				    $error = 'expected_output does not match application_output';
-				}
-			    }
-
-			    # if there is a shell command given
-
-			    elsif ($read->{shell})
-			    {
-				# run it
-
-				my $shell = $read->{shell};
-
-				my $expected = `$shell`;
-
-				# and compare its output with the output of the application
-
-				($matched_pattern_position,
-				 $error,
-				 $successfully_matching_string,
-				 $before_match,
-				 $after_match)
-				    = $exp->expect($timeout, $expected, );
-
-			    }
-			    else
-			    {
-				my $description = $command_test->{description};
-
-				die "test not understood by $0, aborting (illegal read clause for $description)";
-			    }
-			}
-
-			$time_elapsed = tv_interval($time_start);
-
-			# fill in the elapsed time in the report
-
-			if ($option_timings)
-			{
-			    my $description = $command_test->{description};
-
-			    $global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
-			}
-
-			# if things don't match
-
-			if ($error)
-			{
-			    # if allowed to compare numerically
-
-			    if ((!$command_test->{string_only}
-				 && $option_numerical_compare)
-
-				# or forced to compare numerically
-
-				|| $command_test->{numerical_compare}
-				|| $command_definition->{numerical_compare}
-				|| $module_definition->{numerical_compare})
-			    {
-				# compare numerically
-
-				push @{$global_test_report->{numerical_compare}}, $command_test->{description};
-
-				$error
-				    = Neurospaces::Tester::Comparators::numerical
-					(
-					 {
-					  description => $command_test->{description},
-					 },
-					 $before_match,
-					 $read,
-					 $error);
-			    }
-			}
-		    }
-		}
+		my $execution_result = $executor->run($command_test);
 
 		# process errors
+
+		my $after_match = $execution_result->{after_match};
+		my $before_match = $execution_result->{before_match};
+		my $error = $execution_result->{error};
+		my $expected = $execution_result->{expected};
+		my $matched_pattern_position = $execution_result->{matched_pattern_position};
+		my $successfully_matching_string = $execution_result->{successfully_matching_string};
 
 		if ($error)
 		{
@@ -2014,6 +1588,506 @@ sub terminate
 	     },
 	    );
     }
+}
+
+
+package Heterarch::Test::Executor;
+
+
+sub new
+{
+    my $package = shift;
+
+    my $execution_context = shift;
+
+    my $command_definition = shift;
+
+    my $fd_output = $execution_context->{fd_output};
+
+    my $module_definition = $execution_context->{module_definition};
+
+    my $options = shift || {};
+
+    my $self
+	= {
+	   %$options,
+	   command_definition => $command_definition,
+	   fd_output => $fd_output,
+	   module_definition => $module_definition,
+	  };
+
+    bless $self, $package;
+
+    # we have to either instantiate an object that produces output ...
+
+    if ($command_definition->{class})
+    {
+	# instantiate the object
+
+	my $class = $command_definition->{class};
+
+	my $filename = $class . ".pm";
+
+	$filename =~ s(::)(/)g;
+
+	require $filename;
+
+	$self->{command_object} = eval "$class->new()";
+    }
+
+    # ... or run perl code that produces output
+
+    elsif (ref $command_definition->{command} eq 'CODE')
+    {
+	# code is already instantiated, nothing to do here
+    }
+
+    # ... or run a command that produces output
+
+    else
+    {
+	# start the command and connect with its I/O channels
+
+	#! this is similar to having a class name 'Expect' and calling Expect->new()
+	#! but with optimization to prevent spawning new commands unnecessarily
+
+	my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
+
+	$self->{expect_object} = $exp;
+
+	$self->{test_startup} = $test_startup;
+    }
+
+    return $self;
+}
+
+
+sub run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $command_definition = $self->{command_definition};
+
+    my $command = $command_definition->{command};
+
+    my $fd_output = $self->{fd_output};
+
+    # expect this output
+
+    my ($matched_pattern_position,
+	$error,
+	$successfully_matching_string,
+	$before_match,
+	$after_match);
+
+    my $expected;
+
+    # if the command_definition instantiated an object
+
+    my $command_object = $self->{command_object};
+
+    if ($command_object
+	and (ref $command_test->{write} eq 'ARRAY'))
+    {
+	# write data to the object using the given methods
+	# and arguments and obtain a result from the
+	# object
+
+	my $result;
+
+	my $last_method;
+
+	my $writes = $command_test->{write};
+
+	foreach my $write (@$writes)
+	{
+	    my $method = $write->{method};
+
+	    $last_method = $method;
+
+	    my $arguments = $write->{arguments};
+
+	    $result = $command_object->$method(@$arguments);
+	}
+
+	# compare the read data with what is expected
+
+	if (exists $command_test->{read})
+	{
+	    my $read = $command_test->{read};
+
+	    $error
+		= ($result eq $read
+		   ? ""
+		   : "$last_method returned $result, expected $read");
+
+	    $before_match = $result;
+
+	    $expected = $read;
+	}
+    }
+
+    # if the command_definition has executable perl code
+
+    elsif (ref $command eq 'CODE')
+    {
+	# execute the perl code
+
+	use Cwd;
+
+	my $directory = getcwd();
+
+	$error
+	    = &$command
+	    (
+	     $command_test,
+	     {
+	      c_code => {
+			 directory => $directory,
+			},
+	     },
+	    );
+    }
+
+    # else the command definition runs a shell command
+
+    else
+    {
+	my $test_startup = $self->{test_startup};
+
+	# my $description = $command_test->{description};
+
+	# if ($description =~ /startup successful \?$/)
+	# {
+	# 	if (!$test_startup)
+	# 	{
+	# 	    print $fd_module_output "*** Skipped: not testing startup tests on a recycled command ($description)\n";
+
+	# 	    next;
+	# 	}
+	# }
+
+	# set read, wait and write strings
+
+	my $read = $command_test->{read};
+
+	my $wait = $command_test->{wait};
+
+	my $write = $command_test->{write};
+
+	# set the external tester that tests the generated output with what should be expected
+
+	#! the external tester runs an executable shell command
+
+	my $tester = $command_test->{tester};
+
+	# set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
+
+	my $timeout
+	    = (defined $command_test->{timeout}
+	       ? $command_test->{timeout} * $option_timeout_multiplier
+	       : ($test_startup
+		  ? 4 * $option_timeout_multiplier
+		  : 2 * $option_timeout_multiplier));
+
+	use Time::HiRes qw(gettimeofday tv_interval);
+
+	# write
+
+	my $time_start = [ gettimeofday(), ];
+
+	if (ref $write eq 'HASH')
+	{
+	}
+	elsif (defined $write)
+	{
+	    print $fd_output "*** Write: $write\n";
+
+	    $self->{expect_object}->send("$write\n");
+	}
+
+	# wait
+
+	if ($wait)
+	{
+	    print $fd_output "*** Wait: $wait\n";
+
+	    select(undef, undef, undef, $wait);
+	}
+
+	# check the shell command that will be executed with a timeout
+
+	my $shell = $command_test->{shell};
+
+	if (ref $shell eq 'HASH')
+	{
+	    #! not sure what this can be
+	}
+	elsif (defined $shell)
+	{
+	    # run the shell command for a maximum of $timeout seconds
+
+	    print $fd_output "*** Shell: timeout $timeout $shell\n";
+
+	    system "timeout $timeout $shell";
+	}
+
+	# if there is a test external to the application
+
+	if ($tester)
+	{
+	    my $shell = $tester->{shell};
+
+	    # there must be a shell command we should run
+
+	    if ($shell)
+	    {
+		my $produced = `$shell`;
+
+		$expected = defined $tester->{expected} ? $tester->{expected} : '';
+
+		#			    if ($expected)
+		{
+		    #				$expected = quotemeta $tester->{expected};
+
+		    if (($produced eq ''
+			 and $expected ne '')
+			or ($produced ne ''
+			    and $expected eq ''))
+		    {
+			$error = "external tester produces output that is different from what is expected, one is empty, the other is not";
+
+			$before_match = $produced;
+		    }
+		    elsif ($produced =~ /$expected/)
+		    {
+		    }
+		    else
+		    {
+			$error = "external tester produces output that is different from what is expected";
+
+			$before_match = $produced;
+		    }
+		}
+		# 			    else
+		# 			    {
+		# 				die "$0: *** Error: external testers must have expected output";
+		# 			    }
+	    }
+	    else
+	    {
+		die "$0: *** Error: external testers must have a shell command";
+	    }
+	}
+
+	# read
+
+	elsif (defined $read)
+	{
+	    # if literal text expected
+
+	    if (!ref $read)
+	    {
+		if (exists $command_test->{white_space})
+		{
+		    if ($command_test->{white_space} eq 'convert seen 0a to 0d 0a newlines')
+		    {
+			print $fd_output "*** Converting seen 0a to 0d 0a newlines\n";
+
+			$read =~ s(\x0a)(\x0d\x0a)g;
+		    }
+		}
+
+		($matched_pattern_position,
+		 $error,
+		 $successfully_matching_string,
+		 $before_match,
+		 $after_match)
+		    = $self->{expect_object}->expect($timeout, $read, );
+
+		$expected = $read;
+	    }
+
+	    # if array, means regex match
+
+	    elsif (ref $read eq 'ARRAY')
+	    {
+		($matched_pattern_position,
+		 $error,
+		 $successfully_matching_string,
+		 $before_match,
+		 $after_match)
+		    = $self->{expect_object}->expect($timeout, @$read, );
+
+		#! skip the expect '-re' flag
+
+		$expected = $read->[1];
+	    }
+
+	    # else, hash: one of several alternatives expected
+
+	    else
+	    {
+		# compose the alternatives regex
+
+		if ($read->{alternatives})
+		{
+		    my $alternatives = $read->{alternatives};
+
+		    $expected = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
+
+		    # read from the application
+
+		    ($matched_pattern_position,
+		     $error,
+		     $successfully_matching_string,
+		     $before_match,
+		     $after_match)
+			= $self->{expect_object}->expect($timeout, "-re", $expected, );
+		}
+
+		# if an application output file is expected
+
+		elsif ($read->{application_output_file})
+		{
+		    # read it
+
+		    my $application_output_file = $read->{application_output_file};
+
+		    my $pwd = `pwd`;
+
+		    chomp $pwd;
+
+		    print $fd_output "*** Application output file: $application_output_file (in $pwd)\n";
+
+		    # and compare it with an expected output file
+
+		    my $expected_output_file = $read->{expected_output_file};
+
+		    local $/;
+
+		    my $application_output = `cat "$application_output_file"`;
+
+		    my $expected_output;
+
+		    if ($expected_output_file)
+		    {
+			print $fd_output "*** Expected output file: $expected_output_file\n";
+
+			$expected_output = `cat "$expected_output_file"`;
+		    }
+		    elsif (defined $read->{expected_output})
+		    {
+			$expected_output = $read->{expected_output};
+		    }
+
+		    $expected = $expected_output;
+
+		    if ($expected_output eq $application_output)
+		    {
+			$before_match = $application_output;
+		    }
+		    else
+		    {
+			$before_match = $application_output;
+
+			$read = $expected_output;
+
+			$error = 'expected_output does not match application_output';
+		    }
+		}
+
+		# if there is a shell command given
+
+		elsif ($read->{shell})
+		{
+		    # run it
+
+		    my $shell = $read->{shell};
+
+		    my $expected = `$shell`;
+
+		    # and compare its output with the output of the application
+
+		    ($matched_pattern_position,
+		     $error,
+		     $successfully_matching_string,
+		     $before_match,
+		     $after_match)
+			= $self->{expect_object}->expect($timeout, $expected, );
+
+		}
+		else
+		{
+		    my $description = $command_test->{description};
+
+		    die "test not understood by $0, aborting (illegal read clause for $description)";
+		}
+	    }
+
+	    my $time_elapsed = tv_interval($time_start);
+
+	    # fill in the elapsed time in the report
+
+	    if ($option_timings)
+	    {
+		my $module_definition = $self->{module_definition};
+
+		my $module_name = $module_definition->{name};
+
+		my $description = $command_test->{description};
+
+		$global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
+	    }
+
+	    # if things don't match
+
+	    if ($error)
+	    {
+		my $module_definition = $self->{module_definition};
+
+		# if allowed to compare numerically
+
+		if ((!$command_test->{string_only}
+		     && $option_numerical_compare)
+
+		    # or forced to compare numerically
+
+		    || $command_test->{numerical_compare}
+		    || $command_definition->{numerical_compare}
+		    || $module_definition->{numerical_compare})
+		{
+		    # compare numerically
+
+		    push @{$global_test_report->{numerical_compare}}, $command_test->{description};
+
+		    $error
+			= Neurospaces::Tester::Comparators::numerical
+			     (
+			      {
+			       description => $command_test->{description},
+			      },
+			      $before_match,
+			      $read,
+			      $error);
+		}
+	    }
+	}
+    }
+
+    my $test_result
+	= {
+	   after_match => $after_match,
+	   before_match => $before_match,
+	   error => $error,
+	   expected => $expected,
+	   matched_pattern_position => $matched_pattern_position,
+	   successfully_matching_string => $successfully_matching_string,
+	  };
+
+    return $test_result;
 }
 
 
