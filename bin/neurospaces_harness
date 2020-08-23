@@ -355,19 +355,7 @@ sub main
 
 	    # give some diagnostics
 
-	    if (@$command_definitions > 1)
-	    {
-		Heterarch::Test::Reporting::report_message_start($fd_module_output, "Running tests of $description");
-
-		# emit comment if any
-
-		my $comment = $command_definition->{comment};
-
-		if ($comment)
-		{
-		    print $fd_module_output "*** Comment: $comment\n";
-		}
-	    }
+	    $execution_context->start($command_definition);
 
 	    # prepare the command test environment
 
@@ -449,6 +437,10 @@ sub main
 		    next;
 		}
 
+		# emit comment if any
+
+		$execution_context->start($command_definition, $command_test);
+
 		# expect this output
 
 		my ($matched_pattern_position,
@@ -460,8 +452,6 @@ sub main
 		my $expected;
 
 		my $time_elapsed;
-
-		print $fd_module_output "*** Test: $description\n";
 
 		# if the command_definition instantiated an object
 
@@ -532,24 +522,15 @@ sub main
 
 		else
 		{
-		    if ($description =~ /startup successful \?$/)
-		    {
-			if (!$test_startup)
-			{
-			    print $fd_module_output "*** Skipped: not testing startup tests on a recycled command ($description)\n";
+		    # if ($description =~ /startup successful \?$/)
+		    # {
+		    # 	if (!$test_startup)
+		    # 	{
+		    # 	    print $fd_module_output "*** Skipped: not testing startup tests on a recycled command ($description)\n";
 
-			    next;
-			}
-		    }
-
-		    # emit comment if any
-
-		    my $comment = $command_test->{comment};
-
-		    if ($comment)
-		    {
-			print $fd_module_output "*** Comment: $comment\n";
-		    }
+		    # 	    next;
+		    # 	}
+		    # }
 
 		    # set read, wait and write strings
 
@@ -882,6 +863,10 @@ sub main
 
 		}
 
+		# end the execution of this test
+
+		$execution_context->end($command_definition, $command_test);
+
 		# register if this command had side effects
 
 		$global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
@@ -895,11 +880,7 @@ sub main
 
 	    my $reparation_error = $execution_context->reparation($command_definition, $preparation_result);
 
-	    if (@$command_definitions > 1)
-	    {
-		Heterarch::Test::Reporting::report_message_end($fd_module_output, "End for tests of $description
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
-	    }
+	    $execution_context->end($command_definition);
 
 	    # register if this command had side effects
 
@@ -944,8 +925,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 	if (not $option_show)
 	{
-	    Heterarch::Test::Reporting::report_message_end($fd_module_output, "End of tests of module $module_definition->{description}
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+	    $execution_context->end();
 	}
     }
 
@@ -1474,7 +1454,63 @@ sub report_message_with_rulers
 package Heterarch::Test::ExecutionContext;
 
 
-sub execute
+sub end
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $description;
+
+    my $name;
+
+    if (defined $command_test)
+    {
+	$description = "*** Test: $command_test->{description}";
+
+	$name = "";
+    }
+    elsif (defined $command_definition)
+    {
+	$description = "command $command_definition->{description}";
+
+	$name = " ($command_definition->{command})";
+    }
+    else
+    {
+	$description = "module $module_definition->{description}";
+
+	$name = " ($module_definition->{name})";
+    }
+
+    if (defined $command_test)
+    {
+    }
+    else
+    {
+	Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+    }
+
+}
+
+
+sub _execute
 {
     my $executor_element = shift;
 
@@ -1738,7 +1774,7 @@ sub preparation
 
 	my $preparer = $preparation->{preparer};
 
-	$preparation_result = execute($preparer, 'preparation');
+	$preparation_result = _execute($preparer, 'preparation');
 
 	# if the preparer returned an error string
 
@@ -1851,7 +1887,7 @@ sub reparation
 
 	my $reparer = $reparation->{reparer};
 
-	$reparation_error = execute($reparer, 'reparation', $preparation_result);
+	$reparation_error = _execute($reparer, 'reparation', $preparation_result);
 
 	# process errors
 
@@ -1893,19 +1929,54 @@ sub start
 
     my $module_definition = $self->{module_definition};
 
-    my $module_description = $module_definition->{description};
+    my $comment;
 
-    my $module_name = $module_definition->{name};
+    my $description;
 
-    Heterarch::Test::Reporting::report_message_start($fd_output, "Running tests of module $module_description ($module_name)");
+    my $name;
 
-    # emit comment if any
-
-    my $comment = $module_definition->{comment};
-
-    if ($comment)
+    if (defined $command_test)
     {
-	Heterarch::Test::Reporting::report_message_start($fd_output, "*** Comment: $comment\n");
+	$comment = $command_test->{comment};
+
+	$description = "*** Test: $command_test->{description}";
+
+	$name = "";
+    }
+    elsif (defined $command_definition)
+    {
+	$comment = $command_definition->{comment};
+
+	$description = "command $command_definition->{description}";
+
+	$name = " ($command_definition->{command})";
+    }
+    else
+    {
+	$comment = $module_definition->{comment};
+
+	$description = "module $module_definition->{description}";
+
+	$name = " ($module_definition->{name})";
+    }
+
+    if (not defined $command_test)
+    {
+	Heterarch::Test::Reporting::report_message_start($fd_output, "Running tests of $description$name");
+
+	if ($comment)
+	{
+	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment\n");
+	}
+    }
+    else
+    {
+	Heterarch::Test::Reporting::report_message($fd_output, "$description\n");
+
+	if ($comment)
+	{
+	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment\n");
+	}
     }
 }
 
