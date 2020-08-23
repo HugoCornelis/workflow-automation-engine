@@ -282,6 +282,10 @@ sub main
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
+	# create an execution context for this module's tests
+
+	my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, $module_definition);
+
 	my $fd_module_output = $global_fd_output;
 
 	my $module_name = $module_definition->check_name($fd_module_output);
@@ -293,30 +297,23 @@ sub main
 	    next;
 	}
 
-	if (Heterarch::Test::Element::is_disabled($fd_module_output, $module_definition))
+	if ($execution_context->is_disabled())
 	{
 	    next;
 	}
 
-	if (Heterarch::Test::Element::has_error_flag($fd_module_output, $module_definition))
+	if ($execution_context->has_error_flag())
 	{
 	    next;
 	}
 
-	Heterarch::Test::Reporting::report_message_start($fd_module_output, "Running tests of module $module_description ($module_name)");
+	# proceed: start the execution context
 
-	# emit comment if any
-
-	my $comment = $module_definition->{comment};
-
-	if ($comment)
-	{
-	    print $fd_module_output "*** Comment: $comment\n";
-	}
+	$execution_context->start();
 
 	# prepare the module test environment
 
-	my $module_preparation_result = Heterarch::Test::Element::preparation($fd_module_output, $module_definition);
+	my $module_preparation_result = $execution_context->preparation();
 
 	# loop over commands for this module
 
@@ -328,12 +325,12 @@ sub main
 
 	    my $description = $command_definition->{description};
 
-	    if (Heterarch::Test::Element::is_disabled($fd_module_output, $module_definition, $command_definition))
+	    if ($execution_context->is_disabled($command_definition))
 	    {
 		next;
 	    }
 
-	    if (Heterarch::Test::Element::has_error_flag($fd_module_output, $module_definition, $command_definition))
+	    if ($execution_context->has_error_flag($command_definition))
 	    {
 		next;
 	    }
@@ -374,7 +371,7 @@ sub main
 
 	    # prepare the command test environment
 
-	    my $preparation_result = Heterarch::Test::Element::preparation($fd_module_output, $module_definition, $command_definition);
+	    my $preparation_result = $execution_context->preparation($command_definition);
 
 	    my $command = $command_definition->{command};
 
@@ -435,12 +432,12 @@ sub main
 
 		my $description = $command_test->{description};
 
-		if (Heterarch::Test::Element::is_disabled($fd_module_output, $module_definition, $command_definition, $command_test))
+		if ($execution_context->is_disabled($command_definition, $command_test))
 		{
 		    next;
 		}
 
-		if (Heterarch::Test::Element::has_error_flag($fd_module_output, $module_definition, $command_definition, $command_test))
+		if ($execution_context->has_error_flag($command_definition, $command_test))
 		{
 		    next;
 		}
@@ -896,7 +893,7 @@ sub main
 
 	    # repair the command test environment
 
-	    my $reparation_error = Heterarch::Test::Element::reparation($fd_module_output, $module_definition, $command_definition, $preparation_result);
+	    my $reparation_error = $execution_context->reparation($command_definition, $preparation_result);
 
 	    if (@$command_definitions > 1)
 	    {
@@ -913,7 +910,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 	# repair the test environment
 
-	my $reparation_error = Heterarch::Test::Element::reparation($fd_module_output, $module_definition, undef, $module_preparation_result);
+	my $reparation_error = $execution_context->reparation(undef, $module_preparation_result);
 
 	# if library checksum mismatch
 
@@ -1397,13 +1394,26 @@ my $rulers_not_used
        start => { bottom => 1, top => 2, },
       };
 
+sub report_message
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    if (!$option_show)
+    {
+	print $fd_output "$message\n";
+    }
+}
+
+
 sub report_message_end
 {
     my $fd_output = shift;
 
     my $message = shift;
 
-    return report_message_internal($fd_output, 1, 2, $message);
+    return report_message_with_rulers($fd_output, 1, 2, $message);
 }
 
 
@@ -1413,7 +1423,7 @@ sub report_message_info
 
     my $message = shift;
 
-    return report_message_internal($fd_output, 1, 1, $message);
+    return report_message_with_rulers($fd_output, 1, 1, $message);
 }
 
 
@@ -1423,11 +1433,11 @@ sub report_message_start
 
     my $message = shift;
 
-    return report_message_internal($fd_output, 2, 1, $message);
+    return report_message_with_rulers($fd_output, 2, 1, $message);
 }
 
 
-sub report_message_internal
+sub report_message_with_rulers
 {
     my $fd_output = shift;
 
@@ -1457,6 +1467,445 @@ sub report_message_internal
 	print $fd_output "$message\n\n";
 	print $fd_output "$line\n" for 0 .. $bottom_ruler;
 	print $fd_output "\n";
+    }
+}
+
+
+package Heterarch::Test::ExecutionContext;
+
+
+sub execute
+{
+    my $executor_element = shift;
+
+    my $description = shift;
+
+    my $previous_result = shift;
+
+    my $result = 'nothing executed';
+
+    # either execute regular perl code
+
+    if (ref $executor_element eq 'CODE')
+    {
+	$result = &$executor_element($previous_result);
+    }
+
+    # ... or instantiate the object that will do the preparation
+
+    elsif (exists $executor_element->{class})
+    {
+	# instantiate the object
+
+	my $class = $executor_element->{class};
+
+	my $filename = $class . ".pm";
+
+	$filename =~ s(::)(/)g;
+
+	require $filename;
+
+	my $executor_element_object = eval "$class->new()";
+
+	# apply all the methods and collect the results
+
+	$result = [];
+
+	my $applicators = $executor_element->{applicators};
+
+	foreach my $applicator (@$applicators)
+	{
+	    my $method = $applicator->{method};
+
+	    my $arguments = $applicator->{arguments};
+
+	    my $applicator_result = $executor_element_object->$method($arguments);
+
+	    if (ref $applicator_result eq 'SCALAR')
+	    {
+		$result = \ "Error: $description failed ($$applicator_result)";
+
+		last;
+	    }
+
+	    push @$result, $applicator_result;
+	}
+    }
+
+    # or execute an array of system shell commands
+
+    elsif (exists $executor_element->{system_commands})
+    {
+	my $system_commands = $executor_element->{system_commands};
+
+	if (ref $system_commands eq 'ARRAY')
+	{
+	    foreach my $system_command (@$system_commands)
+	    {
+		system $system_command;
+
+		if ($? ne 0)
+		{
+		    $result = \ "Error: $description failed ($system_command)";
+
+		    last;
+		}
+	    }
+	}
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+sub has_error_flag
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $error = $active_element->{error};
+
+    my $description = $active_element->{description};
+
+    if ($error)
+    {
+	Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		  description => $description,
+		  error => "this test was tagged with the error flag",
+		  module_name => $module_name,
+		  subdescription => $error,
+		 },
+		);
+
+	return 1;
+    }
+    else
+    {
+	return 0;
+    }
+}
+
+
+sub is_disabled
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $disabled = $active_element->{disabled};
+
+    if ($disabled)
+    {
+	my $description = $active_element->{description};
+
+	if (not $option_show)
+	{
+	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+
+	    my $report_key
+		= (defined $command_test
+		   ? "command_tests"
+		   : (defined $command_definition
+		      ? "command_definitions"
+		      : "modules"));
+
+	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
+	}
+
+	return 1;
+    }
+    else
+    {
+	return 0;
+    }
+}
+
+
+sub preparation
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    if ($command_definition)
+    {
+	if (exists $command_definition->{preparation}
+	    and exists $command_definition->{harnessing})
+	{
+	    die "$0: command_definition ($command_definition->{description}) has both a preparation and harnessing clause\n";
+	}
+    }
+    else
+    {
+	if (exists $module_definition->{preparation}
+	    and exists $module_definition->{harnessing})
+	{
+	    die "$0: module_definition ($module_definition->{description}) has both a preparation and harnessing clause\n";
+	}
+    }
+
+    my $definition = defined $command_definition ? $command_definition : $module_definition;
+
+    # convert the old format preparation / reparation to the new format of harnessing
+
+    if (not exists $definition->{harnessing})
+    {
+	if (exists $definition->{preparation})
+	{
+	    $definition->{harnessing}->{preparation} = $definition->{preparation};
+
+	    delete $definition->{preparation};
+	}
+
+	if (exists $definition->{reparation})
+	{
+	    $definition->{harnessing}->{reparation} = $definition->{reparation};
+
+	    delete $definition->{reparation};
+	}
+    }
+
+    # process the harnessing preparation clause
+
+    my $harnessing
+	= ($command_definition
+	   ? $command_definition->{harnessing}
+	   : $module_definition->{harnessing});
+
+    my $preparation = $harnessing->{preparation};
+
+    my $preparation_result;
+
+    # if there is a preparation clause
+
+    if ($preparation)
+    {
+	# give diagnostics
+
+	my $preparation_name
+	    = ($command_definition
+	       ? "command '$command_definition->{command}'"
+	       : "module '$module_definition->{name}'");
+
+	print $fd_output "*** Preparing $preparation_name ($preparation->{description})\n";
+
+	# execute the preparation clause
+
+	my $preparer = $preparation->{preparer};
+
+	$preparation_result = execute($preparer, 'preparation');
+
+	# if the preparer returned an error string
+
+	my $preparation_error;
+
+	if (ref $preparation_result eq 'SCALAR')
+	{
+	    # obtain the error string
+
+	    $preparation_error = $$preparation_result;
+	}
+
+	# process errors
+
+	if ($preparation_error)
+	{
+	    my $module_name = $module_definition->{name};
+
+	    my $subdescription
+		= ($command_definition
+		   ? $command_definition->{description}
+		   : $module_definition->{description});
+
+	    Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		     description => $preparation_name,
+		     error => $preparation_error,
+		     module_name => $module_name,
+		     subdescription => $subdescription,
+		 },
+		);
+	}
+    }
+
+    # return result
+
+    return $preparation_result;
+}
+
+
+sub new
+{
+    my $package = shift;
+
+    my $fd_output = shift;
+
+    my $module_definition = shift;
+
+    my $options = shift || {};
+
+    my $self
+	= {
+	   %$options,
+	   fd_output => $fd_output,
+	   module_definition => $module_definition,
+	  };
+
+    bless $self, $package;
+
+    return $self;
+}
+
+
+sub reparation
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $preparation_result = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    # process the harnessing reparation clause
+
+    my $harnessing
+	= ($command_definition
+	   ? $command_definition->{harnessing}
+	   : $module_definition->{harnessing});
+
+    my $reparation = $harnessing->{reparation};
+
+    my $reparation_name
+        = ($command_definition
+	    ? ($command_definition->{command}
+		? "command '$command_definition->{command}'"
+		: "module '$module_definition->{name}'")
+	    : ($command_definition->{recycle}
+		? "these tests use the previous running command ($command_definition->{recycle})"
+		: "*** Error: this command definition is incomplete (no command and no recycle clause)")
+	);
+
+    my $reparation_error;
+
+    # if there is a reparation clause
+
+    if ($reparation)
+    {
+	# give diagnostics
+
+	print $fd_output "*** Reparing $reparation_name ($reparation->{description})\n";
+
+	# execute the reparation clause
+
+	my $reparer = $reparation->{reparer};
+
+	$reparation_error = execute($reparer, 'reparation', $preparation_result);
+
+	# process errors
+
+	if ($reparation_error)
+	{
+	    my $module_name = $module_definition->{name};
+
+	    my $subdescription
+		= ($command_definition
+		   ? $command_definition->{description}
+		   : $module_definition->{description});
+
+	    Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		     description => $reparation_name,
+		     error => $reparation_error,
+		     module_name => $module_name,
+		     subdescription => $subdescription,
+		 },
+		);
+	}
+    }
+
+    return $reparation_error;
+}
+
+
+sub start
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_description = $module_definition->{description};
+
+    my $module_name = $module_definition->{name};
+
+    Heterarch::Test::Reporting::report_message_start($fd_output, "Running tests of module $module_description ($module_name)");
+
+    # emit comment if any
+
+    my $comment = $module_definition->{comment};
+
+    if ($comment)
+    {
+	Heterarch::Test::Reporting::report_message_start($fd_output, "*** Comment: $comment\n");
     }
 }
 
@@ -1863,376 +2312,6 @@ sub readfile
 
 
 package Heterarch::Test::Element;
-
-
-sub execute
-{
-    my $executor_element = shift;
-
-    my $description = shift;
-
-    my $previous_result = shift;
-
-    my $result = 'nothing executed';
-
-    # either execute regular perl code
-
-    if (ref $executor_element eq 'CODE')
-    {
-	$result = &$executor_element($previous_result);
-    }
-
-    # ... or instantiate the object that will do the preparation
-
-    elsif (exists $executor_element->{class})
-    {
-	# instantiate the object
-
-	my $class = $executor_element->{class};
-
-	my $filename = $class . ".pm";
-
-	$filename =~ s(::)(/)g;
-
-	require $filename;
-
-	my $executor_element_object = eval "$class->new()";
-
-	# apply all the methods and collect the results
-
-	$result = [];
-
-	my $applicators = $executor_element->{applicators};
-
-	foreach my $applicator (@$applicators)
-	{
-	    my $method = $applicator->{method};
-
-	    my $arguments = $applicator->{arguments};
-
-	    my $applicator_result = $executor_element_object->$method($arguments);
-
-	    if (ref $applicator_result eq 'SCALAR')
-	    {
-		$result = \ "Error: $description failed ($$applicator_result)";
-
-		last;
-	    }
-
-	    push @$result, $applicator_result;
-	}
-    }
-
-    # or execute an array of system shell commands
-
-    elsif (exists $executor_element->{system_commands})
-    {
-	my $system_commands = $executor_element->{system_commands};
-
-	if (ref $system_commands eq 'ARRAY')
-	{
-	    foreach my $system_command (@$system_commands)
-	    {
-		system $system_command;
-
-		if ($? ne 0)
-		{
-		    $result = \ "Error: $description failed ($system_command)";
-
-		    last;
-		}
-	    }
-	}
-    }
-
-    # return result
-
-    return $result;
-}
-
-
-sub preparation
-{
-    my $fd_output = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    if ($command_definition)
-    {
-	if (exists $command_definition->{preparation}
-	    and exists $command_definition->{harnessing})
-	{
-	    die "$0: command_definition ($command_definition->{description}) has both a preparation and harnessing clause\n";
-	}
-    }
-    else
-    {
-	if (exists $module_definition->{preparation}
-	    and exists $module_definition->{harnessing})
-	{
-	    die "$0: module_definition ($module_definition->{description}) has both a preparation and harnessing clause\n";
-	}
-    }
-
-    my $definition = defined $command_definition ? $command_definition : $module_definition;
-
-    # convert the old format preparation / reparation to the new format of harnessing
-
-    if (not exists $definition->{harnessing})
-    {
-	if (exists $definition->{preparation})
-	{
-	    $definition->{harnessing}->{preparation} = $definition->{preparation};
-
-	    delete $definition->{preparation};
-	}
-
-	if (exists $definition->{reparation})
-	{
-	    $definition->{harnessing}->{reparation} = $definition->{reparation};
-
-	    delete $definition->{reparation};
-	}
-    }
-
-    # process the harnessing preparation clause
-
-    my $harnessing
-	= ($command_definition
-	   ? $command_definition->{harnessing}
-	   : $module_definition->{harnessing});
-
-    my $preparation = $harnessing->{preparation};
-
-    my $preparation_result;
-
-    # if there is a preparation clause
-
-    if ($preparation)
-    {
-	# give diagnostics
-
-	my $preparation_name
-	    = ($command_definition
-	       ? "command '$command_definition->{command}'"
-	       : "module '$module_definition->{name}'");
-
-	print $fd_output "*** Preparing $preparation_name ($preparation->{description})\n";
-
-	# execute the preparation clause
-
-	my $preparer = $preparation->{preparer};
-
-	$preparation_result = execute($preparer, 'preparation');
-
-	# if the preparer returned an error string
-
-	my $preparation_error;
-
-	if (ref $preparation_result eq 'SCALAR')
-	{
-	    # obtain the error string
-
-	    $preparation_error = $$preparation_result;
-	}
-
-	# process errors
-
-	if ($preparation_error)
-	{
-	    my $module_name = $module_definition->{name};
-
-	    my $subdescription
-		= ($command_definition
-		   ? $command_definition->{description}
-		   : $module_definition->{description});
-
-	    Heterarch::Test::Reporting::report_error_add
-		(
-		 $fd_output,
-		 {
-		     description => $preparation_name,
-		     error => $preparation_error,
-		     module_name => $module_name,
-		     subdescription => $subdescription,
-		 },
-		);
-	}
-    }
-
-    # return result
-
-    return $preparation_result;
-}
-
-
-sub reparation
-{
-    my $fd_output = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $preparation_result = shift;
-
-    # process the harnessing reparation clause
-
-    my $harnessing
-	= ($command_definition
-	   ? $command_definition->{harnessing}
-	   : $module_definition->{harnessing});
-
-    my $reparation = $harnessing->{reparation};
-
-    my $reparation_name
-        = ($command_definition
-	    ? ($command_definition->{command}
-		? "command '$command_definition->{command}'"
-		: "module '$module_definition->{name}'")
-	    : ($command_definition->{recycle}
-		? "these tests use the previous running command ($command_definition->{recycle})"
-		: "*** Error: this command definition is incomplete (no command and no recycle clause)")
-	);
-
-    my $reparation_error;
-
-    # if there is a reparation clause
-
-    if ($reparation)
-    {
-	# give diagnostics
-
-	print $fd_output "*** Reparing $reparation_name ($reparation->{description})\n";
-
-	# execute the reparation clause
-
-	my $reparer = $reparation->{reparer};
-
-	$reparation_error = execute($reparer, 'reparation', $preparation_result);
-
-	# process errors
-
-	if ($reparation_error)
-	{
-	    my $module_name = $module_definition->{name};
-
-	    my $subdescription
-		= ($command_definition
-		   ? $command_definition->{description}
-		   : $module_definition->{description});
-
-	    Heterarch::Test::Reporting::report_error_add
-		(
-		 $fd_output,
-		 {
-		     description => $reparation_name,
-		     error => $reparation_error,
-		     module_name => $module_name,
-		     subdescription => $subdescription,
-		 },
-		);
-	}
-    }
-
-    return $reparation_error;
-}
-
-
-sub is_disabled
-{
-    my $fd_output = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $command_test = shift;
-
-    my $module_name = $module_definition->{name};
-
-    my $active_element
-	= (defined $command_test
-	   ? $command_test
-	   : (defined $command_definition
-	      ? $command_definition
-	      : $module_definition));
-
-    my $disabled = $active_element->{disabled};
-
-    if ($disabled)
-    {
-	my $description = $active_element->{description};
-
-	if (not $option_show)
-	{
-	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
-
-	    my $report_key
-		= (defined $command_test
-		   ? "command_tests"
-		   : (defined $command_definition
-		      ? "command_definitions"
-		      : "modules"));
-
-	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
-	}
-
-	return 1;
-    }
-    else
-    {
-	return 0;
-    }
-}
-
-
-sub has_error_flag
-{
-    my $fd_output = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $command_test = shift;
-
-    my $module_name = $module_definition->{name};
-
-    my $active_element
-	= (defined $command_test
-	   ? $command_test
-	   : (defined $command_definition
-	      ? $command_definition
-	      : $module_definition));
-
-    my $error = $active_element->{error};
-
-    my $description = $active_element->{description};
-
-    if ($error)
-    {
-	Heterarch::Test::Reporting::report_error_add
-		(
-		 $fd_output,
-		 {
-		  description => $description,
-		  error => "this test was tagged with the error flag",
-		  module_name => $module_name,
-		  subdescription => $error,
-		 },
-		);
-
-	return 1;
-    }
-    else
-    {
-	return 0;
-    }
-}
 
 
 package Heterarch::Test::CommandDefinition;
