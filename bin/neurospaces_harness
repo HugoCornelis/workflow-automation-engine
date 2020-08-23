@@ -316,7 +316,7 @@ sub main
 
 	# prepare the module test environment
 
-	my $module_preparation_result = $module_definition->preparation($fd_module_output);
+	my $module_preparation_result = Heterarch::Test::Element::preparation($fd_module_output, $module_definition);
 
 	# loop over commands for this module
 
@@ -374,7 +374,7 @@ sub main
 
 	    # prepare the command test environment
 
-	    my $preparation_result = Heterarch::Test::Element::preparation($module_definition, $fd_module_output, $command_definition);
+	    my $preparation_result = Heterarch::Test::Element::preparation($fd_module_output, $module_definition, $command_definition);
 
 	    my $command = $command_definition->{command};
 
@@ -1953,9 +1953,9 @@ sub execute
 
 sub preparation
 {
-    my $module_definition = shift;
-
     my $fd_output = shift;
+
+    my $module_definition = shift;
 
     my $command_definition = shift;
 
