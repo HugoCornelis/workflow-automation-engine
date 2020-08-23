@@ -1226,210 +1226,194 @@ sub sha
 }
 
 
-package Heterarch::Test::Reporting;
+package Heterarch::Test::CommandDefinition;
 
 
-sub report_error_add
+our @ISA = ("Heterarch::Test::Element");
+
+
+use Data::Comparator qw(data_comparator);
+
+
+my $global_exp;
+
+my $global_running_command_definition;
+
+
+sub close_pending
 {
+    # if there is a command running
+
+    if ($global_exp)
+    {
+	# terminate the command
+
+	#t could be that the hard_close() call is needed because
+	#t neurospaces uses readline, not sure needs investigation,
+	#t perhaps.
+
+	$global_exp->hard_close();
+    }
+}
+
+
+sub spawn_new
+{
+    my $command_definition = shift;
+
     my $fd_output = shift;
 
-    my $arguments = shift;
+    # a command can be an absolute pathname,
+    # can come from the _build directory
+    # or from the sources for a script
 
-    my $description = $arguments->{description};
-    my $error = $arguments->{error};
-    my $expected = $arguments->{expected};
-    my $message = $arguments->{message};
-    my $module_name = $arguments->{module_name};
-    my $seen = $arguments->{seen};
-    my $subdescription = $arguments->{subdescription};
+# 		-f $command and print "Found command $command\n";
+# 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
+# 		-f $core_directory . $command and print "Found core $core_directory$command\n";
 
-    my $package_name = $global_test_report->{description}->{package}->{name};
+    my $command = $command_definition->{command};
 
-    $global_error_count++;
+    my $test_command = $command;
+    # = (-f $command
+    #    ? $command
+    #    : (defined $built_exe_directory
+    #       ? (-f $built_exe_directory . $command
+    #        ? $built_exe_directory . $command
+    #        : $core_directory . $command)
+    #       : $command));
 
-    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+    # find differences between how to run this command and
+    # the one already running
 
-    # fill in the error report
+    my $new_command_definition
+	= {
+	    arguments => $command_definition->{arguments},
+	    command => $test_command,
+	  };
 
-    $global_test_report->{global}->{error_count} = $global_error_count;
+    my $differences = data_comparator($new_command_definition, $global_running_command_definition);
 
-    if ($subdescription)
+    # remember to spawn a new command
+
+    my $spawn_new;
+
+    $spawn_new = not $command_definition->{recycle};
+
+    # (
+	#  # if we do not have a previous command
+
+	#  (not $global_exp)
+
+	#  # or if there were differences with the previous command
+
+	#  || (not $differences->is_empty())
+
+	#  # or if the previous command had side effects
+
+	#  || $global_previous_command_side_effects
+
+	#  # or if we had to prepare this command
+
+	#  || $command_definition->{preparation}
+	# )
+	# && (not $command_definition->{recycle});
+
+    # prefix the command with the core directory
+
+    $command = $new_command_definition->{command};
+
+    my $arguments = $command_definition->{arguments};
+
+    # if the command can be executed
+
+    my $test_startup;
+
+# 		    if (-x $command)
+    if (defined $command)
     {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
-    }
-    else
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
-    }
-
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
-
-    if (defined $message)
-    {
-	#! subdescription can be undefined here, in which case
-	#! $message is undefined too.  Both can be defined when
-	#! running in verbose mode seems, allows to track regex
-	#! problems ... I think.
-
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
-    }
-
-    if (defined $expected
-	and defined $seen)
-    {
-	my $processed_expected = [ split "\n", $expected, ];
-
-	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
-
-	print $fd_output $processed_expected;
-
-	my $processed_seen = [ split "\n", $seen, ];
-
-	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
-
-	print $fd_output $processed_seen;
-
-	use IO::File;
-
-	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
-
-	my $expected_file = IO::File->new(">$expected_filename");
-
-	if ($expected_file)
+	if ($spawn_new)
 	{
-	    print $expected_file $expected;
+	    if ($global_exp)
+	    {
+		# terminate the previous command
 
-	    $expected_file->close();
+		#t could be that the hard_close() call is needed because
+		#t neurospaces uses readline, not sure needs investigation,
+		#t perhaps.
+
+		$global_exp->hard_close();
+	    }
+
+	    # create a new Expect object by spawning a new process with the new command
+
+	    $global_exp = Expect->new();
+
+	    #! see the expect manual for this one
+
+	    $global_exp->raw_pty(1);
+
+	    # 		    $exp->slave->stty(qw(raw -echo));
+
+	    $global_exp->spawn
+		(
+		 (
+		  $option_trace
+		  ? ("strace", "-f")
+		  : ()
+		 ),
+		 $command,
+		 @$arguments
+		)
+		or die "$0: cannot spawn $command: $!\n";
+
+	    # set the running_command_definition
+
+	    $global_running_command_definition = $new_command_definition;
+
+	    print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+	    # remember to do startup testing
+
+	    $test_startup = 1;
+
+	    # there were no side effects yet
+
+	    $global_previous_command_side_effects = 0;
 	}
 	else
 	{
-	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
+	    print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+	    $test_startup = 0;
 	}
-
-	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
-
-	my $seen_file = IO::File->new(">$seen_filename");
-
-	if ($seen_filename)
-	{
-	    print $seen_file $seen;
-
-	    $seen_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
-	}
-
-	my $diff = `diff "$expected_filename" "$seen_filename"`;
-
-	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
-
-	my $diff_file = IO::File->new(">$diff_filename");
-
-	if ($diff_file)
-	{
-	    print $diff_file $diff;
-
-	    $diff_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
-	}
-
-	my $processed_diff = [ split "\n", $diff, ];
-
-	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
-
-	print $fd_output $processed_diff;
     }
+    # else
+    # {
+    # 	my $error = "$command is not executable";
 
+    # 	Heterarch::Test::Reporting::report_error_add
+    # 	    (
+    # 	     {
+    # 	      description => $description,
+    # 	      error => $error,
+    # 	      module_name => $module_name,
+    # 	     },
+    # 	    );
+
+    # 	next;
+    # }
+
+    return $global_exp, $test_startup;
 }
 
 
-my $rulers_not_used
-    = {
-       end => { bottom => 2, top => 1, },
-       info => { bottom => 1, top => 1, },
-       start => { bottom => 1, top => 2, },
-      };
-
-sub report_message
-{
-    my $fd_output = shift;
-
-    my $message = shift;
-
-    if (!$option_show)
-    {
-	print $fd_output "$message\n";
-    }
-}
+package Heterarch::Test::CommandTest;
 
 
-sub report_message_end
-{
-    my $fd_output = shift;
-
-    my $message = shift;
-
-    return report_message_with_rulers($fd_output, 1, 2, $message);
-}
+our @ISA = ("Heterarch::Test::Element");
 
 
-sub report_message_info
-{
-    my $fd_output = shift;
-
-    my $message = shift;
-
-    return report_message_with_rulers($fd_output, 1, 1, $message);
-}
-
-
-sub report_message_start
-{
-    my $fd_output = shift;
-
-    my $message = shift;
-
-    return report_message_with_rulers($fd_output, 2, 1, $message);
-}
-
-
-sub report_message_with_rulers
-{
-    my $fd_output = shift;
-
-    my $top_ruler = shift;
-
-    my $bottom_ruler = shift;
-
-    my $message = shift;
-
-    my $lines = [ split '\n', $message, ];
-
-    my $longest = 0;
-
-    map
-    {
-	($longest < length) && ($longest = length)
-    }
-	@$lines;
-
-    my $line = '-' x $longest;
-
-    if (!$option_show)
-    {
-	print $fd_output "\n";
-	print $fd_output "$line\n" for 0 .. $top_ruler;
-	print $fd_output "\n";
-	print $fd_output "$message\n\n";
-	print $fd_output "$line\n" for 0 .. $bottom_ruler;
-	print $fd_output "\n";
-    }
-}
+package Heterarch::Test::Element;
 
 
 package Heterarch::Test::ExecutionContext;
@@ -2433,196 +2417,6 @@ sub readfile
 }
 
 
-package Heterarch::Test::Element;
-
-
-package Heterarch::Test::CommandDefinition;
-
-
-our @ISA = ("Heterarch::Test::Element");
-
-
-use Data::Comparator qw(data_comparator);
-
-
-my $global_exp;
-
-my $global_running_command_definition;
-
-
-sub close_pending
-{
-    # if there is a command running
-
-    if ($global_exp)
-    {
-	# terminate the command
-
-	#t could be that the hard_close() call is needed because
-	#t neurospaces uses readline, not sure needs investigation,
-	#t perhaps.
-
-	$global_exp->hard_close();
-    }
-}
-
-
-sub spawn_new
-{
-    my $command_definition = shift;
-
-    my $fd_output = shift;
-
-    # a command can be an absolute pathname,
-    # can come from the _build directory
-    # or from the sources for a script
-
-# 		-f $command and print "Found command $command\n";
-# 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
-# 		-f $core_directory . $command and print "Found core $core_directory$command\n";
-
-    my $command = $command_definition->{command};
-
-    my $test_command = $command;
-    # = (-f $command
-    #    ? $command
-    #    : (defined $built_exe_directory
-    #       ? (-f $built_exe_directory . $command
-    #        ? $built_exe_directory . $command
-    #        : $core_directory . $command)
-    #       : $command));
-
-    # find differences between how to run this command and
-    # the one already running
-
-    my $new_command_definition
-	= {
-	    arguments => $command_definition->{arguments},
-	    command => $test_command,
-	  };
-
-    my $differences = data_comparator($new_command_definition, $global_running_command_definition);
-
-    # remember to spawn a new command
-
-    my $spawn_new;
-
-    $spawn_new = not $command_definition->{recycle};
-
-    # (
-	#  # if we do not have a previous command
-
-	#  (not $global_exp)
-
-	#  # or if there were differences with the previous command
-
-	#  || (not $differences->is_empty())
-
-	#  # or if the previous command had side effects
-
-	#  || $global_previous_command_side_effects
-
-	#  # or if we had to prepare this command
-
-	#  || $command_definition->{preparation}
-	# )
-	# && (not $command_definition->{recycle});
-
-    # prefix the command with the core directory
-
-    $command = $new_command_definition->{command};
-
-    my $arguments = $command_definition->{arguments};
-
-    # if the command can be executed
-
-    my $test_startup;
-
-# 		    if (-x $command)
-    if (defined $command)
-    {
-	if ($spawn_new)
-	{
-	    if ($global_exp)
-	    {
-		# terminate the previous command
-
-		#t could be that the hard_close() call is needed because
-		#t neurospaces uses readline, not sure needs investigation,
-		#t perhaps.
-
-		$global_exp->hard_close();
-	    }
-
-	    # create a new Expect object by spawning a new process with the new command
-
-	    $global_exp = Expect->new();
-
-	    #! see the expect manual for this one
-
-	    $global_exp->raw_pty(1);
-
-	    # 		    $exp->slave->stty(qw(raw -echo));
-
-	    $global_exp->spawn
-		(
-		 (
-		  $option_trace
-		  ? ("strace", "-f")
-		  : ()
-		 ),
-		 $command,
-		 @$arguments
-		)
-		or die "$0: cannot spawn $command: $!\n";
-
-	    # set the running_command_definition
-
-	    $global_running_command_definition = $new_command_definition;
-
-	    print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-	    # remember to do startup testing
-
-	    $test_startup = 1;
-
-	    # there were no side effects yet
-
-	    $global_previous_command_side_effects = 0;
-	}
-	else
-	{
-	    print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-	    $test_startup = 0;
-	}
-    }
-    # else
-    # {
-    # 	my $error = "$command is not executable";
-
-    # 	Heterarch::Test::Reporting::report_error_add
-    # 	    (
-    # 	     {
-    # 	      description => $description,
-    # 	      error => $error,
-    # 	      module_name => $module_name,
-    # 	     },
-    # 	    );
-
-    # 	next;
-    # }
-
-    return $global_exp, $test_startup;
-}
-
-
-package Heterarch::Test::CommandTest;
-
-
-our @ISA = ("Heterarch::Test::Element");
-
-
 package Heterarch::Test::Module;
 
 
@@ -2746,6 +2540,212 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 	$global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = 'not_selected_by_tag';
 
 	return undef;
+    }
+}
+
+
+package Heterarch::Test::Reporting;
+
+
+sub report_error_add
+{
+    my $fd_output = shift;
+
+    my $arguments = shift;
+
+    my $description = $arguments->{description};
+    my $error = $arguments->{error};
+    my $expected = $arguments->{expected};
+    my $message = $arguments->{message};
+    my $module_name = $arguments->{module_name};
+    my $seen = $arguments->{seen};
+    my $subdescription = $arguments->{subdescription};
+
+    my $package_name = $global_test_report->{description}->{package}->{name};
+
+    $global_error_count++;
+
+    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+
+    # fill in the error report
+
+    $global_test_report->{global}->{error_count} = $global_error_count;
+
+    if ($subdescription)
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
+    }
+    else
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
+    }
+
+    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
+
+    if (defined $message)
+    {
+	#! subdescription can be undefined here, in which case
+	#! $message is undefined too.  Both can be defined when
+	#! running in verbose mode seems, allows to track regex
+	#! problems ... I think.
+
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
+    }
+
+    if (defined $expected
+	and defined $seen)
+    {
+	my $processed_expected = [ split "\n", $expected, ];
+
+	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+
+	print $fd_output $processed_expected;
+
+	my $processed_seen = [ split "\n", $seen, ];
+
+	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
+
+	print $fd_output $processed_seen;
+
+	use IO::File;
+
+	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
+
+	my $expected_file = IO::File->new(">$expected_filename");
+
+	if ($expected_file)
+	{
+	    print $expected_file $expected;
+
+	    $expected_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
+	}
+
+	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
+
+	my $seen_file = IO::File->new(">$seen_filename");
+
+	if ($seen_filename)
+	{
+	    print $seen_file $seen;
+
+	    $seen_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
+	}
+
+	my $diff = `diff "$expected_filename" "$seen_filename"`;
+
+	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
+
+	my $diff_file = IO::File->new(">$diff_filename");
+
+	if ($diff_file)
+	{
+	    print $diff_file $diff;
+
+	    $diff_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
+	}
+
+	my $processed_diff = [ split "\n", $diff, ];
+
+	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+
+	print $fd_output $processed_diff;
+    }
+
+}
+
+
+my $rulers_not_used
+    = {
+       end => { bottom => 2, top => 1, },
+       info => { bottom => 1, top => 1, },
+       start => { bottom => 1, top => 2, },
+      };
+
+sub report_message
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    if (!$option_show)
+    {
+	print $fd_output "$message\n";
+    }
+}
+
+
+sub report_message_end
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    return report_message_with_rulers($fd_output, 1, 2, $message);
+}
+
+
+sub report_message_info
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    return report_message_with_rulers($fd_output, 1, 1, $message);
+}
+
+
+sub report_message_start
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    return report_message_with_rulers($fd_output, 2, 1, $message);
+}
+
+
+sub report_message_with_rulers
+{
+    my $fd_output = shift;
+
+    my $top_ruler = shift;
+
+    my $bottom_ruler = shift;
+
+    my $message = shift;
+
+    my $lines = [ split '\n', $message, ];
+
+    my $longest = 0;
+
+    map
+    {
+	($longest < length) && ($longest = length)
+    }
+	@$lines;
+
+    my $line = '-' x $longest;
+
+    if (!$option_show)
+    {
+	print $fd_output "\n";
+	print $fd_output "$line\n" for 0 .. $top_ruler;
+	print $fd_output "\n";
+	print $fd_output "$message\n\n";
+	print $fd_output "$line\n" for 0 .. $bottom_ruler;
+	print $fd_output "\n";
     }
 }
 
