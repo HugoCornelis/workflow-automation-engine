@@ -927,6 +927,8 @@ sub main
 	{
 	    $execution_context->end();
 	}
+
+	$execution_context->terminate();
     }
 
     # close pending commands
@@ -1507,6 +1509,9 @@ sub end
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
     }
 
+    my $path = $self->{path};
+
+    my $element = pop @$path;
 }
 
 
@@ -1830,6 +1835,7 @@ sub new
     my $self
 	= {
 	   %$options,
+	   path => [],
 	   fd_output => $fd_output,
 	   module_definition => $module_definition,
 	  };
@@ -1929,6 +1935,10 @@ sub start
 
     my $module_definition = $self->{module_definition};
 
+    my $path = $self->{path};
+
+    push @$path, [ $module_definition, $command_definition, $command_test, ];
+
     my $comment;
 
     my $description;
@@ -1977,6 +1987,35 @@ sub start
 	{
 	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment\n");
 	}
+    }
+}
+
+
+sub terminate
+{
+    my $self = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $path = $self->{path};
+
+    if (scalar @$path)
+    {
+	my $module_definition = $self->{module_definition};
+
+	my $description = "module $module_definition->{description}";
+
+	my $module_name = $module_definition->{name};
+
+	report_error_add
+	    (
+	     $fd_output,
+	     {
+	      description => "execution context invalid",
+	      error => "left over elements in the execution context after it was terminated",
+	      module_name => $module_name,
+	     },
+	    );
     }
 }
 
