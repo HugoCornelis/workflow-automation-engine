@@ -297,19 +297,14 @@ sub main
 	    next;
 	}
 
-	if ($execution_context->is_disabled())
-	{
-	    next;
-	}
-
-	if ($execution_context->has_error_flag())
-	{
-	    next;
-	}
-
 	# proceed: start the execution context
 
-	$execution_context->start();
+	my $started = $execution_context->start();
+
+	if (not $started)
+	{
+	    next;
+	}
 
 	# prepare the module test environment
 
@@ -323,21 +318,14 @@ sub main
 	{
 	    bless $command_definition, "Heterarch::Test::CommandDefinition";
 
-	    my $description = $command_definition->{description};
-
-	    if ($execution_context->is_disabled($command_definition))
-	    {
-		next;
-	    }
-
-	    if ($execution_context->has_error_flag($command_definition))
-	    {
-		next;
-	    }
-
 	    # give some diagnostics
 
-	    $execution_context->start($command_definition);
+	    my $started = $execution_context->start($command_definition);
+
+	    if (not $started)
+	    {
+		next;
+	    }
 
 	    # prepare the command test environment
 
@@ -398,23 +386,14 @@ sub main
 	    {
 		bless $command_test, "Heterarch::Test::CommandTest";
 
-		# give feedback about this specific test
-
-		my $description = $command_test->{description};
-
-		if ($execution_context->is_disabled($command_definition, $command_test))
-		{
-		    next;
-		}
-
-		if ($execution_context->has_error_flag($command_definition, $command_test))
-		{
-		    next;
-		}
-
 		# emit comment if any
 
-		$execution_context->start($command_definition, $command_test);
+		my $started = $execution_context->start($command_definition, $command_test);
+
+		if (not $started)
+		{
+		    next;
+		}
 
 		if ($option_show)
 		{
@@ -504,6 +483,8 @@ sub main
 
 		else
 		{
+		    # my $description = $command_test->{description};
+
 		    # if ($description =~ /startup successful \?$/)
 		    # {
 		    # 	if (!$test_startup)
@@ -768,6 +749,8 @@ sub main
 			    }
 			    else
 			    {
+				my $description = $command_test->{description};
+
 				die "test not understood by $0, aborting (illegal read clause for $description)";
 			    }
 			}
@@ -778,6 +761,8 @@ sub main
 
 			if ($option_timings)
 			{
+			    my $description = $command_test->{description};
+
 			    $global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
 			}
 
@@ -1896,6 +1881,18 @@ sub start
 
     my $command_test = shift;
 
+    my $started;
+
+    if ($self->is_disabled($command_definition, $command_test))
+    {
+	return $started;
+    }
+
+    if ($self->has_error_flag($command_definition, $command_test))
+    {
+	return $started;
+    }
+
     my $fd_output = $self->{fd_output};
 
     my $module_definition = $self->{module_definition};
@@ -1984,6 +1981,10 @@ sub start
 	    push @$selected, { description => $command_definition->{description}, tests => [], };
 	}
     }
+
+    $started = 'yes';
+
+    return $started;
 }
 
 
