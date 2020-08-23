@@ -335,24 +335,6 @@ sub main
 		next;
 	    }
 
-	    my $selected_command_definition;
-
-	    if ($option_show)
-	    {
-		if (not $global_test_report->{selected}->{$module_name})
-		{
-		    $global_test_report->{selected}->{$module_name} = [];
-		}
-
-		my $selected = $global_test_report->{selected}->{$module_name};
-
-		push @$selected, { description => $description, tests => [], };
-
-		$selected_command_definition = $selected->[$#$selected]->{tests};
-
-		# next;
-	    }
-
 	    # give some diagnostics
 
 	    $execution_context->start($command_definition);
@@ -430,16 +412,16 @@ sub main
 		    next;
 		}
 
-		if ($option_show)
-		{
-		    push @$selected_command_definition, $description;
-
-		    next;
-		}
-
 		# emit comment if any
 
 		$execution_context->start($command_definition, $command_test);
+
+		if ($option_show)
+		{
+		    $execution_context->end($command_definition, $command_test);
+
+		    next;
+		}
 
 		# expect this output
 
@@ -923,10 +905,7 @@ sub main
 
 	$global_previous_command_side_effects ||= $module_definition->{side_effects} || 0;
 
-	if (not $option_show)
-	{
-	    $execution_context->end();
-	}
+	$execution_context->end();
 
 	$execution_context->terminate();
     }
@@ -1764,7 +1743,8 @@ sub preparation
 
     # if there is a preparation clause
 
-    if ($preparation)
+    if ((not $option_show)
+	and $preparation)
     {
 	# give diagnostics
 
@@ -1883,7 +1863,8 @@ sub reparation
 
     # if there is a reparation clause
 
-    if ($reparation)
+    if ((not $option_show)
+	and $reparation)
     {
 	# give diagnostics
 
@@ -1976,16 +1957,47 @@ sub start
 
 	if ($comment)
 	{
-	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment\n");
+	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment");
 	}
     }
     else
     {
-	Heterarch::Test::Reporting::report_message($fd_output, "$description\n");
+	Heterarch::Test::Reporting::report_message($fd_output, "$description");
 
 	if ($comment)
 	{
-	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment\n");
+	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment");
+	}
+    }
+
+    if ($option_show)
+    {
+	if (defined $command_test)
+	{
+	    my $module_definition = $self->{module_definition};
+
+	    my $module_name = $module_definition->{name};
+
+	    my $selected = $global_test_report->{selected}->{$module_name};
+
+	    my $selected_command_definitions = $selected->[$#$selected]->{tests};
+
+	    push @$selected_command_definitions, $command_test->{description};
+	}
+	elsif (defined $command_definition)
+	{
+	    my $module_definition = $self->{module_definition};
+
+	    my $module_name = $module_definition->{name};
+
+	    if (not $global_test_report->{selected}->{$module_name})
+	    {
+		$global_test_report->{selected}->{$module_name} = [];
+	    }
+
+	    my $selected = $global_test_report->{selected}->{$module_name};
+
+	    push @$selected, { description => $command_definition->{description}, tests => [], };
 	}
     }
 }
@@ -2007,7 +2019,7 @@ sub terminate
 
 	my $module_name = $module_definition->{name};
 
-	report_error_add
+	Heterarch::Test::Reporting::report_error_add
 	    (
 	     $fd_output,
 	     {
