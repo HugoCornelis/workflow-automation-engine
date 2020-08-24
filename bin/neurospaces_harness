@@ -28,6 +28,7 @@ my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSP
 my $option_flattenout;
 my $option_help;
 my $option_numerical_compare;
+my $option_output_html;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -331,9 +332,19 @@ sub main
 
 	    my $preparation_result = $execution_context->preparation($command_definition);
 
+	    # create a test executor for this command
+
 	    my $executor;
 
-	    if (not $option_show)
+	    if ($option_show)
+	    {
+		$executor = Heterarch::Test::Output::YAML->new($execution_context, $command_definition);
+	    }
+	    elsif ($option_output_html)
+	    {
+		$executor = Heterarch::Test::Output::HTML->new($execution_context, $command_definition);
+	    }
+	    else
 	    {
 		$executor = Heterarch::Test::Executor->new($execution_context, $command_definition);
 	    }
@@ -352,13 +363,6 @@ sub main
 
 		if (not $started)
 		{
-		    next;
-		}
-
-		if ($option_show)
-		{
-		    $execution_context->end($command_definition, $command_test);
-
 		    next;
 		}
 
@@ -498,6 +502,7 @@ sub parse_options
 	     "flattenout" => \$option_flattenout,
 	     "help!" => \$option_help,
 	     "numerical-compare!" => \$option_numerical_compare,
+	     "output-html=s" => \$option_output_html,
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
@@ -523,6 +528,7 @@ sub parse_options
 	   flattenout => $option_flattenout,
 	   help => $option_help,
 	   numerical_compare => $option_numerical_compare,
+	   output_html => $option_output_html,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
@@ -551,6 +557,7 @@ options:
                          by recycling test definitions.
     --help               print usage information.
     --numerical-compare  attempt to compare numbers numerically when string differences are found (default enabled).
+    --output-html        unused.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
@@ -1522,37 +1529,6 @@ sub start
 	if ($comment)
 	{
 	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment");
-	}
-    }
-
-    if ($option_show)
-    {
-	if (defined $command_test)
-	{
-	    my $module_definition = $self->{module_definition};
-
-	    my $module_name = $module_definition->{name};
-
-	    my $selected = $global_test_report->{selected}->{$module_name};
-
-	    my $selected_command_definitions = $selected->[$#$selected]->{tests};
-
-	    push @$selected_command_definitions, $command_test->{description};
-	}
-	elsif (defined $command_definition)
-	{
-	    my $module_definition = $self->{module_definition};
-
-	    my $module_name = $module_definition->{name};
-
-	    if (not $global_test_report->{selected}->{$module_name})
-	    {
-		$global_test_report->{selected}->{$module_name} = [];
-	    }
-
-	    my $selected = $global_test_report->{selected}->{$module_name};
-
-	    push @$selected, { description => $command_definition->{description}, tests => [], };
 	}
     }
 
@@ -2616,6 +2592,203 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 	return undef;
     }
+}
+
+
+package Heterarch::Test::Output::HTML;
+
+
+sub new
+{
+    my $package = shift;
+
+    my $execution_context = shift;
+
+    my $command_definition = shift;
+
+    my $fd_output = $execution_context->{fd_output};
+
+    my $module_definition = $execution_context->{module_definition};
+
+    my $options = shift || {};
+
+    my $self
+	= {
+	   %$options,
+	   command_definition => $command_definition,
+	   fd_output => $fd_output,
+	   module_definition => $module_definition,
+	  };
+
+    bless $self, $package;
+
+    # we have to either instantiate an object that produces output ...
+
+    if ($command_definition->{class})
+    {
+	if ($command_definition->{output_html})
+	{
+	    # instantiate the object
+
+	    my $class = $command_definition->{class};
+
+	    my $filename = $class . ".pm";
+
+	    $filename =~ s(::)(/)g;
+
+	    require $filename;
+
+	    $self->{command_object} = eval "$class->new()";
+	}
+    }
+
+    # ... or run perl code that produces output
+
+    elsif (ref $command_definition->{command} eq 'CODE')
+    {
+	# code is already instantiated, nothing to do here
+    }
+
+    # ... or run a command that produces output
+
+    else
+    {
+    }
+
+    return $self;
+}
+
+
+package Heterarch::Test::Output::YAML;
+
+
+sub new
+{
+    my $package = shift;
+
+    my $execution_context = shift;
+
+    my $command_definition = shift;
+
+    my $fd_output = $execution_context->{fd_output};
+
+    my $module_definition = $execution_context->{module_definition};
+
+    my $options = shift || {};
+
+    my $self
+	= {
+	   %$options,
+	   command_definition => $command_definition,
+	   fd_output => $fd_output,
+	   module_definition => $module_definition,
+	  };
+
+    bless $self, $package;
+
+    # we have to either instantiate an object that produces output ...
+
+    if ($command_definition->{class})
+    {
+	if ($command_definition->{output_yaml})
+	{
+	    # instantiate the object
+
+	    my $class = $command_definition->{class};
+
+	    my $filename = $class . ".pm";
+
+	    $filename =~ s(::)(/)g;
+
+	    require $filename;
+
+	    $self->{command_object} = eval "$class->new()";
+	}
+    }
+
+    # ... or run perl code that produces output
+
+    elsif (ref $command_definition->{command} eq 'CODE')
+    {
+	# code is already instantiated, nothing to do here
+    }
+
+    # ... or run a command that produces output
+
+    else
+    {
+    }
+
+    return $self;
+}
+
+
+sub run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $command_definition = $self->{command_definition};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    #! this is ugly: we miss a good context path to implement this in a clean way
+    #! a context path can be used to keep track which command definitions have been added to the result
+    #! this would prevent the lookup of the command definitions implemented here
+
+    my $this_command_definition_been_added
+	= (grep
+	   {
+	       my $result;
+
+	       my $command_definitions_array = $_;
+
+	       if (exists $command_definitions_array->{description}
+		   and $command_definitions_array->{description} eq $command_definition->{description})
+	       {
+		   $result = 1;
+	       }
+	       else
+	       {
+		   $result = 0;
+	       }
+
+	       $result;
+	   }
+	   @$selected_module);
+
+    if (not $this_command_definition_been_added)
+    {
+	push @$selected_module, { description => $command_definition->{description}, tests => [], };
+    }
+
+    my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
+
+    push @$selected_command_definitions, $command_test->{description};
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
 }
 
 

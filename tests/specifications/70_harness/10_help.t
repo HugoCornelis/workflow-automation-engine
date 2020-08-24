@@ -28,6 +28,7 @@ options:
                          by recycling test definitions.
     --help               print usage information.
     --numerical-compare  attempt to compare numbers numerically when string differences are found (default enabled).
+    --output-html        unused.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
