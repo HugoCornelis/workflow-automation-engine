@@ -342,7 +342,7 @@ sub main
 	    }
 	    elsif ($option_output_html)
 	    {
-		$executor = Heterarch::Test::Output::HTML->new($execution_context, $command_definition);
+		$executor = Heterarch::Test::Output::HTMLTable->new($execution_context, $command_definition);
 	    }
 	    else
 	    {
@@ -2595,7 +2595,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 }
 
 
-package Heterarch::Test::Output::HTML;
+package Heterarch::Test::Output::HTMLTable;
 
 
 sub new
@@ -2656,6 +2656,36 @@ sub new
     }
 
     return $self;
+}
+
+
+sub run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $command_definition = $self->{command_definition};
+
+    my $module_definition = $self->{module_definition};
+
+    my $module_name = $module_definition->{name};
+
+    die "$0: *** Error: Please use the separate HTML convertor to generate HTML from the test specifications";
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
 }
 
 
