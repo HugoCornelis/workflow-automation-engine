@@ -29,6 +29,7 @@ my $option_flattenout;
 my $option_help;
 my $option_numerical_compare;
 my $option_output_html;
+my $option_output;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -332,22 +333,9 @@ sub main
 
 	    my $preparation_result = $execution_context->preparation($command_definition);
 
-	    # create a test executor for this command
+	    # create a test executor for this command following the requested type of output
 
-	    my $executor;
-
-	    if ($option_show)
-	    {
-		$executor = Heterarch::Test::Output::YAML->new($execution_context, $command_definition);
-	    }
-	    elsif ($option_output_html)
-	    {
-		$executor = Heterarch::Test::Output::HTMLTable->new($execution_context, $command_definition);
-	    }
-	    else
-	    {
-		$executor = Heterarch::Test::Executor->new($execution_context, $command_definition);
-	    }
+	    my $executor = $option_output->new($execution_context, $command_definition);
 
 	    # loop over all tests for this command
 
@@ -502,7 +490,8 @@ sub parse_options
 	     "flattenout" => \$option_flattenout,
 	     "help!" => \$option_help,
 	     "numerical-compare!" => \$option_numerical_compare,
-	     "output-html=s" => \$option_output_html,
+	     "output=s" => \$option_output,
+	     "output-html" => \$option_output_html,
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
@@ -517,6 +506,22 @@ sub parse_options
     if (!$result)
     {
 	die "$0: Error in option processing";
+    }
+
+    if (not defined $option_output)
+    {
+	if ($option_output_html)
+	{
+	    $option_output = "Heterarch::Test::Output::HTMLTable";
+	}
+	elsif ($option_show)
+	{
+	    $option_output = "Heterarch::Test::Output::YAML";
+	}
+	else
+	{
+	    $option_output = "Heterarch::Test::Executor";
+	}
     }
 
     $global_test_report->{options}
@@ -557,7 +562,8 @@ options:
                          by recycling test definitions.
     --help               print usage information.
     --numerical-compare  attempt to compare numbers numerically when string differences are found (default enabled).
-    --output-html        unused.
+    --output             the class that should generate the output (default is '$option_output').
+    --output-html        generate HTML output.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
