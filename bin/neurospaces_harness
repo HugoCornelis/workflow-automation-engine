@@ -278,15 +278,15 @@ sub main
 
     $global_test_report->{global}->{test_count} = 0;
 
+    # create an execution context for running the tests
+
+    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output);
+
     # loop over all module definitions
 
     foreach my $module_definition (@$test_modules)
     {
 	bless $module_definition, "Heterarch::Test::Module";
-
-	# create an execution context for this module's tests
-
-	my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, $module_definition);
 
 	my $fd_module_output = $global_fd_output;
 
@@ -301,7 +301,7 @@ sub main
 
 	# proceed: start the execution context
 
-	my $started = $execution_context->start();
+	my $started = $execution_context->start($module_definition);
 
 	if (not $started)
 	{
@@ -310,7 +310,7 @@ sub main
 
 	# prepare the module test environment
 
-	my $module_preparation_result = $execution_context->preparation();
+	my $module_preparation_result = $execution_context->preparation($module_definition);
 
 	# loop over commands for this module
 
@@ -322,7 +322,7 @@ sub main
 
 	    # give some diagnostics
 
-	    my $started = $execution_context->start($command_definition);
+	    my $started = $execution_context->start($module_definition, $command_definition);
 
 	    if (not $started)
 	    {
@@ -331,11 +331,11 @@ sub main
 
 	    # prepare the command test environment
 
-	    my $preparation_result = $execution_context->preparation($command_definition);
+	    my $preparation_result = $execution_context->preparation($module_definition, $command_definition);
 
 	    # create a test executor for this command following the requested type of output
 
-	    my $executor = $option_output->new($execution_context, $command_definition);
+	    my $executor = $option_output->new($execution_context, $module_definition, $command_definition);
 
 	    # loop over all tests for this command
 
@@ -347,7 +347,7 @@ sub main
 
 		# emit comment if any
 
-		my $started = $execution_context->start($command_definition, $command_test);
+		my $started = $execution_context->start($module_definition, $command_definition, $command_test);
 
 		if (not $started)
 		{
@@ -398,7 +398,7 @@ sub main
 
 		# end the execution of this test
 
-		$execution_context->end($command_definition, $command_test);
+		$execution_context->end($module_definition, $command_definition, $command_test);
 
 		# register if this command had side effects
 
@@ -413,7 +413,7 @@ sub main
 
 	    my $reparation_error = $execution_context->reparation($command_definition, $preparation_result);
 
-	    $execution_context->end($command_definition);
+	    $execution_context->end($module_definition, $command_definition);
 
 	    # register if this command had side effects
 
@@ -456,10 +456,12 @@ sub main
 
 	$global_previous_command_side_effects ||= $module_definition->{side_effects} || 0;
 
-	$execution_context->end();
-
-	$execution_context->terminate();
+	$execution_context->end($module_definition);
     }
+
+    # end the execution_context
+
+    $execution_context->terminate();
 
     # close pending commands
 
@@ -995,13 +997,13 @@ sub end
 {
     my $self = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $command_test = shift;
 
     my $fd_output = $self->{fd_output};
-
-    my $module_definition = $self->{module_definition};
 
     my $module_name = $module_definition->{name};
 
@@ -1140,13 +1142,13 @@ sub has_error_flag
 {
     my $self = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $command_test = shift;
 
     my $fd_output = $self->{fd_output};
-
-    my $module_definition = $self->{module_definition};
 
     my $module_name = $module_definition->{name};
 
@@ -1187,13 +1189,13 @@ sub is_disabled
 {
     my $self = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $command_test = shift;
 
     my $fd_output = $self->{fd_output};
-
-    my $module_definition = $self->{module_definition};
 
     my $module_name = $module_definition->{name};
 
@@ -1238,13 +1240,13 @@ sub preparation
 {
     my $self = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $command_test = shift;
 
     my $fd_output = $self->{fd_output};
-
-    my $module_definition = $self->{module_definition};
 
     my $module_name = $module_definition->{name};
 
@@ -1364,8 +1366,6 @@ sub new
 
     my $fd_output = shift;
 
-    my $module_definition = shift;
-
     my $options = shift || {};
 
     my $self
@@ -1373,7 +1373,6 @@ sub new
 	   %$options,
 	   path => [],
 	   fd_output => $fd_output,
-	   module_definition => $module_definition,
 	  };
 
     bless $self, $package;
@@ -1464,25 +1463,25 @@ sub start
 {
     my $self = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $command_test = shift;
 
     my $started;
 
-    if ($self->is_disabled($command_definition, $command_test))
+    if ($self->is_disabled($module_definition, $command_definition, $command_test))
     {
 	return $started;
     }
 
-    if ($self->has_error_flag($command_definition, $command_test))
+    if ($self->has_error_flag($module_definition, $command_definition, $command_test))
     {
 	return $started;
     }
 
     my $fd_output = $self->{fd_output};
-
-    my $module_definition = $self->{module_definition};
 
     my $path = $self->{path};
 
@@ -1582,11 +1581,11 @@ sub new
 
     my $execution_context = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $fd_output = $execution_context->{fd_output};
-
-    my $module_definition = $execution_context->{module_definition};
 
     my $options = shift || {};
 
@@ -2610,11 +2609,11 @@ sub new
 
     my $execution_context = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $fd_output = $execution_context->{fd_output};
-
-    my $module_definition = $execution_context->{module_definition};
 
     my $options = shift || {};
 
@@ -2704,11 +2703,11 @@ sub new
 
     my $execution_context = shift;
 
+    my $module_definition = shift;
+
     my $command_definition = shift;
 
     my $fd_output = $execution_context->{fd_output};
-
-    my $module_definition = $execution_context->{module_definition};
 
     my $options = shift || {};
 
