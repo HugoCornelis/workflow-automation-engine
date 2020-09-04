@@ -2132,8 +2132,6 @@ sub start
 
 	$self->{test_startup} = $test_startup;
     }
-
-    return $self;
 }
 
 
@@ -2711,6 +2709,69 @@ sub run
 
 sub start
 {
+    my $self = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $fd_output = $self->{fd_output};
+
+    # we have to either instantiate an object that produces output ...
+
+    if ($command_definition->{class})
+    {
+	# instantiate the object
+
+	my $class = $command_definition->{class};
+
+	my $filename = $class . ".pm";
+
+	$filename =~ s(::)(/)g;
+
+	# require $filename;
+
+	# $self->{command_object} = eval "$class->new()";
+    }
+
+    # ... or run perl code that produces output
+
+    elsif (ref $command_definition->{command} eq 'CODE')
+    {
+	# code is already instantiated, nothing to do here
+    }
+
+    # ... or run a command that produces output
+
+    else
+    {
+	# start the command and connect with its I/O channels
+
+	# my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
+
+	my $command = $command_definition->{command};
+
+	# remember to spawn a new command
+
+	my $spawn_new = not $command_definition->{recycle};
+
+	my $arguments = $command_definition->{arguments};
+
+	# if the command can be executed
+
+	if (defined $command)
+	{
+	    if ($spawn_new)
+	    {
+	    }
+	    else
+	    {
+		# print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+	    }
+	}
+    }
 }
 
 
@@ -2793,6 +2854,17 @@ sub run
 
 sub start
 {
+    my $self = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    #t add the command definition
 }
 
 
