@@ -282,6 +282,10 @@ sub main
 
     my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output);
 
+    # create a test executor for running the tests following the requested type of output
+
+    my $executor = $option_output->new($execution_context);
+
     # loop over all module definitions
 
     foreach my $module_definition (@$test_modules)
@@ -329,13 +333,11 @@ sub main
 		next;
 	    }
 
+	    $executor->start();
+
 	    # prepare the command test environment
 
 	    my $preparation_result = $execution_context->preparation($module_definition, $command_definition);
-
-	    # create a test executor for this command following the requested type of output
-
-	    my $executor = $option_output->new($execution_context, $module_definition, $command_definition);
 
 	    # loop over all tests for this command
 
@@ -1138,6 +1140,54 @@ sub _execute
 }
 
 
+sub get_command_definition
+{
+    my $self = shift;
+
+    my $current = $self->_get_current();
+
+    my $command_definition = $current->[1];
+
+    return $command_definition;
+}
+
+
+sub get_command_test
+{
+    my $self = shift;
+
+    my $current = $self->_get_current();
+
+    my $command_test = $current->[2];
+
+    return $command_test;
+}
+
+
+sub _get_current
+{
+    my $self = shift;
+
+    my $path = $self->{path};
+
+    my $current = $path->[$#$path];
+
+    return $current;
+}
+
+
+sub get_module_definition
+{
+    my $self = shift;
+
+    my $current = $self->_get_current();
+
+    my $module_definition = $current->[0];
+
+    return $module_definition;
+}
+
+
 sub has_error_flag
 {
     my $self = shift;
@@ -1391,7 +1441,7 @@ sub reparation
 
     my $fd_output = $self->{fd_output};
 
-    my $module_definition = $self->{module_definition};
+    my $module_definition = $self->get_module_definition();
 
     my $module_name = $module_definition->{name};
 
@@ -1553,7 +1603,7 @@ sub terminate
 
     if (scalar @$path)
     {
-	my $module_definition = $self->{module_definition};
+	my $module_definition = $self->get_module_definition();
 
 	my $description = "module $module_definition->{description}";
 
@@ -1581,10 +1631,6 @@ sub new
 
     my $execution_context = shift;
 
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
     my $fd_output = $execution_context->{fd_output};
 
     my $options = shift || {};
@@ -1592,52 +1638,11 @@ sub new
     my $self
 	= {
 	   %$options,
-	   command_definition => $command_definition,
+	   execution_context => $execution_context,
 	   fd_output => $fd_output,
-	   module_definition => $module_definition,
 	  };
 
     bless $self, $package;
-
-    # we have to either instantiate an object that produces output ...
-
-    if ($command_definition->{class})
-    {
-	# instantiate the object
-
-	my $class = $command_definition->{class};
-
-	my $filename = $class . ".pm";
-
-	$filename =~ s(::)(/)g;
-
-	require $filename;
-
-	$self->{command_object} = eval "$class->new()";
-    }
-
-    # ... or run perl code that produces output
-
-    elsif (ref $command_definition->{command} eq 'CODE')
-    {
-	# code is already instantiated, nothing to do here
-    }
-
-    # ... or run a command that produces output
-
-    else
-    {
-	# start the command and connect with its I/O channels
-
-	#! this is similar to having a class name 'Expect' and calling Expect->new()
-	#! but with optimization to prevent spawning new commands unnecessarily
-
-	my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
-
-	$self->{expect_object} = $exp;
-
-	$self->{test_startup} = $test_startup;
-    }
 
     return $self;
 }
@@ -1649,7 +1654,11 @@ sub run
 
     my $command_test = shift;
 
-    my $command_definition = $self->{command_definition};
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
 
     my $command = $command_definition->{command};
 
@@ -2069,6 +2078,62 @@ sub run
 	  };
 
     return $test_result;
+}
+
+
+sub start
+{
+    my $self = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $fd_output = $self->{fd_output};
+
+    # we have to either instantiate an object that produces output ...
+
+    if ($command_definition->{class})
+    {
+	# instantiate the object
+
+	my $class = $command_definition->{class};
+
+	my $filename = $class . ".pm";
+
+	$filename =~ s(::)(/)g;
+
+	require $filename;
+
+	$self->{command_object} = eval "$class->new()";
+    }
+
+    # ... or run perl code that produces output
+
+    elsif (ref $command_definition->{command} eq 'CODE')
+    {
+	# code is already instantiated, nothing to do here
+    }
+
+    # ... or run a command that produces output
+
+    else
+    {
+	# start the command and connect with its I/O channels
+
+	#! this is similar to having a class name 'Expect' and calling Expect->new()
+	#! but with optimization to prevent spawning new commands unnecessarily
+
+	my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
+
+	$self->{expect_object} = $exp;
+
+	$self->{test_startup} = $test_startup;
+    }
+
+    return $self;
 }
 
 
@@ -2600,68 +2665,16 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 }
 
 
+package Heterarch::Test::Output::Formatter;
+
+
+our @ISA = ("Heterarch::Test::Executor");
+
+
 package Heterarch::Test::Output::HTMLTable;
 
 
-sub new
-{
-    my $package = shift;
-
-    my $execution_context = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $fd_output = $execution_context->{fd_output};
-
-    my $options = shift || {};
-
-    my $self
-	= {
-	   %$options,
-	   command_definition => $command_definition,
-	   fd_output => $fd_output,
-	   module_definition => $module_definition,
-	  };
-
-    bless $self, $package;
-
-    # we have to either instantiate an object that produces output ...
-
-    if ($command_definition->{class})
-    {
-	if ($command_definition->{output_html})
-	{
-	    # instantiate the object
-
-	    my $class = $command_definition->{class};
-
-	    my $filename = $class . ".pm";
-
-	    $filename =~ s(::)(/)g;
-
-	    require $filename;
-
-	    $self->{command_object} = eval "$class->new()";
-	}
-    }
-
-    # ... or run perl code that produces output
-
-    elsif (ref $command_definition->{command} eq 'CODE')
-    {
-	# code is already instantiated, nothing to do here
-    }
-
-    # ... or run a command that produces output
-
-    else
-    {
-    }
-
-    return $self;
-}
+our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
 sub run
@@ -2670,9 +2683,11 @@ sub run
 
     my $command_test = shift;
 
-    my $command_definition = $self->{command_definition};
+    my $execution_context = $self->{execution_context};
 
-    my $module_definition = $self->{module_definition};
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
 
     my $module_name = $module_definition->{name};
 
@@ -2694,68 +2709,15 @@ sub run
 }
 
 
+sub start
+{
+}
+
+
 package Heterarch::Test::Output::YAML;
 
 
-sub new
-{
-    my $package = shift;
-
-    my $execution_context = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $fd_output = $execution_context->{fd_output};
-
-    my $options = shift || {};
-
-    my $self
-	= {
-	   %$options,
-	   command_definition => $command_definition,
-	   fd_output => $fd_output,
-	   module_definition => $module_definition,
-	  };
-
-    bless $self, $package;
-
-    # we have to either instantiate an object that produces output ...
-
-    if ($command_definition->{class})
-    {
-	if ($command_definition->{output_yaml})
-	{
-	    # instantiate the object
-
-	    my $class = $command_definition->{class};
-
-	    my $filename = $class . ".pm";
-
-	    $filename =~ s(::)(/)g;
-
-	    require $filename;
-
-	    $self->{command_object} = eval "$class->new()";
-	}
-    }
-
-    # ... or run perl code that produces output
-
-    elsif (ref $command_definition->{command} eq 'CODE')
-    {
-	# code is already instantiated, nothing to do here
-    }
-
-    # ... or run a command that produces output
-
-    else
-    {
-    }
-
-    return $self;
-}
+our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
 sub run
@@ -2764,9 +2726,11 @@ sub run
 
     my $command_test = shift;
 
-    my $command_definition = $self->{command_definition};
+    my $execution_context = $self->{execution_context};
 
-    my $module_definition = $self->{module_definition};
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
 
     my $module_name = $module_definition->{name};
 
@@ -2824,6 +2788,11 @@ sub run
 	  };
 
     return $test_result;
+}
+
+
+sub start
+{
 }
 
 
