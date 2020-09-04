@@ -2795,42 +2795,7 @@ sub run
 
     my $module_name = $module_definition->{name};
 
-    if (not $global_test_report->{selected}->{$module_name})
-    {
-	$global_test_report->{selected}->{$module_name} = [];
-    }
-
     my $selected_module = $global_test_report->{selected}->{$module_name};
-
-    #! this is ugly: we miss a good context path to implement this in a clean way
-    #! a context path can be used to keep track which command definitions have been added to the result
-    #! this would prevent the lookup of the command definitions implemented here
-
-    my $this_command_definition_been_added
-	= (grep
-	   {
-	       my $result;
-
-	       my $command_definitions_array = $_;
-
-	       if (exists $command_definitions_array->{description}
-		   and $command_definitions_array->{description} eq $command_definition->{description})
-	       {
-		   $result = 1;
-	       }
-	       else
-	       {
-		   $result = 0;
-	       }
-
-	       $result;
-	   }
-	   @$selected_module);
-
-    if (not $this_command_definition_been_added)
-    {
-	push @$selected_module, { description => $command_definition->{description}, tests => [], };
-    }
 
     my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
 
@@ -2856,15 +2821,30 @@ sub start
 {
     my $self = shift;
 
+    # get the execution context
+
     my $execution_context = $self->{execution_context};
 
-    my $command_definition = $execution_context->get_command_definition();
+    # create an output entry for the module
+
+    #t we could add a counter here to keep the order of execution in the final yaml output
 
     my $module_definition = $execution_context->get_module_definition();
 
     my $module_name = $module_definition->{name};
 
-    #t add the command definition
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+
+    # create an output entry for the command definition
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    push @$selected_module, { description => $command_definition->{description}, tests => [], };
 }
 
 
