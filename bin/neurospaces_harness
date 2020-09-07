@@ -516,11 +516,11 @@ sub parse_options
     {
 	if ($option_output_html)
 	{
-	    $option_output = "Heterarch::Test::Output::HTMLTable";
+	    $option_output = "Heterarch::Test::Output::Formatter::HTMLTable";
 	}
 	elsif ($option_show)
 	{
-	    $option_output = "Heterarch::Test::Output::YAML";
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML";
 	}
 	else
 	{
@@ -2669,42 +2669,18 @@ package Heterarch::Test::Output::Formatter;
 our @ISA = ("Heterarch::Test::Executor");
 
 
-package Heterarch::Test::Output::HTMLTable;
+sub run
+{
+    die "$0: *** Error: this output formatter is not fully implemented.";
+
+    return undef;
+}
+
+
+package Heterarch::Test::Output::Formatter::HTMLTable;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
-
-
-sub run
-{
-    my $self = shift;
-
-    my $command_test = shift;
-
-    my $execution_context = $self->{execution_context};
-
-    my $command_definition = $execution_context->get_command_definition();
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    die "$0: *** Error: Please use the separate HTML convertor to generate HTML from the test specifications";
-
-    # always succeeds
-
-    my $test_result
-	= {
-	   after_match => "",
-	   before_match => "",
-	   error => "",
-	   expected => "",
-	   matched_pattern_position => "",
-	   successfully_matching_string => "",
-	  };
-
-    return $test_result;
-}
 
 
 sub start
@@ -2775,7 +2751,7 @@ sub start
 }
 
 
-package Heterarch::Test::Output::YAML;
+package Heterarch::Test::Output::Formatter::YAML;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
