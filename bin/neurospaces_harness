@@ -333,11 +333,11 @@ sub main
 		next;
 	    }
 
-	    $executor->start();
-
 	    # prepare the command test environment
 
 	    my $preparation_result = $execution_context->preparation($module_definition, $command_definition);
+
+	    $executor->start();
 
 	    # loop over all tests for this command
 
