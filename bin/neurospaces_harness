@@ -520,7 +520,7 @@ sub parse_options
 	}
 	elsif ($option_show)
 	{
-	    $option_output = "Heterarch::Test::Output::Formatter::YAML";
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Summary";
 	}
 	else
 	{
@@ -1666,13 +1666,7 @@ sub run
 
     # expect this output
 
-    my ($matched_pattern_position,
-	$error,
-	$successfully_matching_string,
-	$before_match,
-	$after_match);
-
-    my $expected;
+    my $test_result;
 
     # if the command_definition instantiated an object
 
@@ -1708,14 +1702,14 @@ sub run
 	{
 	    my $read = $command_test->{read};
 
-	    $error
+	    $test_result->{error}
 		= ($result eq $read
 		   ? ""
 		   : "$last_method returned $result, expected $read");
 
-	    $before_match = $result;
+	    $test_result->{before_match} = $result;
 
-	    $expected = $read;
+	    $test_result->{expected} = $read;
 	}
     }
 
@@ -1729,7 +1723,7 @@ sub run
 
 	my $directory = getcwd();
 
-	$error
+	$test_result->{error}
 	    = &$command
 	    (
 	     $command_test,
@@ -1836,29 +1830,29 @@ sub run
 	    {
 		my $produced = `$shell`;
 
-		$expected = defined $tester->{expected} ? $tester->{expected} : '';
+		$test_result->{expected} = defined $tester->{expected} ? $tester->{expected} : '';
 
 		#			    if ($expected)
 		{
 		    #				$expected = quotemeta $tester->{expected};
 
 		    if (($produced eq ''
-			 and $expected ne '')
+			 and $test_result->{expected} ne '')
 			or ($produced ne ''
-			    and $expected eq ''))
+			    and $test_result->{expected} eq ''))
 		    {
-			$error = "external tester produces output that is different from what is expected, one is empty, the other is not";
+			$test_result->{error} = "external tester produces output that is different from what is expected, one is empty, the other is not";
 
-			$before_match = $produced;
+			$test_result->{before_match} = $produced;
 		    }
-		    elsif ($produced =~ /$expected/)
+		    elsif ($produced =~ /$test_result->{expected}/)
 		    {
 		    }
 		    else
 		    {
-			$error = "external tester produces output that is different from what is expected";
+			$test_result->{error} = "external tester produces output that is different from what is expected";
 
-			$before_match = $produced;
+			$test_result->{before_match} = $produced;
 		    }
 		}
 		# 			    else
@@ -1890,30 +1884,47 @@ sub run
 		    }
 		}
 
-		($matched_pattern_position,
-		 $error,
-		 $successfully_matching_string,
-		 $before_match,
-		 $after_match)
+		my ($matched_pattern_position,
+		    $error,
+		    $successfully_matching_string,
+		    $before_match,
+		    $after_match)
 		    = $self->{expect_object}->expect($timeout, $read, );
 
-		$expected = $read;
+		$test_result
+		    = {
+		       matched_pattern_position => $matched_pattern_position,
+		       error => $error,
+		       successfully_matching_string => $successfully_matching_string,
+		       before_match => $before_match,
+		       after_match => $after_match,
+		       expected => $read,
+		      };
 	    }
 
 	    # if array, means regex match
 
 	    elsif (ref $read eq 'ARRAY')
 	    {
-		($matched_pattern_position,
-		 $error,
-		 $successfully_matching_string,
-		 $before_match,
-		 $after_match)
+		my ($matched_pattern_position,
+		    $error,
+		    $successfully_matching_string,
+		    $before_match,
+		    $after_match)
 		    = $self->{expect_object}->expect($timeout, @$read, );
 
-		#! skip the expect '-re' flag
+		$test_result
+		    = {
+		       matched_pattern_position => $matched_pattern_position,
+		       error => $error,
+		       successfully_matching_string => $successfully_matching_string,
+		       before_match => $before_match,
+		       after_match => $after_match,
 
-		$expected = $read->[1];
+		       #! skip the expect '-re' flag
+
+		       expected => $read->[1],
+		      };
 	    }
 
 	    # else, hash: one of several alternatives expected
@@ -1926,16 +1937,28 @@ sub run
 		{
 		    my $alternatives = $read->{alternatives};
 
-		    $expected = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
+		    $test_result->{expected} = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
 
 		    # read from the application
+
+		    my ($matched_pattern_position,
+			$error,
+			$successfully_matching_string,
+			$before_match,
+			$after_match);
 
 		    ($matched_pattern_position,
 		     $error,
 		     $successfully_matching_string,
 		     $before_match,
 		     $after_match)
-			= $self->{expect_object}->expect($timeout, "-re", $expected, );
+			= $self->{expect_object}->expect($timeout, "-re", $test_result->{expected}, );
+
+		    $test_result->{matched_pattern_position} = $matched_pattern_position;
+		    $test_result->{error} = $error;
+		    $test_result->{successfully_matching_string} = $successfully_matching_string;
+		    $test_result->{before_match} = $before_match;
+		    $test_result->{after_match} = $after_match;
 		}
 
 		# if an application output file is expected
@@ -1973,19 +1996,19 @@ sub run
 			$expected_output = $read->{expected_output};
 		    }
 
-		    $expected = $expected_output;
+		    $test_result->{expected} = $expected_output;
 
 		    if ($expected_output eq $application_output)
 		    {
-			$before_match = $application_output;
+			$test_result->{before_match} = $application_output;
 		    }
 		    else
 		    {
-			$before_match = $application_output;
+			$test_result->{before_match} = $application_output;
 
 			$read = $expected_output;
 
-			$error = 'expected_output does not match application_output';
+			$test_result->{error} = 'expected_output does not match application_output';
 		    }
 		}
 
@@ -2001,12 +2024,12 @@ sub run
 
 		    # and compare its output with the output of the application
 
-		    ($matched_pattern_position,
-		     $error,
-		     $successfully_matching_string,
-		     $before_match,
-		     $after_match)
-			= $self->{expect_object}->expect($timeout, $expected, );
+		    my ($matched_pattern_position,
+			$error,
+			$successfully_matching_string,
+			$before_match,
+			$after_match)
+			= $self->{expect_object}->expect($timeout, $test_result->{expected}, );
 
 		}
 		else
@@ -2034,7 +2057,7 @@ sub run
 
 	    # if things don't match
 
-	    if ($error)
+	    if ($test_result->{error})
 	    {
 		my $module_definition = $self->{module_definition};
 
@@ -2053,29 +2076,19 @@ sub run
 
 		    push @{$global_test_report->{numerical_compare}}, $command_test->{description};
 
-		    $error
+		    $test_result->{error}
 			= Neurospaces::Tester::Comparators::numerical
 			     (
 			      {
 			       description => $command_test->{description},
 			      },
-			      $before_match,
+			      $test_result->{before_match},
 			      $read,
-			      $error);
+			      $test_result->{error});
 		}
 	    }
 	}
     }
-
-    my $test_result
-	= {
-	   after_match => $after_match,
-	   before_match => $before_match,
-	   error => $error,
-	   expected => $expected,
-	   matched_pattern_position => $matched_pattern_position,
-	   successfully_matching_string => $successfully_matching_string,
-	  };
 
     return $test_result;
 }
@@ -2751,47 +2764,13 @@ sub start
 }
 
 
-package Heterarch::Test::Output::Formatter::YAML;
+package Heterarch::Test::Output::Formatter::YAML::Summary;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
-sub run
-{
-    my $self = shift;
-
-    my $command_test = shift;
-
-    my $execution_context = $self->{execution_context};
-
-    my $command_definition = $execution_context->get_command_definition();
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    my $selected_module = $global_test_report->{selected}->{$module_name};
-
-    my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
-
-    push @$selected_command_definitions, $command_test->{description};
-
-    # always succeeds
-
-    my $test_result
-	= {
-	   after_match => "",
-	   before_match => "",
-	   error => "",
-	   expected => "",
-	   matched_pattern_position => "",
-	   successfully_matching_string => "",
-	  };
-
-    return $test_result;
-}
-
+# create an output entry for the current command definition
 
 sub start
 {
@@ -2814,13 +2793,76 @@ sub start
 	$global_test_report->{selected}->{$module_name} = [];
     }
 
-    # create an output entry for the command definition
+    # create an output entry for the current command definition
 
     my $selected_module = $global_test_report->{selected}->{$module_name};
 
     my $command_definition = $execution_context->get_command_definition();
 
     push @$selected_module, { description => $command_definition->{description}, tests => [], };
+}
+
+
+# add the current test description to the summary
+
+sub run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    # get the current module summary
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    # get the current test summary
+
+    my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
+
+    # add the current test description to the summary
+
+    push @$selected_command_definitions, $command_test->{description};
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::Output::Definitions;
+
+
+our @ISA = ("Heterarch::Test::Executor");
+
+
+package Heterarch::Test::Output::List;
+
+
+# inherit from the yaml summary to automate text context tracking through its start sub
+
+our @ISA = ("Heterarch::Test::Output::Formatter::YAML::Summary");
+
+
+sub run
+{
 }
 
 
