@@ -1521,17 +1521,25 @@ sub start
 
     my $started;
 
+    # if this test is disabled
+
     if ($self->is_disabled($module_definition, $command_definition, $command_test))
     {
+	# return to skip it
+
 	return $started;
     }
+
+    # if this test has been flagged with an error
 
     if ($self->has_error_flag($module_definition, $command_definition, $command_test))
     {
+	# return to skip it
+
 	return $started;
     }
 
-    my $fd_output = $self->{fd_output};
+    # update the path of execution
 
     my $path = $self->{path};
 
@@ -1567,6 +1575,10 @@ sub start
 
 	$name = " ($module_definition->{name})";
     }
+
+    # give diagnostics
+
+    my $fd_output = $self->{fd_output};
 
     if (not defined $command_test)
     {
@@ -2093,6 +2105,13 @@ sub run
     return $test_result;
 }
 
+
+# instantiate the tester:
+#
+# 1. an object given its class.
+# 2. a piece perl code that is run.
+# 3. an interactive system shell command.
+#
 
 sub start
 {
