@@ -992,65 +992,6 @@ package Heterarch::Test::Element;
 package Heterarch::Test::ExecutionContext;
 
 
-sub end
-{
-    my $self = shift;
-
-    my $module_definition = shift;
-
-    my $command_definition = shift;
-
-    my $command_test = shift;
-
-    my $fd_output = $self->{fd_output};
-
-    my $module_name = $module_definition->{name};
-
-    my $active_element
-	= (defined $command_test
-	   ? $command_test
-	   : (defined $command_definition
-	      ? $command_definition
-	      : $module_definition));
-
-    my $description;
-
-    my $name;
-
-    if (defined $command_test)
-    {
-	$description = "*** Test: $command_test->{description}";
-
-	$name = "";
-    }
-    elsif (defined $command_definition)
-    {
-	$description = "command $command_definition->{description}";
-
-	$name = " ($command_definition->{command})";
-    }
-    else
-    {
-	$description = "module $module_definition->{description}";
-
-	$name = " ($module_definition->{name})";
-    }
-
-    if (defined $command_test)
-    {
-    }
-    else
-    {
-	Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
-    }
-
-    my $path = $self->{path};
-
-    my $element = pop @$path;
-}
-
-
 sub _execute
 {
     my $executor_element = shift;
@@ -1137,6 +1078,99 @@ sub _execute
 }
 
 
+sub _get_current
+{
+    my $self = shift;
+
+    my $path = $self->{path};
+
+    my $current = $path->[$#$path];
+
+    return $current;
+}
+
+
+sub _push_current
+{
+    my $self = shift;
+
+    my $current = shift;
+
+    my $path = $self->{path};
+
+    push @$path, $current;
+}
+
+
+sub _pop_current
+{
+    my $self = shift;
+
+    my $path = $self->{path};
+
+    my $result = pop @$path;
+
+    return $result;
+}
+
+
+sub end
+{
+    my $self = shift;
+
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $description;
+
+    my $name;
+
+    if (defined $command_test)
+    {
+	$description = "*** Test: $command_test->{description}";
+
+	$name = "";
+    }
+    elsif (defined $command_definition)
+    {
+	$description = "command $command_definition->{description}";
+
+	$name = " ($command_definition->{command})";
+    }
+    else
+    {
+	$description = "module $module_definition->{description}";
+
+	$name = " ($module_definition->{name})";
+    }
+
+    if (defined $command_test)
+    {
+    }
+    else
+    {
+	Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
+Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+    }
+
+    $self->_pop_current();
+}
+
+
 sub get_command_definition
 {
     my $self = shift;
@@ -1158,18 +1192,6 @@ sub get_command_test
     my $command_test = $current->[2];
 
     return $command_test;
-}
-
-
-sub _get_current
-{
-    my $self = shift;
-
-    my $path = $self->{path};
-
-    my $current = $path->[$#$path];
-
-    return $current;
 }
 
 
@@ -1538,9 +1560,7 @@ sub start
 
     # update the path of execution
 
-    my $path = $self->{path};
-
-    push @$path, [ $module_definition, $command_definition, $command_test, ];
+    $self->_push_current( [ $module_definition, $command_definition, $command_test, ] );
 
     my $comment;
 
@@ -2879,6 +2899,16 @@ our @ISA = ("Heterarch::Test::Output::Formatter::YAML::Summary");
 
 sub run
 {
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
 }
 
 
