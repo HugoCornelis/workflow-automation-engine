@@ -1731,14 +1731,14 @@ sub run
 	{
 	    my $read = $command_test->{read};
 
-	    $test_result->{error}
-		= ($result eq $read
-		   ? ""
-		   : "$last_method returned $result, expected $read");
-
-	    $test_result->{before_match} = $result;
-
-	    $test_result->{expected} = $read;
+	    $test_result
+		= {
+		   error => ($result eq $read
+			     ? ""
+			     : "$last_method returned $result, expected $read"),
+		   before_match => $result,
+		   expected => $read,
+		  };
 	}
     }
 
@@ -1752,7 +1752,7 @@ sub run
 
 	my $directory = getcwd();
 
-	$test_result->{error}
+	my $error
 	    = &$command
 	    (
 	     $command_test,
@@ -1762,6 +1762,11 @@ sub run
 			},
 	     },
 	    );
+
+	$test_result
+	    = {
+	       error => $error,
+	      };
     }
 
     # else the command definition runs a shell command
@@ -1859,7 +1864,10 @@ sub run
 	    {
 		my $produced = `$shell`;
 
-		$test_result->{expected} = defined $tester->{expected} ? $tester->{expected} : '';
+		$test_result
+		    = {
+		       expected => defined $tester->{expected} ? $tester->{expected} : '',
+		      };
 
 		#			    if ($expected)
 		{
@@ -2025,7 +2033,10 @@ sub run
 			$expected_output = $read->{expected_output};
 		    }
 
-		    $test_result->{expected} = $expected_output;
+		    $test_result
+			= {
+			   expected => $expected_output,
+			  };
 
 		    if ($expected_output eq $application_output)
 		    {
@@ -2058,7 +2069,7 @@ sub run
 			$successfully_matching_string,
 			$before_match,
 			$after_match)
-			= $self->{expect_object}->expect($timeout, $test_result->{expected}, );
+			= $self->{expect_object}->expect($timeout, $expected, );
 
 		}
 		else
@@ -2083,6 +2094,8 @@ sub run
 
 		$global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
 	    }
+
+	    # almost correct processing
 
 	    # if things don't match
 
