@@ -347,6 +347,10 @@ sub main
 	    {
 		bless $command_test, "Heterarch::Test::CommandTest";
 
+		# lookup the class for this command
+
+		$command_test->rebless();
+
 		# emit comment if any
 
 		my $started = $execution_context->start($module_definition, $command_definition, $command_test);
@@ -984,6 +988,277 @@ package Heterarch::Test::CommandTest;
 
 
 our @ISA = ("Heterarch::Test::Element");
+
+
+sub rebless
+{
+    my $command_test = shift;
+
+    my $target_package = "Heterarch::Test::CommandTest";
+
+    if (ref $command_test->{write} eq 'ARRAY')
+    {
+	# command_object
+
+	$target_package = "Heterarch::Test::CommandTest::CommandObject";
+
+	my $writes = $command_test->{write};
+
+	foreach my $write (@$writes)
+	{
+	    my $method = $write->{method};
+
+	    my $arguments = $write->{arguments};
+	}
+
+	# compare the read data with what is expected
+
+	if (exists $command_test->{read})
+	{
+	    my $read = $command_test->{read};
+	}
+    }
+
+    # if the command_definition has executable perl code
+
+    # elsif (ref $command eq 'CODE')
+    # {
+	# $target_package = "Heterarch::Test::CommandTest::PerlCode";
+
+    # }
+
+    # else the command definition runs a shell command
+
+    else
+    {
+	# set read, wait and write strings
+
+	$target_package = "Heterarch::Test::CommandTest::Interactive";
+
+	my $read = $command_test->{read};
+
+	my $wait = $command_test->{wait};
+
+	my $write = $command_test->{write};
+
+	# set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
+
+	my $timeout
+	    = (defined $command_test->{timeout}
+	       ? $command_test->{timeout} * $option_timeout_multiplier
+	       : (0
+		  ? 4 * $option_timeout_multiplier
+		  : 2 * $option_timeout_multiplier));
+
+	# write
+
+	if (ref $write eq 'HASH')
+	{
+	}
+	elsif (defined $write)
+	{
+	    # send write to the command under test via the expect object
+	}
+
+	# wait
+
+	if ($wait)
+	{
+	    # wait for $wait seconds
+	}
+
+	# check the shell command that will be executed with a timeout
+
+	my $shell = $command_test->{shell};
+
+	if (ref $shell eq 'HASH')
+	{
+	    #! not sure what this can be
+	}
+	elsif (defined $shell)
+	{
+	    # run the command for a maximum of $timeout seconds
+
+	    # fall through
+	}
+
+	# if there is an external application to test the final output
+
+	#! the previous shell command was a post-processor, this one is a tester
+
+	my $tester = $command_test->{tester};
+
+	if ($tester)
+	{
+	    $target_package = "Heterarch::Test::CommandTest::Interactive::ShellTester";
+
+	    # set the external tester that compares the generated output with what is expected
+
+	    #! the external tester runs an executable shell command
+
+	    my $shell = $tester->{shell};
+
+	    # there must be a shell command we should run
+
+	    if ($shell)
+	    {
+		my $produced = `$shell`;
+
+		my $test_result
+		    = {
+		       expected => defined $tester->{expected} ? $tester->{expected} : '',
+		      };
+
+		if (($produced eq ''
+		     and $test_result->{expected} ne '')
+		    or ($produced ne ''
+			and $test_result->{expected} eq ''))
+		{
+		    $test_result->{error} = "external tester produces output that is different from what is expected, one is empty, the other is not";
+
+		    $test_result->{before_match} = $produced;
+		}
+		elsif ($produced =~ /$test_result->{expected}/)
+		{
+		}
+		else
+		{
+		    $test_result->{error} = "the external tester produces output that is different from the expected output";
+
+		    $test_result->{before_match} = $produced;
+		}
+	    }
+	    else
+	    {
+		die "$0: *** Error: external testers must have a shell command";
+	    }
+	}
+
+	# read
+
+	elsif (defined $read)
+	{
+	    # if literal text expected
+
+	    if (!ref $read)
+	    {
+		if (exists $command_test->{white_space})
+		{
+		    if ($command_test->{white_space} eq 'convert seen 0a to 0d 0a newlines')
+		    {
+			$read =~ s(\x0a)(\x0d\x0a)g;
+		    }
+		}
+
+		$target_package = "Heterarch::Test::CommandTest::Interactive::Literal";
+
+		# expect $read for output
+	    }
+
+	    # if array, means regex match
+
+	    elsif (ref $read eq 'ARRAY')
+	    {
+		# expect $read to match as a regex with the output
+
+		$target_package = "Heterarch::Test::CommandTest::Interactive::Regex";
+
+	    }
+
+	    # else, hash: one of several alternatives expected
+
+	    else
+	    {
+		# compose the alternatives regex
+
+		if ($read->{alternatives})
+		{
+		    # expect that the output literally matches with one of the given alternatives
+
+		    $target_package = "Heterarch::Test::CommandTest::Interactive::Alternatives";
+
+		    my $alternatives = $read->{alternatives};
+		}
+
+		# if an application output file is expected
+
+		elsif ($read->{application_output_file})
+		{
+		    $target_package = "Heterarch::Test::CommandTest::Interactive::File";
+
+		    # read it
+
+		    my $application_output_file = $read->{application_output_file};
+
+		    # and literally compare it with an expected output file or with the {expected_output}
+
+		    my $expected_output_file = $read->{expected_output_file};
+
+		    local $/;
+
+		    my $application_output = `cat "$application_output_file"`;
+
+		    if ($expected_output_file)
+		    {
+		    }
+		    elsif (defined $read->{expected_output})
+		    {
+		    }
+		}
+
+		# if there is a shell command given
+
+		elsif ($read->{shell})
+		{
+		    $target_package = "Heterarch::Test::CommandTest::Interactive::Shell";
+
+		    # run it and capture its output
+
+		    my $shell = $read->{shell};
+
+		    # and compare its output with the output of the application
+		}
+		else
+		{
+		    my $description = $command_test->{description};
+
+		    die "test not understood by $0, aborting (illegal read clause for $description)";
+		}
+	    }
+	}
+    }
+
+    # almost correct processing
+
+    #! perl code does not produce a full test result object, so we cannot try to correct an almost correct result
+
+    # {
+    # 	# if things don't match
+
+    # 	{
+	    # # if allowed to compare numerically
+
+	    # if ((!$command_test->{string_only}
+	    # 	 && $option_numerical_compare)
+
+	    # 	# or forced to compare numerically
+
+	    # 	|| $command_test->{numerical_compare}
+	    # 	|| $command_definition->{numerical_compare}
+	    # 	|| $module_definition->{numerical_compare})
+	    # {
+	    # }
+    # 	}
+    # }
+
+    # rebless
+
+    bless $command_test, $target_package;
+
+    # return result
+
+    return $command_test;
+}
 
 
 package Heterarch::Test::Element;
@@ -2058,7 +2333,7 @@ sub run
 
 		elsif ($read->{shell})
 		{
-		    # run it
+		    # run it and capture its output
 
 		    my $shell = $read->{shell};
 
