@@ -1447,45 +1447,41 @@ sub run
 
     my $command_object = $executor->{command_object};
 
-    if ($command_object
-	and (ref $self->{write} eq 'ARRAY'))
+    # write data to the object using the given methods
+    # and arguments and obtain a result from the
+    # object
+
+    my $result;
+
+    my $last_method;
+
+    my $writes = $self->{write};
+
+    foreach my $write (@$writes)
     {
-	# write data to the object using the given methods
-	# and arguments and obtain a result from the
-	# object
+	my $method = $write->{method};
 
-	my $result;
+	$last_method = $method;
 
-	my $last_method;
+	my $arguments = $write->{arguments};
 
-	my $writes = $self->{write};
+	$result = $command_object->$method(@$arguments);
+    }
 
-	foreach my $write (@$writes)
-	{
-	    my $method = $write->{method};
+    # compare the read data with what is expected
 
-	    $last_method = $method;
+    if (exists $self->{read})
+    {
+	my $read = $self->{read};
 
-	    my $arguments = $write->{arguments};
-
-	    $result = $command_object->$method(@$arguments);
-	}
-
-	# compare the read data with what is expected
-
-	if (exists $self->{read})
-	{
-	    my $read = $self->{read};
-
-	    $test_result
-		= {
-		   error => ($result eq $read
-			     ? ""
-			     : "$last_method returned $result, expected $read"),
-		   before_match => $result,
-		   expected => $read,
-		  };
-	}
+	$test_result
+	    = {
+	       error => ($result eq $read
+			 ? ""
+			 : "$last_method returned $result, expected $read"),
+	       before_match => $result,
+	       expected => $read,
+	      };
     }
 
     # try correcting
@@ -1708,57 +1704,40 @@ sub run
 
     my $tester = $self->{tester};
 
-    if ($tester)
-    {
-	# set the external tester that compares the generated output with what is expected
+    # set the external tester that compares the generated output with what is expected
 
 	#! the external tester runs an executable shell command
 
-	my $shell = $tester->{shell};
+    my $shell = $tester->{shell};
 
-	# there must be a shell command we should run
+    my $produced = `$shell`;
 
-	if ($shell)
-	{
-	    my $produced = `$shell`;
+    $test_result
+	= {
+	   expected => defined $tester->{expected} ? $tester->{expected} : '',
+	  };
 
-	    $test_result
-		= {
-		   expected => defined $tester->{expected} ? $tester->{expected} : '',
-		  };
+    #			    if ($expected)
+    #				$expected = quotemeta $tester->{expected};
 
-	    #			    if ($expected)
-	    {
-		#				$expected = quotemeta $tester->{expected};
+    if (($produced eq ''
+	 and $test_result->{expected} ne '')
+	or ($produced ne ''
+	    and $test_result->{expected} eq ''))
+    {
+	$test_result->{error}
+	    = "external tester produces output that is different from what is expected, one is empty, the other is not";
 
-		if (($produced eq ''
-		     and $test_result->{expected} ne '')
-		    or ($produced ne ''
-			and $test_result->{expected} eq ''))
-		{
-		    $test_result->{error} = "external tester produces output that is different from what is expected, one is empty, the other is not";
+	$test_result->{before_match} = $produced;
+    }
+    elsif ($produced =~ /$test_result->{expected}/)
+    {
+    }
+    else
+    {
+	$test_result->{error} = "the external tester produces output that is different from the expected output";
 
-		    $test_result->{before_match} = $produced;
-		}
-		elsif ($produced =~ /$test_result->{expected}/)
-		{
-		}
-		else
-		{
-		    $test_result->{error} = "the external tester produces output that is different from the expected output";
-
-		    $test_result->{before_match} = $produced;
-		}
-	    }
-	    # 			    else
-	    # 			    {
-	    # 				die "$0: *** Error: external testers must have expected output";
-	    # 			    }
-	}
-	else
-	{
-	    die "$0: *** Error: external testers must have a shell command";
-	}
+	$test_result->{before_match} = $produced;
     }
 
     # try correcting
@@ -1817,44 +1796,36 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # read
+    # if literal text expected
 
-    if (defined $read)
+    if (exists $self->{white_space})
     {
-	# if literal text expected
-
-	if (!ref $read)
+	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 	{
-	    if (exists $self->{white_space})
-	    {
-		if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
-		{
-		    print $fd_output "*** Converting seen 0a to 0d 0a newlines\n";
+	    print $fd_output "*** Converting seen 0a to 0d 0a newlines\n";
 
-		    $read =~ s(\x0a)(\x0d\x0a)g;
-		}
-	    }
-
-	    my $timeout = $self->get_timeout();
-
-	    my ($matched_pattern_position,
-		$error,
-		$successfully_matching_string,
-		$before_match,
-		$after_match)
-		= $executor->{expect_object}->expect($timeout, $read, );
-
-	    $test_result
-		= {
-		   matched_pattern_position => $matched_pattern_position,
-		   error => $error,
-		   successfully_matching_string => $successfully_matching_string,
-		   before_match => $before_match,
-		   after_match => $after_match,
-		   expected => $read,
-		  };
+	    $read =~ s(\x0a)(\x0d\x0a)g;
 	}
     }
+
+    my $timeout = $self->get_timeout();
+
+    my ($matched_pattern_position,
+	$error,
+	$successfully_matching_string,
+	$before_match,
+	$after_match)
+	= $executor->{expect_object}->expect($timeout, $read, );
+
+    $test_result
+	= {
+	   matched_pattern_position => $matched_pattern_position,
+	   error => $error,
+	   successfully_matching_string => $successfully_matching_string,
+	   before_match => $before_match,
+	   after_match => $after_match,
+	   expected => $read,
+	  };
 
     # try correcting
 
@@ -1910,37 +1881,29 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # read
+    # if array, means regex match
 
-    if (defined $read)
-    {
-	# if array, means regex match
+    my $timeout = $self->get_timeout();
 
-	if (ref $read eq 'ARRAY')
-	{
-	    my $timeout = $self->get_timeout();
+    my ($matched_pattern_position,
+	$error,
+	$successfully_matching_string,
+	$before_match,
+	$after_match)
+	= $executor->{expect_object}->expect($timeout, @$read, );
 
-	    my ($matched_pattern_position,
-		$error,
-		$successfully_matching_string,
-		$before_match,
-		$after_match)
-		= $executor->{expect_object}->expect($timeout, @$read, );
+    $test_result
+	= {
+	   matched_pattern_position => $matched_pattern_position,
+	   error => $error,
+	   successfully_matching_string => $successfully_matching_string,
+	   before_match => $before_match,
+	   after_match => $after_match,
 
-	    $test_result
-		= {
-		   matched_pattern_position => $matched_pattern_position,
-		   error => $error,
-		   successfully_matching_string => $successfully_matching_string,
-		   before_match => $before_match,
-		   after_match => $after_match,
+	   #! skip the expect '-re' flag
 
-		   #! skip the expect '-re' flag
-
-		   expected => $read->[1],
-		  };
-	}
-    }
+	   expected => $read->[1],
+	  };
 
     # try correcting
 
@@ -1998,36 +1961,28 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # read
+    # compose the alternatives regex
 
-    if (defined $read)
-    {
-	# compose the alternatives regex
+    my $alternatives = $read->{alternatives};
 
-	if ($read->{alternatives})
-	{
-	    my $alternatives = $read->{alternatives};
+    $test_result->{expected} = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
 
-	    $test_result->{expected} = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
+    # read from the application
 
-	    # read from the application
+    my $timeout = $self->get_timeout();
 
-	    my $timeout = $self->get_timeout();
+    my ($matched_pattern_position,
+	$error,
+	$successfully_matching_string,
+	$before_match,
+	$after_match)
+	= $executor->{expect_object}->expect($timeout, "-re", $test_result->{expected}, );
 
-	    my ($matched_pattern_position,
-		$error,
-		$successfully_matching_string,
-		$before_match,
-		$after_match)
-		= $executor->{expect_object}->expect($timeout, "-re", $test_result->{expected}, );
-
-	    $test_result->{matched_pattern_position} = $matched_pattern_position;
-	    $test_result->{error} = $error;
-	    $test_result->{successfully_matching_string} = $successfully_matching_string;
-	    $test_result->{before_match} = $before_match;
-	    $test_result->{after_match} = $after_match;
-	}
-    }
+    $test_result->{matched_pattern_position} = $matched_pattern_position;
+    $test_result->{error} = $error;
+    $test_result->{successfully_matching_string} = $successfully_matching_string;
+    $test_result->{before_match} = $before_match;
+    $test_result->{after_match} = $after_match;
 
     # try correcting
 
@@ -2085,63 +2040,55 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # read
+    # if an application output file is expected
 
-    if (defined $read)
+    # read it
+
+    my $application_output_file = $read->{application_output_file};
+
+    my $pwd = `pwd`;
+
+    chomp $pwd;
+
+    print $fd_output "*** Application output file: $application_output_file (in $pwd)\n";
+
+    # and compare it with an expected output file
+
+    my $expected_output_file = $read->{expected_output_file};
+
+    local $/;
+
+    my $application_output = `cat "$application_output_file"`;
+
+    my $expected_output;
+
+    if ($expected_output_file)
     {
-	# if an application output file is expected
+	print $fd_output "*** Expected output file: $expected_output_file\n";
 
-	if ($read->{application_output_file})
-	{
-	    # read it
+	$expected_output = `cat "$expected_output_file"`;
+    }
+    elsif (defined $read->{expected_output})
+    {
+	$expected_output = $read->{expected_output};
+    }
 
-	    my $application_output_file = $read->{application_output_file};
+    $test_result
+	= {
+	   expected => $expected_output,
+	  };
 
-	    my $pwd = `pwd`;
+    if ($expected_output eq $application_output)
+    {
+	$test_result->{before_match} = $application_output;
+    }
+    else
+    {
+	$test_result->{before_match} = $application_output;
 
-	    chomp $pwd;
+	$read = $expected_output;
 
-	    print $fd_output "*** Application output file: $application_output_file (in $pwd)\n";
-
-	    # and compare it with an expected output file
-
-	    my $expected_output_file = $read->{expected_output_file};
-
-	    local $/;
-
-	    my $application_output = `cat "$application_output_file"`;
-
-	    my $expected_output;
-
-	    if ($expected_output_file)
-	    {
-		print $fd_output "*** Expected output file: $expected_output_file\n";
-
-		$expected_output = `cat "$expected_output_file"`;
-	    }
-	    elsif (defined $read->{expected_output})
-	    {
-		$expected_output = $read->{expected_output};
-	    }
-
-	    $test_result
-		= {
-		   expected => $expected_output,
-		  };
-
-	    if ($expected_output eq $application_output)
-	    {
-		$test_result->{before_match} = $application_output;
-	    }
-	    else
-	    {
-		$test_result->{before_match} = $application_output;
-
-		$read = $expected_output;
-
-		$test_result->{error} = 'expected_output does not match application_output';
-	    }
-	}
+	$test_result->{error} = 'expected_output does not match application_output';
     }
 
     # try correcting
@@ -2200,42 +2147,34 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # read
+    # if there is a shell command given
 
-    if (defined $read)
-    {
-	# if there is a shell command given
+    # run it and capture its output
 
-	if ($read->{shell})
-	{
-	    # run it and capture its output
+    my $shell = $read->{shell};
 
-	    my $shell = $read->{shell};
+    my $expected = `$shell`;
 
-	    my $expected = `$shell`;
+    # and compare its output with the output of the application
 
-	    # and compare its output with the output of the application
+    my $timeout = $self->get_timeout();
 
-	    my $timeout = $self->get_timeout();
+    my ($matched_pattern_position,
+	$error,
+	$successfully_matching_string,
+	$before_match,
+	$after_match)
+	= $executor->{expect_object}->expect($timeout, $expected, );
 
-	    my ($matched_pattern_position,
-		$error,
-		$successfully_matching_string,
-		$before_match,
-		$after_match)
-		= $executor->{expect_object}->expect($timeout, $expected, );
-
-	    $test_result
-		= {
-		   matched_pattern_position => $matched_pattern_position,
-		   error => $error,
-		   successfully_matching_string => $successfully_matching_string,
-		   before_match => $before_match,
-		   after_match => $after_match,
-		   expected => $expected,
-		  };
-	}
-    }
+    $test_result
+	= {
+	   matched_pattern_position => $matched_pattern_position,
+	   error => $error,
+	   successfully_matching_string => $successfully_matching_string,
+	   before_match => $before_match,
+	   after_match => $after_match,
+	   expected => $expected,
+	  };
 
     # try correcting
 
