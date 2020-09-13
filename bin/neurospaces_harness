@@ -2938,6 +2938,11 @@ sub new
 }
 
 
+# this executor trivially delegates this call to the command_test object
+#
+# a derived class can inspect the elements found in the test
+# specification and, for instance, print them to a file.
+
 sub run
 {
     my $self = shift;
