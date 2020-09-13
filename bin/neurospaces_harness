@@ -990,6 +990,105 @@ package Heterarch::Test::CommandTest;
 our @ISA = ("Heterarch::Test::Element");
 
 
+sub after_run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $test_result = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    my $time_start = $self->{time_start};
+
+    my $time_elapsed = tv_interval($time_start);
+
+    # fill in the elapsed time in the report
+
+    if ($option_timings)
+    {
+	my $module_definition = $self->{module_definition};
+
+	my $module_name = $module_definition->{name};
+
+	my $description = $self->{description};
+
+	$global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
+    }
+
+    # attempt to correct if the result is almost correct
+
+    #! perl code does not produce a full test result object, so we cannot try to correct an almost correct result
+
+    if (not (ref $command eq 'CODE'))
+    {
+	# if things don't match
+
+	if ($test_result->{error})
+	{
+	    my $module_definition = $self->{module_definition};
+
+	    # if allowed to compare numerically
+
+	    if ((!$self->{string_only}
+		 && $option_numerical_compare)
+
+		# or forced to compare numerically
+
+		|| $self->{numerical_compare}
+		|| $command_definition->{numerical_compare}
+		|| $module_definition->{numerical_compare})
+	    {
+		# compare numerically
+
+		push @{$global_test_report->{numerical_compare}}, $self->{description};
+
+		#! this call uses the $read variable, making it harder to bring this call
+		#! outside the condition that tests if this variable is defined
+		#! this variable contains the expected output
+
+		$test_result->{error}
+		    = Neurospaces::Tester::Comparators::numerical
+		        (
+			 {
+			  description => $self->{description},
+			 },
+			 $test_result->{before_match},
+			 $test_result->{expected},
+			 $test_result->{error});
+	    }
+	}
+    }
+
+    # return result
+
+    return $test_result;
+}
+
+
+sub before_run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    # record time
+
+    use Time::HiRes qw(gettimeofday tv_interval);
+
+    my $time_start = [ gettimeofday(), ];
+
+    $self->{time_start} = $time_start;
+}
+
+
 sub rebless
 {
     my $command_test = shift;
@@ -1258,6 +1357,893 @@ sub rebless
     # return result
 
     return $command_test;
+}
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # if the command_definition has executable perl code
+
+    if (ref $command eq 'CODE')
+    {
+	# execute the perl code
+
+	use Cwd;
+
+	my $directory = getcwd();
+
+	my $error
+	    = &$command
+	    (
+	     $self,
+	     {
+	      c_code => {
+			 directory => $directory,
+			},
+	     },
+	    );
+
+	$test_result
+	    = {
+	       error => $error,
+	      };
+    }
+
+    # return result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::CommandObject;
+
+
+our @ISA = ("Heterarch::Test::CommandTest");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # if the command_definition instantiated an object
+
+    my $command_object = $executor->{command_object};
+
+    if ($command_object
+	and (ref $self->{write} eq 'ARRAY'))
+    {
+	# write data to the object using the given methods
+	# and arguments and obtain a result from the
+	# object
+
+	my $result;
+
+	my $last_method;
+
+	my $writes = $self->{write};
+
+	foreach my $write (@$writes)
+	{
+	    my $method = $write->{method};
+
+	    $last_method = $method;
+
+	    my $arguments = $write->{arguments};
+
+	    $result = $command_object->$method(@$arguments);
+	}
+
+	# compare the read data with what is expected
+
+	if (exists $self->{read})
+	{
+	    my $read = $self->{read};
+
+	    $test_result
+		= {
+		   error => ($result eq $read
+			     ? ""
+			     : "$last_method returned $result, expected $read"),
+		   before_match => $result,
+		   expected => $read,
+		  };
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive;
+
+
+our @ISA = ("Heterarch::Test::CommandTest");
+
+
+sub get_timeout
+{
+    my $self = shift;
+
+    my $test_startup = $self->{test_startup};
+
+    my $result
+	= (defined $self->{timeout}
+	   ? $self->{timeout} * $option_timeout_multiplier
+	   : ($test_startup
+	      ? 4 * $option_timeout_multiplier
+	      : 2 * $option_timeout_multiplier));
+
+    return $result;
+}
+
+
+sub prepare_run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    # check the shell command that will be executed with a timeout
+
+    my $shell = $self->{shell};
+
+    if (ref $shell eq 'HASH')
+    {
+	#! not sure what this can be
+    }
+    elsif (defined $shell)
+    {
+	# run the command for a maximum of $timeout seconds
+
+	# allow it to post-process results generated by the command that is being tested
+
+	my $timeout = $self->get_timeout();
+
+	print $fd_output "*** Shell: timeout $timeout $shell\n";
+
+	system "timeout $timeout $shell";
+
+	#t check the output or status of the shell command?
+
+	# fall through
+    }
+
+    #t return something sensible
+
+    return $?;
+}
+
+
+sub process_wait
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $wait = $self->{wait};
+
+    # wait
+
+    if ($wait)
+    {
+	print $fd_output "*** Wait: $wait\n";
+
+	select(undef, undef, undef, $wait);
+    }
+
+}
+
+
+sub process_write
+{
+    my $self = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $write = $self->{write};
+
+    # write
+
+    if (ref $write eq 'HASH')
+    {
+    }
+    elsif (defined $write)
+    {
+	print $fd_output "*** Write: $write\n";
+
+	$executor->{expect_object}->send("$write\n");
+    }
+}
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # set read, wait and write strings
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::ShellTester;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # set read, wait and write strings
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # if there is an external application to test the final output
+
+    #! the previous shell command was a post-processor, this one is a tester
+
+    my $tester = $self->{tester};
+
+    if ($tester)
+    {
+	# set the external tester that compares the generated output with what is expected
+
+	#! the external tester runs an executable shell command
+
+	my $shell = $tester->{shell};
+
+	# there must be a shell command we should run
+
+	if ($shell)
+	{
+	    my $produced = `$shell`;
+
+	    $test_result
+		= {
+		   expected => defined $tester->{expected} ? $tester->{expected} : '',
+		  };
+
+	    #			    if ($expected)
+	    {
+		#				$expected = quotemeta $tester->{expected};
+
+		if (($produced eq ''
+		     and $test_result->{expected} ne '')
+		    or ($produced ne ''
+			and $test_result->{expected} eq ''))
+		{
+		    $test_result->{error} = "external tester produces output that is different from what is expected, one is empty, the other is not";
+
+		    $test_result->{before_match} = $produced;
+		}
+		elsif ($produced =~ /$test_result->{expected}/)
+		{
+		}
+		else
+		{
+		    $test_result->{error} = "the external tester produces output that is different from the expected output";
+
+		    $test_result->{before_match} = $produced;
+		}
+	    }
+	    # 			    else
+	    # 			    {
+	    # 				die "$0: *** Error: external testers must have expected output";
+	    # 			    }
+	}
+	else
+	{
+	    die "$0: *** Error: external testers must have a shell command";
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::Literal;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # set read, wait and write strings
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # read
+
+    if (defined $read)
+    {
+	# if literal text expected
+
+	if (!ref $read)
+	{
+	    if (exists $self->{white_space})
+	    {
+		if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
+		{
+		    print $fd_output "*** Converting seen 0a to 0d 0a newlines\n";
+
+		    $read =~ s(\x0a)(\x0d\x0a)g;
+		}
+	    }
+
+	    my $timeout = $self->get_timeout();
+
+	    my ($matched_pattern_position,
+		$error,
+		$successfully_matching_string,
+		$before_match,
+		$after_match)
+		= $executor->{expect_object}->expect($timeout, $read, );
+
+	    $test_result
+		= {
+		   matched_pattern_position => $matched_pattern_position,
+		   error => $error,
+		   successfully_matching_string => $successfully_matching_string,
+		   before_match => $before_match,
+		   after_match => $after_match,
+		   expected => $read,
+		  };
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::Regex;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # read
+
+    if (defined $read)
+    {
+	# if array, means regex match
+
+	if (ref $read eq 'ARRAY')
+	{
+	    my $timeout = $self->get_timeout();
+
+	    my ($matched_pattern_position,
+		$error,
+		$successfully_matching_string,
+		$before_match,
+		$after_match)
+		= $executor->{expect_object}->expect($timeout, @$read, );
+
+	    $test_result
+		= {
+		   matched_pattern_position => $matched_pattern_position,
+		   error => $error,
+		   successfully_matching_string => $successfully_matching_string,
+		   before_match => $before_match,
+		   after_match => $after_match,
+
+		   #! skip the expect '-re' flag
+
+		   expected => $read->[1],
+		  };
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::Alternatives;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # set read, wait and write strings
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # read
+
+    if (defined $read)
+    {
+	# compose the alternatives regex
+
+	if ($read->{alternatives})
+	{
+	    my $alternatives = $read->{alternatives};
+
+	    $test_result->{expected} = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
+
+	    # read from the application
+
+	    my $timeout = $self->get_timeout();
+
+	    my ($matched_pattern_position,
+		$error,
+		$successfully_matching_string,
+		$before_match,
+		$after_match)
+		= $executor->{expect_object}->expect($timeout, "-re", $test_result->{expected}, );
+
+	    $test_result->{matched_pattern_position} = $matched_pattern_position;
+	    $test_result->{error} = $error;
+	    $test_result->{successfully_matching_string} = $successfully_matching_string;
+	    $test_result->{before_match} = $before_match;
+	    $test_result->{after_match} = $after_match;
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::File;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # set read, wait and write strings
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # read
+
+    if (defined $read)
+    {
+	# if an application output file is expected
+
+	if ($read->{application_output_file})
+	{
+	    # read it
+
+	    my $application_output_file = $read->{application_output_file};
+
+	    my $pwd = `pwd`;
+
+	    chomp $pwd;
+
+	    print $fd_output "*** Application output file: $application_output_file (in $pwd)\n";
+
+	    # and compare it with an expected output file
+
+	    my $expected_output_file = $read->{expected_output_file};
+
+	    local $/;
+
+	    my $application_output = `cat "$application_output_file"`;
+
+	    my $expected_output;
+
+	    if ($expected_output_file)
+	    {
+		print $fd_output "*** Expected output file: $expected_output_file\n";
+
+		$expected_output = `cat "$expected_output_file"`;
+	    }
+	    elsif (defined $read->{expected_output})
+	    {
+		$expected_output = $read->{expected_output};
+	    }
+
+	    $test_result
+		= {
+		   expected => $expected_output,
+		  };
+
+	    if ($expected_output eq $application_output)
+	    {
+		$test_result->{before_match} = $application_output;
+	    }
+	    else
+	    {
+		$test_result->{before_match} = $application_output;
+
+		$read = $expected_output;
+
+		$test_result->{error} = 'expected_output does not match application_output';
+	    }
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::Shell;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command = $command_definition->{command};
+
+    # expect this output
+
+    my $test_result;
+
+    # set read, wait and write strings
+
+    my $read = $self->{read};
+
+    # record time
+
+    $self->before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->prepare_run($execution_context, $fd_output);
+
+    # read
+
+    if (defined $read)
+    {
+	# if there is a shell command given
+
+	if ($read->{shell})
+	{
+	    # run it and capture its output
+
+	    my $shell = $read->{shell};
+
+	    my $expected = `$shell`;
+
+	    # and compare its output with the output of the application
+
+	    my $timeout = $self->get_timeout();
+
+	    my ($matched_pattern_position,
+		$error,
+		$successfully_matching_string,
+		$before_match,
+		$after_match)
+		= $executor->{expect_object}->expect($timeout, $expected, );
+
+	    $test_result
+		= {
+		   matched_pattern_position => $matched_pattern_position,
+		   error => $error,
+		   successfully_matching_string => $successfully_matching_string,
+		   before_match => $before_match,
+		   after_match => $after_match,
+		   expected => $expected,
+		  };
+	}
+    }
+
+    # try correcting
+
+    $self->after_run($execution_context, $test_result);
+
+    # return the final test result
+
+    return $test_result;
 }
 
 
@@ -1958,6 +2944,8 @@ sub run
 
     my $command_test = shift;
 
+    my $trueclass = shift;
+
     my $execution_context = $self->{execution_context};
 
     my $command_definition = $execution_context->get_command_definition();
@@ -1967,6 +2955,22 @@ sub run
     my $command = $command_definition->{command};
 
     my $fd_output = $self->{fd_output};
+
+    if (1)
+    {
+	# if (not defined $trueclass)
+	# {
+	#     my $result = $self->run($command_test, 0);
+
+	#     $result = $self->run($command_test, 1);
+
+	#     return $result;
+	# }
+	# elsif ($trueclass eq 1)
+	{
+	    return $command_test->run($execution_context, $self, $fd_output);
+	}
+    }
 
     # expect this output
 
