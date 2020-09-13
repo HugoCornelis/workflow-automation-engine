@@ -990,7 +990,7 @@ package Heterarch::Test::CommandTest;
 our @ISA = ("Heterarch::Test::Element");
 
 
-sub after_run
+sub _after_run
 {
     my $self = shift;
 
@@ -1071,7 +1071,19 @@ sub after_run
 }
 
 
-sub before_run
+sub after_testing
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $test_result = shift;
+
+    return $self->_after_run($execution_context, $test_result);
+}
+
+
+sub _before_run
 {
     my $self = shift;
 
@@ -1086,6 +1098,20 @@ sub before_run
     my $time_start = [ gettimeofday(), ];
 
     $self->{time_start} = $time_start;
+}
+
+
+sub before_testing
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    # record time
+
+    $self->_before_run($execution_context, $fd_output);
 }
 
 
@@ -1441,7 +1467,7 @@ sub run
 
     # record time
 
-    $self->before_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $fd_output);
 
     # if the command_definition instantiated an object
 
@@ -1486,7 +1512,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -1499,6 +1525,37 @@ package Heterarch::Test::CommandTest::Interactive;
 
 our @ISA = ("Heterarch::Test::CommandTest");
 
+
+sub before_testing
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # record time
+
+    $self->_before_run($execution_context, $fd_output);
+
+    # do write processing
+
+    $self->_process_write($executor, $fd_output);
+
+    # do wait processing
+
+    $self->_process_wait($execution_context, $fd_output);
+
+    # do post processing
+
+    $self->_prepare_run($execution_context, $fd_output);
+}
+
+
+# compute a sensible timeout for interaction with the command that is
+# being tested.
 
 sub get_timeout
 {
@@ -1517,7 +1574,7 @@ sub get_timeout
 }
 
 
-sub prepare_run
+sub _prepare_run
 {
     my $self = shift;
 
@@ -1556,7 +1613,7 @@ sub prepare_run
 }
 
 
-sub process_wait
+sub _process_wait
 {
     my $self = shift;
 
@@ -1578,7 +1635,7 @@ sub process_wait
 }
 
 
-sub process_write
+sub _process_write
 {
     my $self = shift;
 
@@ -1618,29 +1675,15 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    my $test_result;
+
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -1670,25 +1713,9 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # if there is an external application to test the final output
 
@@ -1704,7 +1731,7 @@ sub run
 
     my $produced = `$shell`;
 
-    $test_result
+    my $test_result
 	= {
 	   expected => defined $tester->{expected} ? $tester->{expected} : '',
 	  };
@@ -1734,7 +1761,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -1764,25 +1791,9 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # set the expected output
 
@@ -1809,7 +1820,7 @@ sub run
 	$after_match)
 	= $executor->{expect_object}->expect($timeout, $read, );
 
-    $test_result
+    my $test_result
 	= {
 	   matched_pattern_position => $matched_pattern_position,
 	   error => $error,
@@ -1821,7 +1832,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -1851,25 +1862,9 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # set the expected output
 
@@ -1886,7 +1881,7 @@ sub run
 	$after_match)
 	= $executor->{expect_object}->expect($timeout, @$read, );
 
-    $test_result
+    my $test_result
 	= {
 	   matched_pattern_position => $matched_pattern_position,
 	   error => $error,
@@ -1901,7 +1896,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -1931,25 +1926,9 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # compose the alternatives regex
 
@@ -1957,7 +1936,10 @@ sub run
 
     my $alternatives = $read->{alternatives};
 
-    $test_result->{expected} = '(' . (join '|', map { quotemeta } @$alternatives) . ')';
+    my $test_result
+	= {
+	   expected => '(' . (join '|', map { quotemeta } @$alternatives) . ')',
+	  };
 
     # read from the application
 
@@ -1978,7 +1960,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -2008,25 +1990,9 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # read the application output file
 
@@ -2061,7 +2027,7 @@ sub run
 	$expected_output = $read->{expected_output};
     }
 
-    $test_result
+    my $test_result
 	= {
 	   expected => $expected_output,
 	  };
@@ -2081,7 +2047,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
@@ -2111,25 +2077,9 @@ sub run
 
     my $command = $command_definition->{command};
 
-    # expect this output
+    # record time, do write, wait processing, pre-processing
 
-    my $test_result;
-
-    # record time
-
-    $self->before_run($execution_context, $fd_output);
-
-    # do write processing
-
-    $self->process_write($executor, $fd_output);
-
-    # do wait processing
-
-    $self->process_wait($execution_context, $fd_output);
-
-    # do post processing
-
-    $self->prepare_run($execution_context, $fd_output);
+    $self->before_testing($execution_context, $executor, $fd_output);
 
     # run the given shell command and capture its output
 
@@ -2150,7 +2100,7 @@ sub run
 	$after_match)
 	= $executor->{expect_object}->expect($timeout, $expected, );
 
-    $test_result
+    my $test_result
 	= {
 	   matched_pattern_position => $matched_pattern_position,
 	   error => $error,
@@ -2162,7 +2112,7 @@ sub run
 
     # try correcting
 
-    $self->after_run($execution_context, $test_result);
+    $self->after_testing($execution_context, $test_result);
 
     # return the final test result
 
