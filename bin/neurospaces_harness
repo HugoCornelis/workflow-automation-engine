@@ -1622,10 +1622,6 @@ sub run
 
     my $test_result;
 
-    # set read, wait and write strings
-
-    my $read = $self->{read};
-
     # record time
 
     $self->before_run($execution_context, $fd_output);
@@ -1677,10 +1673,6 @@ sub run
     # expect this output
 
     my $test_result;
-
-    # set read, wait and write strings
-
-    my $read = $self->{read};
 
     # record time
 
@@ -1776,10 +1768,6 @@ sub run
 
     my $test_result;
 
-    # set read, wait and write strings
-
-    my $read = $self->{read};
-
     # record time
 
     $self->before_run($execution_context, $fd_output);
@@ -1795,6 +1783,10 @@ sub run
     # do post processing
 
     $self->prepare_run($execution_context, $fd_output);
+
+    # set the expected output
+
+    my $read = $self->{read};
 
     # if literal text expected
 
@@ -1863,8 +1855,6 @@ sub run
 
     my $test_result;
 
-    my $read = $self->{read};
-
     # record time
 
     $self->before_run($execution_context, $fd_output);
@@ -1880,6 +1870,10 @@ sub run
     # do post processing
 
     $self->prepare_run($execution_context, $fd_output);
+
+    # set the expected output
+
+    my $read = $self->{read};
 
     # if array, means regex match
 
@@ -1941,10 +1935,6 @@ sub run
 
     my $test_result;
 
-    # set read, wait and write strings
-
-    my $read = $self->{read};
-
     # record time
 
     $self->before_run($execution_context, $fd_output);
@@ -1962,6 +1952,8 @@ sub run
     $self->prepare_run($execution_context, $fd_output);
 
     # compose the alternatives regex
+
+    my $read = $self->{read};
 
     my $alternatives = $read->{alternatives};
 
@@ -2020,10 +2012,6 @@ sub run
 
     my $test_result;
 
-    # set read, wait and write strings
-
-    my $read = $self->{read};
-
     # record time
 
     $self->before_run($execution_context, $fd_output);
@@ -2040,9 +2028,9 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # if an application output file is expected
+    # read the application output file
 
-    # read it
+    my $read = $self->{read};
 
     my $application_output_file = $read->{application_output_file};
 
@@ -2052,7 +2040,7 @@ sub run
 
     print $fd_output "*** Application output file: $application_output_file (in $pwd)\n";
 
-    # and compare it with an expected output file
+    # and compare it with the expected output file
 
     my $expected_output_file = $read->{expected_output_file};
 
@@ -2127,10 +2115,6 @@ sub run
 
     my $test_result;
 
-    # set read, wait and write strings
-
-    my $read = $self->{read};
-
     # record time
 
     $self->before_run($execution_context, $fd_output);
@@ -2147,9 +2131,9 @@ sub run
 
     $self->prepare_run($execution_context, $fd_output);
 
-    # if there is a shell command given
+    # run the given shell command and capture its output
 
-    # run it and capture its output
+    my $read = $self->{read};
 
     my $shell = $read->{shell};
 
