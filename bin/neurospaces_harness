@@ -324,6 +324,10 @@ sub main
 	{
 	    bless $command_definition, "Heterarch::Test::CommandDefinition";
 
+	    # lookup the class for this command definition
+
+	    $command_definition->rebless();
+
 	    # give some diagnostics
 
 	    my $started = $execution_context->start($module_definition, $command_definition);
@@ -337,6 +341,12 @@ sub main
 
 	    my $preparation_result = $execution_context->preparation($module_definition, $command_definition);
 
+	    # call the perl code, spaw_new
+
+	    # 1. an object given its class.
+	    # 2. a piece of perl code that is run.
+	    # 3. an interactive system shell command.
+
 	    $executor->start();
 
 	    # loop over all tests for this command
@@ -347,7 +357,7 @@ sub main
 	    {
 		bless $command_test, "Heterarch::Test::CommandTest";
 
-		# lookup the class for this command
+		# lookup the class for this command test
 
 		$command_test->rebless();
 
@@ -468,7 +478,7 @@ sub main
 
     # close pending commands
 
-    Heterarch::Test::CommandDefinition::close_pending();
+    Heterarch::Test::CommandDefinition::Interactive::close_pending();
 
     # close the test report
 
@@ -809,6 +819,49 @@ package Heterarch::Test::CommandDefinition;
 our @ISA = ("Heterarch::Test::Element");
 
 
+sub rebless
+{
+    my $command_definition = shift;
+
+    my $target_package = "Heterarch::Test::CommandDefinition";
+
+    # we have to either instantiate an object that produces output ...
+
+    if ($command_definition->{class})
+    {
+	$target_package = "Heterarch::Test::CommandDefinition::PerlClass";
+    }
+
+    # ... or run perl code that produces output
+
+    elsif (ref $command_definition->{command} eq 'CODE')
+    {
+	$target_package = "Heterarch::Test::CommandDefinition::PerlCode";
+    }
+
+    # ... or run a command that produces output
+
+    else
+    {
+	$target_package = "Heterarch::Test::CommandDefinition::Interactive";
+    }
+
+    # rebless
+
+    bless $command_definition, $target_package;
+
+    # return result
+
+    return $command_definition;
+}
+
+
+package Heterarch::Test::CommandDefinition::Interactive;;
+
+
+our @ISA = ("Heterarch::Test::CommandDefinition");
+
+
 use Data::Comparator qw(data_comparator);
 
 
@@ -981,6 +1034,73 @@ sub spawn_new
     # }
 
     return $global_exp, $test_startup;
+}
+
+
+sub start
+{
+    my $self = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # start the command and connect with its I/O channels
+
+    #! this is similar to having a class name 'Expect' and calling Expect->new()
+    #! but with optimization to prevent spawning new commands unnecessarily
+
+    my ($exp, $test_startup) = $self->spawn_new($fd_output);
+
+    $executor->{expect_object} = $exp;
+
+    $executor->{test_startup} = $test_startup;
+}
+
+
+package Heterarch::Test::CommandDefinition::PerlClass;;
+
+
+our @ISA = ("Heterarch::Test::CommandDefinition");
+
+
+sub start
+{
+    my $self = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # instantiate the object
+
+    my $class = $self->{class};
+
+    my $filename = $class . ".pm";
+
+    $filename =~ s(::)(/)g;
+
+    require $filename;
+
+    $self->{command_object} = eval "$class->new()";
+}
+
+
+package Heterarch::Test::CommandDefinition::PerlCode;;
+
+
+our @ISA = ("Heterarch::Test::CommandDefinition");
+
+
+sub start
+{
+    my $self = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # code is already instantiated, nothing to do here
 }
 
 
@@ -1352,29 +1472,6 @@ sub rebless
 	    }
 	}
     }
-
-    # almost correct processing
-
-    #! perl code does not produce a full test result object, so we cannot try to correct an almost correct result
-
-    # {
-    # 	# if things don't match
-
-    # 	{
-	    # # if allowed to compare numerically
-
-	    # if ((!$command_test->{string_only}
-	    # 	 && $option_numerical_compare)
-
-	    # 	# or forced to compare numerically
-
-	    # 	|| $command_test->{numerical_compare}
-	    # 	|| $command_definition->{numerical_compare}
-	    # 	|| $module_definition->{numerical_compare})
-	    # {
-	    # }
-    # 	}
-    # }
 
     # rebless
 
@@ -2849,45 +2946,7 @@ sub start
 
     my $fd_output = $self->{fd_output};
 
-    # we have to either instantiate an object that produces output ...
-
-    if ($command_definition->{class})
-    {
-	# instantiate the object
-
-	my $class = $command_definition->{class};
-
-	my $filename = $class . ".pm";
-
-	$filename =~ s(::)(/)g;
-
-	require $filename;
-
-	$self->{command_object} = eval "$class->new()";
-    }
-
-    # ... or run perl code that produces output
-
-    elsif (ref $command_definition->{command} eq 'CODE')
-    {
-	# code is already instantiated, nothing to do here
-    }
-
-    # ... or run a command that produces output
-
-    else
-    {
-	# start the command and connect with its I/O channels
-
-	#! this is similar to having a class name 'Expect' and calling Expect->new()
-	#! but with optimization to prevent spawning new commands unnecessarily
-
-	my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
-
-	$self->{expect_object} = $exp;
-
-	$self->{test_startup} = $test_startup;
-    }
+    $command_definition->start($self, $fd_output);
 }
 
 
