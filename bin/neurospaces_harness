@@ -3492,6 +3492,9 @@ sub run
 }
 
 
+# the Formatter:: HTMLTable package converts the test specifications
+# to HTML tables.
+
 package Heterarch::Test::Output::Formatter::HTMLTable;
 
 
@@ -3565,6 +3568,9 @@ sub start
     }
 }
 
+
+# The Formatter:YAML::Summary package converts the test specifications
+# to a YAML formatted summary.
 
 package Heterarch::Test::Output::Formatter::YAML::Summary;
 
