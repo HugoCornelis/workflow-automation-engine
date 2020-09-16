@@ -2711,7 +2711,7 @@ sub reparation
 		: "module '$module_definition->{name}'")
 	    : ($command_definition->{recycle}
 		? "these tests use the previous running command ($command_definition->{recycle})"
-		: "*** Error: this command definition is incomplete (no command and no recycle clause)")
+		: "*** Warning: this command definition is incomplete (no command and no recycle clause)")
 	);
 
     my $reparation_error;
