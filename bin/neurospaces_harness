@@ -21,6 +21,7 @@ use YAML;
 
 
 my $option_check_test_names;
+my $option_command_tests;
 my $option_dump_json;
 my $option_dump_perl;
 my $option_dump_yaml;
@@ -71,7 +72,7 @@ $SIG{'INT'}
       };
 
 
-sub initialize_environment
+sub initialize_config_environment
 {
     my $fd_initialization;
 
@@ -147,6 +148,7 @@ sub initialize_globals
 {
     $global_test_report
 	= {
+	   %$global_test_report,
 	   description => {
 			   command => $0,
 			   name => "Test report",
@@ -183,7 +185,7 @@ sub initialize_globals
 }
 
 
-sub initialize_running_mode
+sub initialize_config
 {
     # find the package core directory
 
@@ -209,9 +211,9 @@ sub main
 {
     parse_options();
 
-    initialize_running_mode();
+    initialize_config();
 
-    initialize_environment();
+    initialize_config_environment();
 
     initialize_globals();
 
@@ -280,7 +282,7 @@ sub main
 
     # create an execution context for running the tests
 
-    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output);
+    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, { library_sha_before => $library_sha_before, }, );
 
     # create a test executor for running the tests following the requested type of output
 
@@ -294,182 +296,7 @@ sub main
 
 	my $fd_module_output = $global_fd_output;
 
-	my $module_name = $module_definition->check_name($fd_module_output);
-
-	my $module_description = $module_definition->check_description($fd_module_output);
-
-	if (not $module_definition->is_selected_by_tag($fd_module_output))
-	{
-	    next;
-	}
-
-	# proceed: start the execution context
-
-	my $started = $execution_context->start($module_definition);
-
-	if (not $started)
-	{
-	    next;
-	}
-
-	# prepare the module test environment
-
-	my $module_preparation_result = $execution_context->preparation($module_definition);
-
-	# loop over commands for this module
-
-	my $command_definitions = $module_definition->{command_definitions};
-
-	foreach my $command_definition (@$command_definitions)
-	{
-	    bless $command_definition, "Heterarch::Test::CommandDefinition";
-
-	    # lookup the class for this command definition
-
-	    $command_definition->rebless();
-
-	    # give some diagnostics
-
-	    my $started = $execution_context->start($module_definition, $command_definition);
-
-	    if (not $started)
-	    {
-		next;
-	    }
-
-	    # prepare the command test environment
-
-	    my $preparation_result = $execution_context->preparation($module_definition, $command_definition);
-
-	    # call the perl code, spaw_new
-
-	    # 1. an object given its class.
-	    # 2. a piece of perl code that is run.
-	    # 3. an interactive system shell command.
-
-	    $executor->start();
-
-	    # loop over all tests for this command
-
-	    my $command_tests = $command_definition->{command_tests};
-
-	    foreach my $command_test (@$command_tests)
-	    {
-		bless $command_test, "Heterarch::Test::CommandTest";
-
-		# lookup the class for this command test
-
-		$command_test->rebless();
-
-		# emit comment if any
-
-		my $started = $execution_context->start($module_definition, $command_definition, $command_test);
-
-		if (not $started)
-		{
-		    next;
-		}
-
-		# run the text executor
-
-		my $execution_result = $executor->run($command_test);
-
-		# process errors
-
-		my $error = $execution_result->{error};
-
-		if ($error)
-		{
-		    my $description = $command_test->{description};
-
-		    my $command_definition_description = $command_definition->{description};
-
-		    my $message;
-
-		    my $before_match = $execution_result->{before_match};
-
-		    if ($option_verbose)
-		    {
-			$message = $before_match;
-		    }
-
- 		    Heterarch::Test::Reporting::report_error_add
-			(
-			 $fd_module_output,
-			 {
-			  description => $description,
-			  error => $error,
-			  expected => $execution_result->{expected},
-			  message => $message,
-			  module_name => $module_name,
-			  seen => $before_match,
-			  subdescription => $command_definition_description,
-			 },
-			);
-
-		}
-
-		# end the execution of this test
-
-		$execution_context->end($module_definition, $command_definition, $command_test);
-
-		# register if this command had side effects
-
-		$global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
-
-		# increment total test count
-
-		$global_test_report->{global}->{test_count}++;
-	    }
-
-	    # repair the command test environment
-
-	    my $reparation_error = $execution_context->reparation($command_definition, $preparation_result);
-
-	    $execution_context->end($module_definition, $command_definition);
-
-	    # register if this command had side effects
-
-	    #! e.g. using a preparer/reparer combination
-
-	    $global_previous_command_side_effects ||= $command_definition->{side_effects} || 0;
-	}
-
-	# repair the test environment
-
-	my $reparation_error = $execution_context->reparation(undef, $module_preparation_result);
-
-	# if library checksum mismatch
-
-	if (defined ($global_config->{model_library}))
-	{
-	    my $library_sha_after = ModelLibrary::sha();
-
-	    if ($library_sha_after ne $library_sha_before)
-	    {
-		my $error = 'model library checksum mismatch (model library has changed)';
-
-		my $description = $module_definition->{description};
-
-		Heterarch::Test::Reporting::report_error_add
-		    (
-		     $fd_module_output,
-		     {
-		      description => $description,
-		      error => $error,
-		      module_name => $module_name,
-		     },
-		    );
-	    }
-	}
-
-	# register if this command had side effects
-
-	#! don't think this make sense, but anyway ...
-
-	$global_previous_command_side_effects ||= $module_definition->{side_effects} || 0;
-
-	$execution_context->end($module_definition);
+	my $error = $module_definition->run($execution_context, $executor, $fd_module_output);
     }
 
     # end the execution_context
@@ -498,6 +325,7 @@ sub parse_options
 	= GetOptions
 	    (
 	     "check-test-names!" => \$option_check_test_names,
+	     "command-tests!" => \$option_command_tests,
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
 	     "dump-yaml!" => \$option_dump_yaml,
@@ -527,20 +355,33 @@ sub parse_options
     {
 	if ($option_output_html)
 	{
+	    $global_test_report->{regular_output} = 'no';
+
 	    $option_output = "Heterarch::Test::Output::Formatter::HTMLTable";
 	}
 	elsif ($option_show)
 	{
+	    $global_test_report->{regular_output} = 'no';
+
 	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Summary";
+	}
+	elsif ($option_command_tests)
+	{
+	    $global_test_report->{regular_output} = 'no';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML::CommandTests";
 	}
 	else
 	{
+	    $global_test_report->{regular_output} = 'yes';
+
 	    $option_output = "Heterarch::Test::Executor";
 	}
     }
 
     $global_test_report->{options}
 	= {
+	   command_tests => $option_command_tests,
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
 	   dump_yaml => $option_dump_yaml,
@@ -568,6 +409,7 @@ $0: test definition executor
 
 options:
     --check-test-names   check the pathnames of the specification files against the names of the tests.
+    --command-tests      show all the command definitions that would be run during test execution.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
@@ -618,9 +460,9 @@ sub report_exit
 		   {
 		    description => $global_test_report->{description},
 		    ($option_report_disabled ? (disabled => $global_test_report->{disabled}) : ()),
-		    ($option_show ? () : (errors => $global_test_report->{errors})),
-		    ($option_show ? () : (global => $global_test_report->{global})),
-		    ($option_show ? (selected => $global_test_report->{selected}) : ()),
+		    ($global_test_report->{regular_output} eq 'no' ? () : (errors => $global_test_report->{errors})),
+		    ($global_test_report->{regular_output} eq 'no' ? () : (global => $global_test_report->{global})),
+		    ($global_test_report->{regular_output} eq 'no' ? (selected => $global_test_report->{selected}) : ()),
 		   },
 		  );
 
@@ -2512,7 +2354,7 @@ sub is_disabled
     {
 	my $description = $active_element->{description};
 
-	if (not $option_show)
+	if ($global_test_report->{regular_output} eq 'yes')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
@@ -2601,7 +2443,7 @@ sub preparation
 
     # if there is a preparation clause
 
-    if ((not $option_show)
+    if (($global_test_report->{regular_output} eq 'yes')
 	and $preparation)
     {
 	# give diagnostics
@@ -2718,7 +2560,7 @@ sub reparation
 
     # if there is a reparation clause
 
-    if ((not $option_show)
+    if (($global_test_report->{regular_output} eq 'yes')
 	and $reparation)
     {
 	# give diagnostics
@@ -3465,7 +3307,7 @@ sub is_selected_by_tag
     }
     else
     {
-	if (not $option_show)
+	if ($global_test_report->{regular_output} eq 'yes')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
@@ -3475,6 +3317,200 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 
 	return undef;
     }
+}
+
+
+sub run
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    my $module_name = $self->check_name($fd_output);
+
+    my $module_description = $self->check_description($fd_output);
+
+    if (not $self->is_selected_by_tag($fd_output))
+    {
+	return "not_selected_by_tag";
+    }
+
+    # proceed: start the execution context
+
+    my $started = $execution_context->start($self);
+
+    if (not $started)
+    {
+	return "module start failed";
+    }
+
+    # prepare the module test environment
+
+    my $module_preparation_result = $execution_context->preparation($self);
+
+    # loop over commands for this module
+
+    my $command_definitions = $self->{command_definitions};
+
+    foreach my $command_definition (@$command_definitions)
+    {
+	bless $command_definition, "Heterarch::Test::CommandDefinition";
+
+	# lookup the class for this command definition
+
+	$command_definition->rebless();
+
+	# give some diagnostics
+
+	my $started = $execution_context->start($self, $command_definition);
+
+	if (not $started)
+	{
+	    next;
+	}
+
+	# prepare the command test environment
+
+	my $preparation_result = $execution_context->preparation($self, $command_definition);
+
+	# call the perl code, spaw_new
+
+	# 1. an object given its class.
+	# 2. a piece of perl code that is run.
+	# 3. an interactive system shell command.
+
+	$executor->start();
+
+	# loop over all tests for this command
+
+	my $command_tests = $command_definition->{command_tests};
+
+	foreach my $command_test (@$command_tests)
+	{
+	    bless $command_test, "Heterarch::Test::CommandTest";
+
+	    # lookup the class for this command test
+
+	    $command_test->rebless();
+
+	    # emit comment if any
+
+	    my $started = $execution_context->start($self, $command_definition, $command_test);
+
+	    if (not $started)
+	    {
+		next;
+	    }
+
+	    # run the text executor
+
+	    my $execution_result = $executor->run($command_test);
+
+	    # process errors
+
+	    my $error = $execution_result->{error};
+
+	    if ($error)
+	    {
+		my $description = $command_test->{description};
+
+		my $command_definition_description = $command_definition->{description};
+
+		my $message;
+
+		my $before_match = $execution_result->{before_match};
+
+		if ($option_verbose)
+		{
+		    $message = $before_match;
+		}
+
+		Heterarch::Test::Reporting::report_error_add
+			(
+			 $fd_output,
+			 {
+			  description => $description,
+			  error => $error,
+			  expected => $execution_result->{expected},
+			  message => $message,
+			  module_name => $module_name,
+			  seen => $before_match,
+			  subdescription => $command_definition_description,
+			 },
+			);
+	    }
+
+	    # end the execution of this test
+
+	    $execution_context->end($self, $command_definition, $command_test);
+
+	    # register if this command had side effects
+
+	    $global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
+
+	    # increment total test count
+
+	    $global_test_report->{global}->{test_count}++;
+	}
+
+	# repair the command test environment
+
+	my $reparation_error = $execution_context->reparation($command_definition, $preparation_result);
+
+	$execution_context->end($self, $command_definition);
+
+	# register if this command had side effects
+
+	#! e.g. using a preparer/reparer combination
+
+	$global_previous_command_side_effects ||= $command_definition->{side_effects} || 0;
+    }
+
+    # repair the test environment
+
+    my $reparation_error = $execution_context->reparation(undef, $module_preparation_result);
+
+    # if library checksum mismatch
+
+    if (defined ($global_config->{model_library}))
+    {
+	my $library_sha_before = $execution_context->{library_sha_before};
+
+	my $library_sha_after = ModelLibrary::sha();
+
+	if ($library_sha_after ne $library_sha_before)
+	{
+	    my $error = 'model library checksum mismatch (model library has changed)';
+
+	    my $description = $self->{description};
+
+	    Heterarch::Test::Reporting::report_error_add
+		    (
+		     $fd_output,
+		     {
+		      description => $description,
+		      error => $error,
+		      module_name => $module_name,
+		     },
+		    );
+	}
+    }
+
+    # register if this command had side effects
+
+    #! don't think this make sense, but anyway ...
+
+    $global_previous_command_side_effects ||= $self->{side_effects} || 0;
+
+    $execution_context->end($self);
+
+    # return result: execution completed
+
+    return '';
 }
 
 
@@ -3638,6 +3674,113 @@ sub run
     # add the current test description to the summary
 
     push @$selected_command_definitions, $command_test->{description};
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
+}
+
+
+# The Formatter:YAML::CommandTests package converts the test
+# specifications to a YAML formatted list of commands that would be
+# executed if the tests are run.
+
+package Heterarch::Test::Output::Formatter::YAML::CommandTests;
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter");
+
+
+# create an output entry for the current command definition
+
+sub start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    #t we could add a counter here to keep the order of execution in the final yaml output
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    if (exists $command_definition->{command})
+    {
+	if (not $global_test_report->{selected}->{$module_name})
+	{
+	    $global_test_report->{selected}->{$module_name} = [];
+	}
+
+	# create an output entry for the current command definition
+
+	my $selected_module = $global_test_report->{selected}->{$module_name};
+
+	my $command = $command_definition->{command};
+
+	my $arguments = $command_definition->{arguments};
+
+	my $command_string = $command . join ' ', @$arguments;
+
+	push @$selected_module, { command => $command_string, };
+    }
+}
+
+
+# add the current test description to the summary
+
+sub run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (exists $command_definition->{command})
+    {
+	# get the current module summary
+
+	my $selected_module = $global_test_report->{selected}->{$module_name};
+
+	# get the current test summary
+
+	if (not exists $selected_module->[$#$selected_module]->{tests})
+	{
+	    $selected_module->[$#$selected_module]->{tests} = [];
+	}
+
+	my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
+
+	# add the current test write clause to the summary
+
+	if (exists $command_test->{write})
+	{
+	    push @$selected_command_definitions, $command_test->{write};
+	}
+    }
 
     # always succeeds
 
@@ -3819,7 +3962,7 @@ sub report_message
 
     my $message = shift;
 
-    if (!$option_show)
+    if ($global_test_report->{regular_output} eq 'yes')
     {
 	print $fd_output "$message\n";
     }
@@ -3878,7 +4021,7 @@ sub report_message_with_rulers
 
     my $line = '-' x $longest;
 
-    if (!$option_show)
+    if ($global_test_report->{regular_output} eq 'yes')
     {
 	print $fd_output "\n";
 	print $fd_output "$line\n" for 0 .. $top_ruler;
