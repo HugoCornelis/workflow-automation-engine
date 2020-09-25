@@ -3800,12 +3800,17 @@ sub run
 
 package Heterarch::Test::Output::Definitions;
 
+# this package should list all the supported constructs that can be
+# used in the test specifications.
+
 
 our @ISA = ("Heterarch::Test::Executor");
 
 
 package Heterarch::Test::Output::List;
 
+# this package should list the constructs used in the selected test
+# specifications.
 
 # inherit from the yaml summary to automate text context tracking through its start sub
 
