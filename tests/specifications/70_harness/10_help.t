@@ -19,6 +19,7 @@ bin/neurospaces_harness: test definition executor
 
 options:
     --check-test-names   check the pathnames of the specification files against the names of the tests.
+    --command-tests      show all the command definitions that would be run during test execution.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
