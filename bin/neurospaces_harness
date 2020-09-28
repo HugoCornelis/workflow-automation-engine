@@ -952,6 +952,13 @@ package Heterarch::Test::CommandTest;
 our @ISA = ("Heterarch::Test::Element");
 
 
+#
+# _after_run()
+#
+# 1. records the time it took to execute the test.
+# 2. calls approximate testers if this is allowed by options.
+#
+
 sub _after_run
 {
     my $self = shift;
@@ -2064,6 +2071,11 @@ package Heterarch::Test::Element;
 
 package Heterarch::Test::ExecutionContext;
 
+
+#
+# _execute() implements the engine for both preparation and reparation
+# that are used for test modules and command definitions.
+#
 
 sub _execute
 {
@@ -3406,7 +3418,7 @@ sub run
 		next;
 	    }
 
-	    # run the text executor
+	    # run the text executor which will run the command_test
 
 	    my $execution_result = $executor->run($command_test);
 
