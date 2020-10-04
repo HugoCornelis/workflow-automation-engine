@@ -29,8 +29,9 @@ my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSP
 my $option_flattenout;
 my $option_help;
 my $option_numerical_compare;
-my $option_output_html;
 my $option_output;
+my $option_output_html;
+my $option_output_latex;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -335,6 +336,7 @@ sub parse_options
 	     "numerical-compare!" => \$option_numerical_compare,
 	     "output=s" => \$option_output,
 	     "output-html" => \$option_output_html,
+	     "output-latex" => \$option_output_latex,
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
@@ -355,25 +357,31 @@ sub parse_options
     {
 	if ($option_output_html)
 	{
-	    $global_test_report->{regular_output} = 'no';
+	    $global_test_report->{output_format} = 'yaml_exit';
 
 	    $option_output = "Heterarch::Test::Output::Formatter::HTMLTable";
 	}
+	elsif ($option_output_latex)
+	{
+	    $global_test_report->{output_format} = 'latex';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::Latex";
+	}
 	elsif ($option_show)
 	{
-	    $global_test_report->{regular_output} = 'no';
+	    $global_test_report->{output_format} = 'yaml_exit';
 
 	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Summary";
 	}
 	elsif ($option_command_tests)
 	{
-	    $global_test_report->{regular_output} = 'no';
+	    $global_test_report->{output_format} = 'yaml_exit';
 
 	    $option_output = "Heterarch::Test::Output::Formatter::YAML::CommandTests";
 	}
 	else
 	{
-	    $global_test_report->{regular_output} = 'yes';
+	    $global_test_report->{output_format} = 'executor';
 
 	    $option_output = "Heterarch::Test::Executor";
 	}
@@ -389,7 +397,9 @@ sub parse_options
 	   flattenout => $option_flattenout,
 	   help => $option_help,
 	   numerical_compare => $option_numerical_compare,
+	   output => $option_output,
 	   output_html => $option_output_html,
+	   output_latex => $option_output_latex,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
@@ -421,6 +431,7 @@ options:
     --numerical-compare  attempt to compare numbers numerically when string differences are found (default enabled).
     --output             the class that should generate the output (default is '$option_output').
     --output-html        generate HTML output.
+    --output-latex       generate Latex output.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
@@ -454,17 +465,33 @@ sub report_exit
 
     # yaml out the test report
 
-    my $report_text
-	= "\n"
-	    . Dump(
-		   {
-		    description => $global_test_report->{description},
-		    ($option_report_disabled ? (disabled => $global_test_report->{disabled}) : ()),
-		    ($global_test_report->{regular_output} eq 'no' ? () : (errors => $global_test_report->{errors})),
-		    ($global_test_report->{regular_output} eq 'no' ? () : (global => $global_test_report->{global})),
-		    ($global_test_report->{regular_output} eq 'no' ? (selected => $global_test_report->{selected}) : ()),
-		   },
-		  );
+    my $report_yaml
+	= {
+	   description => $global_test_report->{description},
+	  };
+
+    # add output specific to the output selection
+
+    if ($option_report_disabled)
+    {
+	$report_yaml->{disabled} = $global_test_report->{disabled};
+    }
+
+    # add output specific to the output_format
+
+    if ($global_test_report->{output_format} eq 'executor')
+    {
+	$report_yaml->{errors} = $global_test_report->{errors};
+	$report_yaml->{global} = $global_test_report->{global};
+    }
+    elsif ($global_test_report->{output_format} eq 'yaml_exit')
+    {
+	$report_yaml->{selected} = $global_test_report->{selected};
+    }
+
+    # generate ascii text based on the content of the output
+
+    my $report_text = "\n" . Dump($report_yaml);
 
     print $global_fd_output "$report_text\n";
 
@@ -2366,7 +2393,7 @@ sub is_disabled
     {
 	my $description = $active_element->{description};
 
-	if ($global_test_report->{regular_output} eq 'yes')
+	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
@@ -2455,7 +2482,7 @@ sub preparation
 
     # if there is a preparation clause
 
-    if (($global_test_report->{regular_output} eq 'yes')
+    if (($global_test_report->{output_format} eq 'executor')
 	and $preparation)
     {
 	# give diagnostics
@@ -2572,7 +2599,7 @@ sub reparation
 
     # if there is a reparation clause
 
-    if (($global_test_report->{regular_output} eq 'yes')
+    if (($global_test_report->{output_format} eq 'executor')
 	and $reparation)
     {
 	# give diagnostics
@@ -3319,7 +3346,7 @@ sub is_selected_by_tag
     }
     else
     {
-	if ($global_test_report->{regular_output} eq 'yes')
+	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
@@ -3526,6 +3553,9 @@ sub run
 }
 
 
+# A Heterarch::Test::Output::Formatter implements ->run() and start()
+# methods.
+
 package Heterarch::Test::Output::Formatter;
 
 
@@ -3614,6 +3644,90 @@ sub start
 	    }
 	}
     }
+}
+
+
+# The Heterarch::Test::Output::Formatter::Latex package converts the test specifications
+# to a Latex document.
+
+package Heterarch::Test::Output::Formatter::Latex;
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter");
+
+
+sub start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    #t we could add a counter here to keep the order of execution in the final yaml output
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+
+    # create an output entry for the current command definition
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    push @$selected_module, { description => $command_definition->{description}, tests => [], };
+}
+
+
+# add the current test description to the summary
+
+sub run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    # get the current module summary
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    # get the current test summary
+
+    my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
+
+    # add the current test description to the summary
+
+    push @$selected_command_definitions, $command_test->{description};
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
 }
 
 
@@ -3812,9 +3926,11 @@ sub run
 
 package Heterarch::Test::Output::Definitions;
 
-# this package should list all the supported constructs that can be
-# used in the test specifications.
-
+# The Heterarch::Test::Output::Definitions package should list all the
+# supported constructs that can be used in the test specifications.
+#
+# This list has been developed in a separate emacs-org document.
+#
 
 our @ISA = ("Heterarch::Test::Executor");
 
@@ -3979,7 +4095,7 @@ sub report_message
 
     my $message = shift;
 
-    if ($global_test_report->{regular_output} eq 'yes')
+    if ($global_test_report->{output_format} eq 'executor')
     {
 	print $fd_output "$message\n";
     }
@@ -4038,7 +4154,7 @@ sub report_message_with_rulers
 
     my $line = '-' x $longest;
 
-    if ($global_test_report->{regular_output} eq 'yes')
+    if ($global_test_report->{output_format} eq 'executor')
     {
 	print $fd_output "\n";
 	print $fd_output "$line\n" for 0 .. $top_ruler;
