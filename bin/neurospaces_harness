@@ -3748,7 +3748,7 @@ sub start
 
 	my $arguments = $command_definition->{arguments};
 
-	my $command_string = $command . join ' ', @$arguments;
+	my $command_string = $command . ' ' . join ' ', @$arguments;
 
 	push @$selected_module, { command => $command_string, };
     }
