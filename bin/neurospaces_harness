@@ -493,7 +493,22 @@ sub report_exit
 
     my $report_text = "\n" . Dump($report_yaml);
 
-    print $global_fd_output "$report_text\n";
+    if ($global_test_report->{output_format} eq 'executor')
+    {
+	print $global_fd_output "$report_text\n";
+    }
+    elsif ($global_test_report->{output_format} eq 'yaml_exit')
+    {
+	print $global_fd_output "$report_text\n";
+    }
+    elsif ($global_test_report->{output_format} eq 'latex')
+    {
+	Heterarch::Test::Output::Formatter::Latex::output_preamble();
+
+	Heterarch::Test::Output::Formatter::Latex::output_process($global_test_report);
+
+	Heterarch::Test::Output::Formatter::Latex::output_postamble();
+    }
 
     # and write the full report to a file
 
@@ -3656,34 +3671,73 @@ package Heterarch::Test::Output::Formatter::Latex;
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
-sub start
+our $output_file;
+
+our $output_filename = "/tmp/test_report.tex";
+
+
+sub output_postamble
 {
-    my $self = shift;
+    my $postamble
+	= '\end{document}
 
-    # get the execution context
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
+';
 
-    my $execution_context = $self->{execution_context};
+#    $output_file = IO::File->new(">>$output_filename");
 
-    # create an output entry for the module
+    print $output_file $postamble;
+}
 
-    #t we could add a counter here to keep the order of execution in the final yaml output
 
-    my $module_definition = $execution_context->get_module_definition();
+sub output_process
+{
+    my $test_report = shift;
 
-    my $module_name = $module_definition->{name};
+    my $selected_items = $test_report->{selected};
 
-    if (not $global_test_report->{selected}->{$module_name})
+    foreach my $selected_item (keys %$selected_items)
     {
-	$global_test_report->{selected}->{$module_name} = [];
+	print $output_file '\section{' . $selected_item . "}\n\n";
+
+	my $sections = $selected_items->{$selected_item};
+
+	foreach my $section (@$sections)
+	{
+	    my $contents = $section->{description};
+
+	    print $output_file "$contents\n\n";
+	}
     }
+}
 
-    # create an output entry for the current command definition
 
-    my $selected_module = $global_test_report->{selected}->{$module_name};
+sub output_preamble
+{
+    my $preamble
+	= '\documentclass[12pt]{article}
+\usepackage{verbatim}
+\usepackage[dvips]{epsfig}
+\usepackage{color}
+\usepackage{url}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{enumitem} % [noitemsep,nolistsep] compact itemize/enumerate etc.
+\usepackage[margin=2cm]{geometry}
 
-    my $command_definition = $execution_context->get_command_definition();
+% Typeface
+\usepackage[condensed,math]{iwona}
+\usepackage[T1]{fontenc}
 
-    push @$selected_module, { description => $command_definition->{description}, tests => [], };
+\begin{document}
+
+';
+
+    $output_file = IO::File->new(">$output_filename");
+
+    print $output_file $preamble;
 }
 
 
@@ -3728,6 +3782,37 @@ sub run
 	  };
 
     return $test_result;
+}
+
+
+sub start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    #t we could add a counter here to keep the order of execution in the final yaml output
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+
+    # create an output entry for the current command definition
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    push @$selected_module, { description => $command_definition->{description}, tests => [], };
 }
 
 
