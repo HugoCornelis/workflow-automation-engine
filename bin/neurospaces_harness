@@ -2217,6 +2217,57 @@ sub _get_current
 }
 
 
+#t to be replaced with instance variables
+
+our $command_definition_counter_per_module = 0;
+our $command_definition_counter_global = 0;
+
+our $command_test_counter_per_command_definition = 0;
+our $command_test_counter_per_module = 0;
+our $command_test_counter_global = 0;
+
+our $module_counter_global = 0;
+
+
+sub _maintain_counters
+{
+    my $self = shift;
+
+    my $current = shift;
+
+    my $command_definition = $current->[1];
+
+    my $command_test = $current->[2];
+
+    my $module_definition = $current->[0];
+
+    if (defined $command_test)
+    {
+	$command_test_counter_global++;
+	$command_test_counter_per_module++;
+	$command_test_counter_per_command_definition++;
+    }
+    elsif (defined $command_definition)
+    {
+	$command_definition_counter_global++;
+	$command_definition_counter_per_module++;
+
+	$command_test_counter_per_command_definition = 0;
+    }
+    elsif (defined $module_definition)
+    {
+	$module_counter_global++;
+
+	$command_definition_counter_per_module = 0;
+	$command_test_counter_per_module = 0;
+    }
+    else
+    {
+	die "$0: internal error when _maintain_counters(): nothing left to count\n";
+    }
+}
+
+
 sub _push_current
 {
     my $self = shift;
@@ -2310,6 +2361,16 @@ sub get_command_definition
 }
 
 
+sub get_command_definition_counter_per_module
+{
+    my $self = shift;
+
+    #t to be replaced with instance variables
+
+    return $command_definition_counter_per_module;
+}
+
+
 sub get_command_test
 {
     my $self = shift;
@@ -2322,6 +2383,16 @@ sub get_command_test
 }
 
 
+sub get_command_test_counter_per_command_definition
+{
+    my $self = shift;
+
+    #t to be replaced with instance variables
+
+    return $command_test_counter_per_command_definition;
+}
+
+
 sub get_module_definition
 {
     my $self = shift;
@@ -2331,6 +2402,16 @@ sub get_module_definition
     my $module_definition = $current->[0];
 
     return $module_definition;
+}
+
+
+sub get_module_definition_counter
+{
+    my $self = shift;
+
+    #t to be replaced with instance variables
+
+    return $module_counter_global;
 }
 
 
@@ -2804,6 +2885,9 @@ sub new
 }
 
 
+#
+# ->run() is called to execute one command test.
+#
 # this executor trivially delegates this call to the command_test object
 #
 # a derived class can inspect the elements found in the test
@@ -2823,7 +2907,10 @@ sub run
 }
 
 
-# instantiate the tester:
+#
+# ->start() is called to start the tests of a single command definition.
+#
+# It instantiate the tester:
 #
 # 1. an object given its class.
 # 2. a piece of perl code that is run.
@@ -3693,23 +3780,60 @@ sub output_postamble
 }
 
 
+sub output_latex
+{
+    my $outputfile = shift;
+
+    my $contents = shift;
+
+    $contents =~ s/_/\\_/g;
+
+    print $outputfile $contents;
+}
+
+
 sub output_process
 {
     my $test_report = shift;
 
     my $selected_items = $test_report->{selected};
 
-    foreach my $selected_item (keys %$selected_items)
+    foreach my $selected_item (sort
+			       {
+				   my $selected_a = $a;
+				   my $selected_b = $b;
+
+				   my $counter_a = $selected_items->{$selected_a}->{count};
+				   my $counter_b = $selected_items->{$selected_b}->{count};
+
+				   $counter_a <=> $counter_b;
+			       }
+			       keys %$selected_items)
     {
-	print $output_file '\section{' . $selected_item . "}\n\n";
+	my $selected_item_contents = $selected_items->{$selected_item};
 
-	my $sections = $selected_items->{$selected_item};
+	my $selected_item_description = $selected_item_contents->{description};
 
-	foreach my $section (@$sections)
+	output_latex($output_file, '\section{' . $selected_item_description . "}\n\n");
+
+	my $subsections = $selected_items->{$selected_item}->{command_definitions};
+
+	foreach my $subsection (@$subsections)
 	{
-	    my $contents = $section->{description};
+	    my $description = $subsection->{description};
 
-	    print $output_file "$contents\n\n";
+	    output_latex($output_file, '\subsection{' . $description . "}\n\n");
+
+	    my $subsubsections = $subsection->{tests};
+
+	    foreach my $subsubsection (@$subsubsections)
+	    {
+		my $description = $subsubsection->{description};
+
+		output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
+
+		output_latex($output_file, "contents\n\n");
+	    }
 	}
     }
 }
@@ -3763,11 +3887,28 @@ sub run
 
     # get the current test summary
 
-    my $selected_command_definitions = $selected_module->[$#$selected_module]->{tests};
+    my $module_command_definitions = $selected_module->{command_definitions};
+
+    my $command_definition_counter = $execution_context->get_command_definition_counter_per_module();
+
+    my $selected_command_definition = $module_command_definitions->[$command_definition_counter];
+
+    # get the current command test
+
+    my $selected_test_definitions = $selected_command_definition->{tests};
+
+    my $test_definition_counter = $execution_context->get_command_test_counter_per_command_definition();
+
+    if (not $selected_test_definitions->[$test_definition_counter])
+    {
+	$selected_test_definitions->[$test_definition_counter] = {};
+    }
+
+    my $selected_test_definition = $selected_test_definitions->[$test_definition_counter];
 
     # add the current test description to the summary
 
-    push @$selected_command_definitions, $command_test->{description};
+    $selected_test_definition->{description} = $command_test->{description};
 
     # always succeeds
 
@@ -3795,24 +3936,36 @@ sub start
 
     # create an output entry for the module
 
-    #t we could add a counter here to keep the order of execution in the final yaml output
-
     my $module_definition = $execution_context->get_module_definition();
 
     my $module_name = $module_definition->{name};
 
     if (not $global_test_report->{selected}->{$module_name})
     {
-	$global_test_report->{selected}->{$module_name} = [];
+	my $module_counter = $execution_context->get_module_definition_counter();
+
+	$global_test_report->{selected}->{$module_name}
+	    = {
+	       count => $module_counter,
+	       description => $module_definition->{description},
+	       name => $module_name,
+	      };
     }
 
     # create an output entry for the current command definition
 
     my $selected_module = $global_test_report->{selected}->{$module_name};
 
+    if (not $selected_module->{command_definitions})
+    {
+	$selected_module->{command_definitions} = [];
+    }
+
+    my $selected_command_definitions = $selected_module->{command_definitions};
+
     my $command_definition = $execution_context->get_command_definition();
 
-    push @$selected_module, { description => $command_definition->{description}, tests => [], };
+    push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
 }
 
 
