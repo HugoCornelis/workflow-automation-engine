@@ -3792,6 +3792,68 @@ sub output_latex
 }
 
 
+sub output_latex_environment_prompt
+{
+    my $outputfile = shift;
+
+    my $content_type = shift;
+
+    my $contents = shift;
+
+    my $prompt = shift;
+
+    if (defined $contents)
+    {
+	output_latex($output_file, $prompt);
+
+	if ($content_type)
+	{
+	    output_latex($output_file, '\begin{' . $content_type . "}\n");
+	}
+
+	output_latex($output_file, $contents);
+
+	if ($content_type)
+	{
+	    output_latex($output_file, '\end{' . $content_type . "}\n\n");
+	}
+
+	output_latex($output_file, "\n");
+    }
+}
+
+
+sub output_latex_prompt
+{
+    my $outputfile = shift;
+
+    my $content_type = shift;
+
+    my $contents = shift;
+
+    my $prompt = shift;
+
+    if (defined $contents)
+    {
+	output_latex($output_file, $prompt);
+
+	if ($content_type)
+	{
+	    output_latex($output_file, '\\' . $content_type . '{');
+	}
+
+	output_latex($output_file, $contents);
+
+	if ($content_type)
+	{
+	    output_latex($output_file, "}\n");
+	}
+
+	output_latex($output_file, "\n");
+    }
+}
+
+
 sub output_process
 {
     my $test_report = shift;
@@ -3816,23 +3878,56 @@ sub output_process
 
 	output_latex($output_file, '\section{' . $selected_item_description . "}\n\n");
 
+	output_latex($output_file, 'The following tests were defined in the file ');
+
+	output_latex_prompt($output_file, "textit", $selected_item_contents->{name}, "");
+
 	my $subsections = $selected_items->{$selected_item}->{command_definitions};
 
 	foreach my $subsection (@$subsections)
 	{
 	    my $description = $subsection->{description};
 
-	    output_latex($output_file, '\subsection{' . $description . "}\n\n");
+	    if (scalar @$subsections eq 1)
+	    {
+		output_latex($output_file, "The following tests are described as: $description\n");
+	    }
+	    else
+	    {
+		output_latex($output_file, '\subsection{' . $description . "}\n\n");
+	    }
+
+	    output_latex($output_file, 'For the tests the following system shell command must be given ');
+
+	    my $arguments = $subsection->{arguments};
+
+	    my $command = join ' ', $subsection->{command}, @$arguments;
+
+	    output_latex_prompt($output_file, "textbf", $command, "");
 
 	    my $subsubsections = $subsection->{tests};
 
 	    foreach my $subsubsection (@$subsubsections)
 	    {
+		output_latex_prompt($output_file, "textbf", $subsubsection->{disabled}, "note that this test was disabled: \n");
+
 		my $description = $subsubsection->{description};
 
-		output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
+		if (scalar @$subsubsections eq 1)
+		{
+		    output_latex($output_file, "This test is described as: $description\n");
+		}
+		else
+		{
+		    output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
+		}
 
-		output_latex($output_file, "contents\n\n");
+		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{write}, "Input to the application:\n");
+
+		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{read}, "Output we expect to see:\n");
+
+		output_latex_prompt($output_file, "", $subsubsection->{comment}, "Notes:\n");
+
 	    }
 	}
     }
@@ -3904,11 +3999,15 @@ sub run
 	$selected_test_definitions->[$test_definition_counter] = {};
     }
 
-    my $selected_test_definition = $selected_test_definitions->[$test_definition_counter];
+    use Clone 'clone';
 
-    # add the current test description to the summary
+    $selected_test_definitions->[$test_definition_counter] = clone($command_test);
 
-    $selected_test_definition->{description} = $command_test->{description};
+    # my $selected_test_definition = $selected_test_definitions->[$test_definition_counter];
+
+    # # add the current test description to the summary
+
+    # $selected_test_definition->{description} = $command_test->{description};
 
     # always succeeds
 
@@ -3965,7 +4064,15 @@ sub start
 
     my $command_definition = $execution_context->get_command_definition();
 
-    push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
+    use Clone 'clone';
+
+#     push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
+
+    my $clone_command_definition = clone($command_definition);
+
+    $clone_command_definition->{tests} = [];
+
+    push @$selected_command_definitions, $clone_command_definition;
 }
 
 
@@ -3989,8 +4096,6 @@ sub start
     my $execution_context = $self->{execution_context};
 
     # create an output entry for the module
-
-    #t we could add a counter here to keep the order of execution in the final yaml output
 
     my $module_definition = $execution_context->get_module_definition();
 
