@@ -2277,6 +2277,9 @@ sub _push_current
     my $path = $self->{path};
 
     push @$path, $current;
+
+    $self->_maintain_counters($current);
+
 }
 
 
@@ -3792,6 +3795,31 @@ sub output_latex
 }
 
 
+sub output_latex_table
+{
+    my $outputfile = shift;
+
+    my $contents = shift;
+
+    my $prompt = shift;
+
+    output_latex_environment_prompt($output_file, "verbatim", "", $prompt, "\n\n");
+
+    output_latex($output_file, '\begin{longtable}{p{13cm}}' . "\n");
+
+    output_latex($output_file, '\hline' . "\n");
+
+    output_latex_environment_prompt($output_file, "verbatim", $contents, "", "");
+
+    output_latex($output_file, '\\\\' . "\n");
+
+    output_latex($output_file, '\hline' . "\n");
+
+    output_latex($output_file, '\end{longtable}' . "\n");
+
+}
+
+
 sub output_latex_environment_prompt
 {
     my $outputfile = shift;
@@ -3801,6 +3829,8 @@ sub output_latex_environment_prompt
     my $contents = shift;
 
     my $prompt = shift;
+
+    my $suffix = shift;
 
     if (defined $contents)
     {
@@ -3815,11 +3845,11 @@ sub output_latex_environment_prompt
 
 	if ($content_type)
 	{
-	    output_latex($output_file, '\end{' . $content_type . "}\n\n");
+	    output_latex($output_file, '\end{' . $content_type . "}\n");
 	}
-
-	output_latex($output_file, "\n");
     }
+
+    output_latex($output_file, $suffix);
 }
 
 
@@ -3832,6 +3862,8 @@ sub output_latex_prompt
     my $contents = shift;
 
     my $prompt = shift;
+
+    my $suffix = shift;
 
     if (defined $contents)
     {
@@ -3846,11 +3878,11 @@ sub output_latex_prompt
 
 	if ($content_type)
 	{
-	    output_latex($output_file, "}\n");
+	    output_latex($output_file, "}");
 	}
-
-	output_latex($output_file, "\n");
     }
+
+    output_latex($output_file, $suffix);
 }
 
 
@@ -3876,57 +3908,82 @@ sub output_process
 
 	my $selected_item_description = $selected_item_contents->{description};
 
+	my $subsections = $selected_items->{$selected_item}->{command_definitions};
+
 	output_latex($output_file, '\section{' . $selected_item_description . "}\n\n");
 
-	output_latex($output_file, 'The following tests were defined in the file ');
+	if (scalar @$subsections eq 1)
+	{
+	    output_latex($output_file, 'The following test is defined in the file ');
+	}
+	else
+	{
+	    output_latex($output_file, 'The following tests are defined in the file ');
+	}
 
-	output_latex_prompt($output_file, "textit", $selected_item_contents->{name}, "");
-
-	my $subsections = $selected_items->{$selected_item}->{command_definitions};
+	output_latex_prompt($output_file, "textit", $selected_item_contents->{name}, "", "\n\n");
 
 	foreach my $subsection (@$subsections)
 	{
 	    my $description = $subsection->{description};
 
-	    if (scalar @$subsections eq 1)
-	    {
-		output_latex($output_file, "The following tests are described as: $description\n");
-	    }
-	    else
-	    {
-		output_latex($output_file, '\subsection{' . $description . "}\n\n");
-	    }
-
-	    output_latex($output_file, 'For the tests the following system shell command must be given ');
+	    my $subsubsections = $subsection->{command_tests};
 
 	    my $arguments = $subsection->{arguments};
 
 	    my $command = join ' ', $subsection->{command}, @$arguments;
 
-	    output_latex_prompt($output_file, "textbf", $command, "");
+	    if (scalar @$subsections eq 1)
+	    {
+		output_latex($output_file, "The following test is described as: $description\n");
+	    }
+	    else
+	    {
+		if (scalar @$subsubsections eq 1)
+		{
+		    my $subdescription = $subsubsections->[0]->{description};
 
-	    my $subsubsections = $subsection->{tests};
+		    $description .= ": $subdescription";
+		}
+
+		output_latex($output_file, '\subsection{' . $description . "}\n\n");
+	    }
+
+	    if (scalar @$subsubsections eq 1)
+	    {
+		output_latex($output_file, 'For the test that follows the system shell ');
+	    }
+	    else
+	    {
+		output_latex($output_file, 'For the tests that follow the system shell ');
+	    }
+
+	    output_latex_prompt($output_file, "textbf", $command, "", "");
+
+	    output_latex($output_file, ' must first be given.');
 
 	    foreach my $subsubsection (@$subsubsections)
 	    {
-		output_latex_prompt($output_file, "textbf", $subsubsection->{disabled}, "note that this test was disabled: \n");
+		output_latex_prompt($output_file, "textbf", $subsubsection->{disabled}, "note that this test was disabled: \n", "\n\n");
 
 		my $description = $subsubsection->{description};
 
 		if (scalar @$subsubsections eq 1)
 		{
-		    output_latex($output_file, "This test is described as: $description\n");
+		    # output_latex($output_file, "This test is described as: $description\n\n");
 		}
 		else
 		{
 		    output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
 		}
 
-		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{write}, "Input to the application:\n");
+		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{write}, "Input to the application:\n", "\n\n");
 
-		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{read}, "Output we expect to see:\n");
+# 		output_latex_table($output_file, $subsubsection->{read}, "This is the application output we expect:\n");
 
-		output_latex_prompt($output_file, "", $subsubsection->{comment}, "Notes:\n");
+		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{read}, "This is the application output we expect:\n", "\n\n");
+
+		output_latex_prompt($output_file, "", $subsubsection->{comment}, "Notes:\n", "\n\n");
 
 	    }
 	}
@@ -3938,13 +3995,15 @@ sub output_preamble
 {
     my $preamble
 	= '\documentclass[12pt]{article}
-\usepackage{verbatim}
-\usepackage[dvips]{epsfig}
+\usepackage[a4paper, total={6in, 9in}]{geometry}
 \usepackage{color}
-\usepackage{url}
 \usepackage[colorlinks=true]{hyperref}
+\usepackage[dvips]{epsfig}
 \usepackage{enumitem} % [noitemsep,nolistsep] compact itemize/enumerate etc.
-\usepackage[margin=2cm]{geometry}
+\usepackage{longtable}
+% \usepackage[margin=2cm]{geometry}
+\usepackage{url}
+\usepackage{verbatim}
 
 % Typeface
 \usepackage[condensed,math]{iwona}
@@ -4069,8 +4128,6 @@ sub start
 #     push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
 
     my $clone_command_definition = clone($command_definition);
-
-    $clone_command_definition->{tests} = [];
 
     push @$selected_command_definitions, $clone_command_definition;
 }
