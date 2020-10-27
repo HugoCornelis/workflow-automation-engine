@@ -3890,58 +3890,74 @@ sub output_process
 {
     my $test_report = shift;
 
-    my $selected_items = $test_report->{selected};
+    my $module_definitions = $test_report->{selected};
 
-    foreach my $selected_item (sort
-			       {
-				   my $selected_a = $a;
-				   my $selected_b = $b;
+    foreach my $module_definition_key (sort
+				       {
+					   my $selected_a = $a;
+					   my $selected_b = $b;
 
-				   my $counter_a = $selected_items->{$selected_a}->{count};
-				   my $counter_b = $selected_items->{$selected_b}->{count};
+					   my $counter_a = $module_definitions->{$selected_a}->{count};
+					   my $counter_b = $module_definitions->{$selected_b}->{count};
 
-				   $counter_a <=> $counter_b;
-			       }
-			       keys %$selected_items)
+					   $counter_a <=> $counter_b;
+				       }
+				       keys %$module_definitions)
     {
-	my $selected_item_contents = $selected_items->{$selected_item};
+	my $module_definition = $module_definitions->{$module_definition_key};
 
-	my $selected_item_description = $selected_item_contents->{description};
+	my $module_definition_description = $module_definition->{description};
 
-	my $subsections = $selected_items->{$selected_item}->{command_definitions};
+	my $module_definition_explanation = $module_definition->{explanation} || "";
 
-	output_latex($output_file, '\section{' . $selected_item_description . "}\n\n");
+	my $command_definitions = $module_definition->{command_definitions};
 
-	if (scalar @$subsections eq 1)
+	output_latex($output_file, '\section{' . $module_definition_description . "}\n\n");
+
+	if (scalar @$command_definitions eq 1)
 	{
-	    output_latex($output_file, 'The following test is defined in the file ');
+	    output_latex($output_file, 'The file ');
+
+	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	    output_latex($output_file, " defines the test that is explained in the following section.\n\n");
+
 	}
 	else
 	{
-	    output_latex($output_file, 'The following tests are defined in the file ');
+	    output_latex($output_file, 'The file ');
+
+	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	    output_latex($output_file, " defines the tests that are explained in the following sections.\n\n");
 	}
 
-	output_latex_prompt($output_file, "textit", $selected_item_contents->{name}, "", "\n\n");
-
-	foreach my $subsection (@$subsections)
+	if ($module_definition_explanation)
 	{
-	    my $description = $subsection->{description};
+	    output_latex($output_file, "$module_definition_explanation\n\n");
 
-	    my $subsubsections = $subsection->{command_tests};
+	    # output_latex($output_file, "Test commands follow.\n\n");
+	}
 
-	    my $arguments = $subsection->{arguments};
+	foreach my $command_definition (@$command_definitions)
+	{
+	    my $description = $command_definition->{description};
 
-	    my $command = join ' ', $subsection->{command}, @$arguments;
+	    my $command_tests = $command_definition->{command_tests};
 
-	    if (scalar @$subsections eq 1)
+	    my $arguments = $command_definition->{arguments};
+
+	    my $command = join ' ', $command_definition->{command}, @$arguments;
+
+	    if (scalar @$command_definitions eq 1)
 	    {
 		output_latex($output_file, "The following test is described as: $description\n");
 	    }
 	    else
 	    {
-		if (scalar @$subsubsections eq 1)
+		if (scalar @$command_tests eq 1)
 		{
-		    my $subdescription = $subsubsections->[0]->{description};
+		    my $subdescription = $command_tests->[0]->{description};
 
 		    $description .= ": $subdescription";
 		}
@@ -3949,7 +3965,7 @@ sub output_process
 		output_latex($output_file, '\subsection{' . $description . "}\n\n");
 	    }
 
-	    if (scalar @$subsubsections eq 1)
+	    if (scalar @$command_tests eq 1)
 	    {
 		output_latex($output_file, 'For the test that follows the system shell ');
 	    }
@@ -3962,13 +3978,13 @@ sub output_process
 
 	    output_latex($output_file, ' must first be given.');
 
-	    foreach my $subsubsection (@$subsubsections)
+	    foreach my $command_test (@$command_tests)
 	    {
-		output_latex_prompt($output_file, "textbf", $subsubsection->{disabled}, "note that this test was disabled: \n", "\n\n");
+		output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
 
-		my $description = $subsubsection->{description};
+		my $description = $command_test->{description};
 
-		if (scalar @$subsubsections eq 1)
+		if (scalar @$command_tests eq 1)
 		{
 		    # output_latex($output_file, "This test is described as: $description\n\n");
 		}
@@ -3977,13 +3993,13 @@ sub output_process
 		    output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
 		}
 
-		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{write}, "Input to the application:\n", "\n\n");
+		output_latex_environment_prompt($output_file, "verbatim", $command_test->{write}, "Input to the application:\n", "\n\n");
 
-# 		output_latex_table($output_file, $subsubsection->{read}, "This is the application output we expect:\n");
+# 		output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
 
-		output_latex_environment_prompt($output_file, "verbatim", $subsubsection->{read}, "This is the application output we expect:\n", "\n\n");
+		output_latex_environment_prompt($output_file, "verbatim", $command_test->{read}, "This is the application output we expect:\n", "\n\n");
 
-		output_latex_prompt($output_file, "", $subsubsection->{comment}, "Notes:\n", "\n\n");
+		output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
 
 	    }
 	}
@@ -4106,6 +4122,7 @@ sub start
 	    = {
 	       count => $module_counter,
 	       description => $module_definition->{description},
+	       explanation => $module_definition->{explanation},
 	       name => $module_name,
 	      };
     }
