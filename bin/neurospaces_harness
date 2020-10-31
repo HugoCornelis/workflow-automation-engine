@@ -1374,6 +1374,8 @@ sub rebless
 }
 
 
+# execute perl code in the command definition
+
 sub run
 {
     my $self = shift;
@@ -1432,6 +1434,9 @@ package Heterarch::Test::CommandTest::CommandObject;
 
 our @ISA = ("Heterarch::Test::CommandTest");
 
+
+# write the write clauses of the command test to the test object.
+# expect the contents of the read clause for output.
 
 sub run
 {
@@ -1647,6 +1652,8 @@ sub _process_write
 }
 
 
+# I believe this is only a template for derived classes.
+
 sub run
 {
     my $self = shift;
@@ -1685,6 +1692,11 @@ package Heterarch::Test::CommandTest::Interactive::ShellTester;
 our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 
 
+# write the write clauses of the command test.
+# use the shell command in the tester clause to produce the application output.
+#   the shell command should find the produced output and process it.
+# compare this output with the expected output.
+
 sub run
 {
     my $self = shift;
@@ -1713,7 +1725,7 @@ sub run
 
     # set the external tester that compares the generated output with what is expected
 
-	#! the external tester runs an executable shell command
+    #! the external tester runs an executable shell command
 
     my $shell = $tester->{shell};
 
@@ -1762,6 +1774,10 @@ package Heterarch::Test::CommandTest::Interactive::Literal;
 
 our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 
+
+# write the write clauses of the command test.
+# read the application output using the expect object.
+# literally compare the application output with the expected output.
 
 sub run
 {
@@ -1834,6 +1850,10 @@ package Heterarch::Test::CommandTest::Interactive::Regex;
 our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 
 
+# write the write clauses of the command test.
+# read the application output using the expect object.
+# compare the application output with the expected output as a regex.
+
 sub run
 {
     my $self = shift;
@@ -1898,6 +1918,10 @@ package Heterarch::Test::CommandTest::Interactive::Alternatives;
 our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 
 
+# write the write clauses of the command test.
+# read the application output using the expect object.
+# compare the application output with the expected output which is a list of alternatives.
+
 sub run
 {
     my $self = shift;
@@ -1961,6 +1985,10 @@ package Heterarch::Test::CommandTest::Interactive::File;
 
 our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 
+
+# write the write clauses of the command test.
+# read the application output from a file.
+# compare the application output with the expected output which is a file.
 
 sub run
 {
@@ -2048,6 +2076,11 @@ package Heterarch::Test::CommandTest::Interactive::Shell;
 
 our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 
+
+# write the write clauses of the command test.
+# run the given shell command and capture its output.
+# read the application output using the expect object.
+# compare this output with the application output.
 
 sub run
 {
@@ -3463,6 +3496,10 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
     }
 }
 
+
+# check if this module is ready to run its tests.
+# execute all the command definitions.
+# execute all the command tests in these command definitions.
 
 sub run
 {
