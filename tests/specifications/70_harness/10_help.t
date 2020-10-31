@@ -32,6 +32,7 @@ options:
     --output             the class that should generate the output (default is 'Heterarch::Test::Executor').
     --output-html        generate HTML output.
     --output-latex       generate Latex output.
+    --output-levels      generate output for these levels (default is 'meta, module, command_definition, command_test'.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.

@@ -32,6 +32,7 @@ my $option_numerical_compare;
 my $option_output;
 my $option_output_html;
 my $option_output_latex;
+my $option_output_levels = [];
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -44,6 +45,14 @@ my $option_verbose;
 
 
 our $global_config;
+
+my $global_all_output_levels
+    = [
+       "meta",
+       "module",
+       "command_definition",
+       "command_test",
+      ];
 
 my $global_error_count = 0;
 my $global_fd_output;
@@ -337,6 +346,7 @@ sub parse_options
 	     "output=s" => \$option_output,
 	     "output-html" => \$option_output_html,
 	     "output-latex" => \$option_output_latex,
+	     "output-levels=s" => $option_output_levels,
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
@@ -387,6 +397,13 @@ sub parse_options
 	}
     }
 
+    if (not scalar @$option_output_levels)
+    {
+	use Clone 'clone';
+
+	$option_output_levels = clone($global_all_output_levels);
+    }
+
     $global_test_report->{options}
 	= {
 	   command_tests => $option_command_tests,
@@ -400,6 +417,7 @@ sub parse_options
 	   output => $option_output,
 	   output_html => $option_output_html,
 	   output_latex => $option_output_latex,
+	   output_levels => $option_output_levels,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
@@ -432,6 +450,7 @@ options:
     --output             the class that should generate the output (default is '$option_output').
     --output-html        generate HTML output.
     --output-latex       generate Latex output.
+    --output-levels      generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
@@ -2144,6 +2163,63 @@ sub run
 package Heterarch::Test::Element;
 
 
+my $selected_output_levels;
+
+
+sub is_selected
+{
+    my $self = shift;
+
+    my $fd_output = shift;
+
+    return $self->is_selected_by_output_level_options($fd_output);
+}
+
+
+sub is_selected_by_output_level_options
+{
+    my $self = shift;
+
+    my $fd_output = shift;
+
+    # map the selected output levels to a hash to facilitate easy detection what has been enabled
+
+    if (not defined $selected_output_levels)
+    {
+	$selected_output_levels
+	    = {
+	       map
+	       {
+		   my $output_level = $_;
+
+		   my $result = { $output_level => "from options", };
+
+		   %$result;
+	       }
+	       @$option_output_levels,
+	      };
+    }
+
+    # convert the class to its output level
+
+    use Scalar::Util 'blessed';
+
+    my $type = defined blessed $self && $self->isa("Heterarch::Test::Module") ? "module" : "";
+
+    $type ||= defined blessed $self && $self->isa("Heterarch::Test::CommandDefinition") ? "command_definition" : "";
+
+    $type ||= defined blessed $self && $self->isa("Heterarch::Test::CommandTest") ? "command_test" : "";
+
+    # determine whether this output level was selected
+
+    my $selected = $selected_output_levels->{$type};
+
+    # return result
+
+    return $selected;
+}
+
+
 package Heterarch::Test::ExecutionContext;
 
 
@@ -2783,6 +2859,13 @@ sub start
     my $command_test = shift;
 
     my $started;
+
+    # # if this element is selected by active options
+
+    # if ($self->is_selected($module_definition, $command_definition, $command_test))
+    # {
+    # 	return $started;
+    # }
 
     # if this test is disabled
 
@@ -3459,6 +3542,25 @@ sub check_name
 }
 
 
+sub is_selected
+{
+    my $self = shift;
+
+    my $fd_output = shift;
+
+    my $result = $self->SUPER::is_selected($fd_output);
+
+    if ($result)
+    {
+	$result = $self->is_selected_by_tag($fd_output);
+    }
+
+    return $result;
+}
+
+
+# return true if this module definition has a tag that matches the tag options.
+
 sub is_selected_by_tag
 {
     my $module_definition = shift;
@@ -3515,9 +3617,9 @@ sub run
 
     my $module_description = $self->check_description($fd_output);
 
-    if (not $self->is_selected_by_tag($fd_output))
+    if (not $self->is_selected($fd_output))
     {
-	return "not_selected_by_tag";
+	return "not_selected";
     }
 
     # proceed: start the execution context
@@ -3544,6 +3646,11 @@ sub run
 	# lookup the class for this command definition
 
 	$command_definition->rebless();
+
+	if (not $command_definition->is_selected($fd_output))
+	{
+	    next;
+	}
 
 	# give some diagnostics
 
@@ -3577,6 +3684,11 @@ sub run
 	    # lookup the class for this command test
 
 	    $command_test->rebless();
+
+	    if (not $command_test->is_selected($fd_output))
+	    {
+		next;
+	    }
 
 	    # emit comment if any
 
