@@ -2166,6 +2166,8 @@ package Heterarch::Test::Element;
 my $selected_output_levels;
 
 
+# sub is_selected() should implement a logical and of the different selection criteria
+
 sub is_selected
 {
     my $self = shift;
@@ -2625,6 +2627,33 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 }
 
 
+sub is_selected
+{
+    my $self = shift;
+
+    my $module_definition = shift;
+
+    my $command_definition = shift;
+
+    my $command_test = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $module_name = $module_definition->{name};
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
+
+    my $result = $active_element->is_selected($fd_output);
+
+    return $result;
+}
+
+
 sub preparation
 {
     my $self = shift;
@@ -2860,12 +2889,12 @@ sub start
 
     my $started;
 
-    # # if this element is selected by active options
+    # if this element is selected by active options
 
-    # if ($self->is_selected($module_definition, $command_definition, $command_test))
-    # {
-    # 	return $started;
-    # }
+    if (not $self->is_selected($module_definition, $command_definition, $command_test))
+    {
+    	return $started;
+    }
 
     # if this test is disabled
 
@@ -3548,6 +3577,8 @@ sub is_selected
 
     my $fd_output = shift;
 
+    # implement a logical and of the different selection criteria
+
     my $result = $self->SUPER::is_selected($fd_output);
 
     if ($result)
@@ -3617,11 +3648,6 @@ sub run
 
     my $module_description = $self->check_description($fd_output);
 
-    if (not $self->is_selected($fd_output))
-    {
-	return "not_selected";
-    }
-
     # proceed: start the execution context
 
     my $started = $execution_context->start($self);
@@ -3646,11 +3672,6 @@ sub run
 	# lookup the class for this command definition
 
 	$command_definition->rebless();
-
-	if (not $command_definition->is_selected($fd_output))
-	{
-	    next;
-	}
 
 	# give some diagnostics
 
@@ -3684,11 +3705,6 @@ sub run
 	    # lookup the class for this command test
 
 	    $command_test->rebless();
-
-	    if (not $command_test->is_selected($fd_output))
-	    {
-		next;
-	    }
 
 	    # emit comment if any
 
