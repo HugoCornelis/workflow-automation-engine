@@ -2465,7 +2465,7 @@ sub _pop_current
 }
 
 
-sub end
+sub ec_end
 {
     my $self = shift;
 
@@ -2474,6 +2474,10 @@ sub end
     my $command_definition = shift;
 
     my $command_test = shift;
+
+    #! note: reparation_error has already been processed
+
+    my $reparation_error = $self->_reparation();
 
     my $fd_output = $self->{fd_output};
 
@@ -2713,15 +2717,24 @@ sub is_selected
 }
 
 
-sub preparation
+sub _preparation
 {
     my $self = shift;
 
-    my $module_definition = shift;
+    my $current = $self->_get_current();
 
-    my $command_definition = shift;
+    my $module_definition = $current->[0];
 
-    my $command_test = shift;
+    my $command_definition = $current->[1];
+
+    my $command_test = $current->[2];
+
+    # command_tests with a harnessing clause are unsupported
+
+    if ($command_test)
+    {
+	return undef;
+    }
 
     my $fd_output = $self->{fd_output};
 
@@ -2744,39 +2757,41 @@ sub preparation
 	}
     }
 
-    my $definition = defined $command_definition ? $command_definition : $module_definition;
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
 
     # convert the old format preparation / reparation to the new format of harnessing
 
-    if (not exists $definition->{harnessing})
+    if (not exists $active_element->{harnessing})
     {
-	if (exists $definition->{preparation})
+	if (exists $active_element->{preparation})
 	{
-	    $definition->{harnessing}->{preparation} = $definition->{preparation};
+	    $active_element->{harnessing}->{preparation} = $active_element->{preparation};
 
-	    delete $definition->{preparation};
+	    delete $active_element->{preparation};
 	}
 
-	if (exists $definition->{reparation})
+	if (exists $active_element->{reparation})
 	{
-	    $definition->{harnessing}->{reparation} = $definition->{reparation};
+	    $active_element->{harnessing}->{reparation} = $active_element->{reparation};
 
-	    delete $definition->{reparation};
+	    delete $active_element->{reparation};
 	}
     }
 
     # process the harnessing preparation clause
 
-    my $harnessing
-	= ($command_definition
-	   ? $command_definition->{harnessing}
-	   : $module_definition->{harnessing});
+    my $harnessing = $active_element->{harnessing};
 
     my $preparation = $harnessing->{preparation};
 
     my $preparation_result;
 
-    # if there is a preparation clause
+    # if we are really running tests and there is a preparation clause
 
     if (($global_test_report->{output_format} eq 'executor')
 	and $preparation)
@@ -2858,17 +2873,42 @@ sub new
 }
 
 
-sub reparation
+sub _reparation
 {
     my $self = shift;
 
-    my $command_definition = shift;
+    my $current = $self->_get_current();
 
-    my $preparation_result = shift;
+    my $module_definition = $current->[0];
 
-    my $fd_output = $self->{fd_output};
+    my $command_definition = $current->[1];
 
-    my $module_definition = $self->get_module_definition();
+    my $command_test = $current->[2];
+
+    # command_tests with a harnessing clause are unsupported
+
+    if ($command_test)
+    {
+	return undef;
+    }
+
+    my $preparation_result;
+
+    if ($command_definition)
+    {
+	$preparation_result = $self->{command_preparation_result};
+    }
+    else
+    {
+	$preparation_result = $self->{module_preparation_result};
+    }
+
+    my $active_element
+	= (defined $command_test
+	   ? $command_test
+	   : (defined $command_definition
+	      ? $command_definition
+	      : $module_definition));
 
     my $module_name = $module_definition->{name};
 
@@ -2899,6 +2939,8 @@ sub reparation
 	and $reparation)
     {
 	# give diagnostics
+
+	my $fd_output = $self->{fd_output};
 
 	print $fd_output "*** Reparing $reparation_name ($reparation->{description})\n";
 
@@ -2936,6 +2978,13 @@ sub reparation
 }
 
 
+#
+# sub start
+#
+# Apply selection criteria to the current context.
+# Prepare the test environment.
+#
+
 sub ec_start
 {
     my $self = shift;
@@ -2946,13 +2995,15 @@ sub ec_start
 
     my $command_test = shift;
 
-    my $started;
+    # set default result: everything ok
+
+    my $result;
 
     # if this element is selected by active options
 
     if (not $self->is_selected($module_definition, $command_definition, $command_test))
     {
-    	return $started;
+	return "not selected";
     }
 
     # if this test is disabled
@@ -2961,7 +3012,7 @@ sub ec_start
     {
 	# return to skip it
 
-	return $started;
+	return "is disbled";
     }
 
     # if this test has been flagged with an error
@@ -2970,7 +3021,7 @@ sub ec_start
     {
 	# return to skip it
 
-	return $started;
+	return "has the error flag";;
     }
 
     # update the path of execution
@@ -3031,9 +3082,28 @@ sub ec_start
 	}
     }
 
-    $started = 'yes';
+    if ($command_test)
+    {
+	# prepare the command test environment
 
-    return $started;
+	$self->{command_test_preparation_result} = $self->_preparation();
+    }
+    elsif ($command_definition)
+    {
+	# prepare the command definition environment
+
+	$self->{command_preparation_result} = $self->_preparation();
+    }
+    else
+    {
+	# prepare the test environment
+
+	$self->{module_preparation_result} = $self->_preparation();
+    }
+
+    # return result: should be undef here
+
+    return $result;
 }
 
 
@@ -3707,18 +3777,14 @@ sub md_run
 
     my $module_description = $self->check_description($fd_output);
 
-    # proceed: start the execution context
+    # do selection and prepare the test environment
 
-    my $started = $execution_context->ec_start($self);
+    my $not_started = $execution_context->ec_start($self);
 
-    if (not $started)
+    if ($not_started)
     {
-	return "module start failed";
+	return "module start failed ($not_started)";
     }
-
-    # prepare the module test environment
-
-    my $module_preparation_result = $execution_context->preparation($self);
 
     # loop over commands for this module
 
@@ -3732,18 +3798,14 @@ sub md_run
 
 	$command_definition->rebless();
 
-	# give some diagnostics
+	# do selection and prepare the test environment
 
-	my $started = $execution_context->ec_start($self, $command_definition);
+	my $not_started = $execution_context->ec_start($self, $command_definition);
 
-	if (not $started)
+	if ($not_started)
 	{
 	    next;
 	}
-
-	# prepare the command test environment
-
-	my $preparation_result = $execution_context->preparation($self, $command_definition);
 
 	# call the perl code, spaw_new
 
@@ -3767,9 +3829,9 @@ sub md_run
 
 	    # emit comment if any
 
-	    my $started = $execution_context->ec_start($self, $command_definition, $command_test);
+	    my $not_started = $execution_context->ec_start($self, $command_definition, $command_test);
 
-	    if (not $started)
+	    if ($not_started)
 	    {
 		next;
 	    }
@@ -3814,7 +3876,7 @@ sub md_run
 
 	    # end the execution of this test
 
-	    $execution_context->end($self, $command_definition, $command_test);
+	    $execution_context->ec_end($self, $command_definition, $command_test);
 
 	    # register if this command had side effects
 
@@ -3827,9 +3889,7 @@ sub md_run
 
 	# repair the command test environment
 
-	my $reparation_error = $execution_context->reparation($command_definition, $preparation_result);
-
-	$execution_context->end($self, $command_definition);
+	$execution_context->ec_end($self, $command_definition);
 
 	# register if this command had side effects
 
@@ -3840,7 +3900,13 @@ sub md_run
 
     # repair the test environment
 
-    my $reparation_error = $execution_context->reparation(undef, $module_preparation_result);
+    $execution_context->ec_end($self);
+
+    # register if this command had side effects
+
+    #! don't think this make sense, but anyway ...
+
+    $global_previous_command_side_effects ||= $self->{side_effects} || 0;
 
     # if library checksum mismatch
 
@@ -3867,14 +3933,6 @@ sub md_run
 		    );
 	}
     }
-
-    # register if this command had side effects
-
-    #! don't think this make sense, but anyway ...
-
-    $global_previous_command_side_effects ||= $self->{side_effects} || 0;
-
-    $execution_context->end($self);
 
     # return result: execution completed
 
