@@ -304,7 +304,7 @@ sub main
 
 	my $fd_module_output = $global_fd_output;
 
-	my $error = $module_definition->run($execution_context, $executor, $fd_module_output);
+	my $error = $module_definition->md_run($execution_context, $executor, $fd_module_output);
     }
 
     # end the execution_context
@@ -944,7 +944,7 @@ sub spawn_new
 # Starts the application command and connects to its I/O channels.
 #
 
-sub start
+sub cd_start
 {
     my $self = shift;
 
@@ -978,7 +978,7 @@ our @ISA = ("Heterarch::Test::CommandDefinition");
 # Calls the new method of the given class to instantiate a Perl object.
 #
 
-sub start
+sub cd_start
 {
     my $self = shift;
 
@@ -1014,7 +1014,7 @@ our @ISA = ("Heterarch::Test::CommandDefinition");
 # Deprecated: Hardcoded perl code in the test specifications should be removed.
 #
 
-sub start
+sub cd_start
 {
     my $self = shift;
 
@@ -1426,7 +1426,7 @@ sub rebless
 # The default implementation executes perl code in the command definition.
 #
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -1492,7 +1492,7 @@ our @ISA = ("Heterarch::Test::CommandTest");
 # expect the contents of the read clause for output.
 #
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -1732,7 +1732,7 @@ sub _process_write
 
 # I believe this is only a template for derived classes.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -1775,7 +1775,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 #   the shell command should find the produced output and process it.
 # compare this output with the expected output.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -1857,7 +1857,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # literally compare the application output with the expected output.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -1932,7 +1932,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # compare the application output with the expected output as a regex.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -2000,7 +2000,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # compare the application output with the expected output which is a list of alternatives.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -2068,7 +2068,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output from a file.
 # compare the application output with the expected output which is a file.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -2160,7 +2160,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # compare this output with the application output.
 
-sub run
+sub ct_run
 {
     my $self = shift;
 
@@ -2936,7 +2936,7 @@ sub reparation
 }
 
 
-sub start
+sub ec_start
 {
     my $self = shift;
 
@@ -3100,7 +3100,7 @@ sub new
 # a derived class can inspect the elements found in the test
 # specification and, for instance, print them to a file.
 
-sub run
+sub ex_run
 {
     my $self = shift;
 
@@ -3110,7 +3110,7 @@ sub run
 
     my $fd_output = $self->{fd_output};
 
-    return $command_test->run($execution_context, $self, $fd_output);
+    return $command_test->ct_run($execution_context, $self, $fd_output);
 }
 
 
@@ -3124,7 +3124,7 @@ sub run
 # 3. an interactive system shell command.
 #
 
-sub start
+sub ex_start
 {
     my $self = shift;
 
@@ -3136,7 +3136,7 @@ sub start
 
     my $fd_output = $self->{fd_output};
 
-    $command_definition->start($self, $fd_output);
+    $command_definition->cd_start($self, $fd_output);
 }
 
 
@@ -3693,7 +3693,7 @@ Total of $global_test_report->{global}->{test_count} tests (encountered $global_
 # execute all the command definitions.
 # execute all the command tests in these command definitions.
 
-sub run
+sub md_run
 {
     my $self = shift;
 
@@ -3709,7 +3709,7 @@ sub run
 
     # proceed: start the execution context
 
-    my $started = $execution_context->start($self);
+    my $started = $execution_context->ec_start($self);
 
     if (not $started)
     {
@@ -3734,7 +3734,7 @@ sub run
 
 	# give some diagnostics
 
-	my $started = $execution_context->start($self, $command_definition);
+	my $started = $execution_context->ec_start($self, $command_definition);
 
 	if (not $started)
 	{
@@ -3751,7 +3751,7 @@ sub run
 	# 2. a piece of perl code that is run.
 	# 3. an interactive system shell command.
 
-	$executor->start();
+	$executor->ex_start();
 
 	# loop over all tests for this command
 
@@ -3767,7 +3767,7 @@ sub run
 
 	    # emit comment if any
 
-	    my $started = $execution_context->start($self, $command_definition, $command_test);
+	    my $started = $execution_context->ec_start($self, $command_definition, $command_test);
 
 	    if (not $started)
 	    {
@@ -3776,7 +3776,7 @@ sub run
 
 	    # run the text executor which will run the command_test
 
-	    my $execution_result = $executor->run($command_test);
+	    my $execution_result = $executor->ex_run($command_test);
 
 	    # process errors
 
@@ -3893,7 +3893,7 @@ package Heterarch::Test::Output::Formatter;
 our @ISA = ("Heterarch::Test::Executor");
 
 
-sub run
+sub ex_run
 {
     die "$0: *** Error: this output formatter is not fully implemented.";
 
@@ -3910,7 +3910,7 @@ package Heterarch::Test::Output::Formatter::HTMLTable;
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
-sub start
+sub ex_start
 {
     my $self = shift;
 
@@ -4263,7 +4263,7 @@ sub output_preamble
 
 # add the current test description to the summary
 
-sub run
+sub ex_run
 {
     my $self = shift;
 
@@ -4326,7 +4326,7 @@ sub run
 }
 
 
-sub start
+sub ex_start
 {
     my $self = shift;
 
@@ -4387,7 +4387,7 @@ our @ISA = ("Heterarch::Test::Output::Formatter");
 
 # create an output entry for the current command definition
 
-sub start
+sub ex_start
 {
     my $self = shift;
 
@@ -4418,7 +4418,7 @@ sub start
 
 # add the current test description to the summary
 
-sub run
+sub ex_run
 {
     my $self = shift;
 
@@ -4472,7 +4472,7 @@ our @ISA = ("Heterarch::Test::Output::Formatter");
 
 # create an output entry for the current command definition
 
-sub start
+sub ex_start
 {
     my $self = shift;
 
@@ -4514,7 +4514,7 @@ sub start
 
 # add the current test description to the summary
 
-sub run
+sub ex_run
 {
     my $self = shift;
 
@@ -4588,7 +4588,7 @@ package Heterarch::Test::Output::List;
 our @ISA = ("Heterarch::Test::Output::Formatter::YAML::Summary");
 
 
-sub run
+sub ex_run
 {
     my $self = shift;
 
