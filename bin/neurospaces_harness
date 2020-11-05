@@ -2474,6 +2474,31 @@ sub _pop_current
 }
 
 
+sub _push_preparation_result
+{
+    my $self = shift;
+
+    my $preparation_result = shift;
+
+    my $path = $self->{preparation_result};
+
+    push @$path, $preparation_result;
+
+}
+
+
+sub _pop_preparation_result
+{
+    my $self = shift;
+
+    my $path = $self->{preparation_result};
+
+    my $result = pop @$path;
+
+    return $result;
+}
+
+
 sub ec_end
 {
     my $self = shift;
@@ -2872,8 +2897,9 @@ sub new
     my $self
 	= {
 	   %$options,
-	   path => [],
 	   fd_output => $fd_output,
+	   path => [],
+	   preparation_result => [],
 	  };
 
     bless $self, $package;
@@ -2894,22 +2920,13 @@ sub _reparation
 
     my $command_test = $current->[2];
 
+    my $preparation_result = $self->_pop_preparation_result();
+
     # command_tests with a harnessing clause are unsupported
 
     if ($command_test)
     {
 	return undef;
-    }
-
-    my $preparation_result;
-
-    if ($command_definition)
-    {
-	$preparation_result = $self->{command_preparation_result};
-    }
-    else
-    {
-	$preparation_result = $self->{module_preparation_result};
     }
 
     my $active_element
@@ -3091,24 +3108,11 @@ sub ec_start
 	}
     }
 
-    if ($command_test)
-    {
-	# prepare the command test environment
+    # prepare the test environment
 
-	$self->{command_test_preparation_result} = $self->_preparation();
-    }
-    elsif ($command_definition)
-    {
-	# prepare the command definition environment
+    my $preparation_result = $self->_preparation();
 
-	$self->{command_preparation_result} = $self->_preparation();
-    }
-    else
-    {
-	# prepare the test environment
-
-	$self->{module_preparation_result} = $self->_preparation();
-    }
+    $self->_push_preparation_result($preparation_result);
 
     # return result: should be undef here
 
