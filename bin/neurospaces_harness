@@ -166,7 +166,11 @@ sub initialize_globals
 		      config => $global_config,
 		      error_count => $global_error_count,
 		      status => 'initializing',
-		      test_count => 0,
+		      test_counters => {
+					module_definition => 0,
+					command_definition => 0,
+					command_test => 0,
+				       },
 		      time_start => `date`,
 		     },
 	   target => {
@@ -235,10 +239,6 @@ sub main
 
     $test_modules = Heterarch::Test::Library::expand($global_fd_output, $test_modules);
 
-    # total test count so far is zero
-
-    my $test_count = 0;
-
     # compute the model library checksum
 
     my $library_sha_before;
@@ -286,7 +286,12 @@ sub main
 	$global_test_report->{random_seed} = 'not randomized';
     }
 
-    $global_test_report->{global}->{test_count} = 0;
+    $global_test_report->{global}->{test_counters}
+	= {
+	   module_definition => 0,
+	   command_definition => 0,
+	   command_test => 0,
+	  };
 
     # create an execution context for running the tests
 
@@ -305,6 +310,10 @@ sub main
 	my $fd_module_output = $global_fd_output;
 
 	my $error = $module_definition->md_run($execution_context, $executor, $fd_module_output);
+
+	# increment module definition test count
+
+	$global_test_report->{global}->{test_counters}->{module_definition}++;
     }
 
     # end the execution_context
@@ -666,7 +675,7 @@ Email was not sent.
 
 	$exit_code ||= 1;
 
-	print $global_fd_output "$0: $global_test_report->{global}->{test_count} test(s), $global_error_count error(s)\n";
+	print $global_fd_output "$0: $global_test_report->{global}->{test_counters}->{command_test} test(s), $global_error_count error(s)\n";
 
 	print $global_fd_output "$0: exit_code $exit_code\n\n";
 
@@ -2519,7 +2528,7 @@ sub ec_end
     else
     {
 	Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
     }
 
     $self->_pop_current();
@@ -2669,7 +2678,7 @@ sub is_disabled
 	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 
 	    my $report_key
 		= (defined $command_test
@@ -3749,7 +3758,7 @@ sub is_selected_by_tag
 	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Module $module_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
-Total of $global_test_report->{global}->{test_count} tests (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
 	$global_test_report->{not_selected_by_tag}->{modules}->{$module_name} = 'not_selected_by_tag';
@@ -3882,9 +3891,9 @@ sub md_run
 
 	    $global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
 
-	    # increment total test count
+	    # increment command test count
 
-	    $global_test_report->{global}->{test_count}++;
+	    $global_test_report->{global}->{test_counters}->{command_test}++;
 	}
 
 	# repair the command test environment
@@ -3896,6 +3905,10 @@ sub md_run
 	#! e.g. using a preparer/reparer combination
 
 	$global_previous_command_side_effects ||= $command_definition->{side_effects} || 0;
+
+	# increment command definition test count
+
+	$global_test_report->{global}->{test_counters}->{command_definition}++;
     }
 
     # repair the test environment
