@@ -3011,7 +3011,7 @@ sub _reparation
 # Prepare the test environment.
 #
 
-sub ec_start
+sub ec_examine
 {
     my $self = shift;
 
@@ -3180,10 +3180,11 @@ sub new
 #
 # this executor trivially delegates this call to the command_test object
 #
-# a derived class can inspect the elements found in the test
+# A derived class can inspect the elements found in the test
 # specification and, for instance, print them to a file.
+#
 
-sub ex_run
+sub ex_ct_run
 {
     my $self = shift;
 
@@ -3207,7 +3208,7 @@ sub ex_run
 # 3. an interactive system shell command.
 #
 
-sub ex_start
+sub ex_cd_start
 {
     my $self = shift;
 
@@ -3792,7 +3793,7 @@ sub md_run
 
     # do selection and prepare the test environment
 
-    my $not_started = $execution_context->ec_start($self);
+    my $not_started = $execution_context->ec_examine($self);
 
     if ($not_started)
     {
@@ -3813,7 +3814,7 @@ sub md_run
 
 	# do selection and prepare the test environment
 
-	my $not_started = $execution_context->ec_start($self, $command_definition);
+	my $not_started = $execution_context->ec_examine($self, $command_definition);
 
 	if ($not_started)
 	{
@@ -3826,7 +3827,7 @@ sub md_run
 	# 2. a piece of perl code that is run.
 	# 3. an interactive system shell command.
 
-	$executor->ex_start();
+	$executor->ex_cd_start();
 
 	# loop over all tests for this command
 
@@ -3842,7 +3843,7 @@ sub md_run
 
 	    # emit comment if any
 
-	    my $not_started = $execution_context->ec_start($self, $command_definition, $command_test);
+	    my $not_started = $execution_context->ec_examine($self, $command_definition, $command_test);
 
 	    if ($not_started)
 	    {
@@ -3851,7 +3852,7 @@ sub md_run
 
 	    # run the text executor which will run the command_test
 
-	    my $execution_result = $executor->ex_run($command_test);
+	    my $execution_result = $executor->ex_ct_run($command_test);
 
 	    # process errors
 
@@ -3968,7 +3969,7 @@ package Heterarch::Test::Output::Formatter;
 our @ISA = ("Heterarch::Test::Executor");
 
 
-sub ex_run
+sub ex_ct_run
 {
     die "$0: *** Error: this output formatter is not fully implemented.";
 
@@ -3985,7 +3986,13 @@ package Heterarch::Test::Output::Formatter::HTMLTable;
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
-sub ex_start
+#
+# sub start
+#
+# Incomplete.
+#
+
+sub ex_cd_start
 {
     my $self = shift;
 
@@ -4336,9 +4343,12 @@ sub output_preamble
 }
 
 
-# add the current test description to the summary
+#
+# Adds the current test description to the summary, constructs a
+# structure to keep results.
+#
 
-sub ex_run
+sub ex_ct_run
 {
     my $self = shift;
 
@@ -4401,7 +4411,12 @@ sub ex_run
 }
 
 
-sub ex_start
+#
+# Adds the current test description to the summary, constructs a
+# structure to keep results.
+#
+
+sub ex_cd_start
 {
     my $self = shift;
 
@@ -4460,40 +4475,9 @@ package Heterarch::Test::Output::Formatter::YAML::Summary;
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
-# create an output entry for the current command definition
-
-sub ex_start
-{
-    my $self = shift;
-
-    # get the execution context
-
-    my $execution_context = $self->{execution_context};
-
-    # create an output entry for the module
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    if (not $global_test_report->{selected}->{$module_name})
-    {
-	$global_test_report->{selected}->{$module_name} = [];
-    }
-
-    # create an output entry for the current command definition
-
-    my $selected_module = $global_test_report->{selected}->{$module_name};
-
-    my $command_definition = $execution_context->get_command_definition();
-
-    push @$selected_module, { description => $command_definition->{description}, tests => [], };
-}
-
-
 # add the current test description to the summary
 
-sub ex_run
+sub ex_ct_run
 {
     my $self = shift;
 
@@ -4535,6 +4519,37 @@ sub ex_run
 }
 
 
+# create an output entry for the current command definition
+
+sub ex_cd_start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+
+    # create an output entry for the current command definition
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    push @$selected_module, { description => $command_definition->{description}, tests => [], };
+}
+
+
 # The Formatter:YAML::CommandTests package converts the test
 # specifications to a YAML formatted list of commands that would be
 # executed if the tests are run.
@@ -4547,49 +4562,9 @@ our @ISA = ("Heterarch::Test::Output::Formatter");
 
 # create an output entry for the current command definition
 
-sub ex_start
-{
-    my $self = shift;
-
-    # get the execution context
-
-    my $execution_context = $self->{execution_context};
-
-    # create an output entry for the module
-
-    #t we could add a counter here to keep the order of execution in the final yaml output
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    my $command_definition = $execution_context->get_command_definition();
-
-    if (exists $command_definition->{command})
-    {
-	if (not $global_test_report->{selected}->{$module_name})
-	{
-	    $global_test_report->{selected}->{$module_name} = [];
-	}
-
-	# create an output entry for the current command definition
-
-	my $selected_module = $global_test_report->{selected}->{$module_name};
-
-	my $command = $command_definition->{command};
-
-	my $arguments = $command_definition->{arguments};
-
-	my $command_string = $command . ' ' . join ' ', @$arguments;
-
-	push @$selected_module, { command => $command_string, };
-    }
-}
-
-
 # add the current test description to the summary
 
-sub ex_run
+sub ex_ct_run
 {
     my $self = shift;
 
@@ -4642,6 +4617,46 @@ sub ex_run
 }
 
 
+sub ex_cd_start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    #t we could add a counter here to keep the order of execution in the final yaml output
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    if (exists $command_definition->{command})
+    {
+	if (not $global_test_report->{selected}->{$module_name})
+	{
+	    $global_test_report->{selected}->{$module_name} = [];
+	}
+
+	# create an output entry for the current command definition
+
+	my $selected_module = $global_test_report->{selected}->{$module_name};
+
+	my $command = $command_definition->{command};
+
+	my $arguments = $command_definition->{arguments};
+
+	my $command_string = $command . ' ' . join ' ', @$arguments;
+
+	push @$selected_module, { command => $command_string, };
+    }
+}
+
+
 package Heterarch::Test::Output::Definitions;
 
 # The Heterarch::Test::Output::Definitions package should list all the
@@ -4663,7 +4678,7 @@ package Heterarch::Test::Output::List;
 our @ISA = ("Heterarch::Test::Output::Formatter::YAML::Summary");
 
 
-sub ex_run
+sub ex_ct_run
 {
     my $self = shift;
 
