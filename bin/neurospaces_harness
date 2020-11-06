@@ -3176,6 +3176,22 @@ sub new
 
 
 #
+# Create the infrastructure for keeping module test results.
+#
+# For a base executor, this is currently a no-op.
+#
+# There is currently a global infrastructure for storing real test
+# results, rather than a local one.
+#
+
+sub ex_mo_prepare
+{
+    my $self = shift;
+
+}
+
+
+#
 # ->run() is called to execute one command test.
 #
 # this executor trivially delegates this call to the command_test object
@@ -3800,6 +3816,10 @@ sub md_run
 	return "module start failed ($not_started)";
     }
 
+    # create the infrastructure for keeping module test results
+
+    $executor->ex_mo_prepare();
+
     # loop over commands for this module
 
     my $command_definitions = $self->{command_definitions};
@@ -4344,6 +4364,42 @@ sub output_preamble
 
 
 #
+# Create the infrastructure for keeping module test results.
+#
+
+sub ex_mo_prepare
+{
+    my $self = shift;
+
+    # create an output entry for the module
+
+    my $execution_context = $self->{execution_context};
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	my $module_counter = $execution_context->get_module_definition_counter();
+
+	$global_test_report->{selected}->{$module_name}
+	    = {
+	       count => $module_counter,
+	       command_definitions => [],
+	       description => $module_definition->{description},
+	       explanation => $module_definition->{explanation},
+	       name => $module_name,
+	      };
+    }
+    else
+    {
+	die "$0: *** Error: module_name $module_name is defined twice.";
+    }
+}
+
+
+#
 # Adds the current test description to the summary, constructs a
 # structure to keep results.
 #
@@ -4430,27 +4486,9 @@ sub ex_cd_start
 
     my $module_name = $module_definition->{name};
 
-    if (not $global_test_report->{selected}->{$module_name})
-    {
-	my $module_counter = $execution_context->get_module_definition_counter();
-
-	$global_test_report->{selected}->{$module_name}
-	    = {
-	       count => $module_counter,
-	       description => $module_definition->{description},
-	       explanation => $module_definition->{explanation},
-	       name => $module_name,
-	      };
-    }
-
     # create an output entry for the current command definition
 
     my $selected_module = $global_test_report->{selected}->{$module_name};
-
-    if (not $selected_module->{command_definitions})
-    {
-	$selected_module->{command_definitions} = [];
-    }
 
     my $selected_command_definitions = $selected_module->{command_definitions};
 
@@ -4473,6 +4511,35 @@ package Heterarch::Test::Output::Formatter::YAML::Summary;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
+
+
+#
+# Create the infrastructure for keeping module test results.
+#
+
+sub ex_mo_prepare
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+    else
+    {
+	die "$0: *** Error: module_name $module_name is defined twice.";
+    }
+}
 
 
 # add the current test description to the summary
@@ -4535,11 +4602,6 @@ sub ex_cd_start
 
     my $module_name = $module_definition->{name};
 
-    if (not $global_test_report->{selected}->{$module_name})
-    {
-	$global_test_report->{selected}->{$module_name} = [];
-    }
-
     # create an output entry for the current command definition
 
     my $selected_module = $global_test_report->{selected}->{$module_name};
@@ -4560,8 +4622,18 @@ package Heterarch::Test::Output::Formatter::YAML::CommandTests;
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
 
-# create an output entry for the current command definition
+#
+# Create the infrastructure for keeping module test results.
+#
 
+sub ex_mo_prepare
+{
+    my $self = shift;
+
+}
+
+
+# create an output entry for the current command definition
 # add the current test description to the summary
 
 sub ex_ct_run
