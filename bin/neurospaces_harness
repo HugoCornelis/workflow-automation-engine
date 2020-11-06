@@ -2513,47 +2513,44 @@ sub ec_end
 
     my $reparation_error = $self->_reparation();
 
-    my $fd_output = $self->{fd_output};
-
-    my $module_name = $module_definition->{name};
-
-    my $active_element
-	= (defined $command_test
-	   ? $command_test
-	   : (defined $command_definition
-	      ? $command_definition
-	      : $module_definition));
-
-    my $description;
-
-    my $name;
-
-    if (defined $command_test)
+    if ($global_test_report->{output_format} eq 'executor')
     {
-	$description = "*** Test: $command_test->{description}";
+	my $fd_output = $self->{fd_output};
 
-	$name = "";
-    }
-    elsif (defined $command_definition)
-    {
-	$description = "command $command_definition->{description}";
+	my $module_name = $module_definition->{name};
 
-	$name = " ($command_definition->{command})";
-    }
-    else
-    {
-	$description = "module $module_definition->{description}";
+	my $description;
 
-	$name = " ($module_definition->{name})";
-    }
+	my $name;
 
-    if (defined $command_test)
-    {
-    }
-    else
-    {
-	Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
+	if (defined $command_test)
+	{
+	    $description = "*** Test: $command_test->{description}";
+
+	    $name = "";
+	}
+	elsif (defined $command_definition)
+	{
+	    $description = "command $command_definition->{description}";
+
+	    $name = " ($command_definition->{command})";
+	}
+	else
+	{
+	    $description = "module $module_definition->{description}";
+
+	    $name = " ($module_definition->{name})";
+	}
+
+	if (defined $command_test)
+	{
+	    # no output here, the test output is emitted in ->ec_examine()
+	}
+	else
+	{
+	    Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
 Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+	}
     }
 
     $self->_pop_current();
@@ -2700,19 +2697,19 @@ sub is_disabled
     {
 	my $description = $active_element->{description};
 
+	my $report_key
+	    = (defined $command_test
+	       ? "command_tests"
+	       : (defined $command_definition
+		  ? "command_definitions"
+		  : "modules"));
+
+	$global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
+
 	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
-
-	    my $report_key
-		= (defined $command_test
-		   ? "command_tests"
-		   : (defined $command_definition
-		      ? "command_definitions"
-		      : "modules"));
-
-	    $global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
 	}
 
 	return 1;
@@ -2837,7 +2834,7 @@ sub _preparation
 	       ? "command '$command_definition->{command}'"
 	       : "module '$module_definition->{name}'");
 
-	print $fd_output "*** Preparing $preparation_name ($preparation->{description})\n";
+	Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
 
 	# execute the preparation clause
 
@@ -2968,7 +2965,7 @@ sub _reparation
 
 	my $fd_output = $self->{fd_output};
 
-	print $fd_output "*** Reparing $reparation_name ($reparation->{description})\n";
+	Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing $reparation_name ($reparation->{description})");
 
 	# execute the reparation clause
 
@@ -3054,53 +3051,51 @@ sub ec_examine
 
     $self->_push_current( [ $module_definition, $command_definition, $command_test, ] );
 
-    my $comment;
-
-    my $description;
-
-    my $name;
-
-    if (defined $command_test)
-    {
-	$comment = $command_test->{comment};
-
-	$description = "*** Test: $command_test->{description}";
-
-	$name = "";
-    }
-    elsif (defined $command_definition)
-    {
-	$comment = $command_definition->{comment};
-
-	$description = "command $command_definition->{description}";
-
-	$name = " ($command_definition->{command})";
-    }
-    else
-    {
-	$comment = $module_definition->{comment};
-
-	$description = "module $module_definition->{description}";
-
-	$name = " ($module_definition->{name})";
-    }
-
     # give diagnostics
 
-    my $fd_output = $self->{fd_output};
-
-    if (not defined $command_test)
+    if ($global_test_report->{output_format} eq 'executor')
     {
-	Heterarch::Test::Reporting::report_message_start($fd_output, "Running tests of $description$name");
+	my $fd_output = $self->{fd_output};
 
-	if ($comment)
+	my $comment;
+
+	my $description;
+
+	my $name;
+
+	if (defined $command_test)
 	{
-	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment");
+	    $comment = $command_test->{comment};
+
+	    $description = "*** Test: $command_test->{description}";
+
+	    $name = "";
 	}
-    }
-    else
-    {
-	Heterarch::Test::Reporting::report_message($fd_output, "$description");
+	elsif (defined $command_definition)
+	{
+	    $comment = $command_definition->{comment};
+
+	    $description = "command $command_definition->{description}";
+
+	    $name = " ($command_definition->{command})";
+	}
+	else
+	{
+	    $comment = $module_definition->{comment};
+
+	    $description = "module $module_definition->{description}";
+
+	    $name = " ($module_definition->{name})";
+	}
+
+	if (defined $command_test)
+	{
+	    Heterarch::Test::Reporting::report_message($fd_output, "$description");
+	}
+	else
+	{
+	    Heterarch::Test::Reporting::report_message_start($fd_output, "Running tests of $description$name");
+	}
 
 	if ($comment)
 	{
@@ -4900,10 +4895,7 @@ sub report_message
 
     my $message = shift;
 
-    if ($global_test_report->{output_format} eq 'executor')
-    {
-	print $fd_output "$message\n";
-    }
+    print $fd_output "$message\n";
 }
 
 
@@ -4913,7 +4905,7 @@ sub report_message_end
 
     my $message = shift;
 
-    return report_message_with_rulers($fd_output, 1, 2, $message);
+    return _report_message_with_rulers($fd_output, 1, 2, $message);
 }
 
 
@@ -4923,7 +4915,7 @@ sub report_message_info
 
     my $message = shift;
 
-    return report_message_with_rulers($fd_output, 1, 1, $message);
+    return _report_message_with_rulers($fd_output, 1, 1, $message);
 }
 
 
@@ -4933,11 +4925,11 @@ sub report_message_start
 
     my $message = shift;
 
-    return report_message_with_rulers($fd_output, 2, 1, $message);
+    return _report_message_with_rulers($fd_output, 2, 1, $message);
 }
 
 
-sub report_message_with_rulers
+sub _report_message_with_rulers
 {
     my $fd_output = shift;
 
@@ -4959,15 +4951,12 @@ sub report_message_with_rulers
 
     my $line = '-' x $longest;
 
-    if ($global_test_report->{output_format} eq 'executor')
-    {
-	print $fd_output "\n";
-	print $fd_output "$line\n" for 0 .. $top_ruler;
-	print $fd_output "\n";
-	print $fd_output "$message\n\n";
-	print $fd_output "$line\n" for 0 .. $bottom_ruler;
-	print $fd_output "\n";
-    }
+    print $fd_output "\n";
+    print $fd_output "$line\n" for 0 .. $top_ruler;
+    print $fd_output "\n";
+    print $fd_output "$message\n\n";
+    print $fd_output "$line\n" for 0 .. $bottom_ruler;
+    print $fd_output "\n";
 }
 
 
