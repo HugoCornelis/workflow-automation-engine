@@ -213,6 +213,8 @@ sub initialize_config
     if (!exists $global_config->{tests_directory})
     {
 	$global_config->{tests_directory} = "./tests/specifications";
+
+	$global_config->{introduction_filename} = "tests/introduction.html";
     }
 
     unshift @INC, $global_config->{tests_directory};
@@ -233,11 +235,13 @@ sub main
 
     # find all the test module files
 
-    my $test_modules = Heterarch::Test::Library::construct();
+    my $test_module_references = Heterarch::Test::Library::construct();
 
     # read the test module files
 
-    $test_modules = Heterarch::Test::Library::expand($global_fd_output, $test_modules);
+    my $test_module_library_contents = Heterarch::Test::Library::expand($global_fd_output, $test_module_references);
+
+    my $test_modules = $test_module_library_contents->{test_modules};
 
     # compute the model library checksum
 
@@ -330,7 +334,7 @@ sub main
 
     # final report
 
-    report_exit(0);
+    report_exit(0, $test_module_library_contents);
 }
 
 
@@ -529,11 +533,13 @@ sub report_exit
     }
     elsif ($global_test_report->{output_format} eq 'latex')
     {
-	Heterarch::Test::Output::Formatter::Latex::output_preamble();
+	my $test_module_library_contents = ref($description) eq 'HASH' ? $description : {};
 
-	Heterarch::Test::Output::Formatter::Latex::output_process($global_test_report);
+	Heterarch::Test::Output::Formatter::Latex::output_latex_preamble($test_module_library_contents->{html_introduction});
 
-	Heterarch::Test::Output::Formatter::Latex::output_postamble();
+	Heterarch::Test::Output::Formatter::Latex::output_latex_process($global_test_report);
+
+	Heterarch::Test::Output::Formatter::Latex::output_latex_postamble();
     }
 
     # and write the full report to a file
@@ -3262,7 +3268,21 @@ sub expand
 
     my $library = shift;
 
-    my $result = [];
+    my $test_modules = [];
+
+    # read the introduction
+
+    my $html_introduction;
+
+    {
+	local $/; # enable 'slurp' mode
+
+	my $file = IO::File->new("<$global_config->{introduction_filename}");
+
+	$html_introduction = <$file>;
+
+	$file->close();
+    }
 
     # parse all modules
 
@@ -3277,7 +3297,7 @@ sub expand
 
 	if ($module_definition)
 	{
-	    push @$result, $module_definition;
+	    push @$test_modules, $module_definition;
 	}
     }
 
@@ -3293,7 +3313,7 @@ sub expand
 		(
 		 apply_identity_transformation => 0,
 		 name => 'test-module-selector',
-		 contents => $result,
+		 contents => $test_modules,
 		 separator => '`',
 		 array_filter =>
 		 sub
@@ -3408,8 +3428,16 @@ sub expand
 
 	# set result
 
-	$result = $tests;
+	$test_modules = $tests;
     }
+
+    # set result
+
+    my $result
+	= {
+	   html_introduction => $html_introduction,
+	   test_modules => $test_modules,
+	  };
 
     # return result
 
@@ -3527,7 +3555,6 @@ sub readfile
     }
     elsif (is_json($pathname))
     {
-
 	local $/; # enable 'slurp' mode
 
 	my $file = IO::File->new("<$pathname");
@@ -4089,23 +4116,6 @@ our $output_file;
 our $output_filename = "/tmp/test_report.tex";
 
 
-sub output_postamble
-{
-    my $postamble
-	= '\end{document}
-
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: t
-%%% End:
-';
-
-#    $output_file = IO::File->new(">>$output_filename");
-
-    print $output_file $postamble;
-}
-
-
 sub output_latex
 {
     my $outputfile = shift;
@@ -4176,40 +4186,167 @@ sub output_latex_environment_prompt
 }
 
 
-sub output_latex_prompt
+sub output_latex_postamble
 {
-    my $outputfile = shift;
+    my $postamble
+	= '\end{document}
 
-    my $content_type = shift;
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
+';
 
-    my $contents = shift;
+#    $output_file = IO::File->new(">>$output_filename");
 
-    my $prompt = shift;
-
-    my $suffix = shift;
-
-    if (defined $contents)
-    {
-	output_latex($output_file, $prompt);
-
-	if ($content_type)
-	{
-	    output_latex($output_file, '\\' . $content_type . '{');
-	}
-
-	output_latex($output_file, $contents);
-
-	if ($content_type)
-	{
-	    output_latex($output_file, "}");
-	}
-    }
-
-    output_latex($output_file, $suffix);
+    print $output_file $postamble;
 }
 
 
-sub output_process
+sub output_latex_preamble
+{
+    my $html_introduction = shift;
+
+    $output_file = IO::File->new(">$output_filename");
+
+    my $title_paragraphs = output_latex_preamble_construct($html_introduction);
+
+    my $preamble1
+	= '\documentclass[12pt]{article}
+\usepackage[a4paper, total={6in, 9in}]{geometry}
+\usepackage{color}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage[dvips]{epsfig}
+\usepackage{enumitem} % [noitemsep,nolistsep] compact itemize/enumerate etc.
+\usepackage{longtable}
+% \usepackage[margin=2cm]{geometry}
+\usepackage{url}
+\usepackage{verbatim}
+
+% Typeface
+\usepackage[condensed,math]{iwona}
+\usepackage[T1]{fontenc}
+
+';
+
+    print $output_file $preamble1;
+
+    output_latex_preamble_title($title_paragraphs);
+
+    my $preamble2
+	= '
+\begin{document}
+
+\maketitle
+
+';
+
+    print $output_file $preamble2;
+
+    output_latex_preamble_abstract($title_paragraphs);
+
+    output_latex_preamble_summary($title_paragraphs);
+}
+
+
+sub output_latex_preamble_abstract
+{
+    my $title_paragraphs = shift;
+
+}
+
+
+sub output_latex_preamble_construct
+{
+    my $html_introduction_original = shift;
+
+    my $html_introduction = $html_introduction_original;
+
+    # extract email address
+
+    $html_introduction =~ m(<address>(.*)</address>)gs;
+
+    my $email_anchored = $1;
+
+    my $author = $email_anchored || "";
+
+    $author =~ m(<a.*?>(.*)</a>)gs;
+
+    $author = $1 || "";
+
+    my $thanks = $email_anchored || "";
+
+    $thanks =~ m("mailto:(.*)")gs;
+
+    $thanks = $1 || "";
+
+    # remove trailing part
+
+    $html_introduction =~ s(<address>(.*))()gs;
+
+    # extract title
+
+    $html_introduction =~ s(<h1>(.*)</h1>)()gs;
+
+    my $title = $1 || "";
+
+    # remove irrelevant html tags
+
+    $html_introduction =~ s(<p/?>)()gs;
+
+    $html_introduction =~ s(<hr/?>)()gs;
+
+    # split in paragraphs
+
+    my $paragraphs = [ split "\n\n", $html_introduction, ];
+
+    # construct and return result
+
+    my $result
+	= {
+	   author => $author,
+	   email_anchored => $email_anchored,
+	   original_contents => $html_introduction_original,
+	   paragraphs => $paragraphs,
+	   thanks => $thanks,
+	   title => $title,
+	  };
+
+    return $result
+}
+
+
+sub output_latex_preamble_summary
+{
+    my $title_paragraphs = shift;
+
+    # write paragraphs
+
+    my $paragraphs = $title_paragraphs->{paragraphs};
+
+    foreach my $paragraph (@$paragraphs)
+    {
+	output_latex($output_file, "$paragraph\n\n");
+    }
+}
+
+
+sub output_latex_preamble_title
+{
+    my $title_paragraphs = shift;
+
+    # write title
+
+    output_latex($output_file, '\title{' . $title_paragraphs->{title} . "}\n\n");
+
+    output_latex($output_file, '\date{' . localtime() . "}\n\n");
+
+    output_latex($output_file, '\author{' . $title_paragraphs->{author} . "}\n\n");
+
+}
+
+
+sub output_latex_process
 {
     my $test_report = shift;
 
@@ -4335,31 +4472,36 @@ sub output_process
 }
 
 
-sub output_preamble
+sub output_latex_prompt
 {
-    my $preamble
-	= '\documentclass[12pt]{article}
-\usepackage[a4paper, total={6in, 9in}]{geometry}
-\usepackage{color}
-\usepackage[colorlinks=true]{hyperref}
-\usepackage[dvips]{epsfig}
-\usepackage{enumitem} % [noitemsep,nolistsep] compact itemize/enumerate etc.
-\usepackage{longtable}
-% \usepackage[margin=2cm]{geometry}
-\usepackage{url}
-\usepackage{verbatim}
+    my $outputfile = shift;
 
-% Typeface
-\usepackage[condensed,math]{iwona}
-\usepackage[T1]{fontenc}
+    my $content_type = shift;
 
-\begin{document}
+    my $contents = shift;
 
-';
+    my $prompt = shift;
 
-    $output_file = IO::File->new(">$output_filename");
+    my $suffix = shift;
 
-    print $output_file $preamble;
+    if (defined $contents)
+    {
+	output_latex($output_file, $prompt);
+
+	if ($content_type)
+	{
+	    output_latex($output_file, '\\' . $content_type . '{');
+	}
+
+	output_latex($output_file, $contents);
+
+	if ($content_type)
+	{
+	    output_latex($output_file, "}");
+	}
+    }
+
+    output_latex($output_file, $suffix);
 }
 
 
