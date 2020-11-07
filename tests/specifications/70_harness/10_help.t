@@ -48,7 +48,23 @@ options:
 				     description => "help message",
 				    },
 				   ],
-	    description => "neurospaces_harness help and usage information",
+	    description => "neurospaces_harness tester help and usage information",
+	    documentation => {
+			      explanation => "
+
+The Neurospaces Harness automates unit, regression, integration and
+smoke testing.  Declarative test specifications define application
+behaviour and are used to execute tests.
+
+Command line options support extraction of documentation at various
+levels of detail or with a user-given focus.
+
+The knowledge base about application behaviour that is implicitly
+embedded in the test specifications can be converted to HTML or Latex.
+
+",
+			      purpose => "Help page.",
+			     },
 	    name => '70_harness/10_help.t',
 	   };
 

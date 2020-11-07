@@ -63,6 +63,19 @@ my $test = {
 					  },
 					 },
 			   },
+	    documentation => {
+			      explanation => "
+
+The Neurospaces Harness automates unit, regression, integration and
+smoke testing.  Declarative test specifications define application
+behaviour and are used to execute tests.
+
+Specific clauses in the test specifications allow to customize the
+test environment.
+
+",
+			      purpose => "Custom preparation and restoration of the test environment.",
+			     },
 	    name => '70_harness/75_preparation_checker.t',
 	   };
 

@@ -4368,7 +4368,7 @@ sub output_latex_process
 
 	my $module_definition_description = $module_definition->{description};
 
-	my $module_definition_explanation = $module_definition->{explanation} || "";
+	my $module_definition_documentation = $module_definition->{documentation} || "";
 
 	my $command_definitions = $module_definition->{command_definitions};
 
@@ -4378,7 +4378,16 @@ sub output_latex_process
 	{
 	    output_latex($output_file, 'File ');
 
-	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", ".");
+	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	    if ($module_definition_documentation)
+	    {
+		output_latex($output_file, ':  ');
+	    }
+	    else
+	    {
+		output_latex($output_file, '.');
+	    }
 	}
 	elsif (scalar @$command_definitions eq 1)
 	{
@@ -4397,11 +4406,17 @@ sub output_latex_process
 	    output_latex($output_file, " defines the tests that are explained in the following sections.\n\n");
 	}
 
-	if ($module_definition_explanation)
+	if ($module_definition_documentation)
 	{
-	    output_latex($output_file, "$module_definition_explanation\n\n");
+	    output_latex($output_file, "$module_definition_documentation->{purpose}\n\n");
+
+	    output_latex($output_file, "$module_definition_documentation->{explanation}\n\n");
 
 	    # output_latex($output_file, "Test commands follow.\n\n");
+	}
+	else
+	{
+	    output_latex($output_file, "\n\n");
 	}
 
 	foreach my $command_definition (@$command_definitions)
@@ -4530,7 +4545,7 @@ sub ex_mo_prepare
 	       count => $module_counter,
 	       command_definitions => [],
 	       description => $module_definition->{description},
-	       explanation => $module_definition->{explanation},
+	       documentation => $module_definition->{documentation},
 	       name => $module_name,
 	      };
     }
