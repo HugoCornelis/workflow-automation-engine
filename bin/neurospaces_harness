@@ -4237,14 +4237,19 @@ sub output_process
 
 	output_latex($output_file, '\section{' . $module_definition_description . "}\n\n");
 
-	if (scalar @$command_definitions eq 1)
+	if (scalar @$command_definitions eq 0)
+	{
+	    output_latex($output_file, 'File ');
+
+	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", ".");
+	}
+	elsif (scalar @$command_definitions eq 1)
 	{
 	    output_latex($output_file, 'The file ');
 
 	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
 
 	    output_latex($output_file, " defines the test that is explained in the following section.\n\n");
-
 	}
 	else
 	{
