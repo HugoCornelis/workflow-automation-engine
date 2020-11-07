@@ -2294,11 +2294,11 @@ package Heterarch::Test::ExecutionContext;
 
 
 #
-# _execute() implements the engine for both preparation and reparation
-# that are used for test modules and command definitions.
+# _prepre_engine() implements the engine for both preparation and
+# reparation that are used for test modules and command definitions.
 #
 
-sub _execute
+sub _prepre_engine
 {
     my $executor_element = shift;
 
@@ -2840,7 +2840,7 @@ sub _preparation
 
 	my $preparer = $preparation->{preparer};
 
-	$preparation_result = _execute($preparer, 'preparation');
+	$preparation_result = _prepre_engine($preparer, 'preparation');
 
 	# if the preparer returned an error string
 
@@ -2971,7 +2971,7 @@ sub _reparation
 
 	my $reparer = $reparation->{reparer};
 
-	$reparation_error = _execute($reparer, 'reparation', $preparation_result);
+	$reparation_error = _prepre_engine($reparer, 'reparation', $preparation_result);
 
 	# process errors
 
