@@ -535,11 +535,38 @@ sub report_exit
     {
 	my $test_module_library_contents = ref($description) eq 'HASH' ? $description : {};
 
-	Heterarch::Test::Output::Formatter::Latex::output_latex_preamble($test_module_library_contents->{html_introduction});
+	my $selected_output_levels = $Heterarch::Test::Element::selected_output_levels;
+
+	my $extension = join '-', sort keys %$selected_output_levels;
+
+	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension.tex";
+
+	Heterarch::Test::Output::Formatter::Latex::output_latex_preamble
+		(
+		 $output_filename,
+		 $test_module_library_contents->{html_introduction},
+		);
 
 	Heterarch::Test::Output::Formatter::Latex::output_latex_process($global_test_report);
 
 	Heterarch::Test::Output::Formatter::Latex::output_latex_postamble();
+
+	my $testing = 1;
+
+	if ($testing)
+	{
+	    my $output_filename = "/tmp/test_report_$global_config->{package}->{name}.tex";
+
+	    Heterarch::Test::Output::Formatter::Latex::output_latex_preamble
+		    (
+		     $output_filename,
+		     $test_module_library_contents->{html_introduction},
+		    );
+
+	    Heterarch::Test::Output::Formatter::Latex::output_latex_process($global_test_report);
+
+	    Heterarch::Test::Output::Formatter::Latex::output_latex_postamble();
+	}
     }
 
     # and write the full report to a file
@@ -2237,7 +2264,7 @@ sub ct_run
 package Heterarch::Test::Element;
 
 
-my $selected_output_levels;
+our $selected_output_levels;
 
 
 # sub is_selected() should implement a logical and of the different selection criteria
@@ -4113,8 +4140,6 @@ our @ISA = ("Heterarch::Test::Output::Formatter");
 
 our $output_file;
 
-our $output_filename = "/tmp/test_report.tex";
-
 
 sub output_latex
 {
@@ -4205,6 +4230,8 @@ sub output_latex_postamble
 
 sub output_latex_preamble
 {
+    my $output_filename = shift;
+
     my $html_introduction = shift;
 
     $output_file = IO::File->new(">$output_filename");
@@ -4372,7 +4399,11 @@ sub output_latex_process
 
 	my $command_definitions = $module_definition->{command_definitions};
 
+	# output the description as a section title
+
 	output_latex($output_file, '\section{' . $module_definition_description . "}\n\n");
+
+	# output the filename
 
 	if (scalar @$command_definitions eq 0)
 	{
@@ -4406,6 +4437,8 @@ sub output_latex_process
 	    output_latex($output_file, " defines the tests that are explained in the following sections.\n\n");
 	}
 
+	# output the documentation and explanation
+
 	if ($module_definition_documentation)
 	{
 	    output_latex($output_file, "$module_definition_documentation->{purpose}\n\n");
@@ -4419,11 +4452,34 @@ sub output_latex_process
 	    output_latex($output_file, "\n\n");
 	}
 
+	# output the preparation and reparation
+
+	my $harnessing = $module_definition->{harnessing};
+
+	if ($harnessing->{preparation})
+	{
+	    output_latex($output_file, '\begin{' . "itemize" . "}\n");
+
+	    output_latex($output_file, '\item ');
+
+	    output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+
+	    output_latex($output_file, '\item ');
+
+	    output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+
+	    output_latex($output_file, '\end{' . "itemize" . "}\n");
+	}
+
+	# output the command definitions
+
 	foreach my $command_definition (@$command_definitions)
 	{
 	    my $description = $command_definition->{description};
 
 	    my $command_tests = $command_definition->{command_tests};
+
+	    # output the command and its arguments
 
 	    my $arguments = $command_definition->{arguments};
 
@@ -4458,6 +4514,25 @@ sub output_latex_process
 
 	    output_latex($output_file, ' must first be given.');
 
+	    # output the preparation and reparation
+
+	    my $harnessing = $command_definition->{harnessing};
+
+	    if ($harnessing->{preparation})
+	    {
+		output_latex($output_file, '\begin{' . "itemize" . "}\n");
+
+		output_latex($output_file, '\item ');
+
+		output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+
+		output_latex($output_file, '\item ');
+
+		output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+
+		output_latex($output_file, '\end{' . "itemize" . "}\n");
+	    }
+
 	    foreach my $command_test (@$command_tests)
 	    {
 		output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
@@ -4473,11 +4548,21 @@ sub output_latex_process
 		    output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
 		}
 
-		output_latex_environment_prompt($output_file, "verbatim", $command_test->{write}, "Input to the application:\n", "\n\n");
+		my $write = $command_test->{write} || "";
 
-# 		output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
+		if (defined $write)
+		{
+		    output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $write . '}', "Input to the application:\n", "\n\n");
+		}
 
-		output_latex_environment_prompt($output_file, "verbatim", $command_test->{read}, "This is the application output we expect:\n", "\n\n");
+		# 		output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
+
+		my $read = $command_test->{read} || "";
+
+		if (defined $read)
+		{
+		    output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $read . '}', "This is the application output we expect:\n", "\n\n");
+		}
 
 		output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
 
@@ -4546,6 +4631,10 @@ sub ex_mo_prepare
 	       command_definitions => [],
 	       description => $module_definition->{description},
 	       documentation => $module_definition->{documentation},
+	       harnessing => {
+			      preparation => $module_definition->{harnessing}->{preparation}->{description},
+			      reparation => $module_definition->{harnessing}->{reparation}->{description},
+			     },
 	       name => $module_name,
 	      };
     }
