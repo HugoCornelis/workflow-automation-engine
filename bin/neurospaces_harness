@@ -4031,25 +4031,163 @@ package Heterarch::Test::Output::Formatter;
 
 
 #
-# A Heterarch::Test::Output::Formatter implements ->start() and
-# ->run() methods.
+# A Heterarch::Test::Output::Formatter implements ->ex_mo_prepare(),
+# ex_cd_start() and ex_ct_run() methods that prepare structured
+# content for the output formatter to convert to its target format.
 #
 
 our @ISA = ("Heterarch::Test::Executor");
 
 
-sub ex_ct_run
-{
-    die "$0: *** Error: this output formatter is not fully implemented.";
+#
+# Create the infrastructure for keeping module test results.
+#
 
-    return undef;
+sub ex_mo_prepare
+{
+    my $self = shift;
+
+    # create an output entry for the module
+
+    my $execution_context = $self->{execution_context};
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	my $module_counter = $execution_context->get_module_definition_counter();
+
+	$global_test_report->{selected}->{$module_name}
+	    = {
+	       count => $module_counter,
+	       command_definitions => [],
+	       description => $module_definition->{description},
+	       documentation => $module_definition->{documentation},
+	       harnessing => {
+			      preparation => $module_definition->{harnessing}->{preparation}->{description},
+			      reparation => $module_definition->{harnessing}->{reparation}->{description},
+			     },
+	       name => $module_name,
+	      };
+    }
+    else
+    {
+	die "$0: *** Error: module_name $module_name is defined twice.";
+    }
 }
 
 
-# the Formatter:: HTMLTable package converts the test specifications
-# to HTML tables.
+#
+# Adds the current test description to the summary, constructs a
+# structure to keep results.
+#
+
+sub ex_ct_run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    # get the current module summary
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    # get the current test summary
+
+    my $module_command_definitions = $selected_module->{command_definitions};
+
+    my $command_definition_counter = $execution_context->get_command_definition_counter_per_module();
+
+    my $selected_command_definition = $module_command_definitions->[$command_definition_counter];
+
+    # get the current command test
+
+    my $selected_test_definitions = $selected_command_definition->{tests};
+
+    my $test_definition_counter = $execution_context->get_command_test_counter_per_command_definition();
+
+    if (not $selected_test_definitions->[$test_definition_counter])
+    {
+	$selected_test_definitions->[$test_definition_counter] = {};
+    }
+
+    use Clone 'clone';
+
+    $selected_test_definitions->[$test_definition_counter] = clone($command_test);
+
+    # my $selected_test_definition = $selected_test_definitions->[$test_definition_counter];
+
+    # # add the current test description to the summary
+
+    # $selected_test_definition->{description} = $command_test->{description};
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
+}
+
+
+#
+# Adds the current command definition to the summary, constructs a
+# structure to keep results.
+#
+
+sub ex_cd_start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    # create an output entry for the current command definition
+
+    my $selected_module = $global_test_report->{selected}->{$module_name};
+
+    my $selected_command_definitions = $selected_module->{command_definitions};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    use Clone 'clone';
+
+#     push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
+
+    my $clone_command_definition = clone($command_definition);
+
+    push @$selected_command_definitions, $clone_command_definition;
+}
+
 
 package Heterarch::Test::Output::Formatter::HTMLTable;
+
+# the Formatter:: HTMLTable package converts the test specifications
+# to HTML tables.
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
@@ -4129,10 +4267,10 @@ sub ex_cd_start
 }
 
 
+package Heterarch::Test::Output::Formatter::Latex;
+
 # The Heterarch::Test::Output::Formatter::Latex package converts the test specifications
 # to a Latex document.
-
-package Heterarch::Test::Output::Formatter::Latex;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
@@ -4605,155 +4743,10 @@ sub output_latex_prompt
 }
 
 
-#
-# Create the infrastructure for keeping module test results.
-#
-
-sub ex_mo_prepare
-{
-    my $self = shift;
-
-    # create an output entry for the module
-
-    my $execution_context = $self->{execution_context};
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    if (not $global_test_report->{selected}->{$module_name})
-    {
-	my $module_counter = $execution_context->get_module_definition_counter();
-
-	$global_test_report->{selected}->{$module_name}
-	    = {
-	       count => $module_counter,
-	       command_definitions => [],
-	       description => $module_definition->{description},
-	       documentation => $module_definition->{documentation},
-	       harnessing => {
-			      preparation => $module_definition->{harnessing}->{preparation}->{description},
-			      reparation => $module_definition->{harnessing}->{reparation}->{description},
-			     },
-	       name => $module_name,
-	      };
-    }
-    else
-    {
-	die "$0: *** Error: module_name $module_name is defined twice.";
-    }
-}
-
-
-#
-# Adds the current test description to the summary, constructs a
-# structure to keep results.
-#
-
-sub ex_ct_run
-{
-    my $self = shift;
-
-    my $command_test = shift;
-
-    my $execution_context = $self->{execution_context};
-
-    my $command_definition = $execution_context->get_command_definition();
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    # get the current module summary
-
-    my $selected_module = $global_test_report->{selected}->{$module_name};
-
-    # get the current test summary
-
-    my $module_command_definitions = $selected_module->{command_definitions};
-
-    my $command_definition_counter = $execution_context->get_command_definition_counter_per_module();
-
-    my $selected_command_definition = $module_command_definitions->[$command_definition_counter];
-
-    # get the current command test
-
-    my $selected_test_definitions = $selected_command_definition->{tests};
-
-    my $test_definition_counter = $execution_context->get_command_test_counter_per_command_definition();
-
-    if (not $selected_test_definitions->[$test_definition_counter])
-    {
-	$selected_test_definitions->[$test_definition_counter] = {};
-    }
-
-    use Clone 'clone';
-
-    $selected_test_definitions->[$test_definition_counter] = clone($command_test);
-
-    # my $selected_test_definition = $selected_test_definitions->[$test_definition_counter];
-
-    # # add the current test description to the summary
-
-    # $selected_test_definition->{description} = $command_test->{description};
-
-    # always succeeds
-
-    my $test_result
-	= {
-	   after_match => "",
-	   before_match => "",
-	   error => "",
-	   expected => "",
-	   matched_pattern_position => "",
-	   successfully_matching_string => "",
-	  };
-
-    return $test_result;
-}
-
-
-#
-# Adds the current test description to the summary, constructs a
-# structure to keep results.
-#
-
-sub ex_cd_start
-{
-    my $self = shift;
-
-    # get the execution context
-
-    my $execution_context = $self->{execution_context};
-
-    # create an output entry for the module
-
-    my $module_definition = $execution_context->get_module_definition();
-
-    my $module_name = $module_definition->{name};
-
-    # create an output entry for the current command definition
-
-    my $selected_module = $global_test_report->{selected}->{$module_name};
-
-    my $selected_command_definitions = $selected_module->{command_definitions};
-
-    my $command_definition = $execution_context->get_command_definition();
-
-    use Clone 'clone';
-
-#     push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
-
-    my $clone_command_definition = clone($command_definition);
-
-    push @$selected_command_definitions, $clone_command_definition;
-}
-
+package Heterarch::Test::Output::Formatter::YAML::Summary;
 
 # The Formatter:YAML::Summary package converts the test specifications
 # to a YAML formatted summary.
-
-package Heterarch::Test::Output::Formatter::YAML::Summary;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
@@ -4858,11 +4851,11 @@ sub ex_cd_start
 }
 
 
+package Heterarch::Test::Output::Formatter::YAML::CommandTests;
+
 # The Formatter:YAML::CommandTests package converts the test
 # specifications to a YAML formatted list of commands that would be
 # executed if the tests are run.
-
-package Heterarch::Test::Output::Formatter::YAML::CommandTests;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
