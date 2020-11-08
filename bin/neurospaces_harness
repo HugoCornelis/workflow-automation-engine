@@ -541,15 +541,12 @@ sub report_exit
 
 	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension.tex";
 
-	Heterarch::Test::Output::Formatter::Latex::output_latex_preamble
+	Heterarch::Test::Output::Formatter::Latex::process
 		(
 		 $output_filename,
-		 $test_module_library_contents->{html_introduction},
+		 $test_module_library_contents,
+		 $global_test_report,
 		);
-
-	Heterarch::Test::Output::Formatter::Latex::output_latex_process($global_test_report);
-
-	Heterarch::Test::Output::Formatter::Latex::output_latex_postamble();
 
 	my $testing = 1;
 
@@ -557,15 +554,12 @@ sub report_exit
 	{
 	    my $output_filename = "/tmp/test_report_$global_config->{package}->{name}.tex";
 
-	    Heterarch::Test::Output::Formatter::Latex::output_latex_preamble
+	    Heterarch::Test::Output::Formatter::Latex::process
 		    (
 		     $output_filename,
-		     $test_module_library_contents->{html_introduction},
+		     $test_module_library_contents,
+		     $global_test_report,
 		    );
-
-	    Heterarch::Test::Output::Formatter::Latex::output_latex_process($global_test_report);
-
-	    Heterarch::Test::Output::Formatter::Latex::output_latex_postamble();
 	}
     }
 
@@ -4279,7 +4273,7 @@ our @ISA = ("Heterarch::Test::Output::Formatter");
 our $output_file;
 
 
-sub output_latex
+sub _output_latex
 {
     my $outputfile = shift;
 
@@ -4291,7 +4285,7 @@ sub output_latex
 }
 
 
-sub output_latex_table
+sub _output_latex_table
 {
     my $outputfile = shift;
 
@@ -4299,24 +4293,24 @@ sub output_latex_table
 
     my $prompt = shift;
 
-    output_latex_environment_prompt($output_file, "verbatim", "", $prompt, "\n\n");
+    _output_latex_environment_prompt($output_file, "verbatim", "", $prompt, "\n\n");
 
-    output_latex($output_file, '\begin{longtable}{p{13cm}}' . "\n");
+    _output_latex($output_file, '\begin{longtable}{p{13cm}}' . "\n");
 
-    output_latex($output_file, '\hline' . "\n");
+    _output_latex($output_file, '\hline' . "\n");
 
-    output_latex_environment_prompt($output_file, "verbatim", $contents, "", "");
+    _output_latex_environment_prompt($output_file, "verbatim", $contents, "", "");
 
-    output_latex($output_file, '\\\\' . "\n");
+    _output_latex($output_file, '\\\\' . "\n");
 
-    output_latex($output_file, '\hline' . "\n");
+    _output_latex($output_file, '\hline' . "\n");
 
-    output_latex($output_file, '\end{longtable}' . "\n");
+    _output_latex($output_file, '\end{longtable}' . "\n");
 
 }
 
 
-sub output_latex_environment_prompt
+sub _output_latex_environment_prompt
 {
     my $outputfile = shift;
 
@@ -4330,26 +4324,26 @@ sub output_latex_environment_prompt
 
     if (defined $contents)
     {
-	output_latex($output_file, $prompt);
+	_output_latex($output_file, $prompt);
 
 	if ($content_type)
 	{
-	    output_latex($output_file, '\begin{' . $content_type . "}\n");
+	    _output_latex($output_file, '\begin{' . $content_type . "}\n");
 	}
 
-	output_latex($output_file, $contents);
+	_output_latex($output_file, $contents);
 
 	if ($content_type)
 	{
-	    output_latex($output_file, '\end{' . $content_type . "}\n");
+	    _output_latex($output_file, '\end{' . $content_type . "}\n");
 	}
     }
 
-    output_latex($output_file, $suffix);
+    _output_latex($output_file, $suffix);
 }
 
 
-sub output_latex_postamble
+sub _output_latex_postamble
 {
     my $postamble
 	= '\end{document}
@@ -4366,7 +4360,7 @@ sub output_latex_postamble
 }
 
 
-sub output_latex_preamble
+sub _output_latex_preamble
 {
     my $output_filename = shift;
 
@@ -4374,7 +4368,7 @@ sub output_latex_preamble
 
     $output_file = IO::File->new(">$output_filename");
 
-    my $title_paragraphs = output_latex_preamble_construct($html_introduction);
+    my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
 
     my $preamble1
 	= '\documentclass[12pt]{article}
@@ -4396,7 +4390,7 @@ sub output_latex_preamble
 
     print $output_file $preamble1;
 
-    output_latex_preamble_title($title_paragraphs);
+    _output_latex_preamble_title($title_paragraphs);
 
     my $preamble2
 	= '
@@ -4408,20 +4402,20 @@ sub output_latex_preamble
 
     print $output_file $preamble2;
 
-    output_latex_preamble_abstract($title_paragraphs);
+    _output_latex_preamble_abstract($title_paragraphs);
 
-    output_latex_preamble_summary($title_paragraphs);
+    _output_latex_preamble_summary($title_paragraphs);
 }
 
 
-sub output_latex_preamble_abstract
+sub _output_latex_preamble_abstract
 {
     my $title_paragraphs = shift;
 
 }
 
 
-sub output_latex_preamble_construct
+sub _output_latex_preamble_construct
 {
     my $html_introduction_original = shift;
 
@@ -4481,7 +4475,7 @@ sub output_latex_preamble_construct
 }
 
 
-sub output_latex_preamble_summary
+sub _output_latex_preamble_summary
 {
     my $title_paragraphs = shift;
 
@@ -4491,27 +4485,27 @@ sub output_latex_preamble_summary
 
     foreach my $paragraph (@$paragraphs)
     {
-	output_latex($output_file, "$paragraph\n\n");
+	_output_latex($output_file, "$paragraph\n\n");
     }
 }
 
 
-sub output_latex_preamble_title
+sub _output_latex_preamble_title
 {
     my $title_paragraphs = shift;
 
     # write title
 
-    output_latex($output_file, '\title{' . $title_paragraphs->{title} . "}\n\n");
+    _output_latex($output_file, '\title{' . $title_paragraphs->{title} . "}\n\n");
 
-    output_latex($output_file, '\date{' . localtime() . "}\n\n");
+    _output_latex($output_file, '\date{' . localtime() . "}\n\n");
 
-    output_latex($output_file, '\author{' . $title_paragraphs->{author} . "}\n\n");
+    _output_latex($output_file, '\author{' . $title_paragraphs->{author} . "}\n\n");
 
 }
 
 
-sub output_latex_process
+sub _output_latex_process
 {
     my $test_report = shift;
 
@@ -4539,55 +4533,55 @@ sub output_latex_process
 
 	# output the description as a section title
 
-	output_latex($output_file, '\section{' . $module_definition_description . "}\n\n");
+	_output_latex($output_file, '\section{' . $module_definition_description . "}\n\n");
 
 	# output the filename
 
 	if (scalar @$command_definitions eq 0)
 	{
-	    output_latex($output_file, 'File ');
+	    _output_latex($output_file, 'File ');
 
-	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
 
 	    if ($module_definition_documentation)
 	    {
-		output_latex($output_file, ':  ');
+		_output_latex($output_file, ':  ');
 	    }
 	    else
 	    {
-		output_latex($output_file, '.');
+		_output_latex($output_file, '.');
 	    }
 	}
 	elsif (scalar @$command_definitions eq 1)
 	{
-	    output_latex($output_file, 'The file ');
+	    _output_latex($output_file, 'The file ');
 
-	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
 
-	    output_latex($output_file, " defines the test that is explained in the following section.\n\n");
+	    _output_latex($output_file, " defines the test that is explained in the following section.\n\n");
 	}
 	else
 	{
-	    output_latex($output_file, 'The file ');
+	    _output_latex($output_file, 'The file ');
 
-	    output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
 
-	    output_latex($output_file, " defines the tests that are explained in the following sections.\n\n");
+	    _output_latex($output_file, " defines the tests that are explained in the following sections.\n\n");
 	}
 
 	# output the documentation and explanation
 
 	if ($module_definition_documentation)
 	{
-	    output_latex($output_file, "$module_definition_documentation->{purpose}\n\n");
+	    _output_latex($output_file, "$module_definition_documentation->{purpose}\n\n");
 
-	    output_latex($output_file, "$module_definition_documentation->{explanation}\n\n");
+	    _output_latex($output_file, "$module_definition_documentation->{explanation}\n\n");
 
-	    # output_latex($output_file, "Test commands follow.\n\n");
+	    # _output_latex($output_file, "Test commands follow.\n\n");
 	}
 	else
 	{
-	    output_latex($output_file, "\n\n");
+	    _output_latex($output_file, "\n\n");
 	}
 
 	# output the preparation and reparation
@@ -4596,17 +4590,17 @@ sub output_latex_process
 
 	if ($harnessing->{preparation})
 	{
-	    output_latex($output_file, '\begin{' . "itemize" . "}\n");
+	    _output_latex($output_file, '\begin{' . "itemize" . "}\n");
 
-	    output_latex($output_file, '\item ');
+	    _output_latex($output_file, '\item ');
 
-	    output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+	    _output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
 
-	    output_latex($output_file, '\item ');
+	    _output_latex($output_file, '\item ');
 
-	    output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+	    _output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
 
-	    output_latex($output_file, '\end{' . "itemize" . "}\n");
+	    _output_latex($output_file, '\end{' . "itemize" . "}\n");
 	}
 
 	# output the command definitions
@@ -4625,7 +4619,7 @@ sub output_latex_process
 
 	    if (scalar @$command_definitions eq 1)
 	    {
-		output_latex($output_file, "The following test is described as: $description\n");
+		_output_latex($output_file, "The following test is described as: $description\n");
 	    }
 	    else
 	    {
@@ -4636,21 +4630,21 @@ sub output_latex_process
 		    $description .= ": $subdescription";
 		}
 
-		output_latex($output_file, '\subsection{' . $description . "}\n\n");
+		_output_latex($output_file, '\subsection{' . $description . "}\n\n");
 	    }
 
 	    if (scalar @$command_tests eq 1)
 	    {
-		output_latex($output_file, 'For the test that follows the system shell ');
+		_output_latex($output_file, 'For the test that follows the system shell ');
 	    }
 	    else
 	    {
-		output_latex($output_file, 'For the tests that follow the system shell ');
+		_output_latex($output_file, 'For the tests that follow the system shell ');
 	    }
 
-	    output_latex_prompt($output_file, "textbf", $command, "", "");
+	    _output_latex_prompt($output_file, "textbf", $command, "", "");
 
-	    output_latex($output_file, ' must first be given.');
+	    _output_latex($output_file, ' must first be given.');
 
 	    # output the preparation and reparation
 
@@ -4658,51 +4652,51 @@ sub output_latex_process
 
 	    if ($harnessing->{preparation})
 	    {
-		output_latex($output_file, '\begin{' . "itemize" . "}\n");
+		_output_latex($output_file, '\begin{' . "itemize" . "}\n");
 
-		output_latex($output_file, '\item ');
+		_output_latex($output_file, '\item ');
 
-		output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
 
-		output_latex($output_file, '\item ');
+		_output_latex($output_file, '\item ');
 
-		output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
 
-		output_latex($output_file, '\end{' . "itemize" . "}\n");
+		_output_latex($output_file, '\end{' . "itemize" . "}\n");
 	    }
 
 	    foreach my $command_test (@$command_tests)
 	    {
-		output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
+		_output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
 
 		my $description = $command_test->{description};
 
 		if (scalar @$command_tests eq 1)
 		{
-		    # output_latex($output_file, "This test is described as: $description\n\n");
+		    # _output_latex($output_file, "This test is described as: $description\n\n");
 		}
 		else
 		{
-		    output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
+		    _output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
 		}
 
 		my $write = $command_test->{write} || "";
 
 		if (defined $write)
 		{
-		    output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $write . '}', "Input to the application:\n", "\n\n");
+		    _output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $write . '}', "Input to the application:\n", "\n\n");
 		}
 
-		# 		output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
+		# 		_output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
 
 		my $read = $command_test->{read} || "";
 
 		if (defined $read)
 		{
-		    output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $read . '}', "This is the application output we expect:\n", "\n\n");
+		    _output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $read . '}', "This is the application output we expect:\n", "\n\n");
 		}
 
-		output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
+		_output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
 
 	    }
 	}
@@ -4710,7 +4704,7 @@ sub output_latex_process
 }
 
 
-sub output_latex_prompt
+sub _output_latex_prompt
 {
     my $outputfile = shift;
 
@@ -4724,22 +4718,42 @@ sub output_latex_prompt
 
     if (defined $contents)
     {
-	output_latex($output_file, $prompt);
+	_output_latex($output_file, $prompt);
 
 	if ($content_type)
 	{
-	    output_latex($output_file, '\\' . $content_type . '{');
+	    _output_latex($output_file, '\\' . $content_type . '{');
 	}
 
-	output_latex($output_file, $contents);
+	_output_latex($output_file, $contents);
 
 	if ($content_type)
 	{
-	    output_latex($output_file, "}");
+	    _output_latex($output_file, "}");
 	}
     }
 
-    output_latex($output_file, $suffix);
+    _output_latex($output_file, $suffix);
+}
+
+
+sub process
+{
+    my $output_filename = shift;
+
+    my $test_module_library_contents = shift;
+
+    my $global_test_report = shift;
+
+    _output_latex_preamble
+	(
+	 $output_filename,
+	 $test_module_library_contents->{html_introduction},
+	);
+
+    _output_latex_process($global_test_report);
+
+    _output_latex_postamble();
 }
 
 
