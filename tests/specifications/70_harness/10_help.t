@@ -54,13 +54,16 @@ options:
 
 The Neurospaces Harness automates unit, regression, integration and
 smoke testing.  Declarative test specifications define application
-behaviour and are used to execute tests.
+behaviour and can be executed to validate application behaviour
+against its specifications.
 
 Command line options support extraction of documentation at various
-levels of detail or with a user-given focus.
+levels of detail or for specific application functions.  Test
+specifications can be converted either to a list of commands with test
+input or to HTML or Latex to create a comprehensive series of manuals.
 
-The knowledge base about application behaviour that is implicitly
-embedded in the test specifications can be converted to HTML or Latex.
+Used this way test specifications are an application knowledge base
+that guarantee correct application behaviour.
 
 ",
 			      purpose => "Help page.",

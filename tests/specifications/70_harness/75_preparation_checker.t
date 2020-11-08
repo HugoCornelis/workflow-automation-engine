@@ -71,7 +71,7 @@ smoke testing.  Declarative test specifications define application
 behaviour and are used to execute tests.
 
 Specific clauses in the test specifications allow to customize the
-test environment.
+test environment prior to test execution.
 
 ",
 			      purpose => "Custom preparation and restoration of the test environment.",
