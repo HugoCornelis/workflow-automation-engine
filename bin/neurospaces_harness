@@ -4586,21 +4586,24 @@ sub _output_latex_process
 
 	# output the preparation and reparation
 
-	my $harnessing = $module_definition->{harnessing};
-
-	if ($harnessing->{preparation})
+	if (scalar @$command_definitions ne 0)
 	{
-	    _output_latex($output_file, '\begin{' . "itemize" . "}\n");
+	    my $harnessing = $module_definition->{harnessing};
 
-	    _output_latex($output_file, '\item ');
+	    if ($harnessing->{preparation})
+	    {
+		_output_latex($output_file, '\begin{' . "itemize" . "}\n");
 
-	    _output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+		_output_latex($output_file, '\item ');
 
-	    _output_latex($output_file, '\item ');
+		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
 
-	    _output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+		_output_latex($output_file, '\item ');
 
-	    _output_latex($output_file, '\end{' . "itemize" . "}\n");
+		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+
+		_output_latex($output_file, '\end{' . "itemize" . "}\n");
+	    }
 	}
 
 	# output the command definitions
