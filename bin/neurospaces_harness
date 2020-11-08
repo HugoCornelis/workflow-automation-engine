@@ -448,7 +448,7 @@ $0: test definition executor
 
 options:
     --check-test-names   check the pathnames of the specification files against the names of the tests.
-    --command-tests      show all the command definitions that would be run during test execution.
+    --command-tests      show all the command definitions that would be run during test execution, including the input to those commands.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
@@ -4854,8 +4854,8 @@ sub ex_cd_start
 package Heterarch::Test::Output::Formatter::YAML::CommandTests;
 
 # The Formatter:YAML::CommandTests package converts the test
-# specifications to a YAML formatted list of commands that would be
-# executed if the tests are run.
+# specifications to a YAML formatted list of commands and their input
+# in the write clauses, that would be executed if the tests are run.
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
