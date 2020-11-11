@@ -4324,13 +4324,13 @@ sub _output_latex_table
 
     my $prompt = shift;
 
-    _output_latex_environment_prompt($output_file, "verbatim", "", $prompt, "\n\n");
+    _output_latex_environment_prompt($output_file, "Verbatim", undef, "", $prompt, "\n\n");
 
     _output_latex($output_file, '\begin{longtable}{p{13cm}}' . "\n");
 
     _output_latex($output_file, '\hline' . "\n");
 
-    _output_latex_environment_prompt($output_file, "verbatim", $contents, "", "");
+    _output_latex_environment_prompt($output_file, "Verbatim", undef, $contents, "", "");
 
     _output_latex($output_file, '\\\\' . "\n");
 
@@ -4347,6 +4347,8 @@ sub _output_latex_environment_prompt
 
     my $content_type = shift;
 
+    my $content_type_options = shift || "";
+
     my $contents = shift;
 
     my $prompt = shift;
@@ -4359,10 +4361,15 @@ sub _output_latex_environment_prompt
 
 	if ($content_type)
 	{
-	    _output_latex($output_file, '\begin{' . $content_type . "}\n");
+	    _output_latex($output_file, '\begin{' . $content_type . "}[$content_type_options]\n");
 	}
 
 	_output_latex($output_file, $contents);
+
+	if ($contents !~ /\n$/)
+	{
+	    _output_latex($output_file, "\n");
+	}
 
 	if ($content_type)
 	{
@@ -4412,6 +4419,8 @@ sub _output_latex_preamble
 % \usepackage[margin=2cm]{geometry}
 \usepackage{url}
 \usepackage{verbatim}
+\usepackage{fancyvrb}
+\usepackage{relsize}
 
 % Typeface
 \usepackage[condensed,math]{iwona}
@@ -4676,16 +4685,16 @@ sub _output_latex_process
 
 	    if (scalar @$command_tests eq 1)
 	    {
-		_output_latex($output_file, 'For the test that follows the system shell ');
+		_output_latex($output_file, 'The test is started with system shell command: ');
 	    }
 	    else
 	    {
-		_output_latex($output_file, 'For the tests that follow the system shell ');
+		_output_latex($output_file, 'The tests are started with the system shell command: ');
 	    }
 
 	    _output_latex_prompt($output_file, "textbf", $command, "", "");
 
-	    _output_latex($output_file, ' must first be given.');
+	    _output_latex_prompt($output_file, "", $command_definition->{comment}, "Notes:\n", "\n\n");
 
 	    # output the preparation and reparation
 
@@ -4723,18 +4732,18 @@ sub _output_latex_process
 
 		my $write = $command_test->{write} || "";
 
-		if (defined $write)
+		if ($write)
 		{
-		    _output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $write . '}', "Input to the application:\n", "\n\n");
+		    _output_latex_environment_prompt($output_file, "Verbatim", 'fontsize=\relsize{-2}', $write, "The input to the application is:\n", "\n\n");
 		}
 
 		# 		_output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
 
 		my $read = $command_test->{read} || "";
 
-		if (defined $read)
+		if ($read)
 		{
-		    _output_latex_environment_prompt($output_file, "verbatim", '{\small ' . $read . '}', "This is the application output we expect:\n", "\n\n");
+		    _output_latex_environment_prompt($output_file, "Verbatim", 'fontsize=\relsize{-2}', $read, "The application output we expect:\n", "\n\n");
 		}
 
 		_output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
