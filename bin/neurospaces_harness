@@ -19,7 +19,6 @@ use YAML;
 
 
 my $option_check_test_names;
-my $option_command_tests;
 my $option_dump_json;
 my $option_dump_perl;
 my $option_dump_yaml;
@@ -35,6 +34,7 @@ my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
 my $option_show;
+my $option_show_command_tests;
 my $option_tags = [];
 my $option_timeout_multiplier = 1;
 my $option_timings;
@@ -346,7 +346,6 @@ sub parse_options
 	= GetOptions
 	    (
 	     "check-test-names!" => \$option_check_test_names,
-	     "command-tests!" => \$option_command_tests,
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
 	     "dump-yaml!" => \$option_dump_yaml,
@@ -362,6 +361,7 @@ sub parse_options
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
 	     "show!" => \$option_show,
+	     "show-command-tests!" => \$option_show_command_tests,
 	     "tags=s" => $option_tags,
 	     "timeout-multiplier=s" => \$option_timeout_multiplier,
 	     "timings!" => \$option_timings,
@@ -394,7 +394,7 @@ sub parse_options
 
 	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Summary";
 	}
-	elsif ($option_command_tests)
+	elsif ($option_show_command_tests)
 	{
 	    $global_test_report->{output_format} = 'yaml_exit';
 
@@ -417,7 +417,6 @@ sub parse_options
 
     $global_test_report->{options}
 	= {
-	   command_tests => $option_command_tests,
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
 	   dump_yaml => $option_dump_yaml,
@@ -433,6 +432,7 @@ sub parse_options
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
 	   show => $option_show,
+	   show_command_tests => $option_show_command_tests,
 	   tags => $option_tags,
 	   timeout_multiplier => $option_timeout_multiplier,
 	   timings => $option_timings,
@@ -448,7 +448,6 @@ $0: test definition executor
 
 options:
     --check-test-names   check the pathnames of the specification files against the names of the tests.
-    --command-tests      show all the command definitions that would be run during test execution, including the input to those commands.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
@@ -466,6 +465,7 @@ options:
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
     --show               show tests that would be run using the current configuration.
+    --show-command-tests show all the command definitions that would be run during test execution, including the input to those commands.
     --tags               only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier multiply all timeout values with this constant.
     --timings            add timing information about the tests to the report.
