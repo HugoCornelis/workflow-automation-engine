@@ -4479,13 +4479,20 @@ sub _output_latex_preamble_summary
 {
     my $title_paragraphs = shift;
 
-    # write paragraphs
-
     my $paragraphs = $title_paragraphs->{paragraphs};
 
-    foreach my $paragraph (@$paragraphs)
+    if (scalar @$paragraphs)
     {
-	_output_latex($output_file, "$paragraph\n\n");
+	# output the description as a section title
+
+	_output_latex($output_file, '\section*{\center ' . "Summary" . "}\n\n");
+
+	# write paragraphs
+
+	foreach my $paragraph (@$paragraphs)
+	{
+	    _output_latex($output_file, "$paragraph\n\n");
+	}
     }
 }
 
@@ -4533,7 +4540,7 @@ sub _output_latex_process
 
 	# output the description as a section title
 
-	_output_latex($output_file, '\section{' . $module_definition_description . "}\n\n");
+	_output_latex($output_file, '\section{' . ucfirst $module_definition_description . "}\n\n");
 
 	# output the filename
 
@@ -4633,7 +4640,7 @@ sub _output_latex_process
 		    $description .= ": $subdescription";
 		}
 
-		_output_latex($output_file, '\subsection{' . $description . "}\n\n");
+		_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
 	    }
 
 	    if (scalar @$command_tests eq 1)
@@ -4680,7 +4687,7 @@ sub _output_latex_process
 		}
 		else
 		{
-		    _output_latex($output_file, '\subsubsection{' . $description . "}\n\n");
+		    _output_latex($output_file, '\subsubsection{' . ucfirst $description . "}\n\n");
 		}
 
 		my $write = $command_test->{write} || "";
