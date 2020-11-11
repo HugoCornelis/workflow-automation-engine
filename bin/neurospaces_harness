@@ -4915,7 +4915,8 @@ sub ex_ct_run
 
     # only if there is something to add
 
-    if (exists $command_test->{write})
+    if (exists $command_test->{write}
+        and defined $command_test->{write})
     {
 	# get the current module summary
 
@@ -4984,7 +4985,7 @@ sub ex_cd_start
 
 	my $arguments = $command_definition->{arguments};
 
-	my $command_string = $command . ' ' . join ' ', @$arguments;
+	my $command_string = $command . ' ' . join ' ', @ { $arguments || [] };
 
 	push @$selected_module, { command => $command_string, };
     }
