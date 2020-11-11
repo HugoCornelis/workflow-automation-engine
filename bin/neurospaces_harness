@@ -3173,6 +3173,14 @@ sub terminate
 
 package Heterarch::Test::Executor;
 
+#
+# This is the default Heterarch::Test::Executor.  It provides a link
+# with the execution context and implements ->ex_mo_prepare(),
+# ex_cd_start() and ex_ct_run() methods that call the appropriate
+# module, command_definition and command_test methods for implementing
+# test execution.
+#
+
 
 sub new
 {
@@ -4021,8 +4029,31 @@ sub md_run
 }
 
 
-package Heterarch::Test::Output::Formatter;
+package Heterarch::Test::Output;
 
+#
+# A Heterarch::Test::Output::Summarizer implements ->ex_mo_prepare(),
+# ex_cd_start() and ex_ct_run() methods that select content and
+# prepare a structured for generating a summary in YAML of this
+# selection.
+#
+
+our @ISA = ("Heterarch::Test::Executor");
+
+
+package Heterarch::Test::Output::Summarizer;
+
+#
+# A Heterarch::Test::Output::Summarizer implements ->ex_mo_prepare(),
+# ex_cd_start() and ex_ct_run() methods that select content and
+# prepare a structured for generating a summary in YAML of this
+# selection.
+#
+
+our @ISA = ("Heterarch::Test::Output");
+
+
+package Heterarch::Test::Output::Formatter;
 
 #
 # A Heterarch::Test::Output::Formatter implements ->ex_mo_prepare(),
@@ -4030,7 +4061,7 @@ package Heterarch::Test::Output::Formatter;
 # content for the output formatter to convert to its target format.
 #
 
-our @ISA = ("Heterarch::Test::Executor");
+our @ISA = ("Heterarch::Test::Output");
 
 
 #
@@ -4773,7 +4804,7 @@ package Heterarch::Test::Output::Formatter::YAML::Summary;
 # to a YAML formatted summary.
 
 
-our @ISA = ("Heterarch::Test::Output::Formatter");
+our @ISA = ("Heterarch::Test::Output::Summarizer");
 
 
 #
@@ -4882,7 +4913,7 @@ package Heterarch::Test::Output::Formatter::YAML::CommandTests;
 # in the write clauses, that would be executed if the tests are run.
 
 
-our @ISA = ("Heterarch::Test::Output::Formatter");
+our @ISA = ("Heterarch::Test::Output::Summarizer");
 
 
 #
@@ -5000,7 +5031,7 @@ package Heterarch::Test::Output::Definitions;
 # This list has been developed in a separate emacs-org document.
 #
 
-our @ISA = ("Heterarch::Test::Executor");
+our @ISA = ("Heterarch::Test::Output::Summarizer");
 
 
 package Heterarch::Test::Output::List;
