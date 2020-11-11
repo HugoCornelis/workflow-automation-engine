@@ -4311,6 +4311,7 @@ sub _output_latex
     my $contents = shift;
 
     $contents =~ s/_/\\_/g;
+    $contents =~ s/&/\\&/g;
 
     print $outputfile $contents;
 }
@@ -4324,13 +4325,28 @@ sub _output_latex_table
 
     my $prompt = shift;
 
-    _output_latex_environment_prompt($output_file, "Verbatim", undef, "", $prompt, "\n\n");
+    _output_latex_environment_prompt
+	(
+	 $output_file,
+	 {
+	  content_type => "Verbatim",
+	  prompt => $prompt,
+	  suffix => "\n\n",
+	 },
+	);
 
     _output_latex($output_file, '\begin{longtable}{p{13cm}}' . "\n");
 
     _output_latex($output_file, '\hline' . "\n");
 
-    _output_latex_environment_prompt($output_file, "Verbatim", undef, $contents, "", "");
+    _output_latex_environment_prompt
+	(
+	 $output_file,
+	 {
+	  content_type => "Verbatim",
+	  contents => $contents,
+	 }
+	);
 
     _output_latex($output_file, '\\\\' . "\n");
 
@@ -4345,15 +4361,13 @@ sub _output_latex_environment_prompt
 {
     my $outputfile = shift;
 
-    my $content_type = shift;
+    my $content = shift;
 
-    my $content_type_options = shift || "";
-
-    my $contents = shift;
-
-    my $prompt = shift;
-
-    my $suffix = shift;
+    my $content_type = $content->{content_type};
+    my $content_type_options = $content->{content_type_options} || "";
+    my $contents = $content->{contents} || "";
+    my $prompt = $content->{prompt} || "";
+    my $suffix = $content->{suffix} || "";
 
     if (defined $contents)
     {
@@ -4734,7 +4748,17 @@ sub _output_latex_process
 
 		if ($write)
 		{
-		    _output_latex_environment_prompt($output_file, "Verbatim", 'fontsize=\relsize{-2}', $write, "The input to the application is:\n", "\n\n");
+		    _output_latex_environment_prompt
+			(
+			 $output_file,
+			 {
+			  content_type => "Verbatim",
+			  content_type_options => 'fontsize=\relsize{-2}',
+			  content => $write,
+			  prompt => "The input to the application is:\n",
+			  suffix => "\n\n",
+			 },
+			);
 		}
 
 		# 		_output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
@@ -4743,7 +4767,17 @@ sub _output_latex_process
 
 		if ($read)
 		{
-		    _output_latex_environment_prompt($output_file, "Verbatim", 'fontsize=\relsize{-2}', $read, "The application output we expect:\n", "\n\n");
+		    _output_latex_environment_prompt
+			(
+			 $output_file,
+			 {
+			  content_type => "Verbatim",
+			  content_type_options => 'fontsize=\relsize{-2}',
+			  content => $read,
+			  prompt => "The application output we expect:\n",
+			  suffix => "\n\n",
+			 },
+			);
 		}
 
 		_output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
