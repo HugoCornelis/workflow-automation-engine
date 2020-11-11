@@ -4344,7 +4344,7 @@ sub _output_latex_table
 	 $output_file,
 	 {
 	  content_type => "Verbatim",
-	  contents => $contents,
+	  content => $contents,
 	 }
 	);
 
@@ -4361,16 +4361,29 @@ sub _output_latex_environment_prompt
 {
     my $outputfile = shift;
 
-    my $content = shift;
+    my $content_options = shift;
 
-    my $content_type = $content->{content_type};
-    my $content_type_options = $content->{content_type_options} || "";
-    my $contents = $content->{contents} || "";
-    my $prompt = $content->{prompt} || "";
-    my $suffix = $content->{suffix} || "";
+    my $content_line_limit = $content_options->{content_line_limit};
+    my $content_type = $content_options->{content_type};
+    my $content_type_options = $content_options->{content_type_options} || "";
+    my $content = $content_options->{content} || "";
+    my $prompt = $content_options->{prompt} || "";
+    my $suffix = $content_options->{suffix} || "";
 
-    if (defined $contents)
+    if (defined $content)
     {
+	if ($content_line_limit)
+	{
+	    my $line_count = $content =~ tr/\n//;
+
+	    if ($line_count > $content_line_limit)
+	    {
+		my $first_lines = join "\n", ( split /\n/, $content )[0 .. $content_line_limit];
+
+		$content = $first_lines . "\n ... < cut at $content_line_limit lines, more follows > ...\n";
+	    }
+	}
+
 	_output_latex($output_file, $prompt);
 
 	if ($content_type)
@@ -4378,9 +4391,9 @@ sub _output_latex_environment_prompt
 	    _output_latex($output_file, '\begin{' . $content_type . "}[$content_type_options]\n");
 	}
 
-	_output_latex($output_file, $contents);
+	_output_latex($output_file, $content);
 
-	if ($contents !~ /\n$/)
+	if ($content !~ /\n$/)
 	{
 	    _output_latex($output_file, "\n");
 	}
@@ -4752,9 +4765,10 @@ sub _output_latex_process
 			(
 			 $output_file,
 			 {
+			  content => $write,
+			  content_line_limit => 10,
 			  content_type => "Verbatim",
 			  content_type_options => 'fontsize=\relsize{-2}',
-			  content => $write,
 			  prompt => "The input to the application is:\n",
 			  suffix => "\n\n",
 			 },
@@ -4771,9 +4785,10 @@ sub _output_latex_process
 			(
 			 $output_file,
 			 {
+			  content => $read,
+			  content_line_limit => 10,
 			  content_type => "Verbatim",
 			  content_type_options => 'fontsize=\relsize{-2}',
-			  content => $read,
 			  prompt => "The application output we expect:\n",
 			  suffix => "\n\n",
 			 },
