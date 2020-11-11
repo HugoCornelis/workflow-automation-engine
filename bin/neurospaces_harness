@@ -4913,7 +4913,9 @@ sub ex_ct_run
 
     my $module_name = $module_definition->{name};
 
-    if (exists $command_definition->{command})
+    # only if there is something to add
+
+    if (exists $command_test->{write})
     {
 	# get the current module summary
 
@@ -4930,10 +4932,7 @@ sub ex_ct_run
 
 	# add the current test write clause to the summary
 
-	if (exists $command_test->{write})
-	{
-	    push @$selected_command_definitions, $command_test->{write};
-	}
+	push @$selected_command_definitions, $command_test->{write};
     }
 
     # always succeeds
