@@ -4370,8 +4370,12 @@ sub _output_latex_environment_prompt
     my $prompt = $content_options->{prompt} || "";
     my $suffix = $content_options->{suffix} || "";
 
+    # if there is content
+
     if (defined $content)
     {
+	# cut the content at the content limit
+
 	if ($content_line_limit)
 	{
 	    my $line_count = $content =~ tr/\n//;
@@ -4384,11 +4388,15 @@ sub _output_latex_environment_prompt
 	    }
 	}
 
+	# output the prompt
+
 	_output_latex($output_file, $prompt);
+
+	# output the content enclosed with the begin and end markers
 
 	if ($content_type)
 	{
-	    _output_latex($output_file, '\begin{' . $content_type . "}[$content_type_options]\n");
+	    _output_latex($output_file, '\begin{' . $content_type . "}$content_type_options\n");
 	}
 
 	_output_latex($output_file, $content);
@@ -4403,6 +4411,91 @@ sub _output_latex_environment_prompt
 	    _output_latex($output_file, '\end{' . $content_type . "}\n");
 	}
     }
+
+    # output the suffix
+
+    _output_latex($output_file, $suffix);
+}
+
+
+sub _output_latex_environment_minipage
+{
+    my $outputfile = shift;
+
+    my $content_options = shift;
+
+    my $content_line_limit = $content_options->{content_line_limit};
+    my $content_type = $content_options->{content_type};
+    my $content_type_embedding = $content_options->{content_type_embedding} || "";
+    my $content_type_options = $content_options->{content_type_options} || "";
+    my $content = $content_options->{content};
+    my $prompt = $content_options->{prompt} || "";
+    my $prompt_type = $content_options->{prompt_type};
+    my $suffix = $content_options->{suffix} || "";
+
+    # if there is content
+
+    if (defined $content)
+    {
+	# cut the content at the content limit
+
+	if ($content_line_limit)
+	{
+	    my $line_count = $content =~ tr/\n//;
+
+	    if ($line_count > $content_line_limit)
+	    {
+		my $first_lines = join "\n", ( split /\n/, $content )[0 .. $content_line_limit];
+
+		$content = $first_lines . "\n ... < cut at $content_line_limit lines, more follows > ...\n";
+	    }
+	}
+
+	# output the content begin marker
+
+	if ($content_type)
+	{
+	    print $output_file '\vspace{3ex}
+\begin{' . $content_type . "}$content_type_options\n";
+	}
+
+	# output the embedding start
+
+	if ($content_type_embedding)
+	{
+	    print $outputfile "\\$content_type_embedding\{";
+	}
+
+	# output the prompt
+
+	_output_latex_prompt($output_file, $prompt_type, $prompt, "", "");
+
+	# output the content
+
+	_output_latex($output_file, $content);
+
+	if ($content !~ /\n$/)
+	{
+	    _output_latex($output_file, "\n");
+	}
+
+	# output the embedding end
+
+	if ($content_type_embedding)
+	{
+	    print $outputfile "\}\n";
+	}
+
+	# output the content end marker
+
+	if ($content_type)
+	{
+	    print $output_file '\end{' . $content_type . "}\n" . '\vspace{3ex}
+';
+	}
+    }
+
+    # output the suffix
 
     _output_latex($output_file, $suffix);
 }
@@ -4438,6 +4531,9 @@ sub _output_latex_preamble
     my $preamble1
 	= '\documentclass[12pt]{article}
 \usepackage[a4paper, total={6in, 9in}]{geometry}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{color}
 \usepackage[colorlinks=true]{hyperref}
 \usepackage[dvips]{epsfig}
@@ -4719,9 +4815,21 @@ sub _output_latex_process
 		_output_latex($output_file, 'The tests are started with the system shell command: ');
 	    }
 
-	    _output_latex_prompt($output_file, "textbf", $command, "", "");
+	    _output_latex_prompt($output_file, "textbf", $command, "", "\n\n");
 
-	    _output_latex_prompt($output_file, "", $command_definition->{comment}, "Notes:\n", "\n\n");
+	    _output_latex_environment_minipage
+		(
+		 $output_file,
+		 {
+		  content => $command_definition->{comment},
+		  content_type => "minipage",
+		  content_type_options => '{14cm}',
+		  content_type_embedding => "small",
+		  prompt => "NOTE\\::",
+		  prompt_type => 'textbf',
+		  suffix => "\n\n",
+		 },
+		);
 
 	    # output the preparation and reparation
 
@@ -4768,7 +4876,7 @@ sub _output_latex_process
 			  content => $write,
 			  content_line_limit => 10,
 			  content_type => "Verbatim",
-			  content_type_options => 'fontsize=\relsize{-2}',
+			  content_type_options => '[fontsize=\relsize{-2}]',
 			  prompt => "The input to the application is:\n",
 			  suffix => "\n\n",
 			 },
@@ -4788,14 +4896,26 @@ sub _output_latex_process
 			  content => $read,
 			  content_line_limit => 10,
 			  content_type => "Verbatim",
-			  content_type_options => 'fontsize=\relsize{-2}',
+			  content_type_options => '[fontsize=\relsize{-2}]',
 			  prompt => "The application output we expect:\n",
 			  suffix => "\n\n",
 			 },
 			);
 		}
 
-		_output_latex_prompt($output_file, "", $command_test->{comment}, "Notes:\n", "\n\n");
+		_output_latex_environment_minipage
+		    (
+		     $output_file,
+		     {
+		      content => $command_test->{comment},
+		      content_type => "minipage",
+		      content_type_options => '{14cm}',
+		      content_type_embedding => "small",
+		      prompt => "NOTE\\::",
+		      prompt_type => 'textbf',
+		      suffix => "\n\n",
+		     },
+		    );
 
 	    }
 	}
@@ -4809,26 +4929,26 @@ sub _output_latex_prompt
 
     my $content_type = shift;
 
-    my $contents = shift;
+    my $content = shift;
 
     my $prompt = shift;
 
     my $suffix = shift;
 
-    if (defined $contents)
+    if (defined $content)
     {
 	_output_latex($output_file, $prompt);
 
 	if ($content_type)
 	{
-	    _output_latex($output_file, '\\' . $content_type . '{');
+	    print $output_file '\\' . $content_type . '{';
 	}
 
-	_output_latex($output_file, $contents);
+	_output_latex($output_file, " $content ");
 
 	if ($content_type)
 	{
-	    _output_latex($output_file, "}");
+	    print $output_file "}";
 	}
     }
 
