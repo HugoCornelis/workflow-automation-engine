@@ -4088,6 +4088,7 @@ sub ex_mo_prepare
 	    = {
 	       count => $module_counter,
 	       command_definitions => [],
+	       comment => $module_definition->{comment},
 	       description => $module_definition->{description},
 	       documentation => $module_definition->{documentation},
 	       harnessing => {
@@ -4775,6 +4776,22 @@ sub _output_latex_process
 		_output_latex($output_file, '\end{' . "itemize" . "}\n");
 	    }
 	}
+
+	# output notes
+
+	_output_latex_environment_minipage
+	    (
+	     $output_file,
+	     {
+	      content => $module_definition->{comment},
+	      content_type => "minipage",
+	      content_type_options => '{14cm}',
+	      content_type_embedding => "small",
+	      prompt => "NOTE\\::",
+	      prompt_type => 'textbf',
+	      suffix => "\n\n",
+	     },
+	    );
 
 	# output the command definitions
 
