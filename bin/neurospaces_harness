@@ -27,6 +27,7 @@ my $option_flattenout;
 my $option_help;
 my $option_numerical_compare;
 my $option_output;
+my $option_output_figures;
 my $option_output_html;
 my $option_output_latex;
 my $option_output_levels = [];
@@ -138,7 +139,7 @@ sub initialize_config_environment
 
 		if ($option_verbose)
 		{
-		    print $fd_initialization "$0: executing ($shell_command)\n";
+		    print $fd_initialization "$0: Executing ($shell_command)\n";
 		}
 
 		system $shell_command;
@@ -266,7 +267,7 @@ sub main
     {
 	if ($option_verbose)
 	{
-	    print $global_fd_output "Randomizing test specifications, random seed is $option_random_order\n";
+	    print $global_fd_output "$0: Randomizing test specifications, random seed is $option_random_order\n";
 	}
 
 	# by default the randomizer will choose a random_seed
@@ -354,6 +355,7 @@ sub parse_options
 	     "help!" => \$option_help,
 	     "numerical-compare!" => \$option_numerical_compare,
 	     "output=s" => \$option_output,
+	     "output-figures" => \$option_output_figures,
 	     "output-html" => \$option_output_html,
 	     "output-latex" => \$option_output_latex,
 	     "output-levels=s" => $option_output_levels,
@@ -417,6 +419,7 @@ sub parse_options
 
     $global_test_report->{options}
 	= {
+	   check_test_names => $option_check_test_names,
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
 	   dump_yaml => $option_dump_yaml,
@@ -425,6 +428,7 @@ sub parse_options
 	   help => $option_help,
 	   numerical_compare => $option_numerical_compare,
 	   output => $option_output,
+	   output_figures => $option_output_figures,
 	   output_html => $option_output_html,
 	   output_latex => $option_output_latex,
 	   output_levels => $option_output_levels,
@@ -458,6 +462,7 @@ options:
     --help               print usage information.
     --numerical-compare  attempt to compare numbers numerically when string differences are found (default enabled).
     --output             the class that should generate the output (default is '$option_output').
+    --output-figures     generate figures for test output with a figure clause.
     --output-html        generate HTML output.
     --output-latex       generate Latex output.
     --output-levels      generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
@@ -2628,6 +2633,74 @@ sub get_command_test_counter_per_command_definition
 }
 
 
+sub get_context_path
+{
+    my $self = shift;
+
+    # add module counter and identifier
+
+    my $result = $self->get_module_definition_counter();
+
+    $result .= "_";
+
+    $result .= $self->get_module_definition()->{name};
+
+    # add command_definition counter and identifier
+
+    my $command_definition = $self->get_command_definition();
+
+    if (defined $command_definition)
+    {
+	$result .= "_";
+
+	$result .= $self->get_command_definition_counter_per_module();
+
+	$result .= "_";
+
+	# the command_definition identifier is based on the system
+	# shell command that is used to perform the tests
+
+	if (exists $command_definition->{command})
+	{
+	    $result .= $command_definition->{command};
+	}
+	else
+	{
+	    $result .= "NONE";
+	}
+
+	# add command_test counter and identifier
+
+	my $command_test = $self->get_command_test();
+
+	if (defined $command_test)
+	{
+	    $result .= "_";
+
+	    $result .= $self->get_command_test_counter_per_command_definition();
+
+	    $result .= "_";
+
+	    # the command_test identifier is based on the write clause
+
+	    if (exists $command_test->{write}
+		and defined $command_test->{write})
+	    {
+		$result .= $command_test->{write};
+	    }
+	    else
+	    {
+		$result .= "NONE";
+	    }
+	}
+    }
+
+    # return result
+
+    return $result;
+}
+
+
 sub get_module_definition
 {
     my $self = shift;
@@ -3621,15 +3694,15 @@ sub readfile
 
 	if ($@)
 	{
-	    report_error_add
-	    (
-	     $fd_output,
-	     {
-	      description => $@,
-	      error => $@,
-	      module_name => $pathname,
-	     },
-	    );
+	    Heterarch::Test::Reporting::report_error_add
+		    (
+		     $fd_output,
+		     {
+		      description => $@,
+		      error => $@,
+		      module_name => $pathname,
+		     },
+		    );
 	}
     }
 
@@ -3939,6 +4012,8 @@ sub md_run
 
 		my $before_match = $execution_result->{before_match};
 
+		#! wondering what option_verbose has to do with the reporting of errors
+
 		if ($option_verbose)
 		{
 		    $message = $before_match;
@@ -4060,6 +4135,9 @@ package Heterarch::Test::Output::Formatter;
 # ex_cd_start() and ex_ct_run() methods that prepare structured
 # content for the output formatter to convert to its target format.
 #
+# Each element in the result receives a key ->{context_path} that is
+# unique and identifies the path from the root to the element.
+#
 
 our @ISA = ("Heterarch::Test::Output");
 
@@ -4084,11 +4162,19 @@ sub ex_mo_prepare
     {
 	my $module_counter = $execution_context->get_module_definition_counter();
 
+	my $context_path = $execution_context->get_context_path();;
+
+	if ($option_verbose)
+	{
+	    print $global_fd_output "$0: Preparing $context_path\n";
+	}
+
 	$global_test_report->{selected}->{$module_name}
 	    = {
-	       count => $module_counter,
 	       command_definitions => [],
 	       comment => $module_definition->{comment},
+	       context_path => $context_path,
+	       count => $module_counter,
 	       description => $module_definition->{description},
 	       documentation => $module_definition->{documentation},
 	       harnessing => {
@@ -4134,22 +4220,42 @@ sub ex_ct_run
 
     my $command_definition_counter = $execution_context->get_command_definition_counter_per_module();
 
-    my $selected_command_definition = $module_command_definitions->[$command_definition_counter];
+    my $selected_command_definition = $module_command_definitions->[$command_definition_counter - 1];
 
     # get the current command test
 
-    my $selected_test_definitions = $selected_command_definition->{tests};
+    if (not exists $selected_command_definition->{command_tests})
+    {
+	$selected_command_definition->{command_tests} = [];
+    }
+
+    my $selected_test_definitions = $selected_command_definition->{command_tests};
 
     my $test_definition_counter = $execution_context->get_command_test_counter_per_command_definition();
 
-    if (not $selected_test_definitions->[$test_definition_counter])
-    {
-	$selected_test_definitions->[$test_definition_counter] = {};
-    }
+    # if (not $selected_test_definitions->[$test_definition_counter])
+    # {
+    # 	$selected_test_definitions->[$test_definition_counter] = {};
+    # }
+
+    # just clone the current command test and add to the result
 
     use Clone 'clone';
 
-    $selected_test_definitions->[$test_definition_counter] = clone($command_test);
+    my $cloned_command_test = clone($command_test);
+
+    # add the context_path
+
+    my $context_path = $execution_context->get_context_path();;
+
+    if ($option_verbose)
+    {
+	print $global_fd_output "$0: Preparing $context_path\n";
+    }
+
+    $cloned_command_test->{context_path} = $context_path;
+
+    push @$selected_test_definitions, $cloned_command_test;
 
     # my $selected_test_definition = $selected_test_definitions->[$test_definition_counter];
 
@@ -4200,13 +4306,30 @@ sub ex_cd_start
 
     my $command_definition = $execution_context->get_command_definition();
 
+    # just clone the current command_definition
+
     use Clone 'clone';
 
 #     push @$selected_command_definitions, { description => $command_definition->{description}, tests => [], };
 
-    my $clone_command_definition = clone($command_definition);
+    my $cloned_command_definition = clone($command_definition);
 
-    push @$selected_command_definitions, $clone_command_definition;
+    delete $cloned_command_definition->{command_tests};
+
+    # add the context_path
+
+    my $context_path = $execution_context->get_context_path();;
+
+    if ($option_verbose)
+    {
+	print $global_fd_output "$0: Preparing $context_path\n";
+    }
+
+    $cloned_command_definition->{context_path} = $context_path;
+
+    # add to the result
+
+    push @$selected_command_definitions, $cloned_command_definition;
 }
 
 
@@ -4419,6 +4542,79 @@ sub _output_latex_environment_prompt
 }
 
 
+sub _output_latex_environment_figure
+{
+    my $outputfile = shift;
+
+    my $content_options = shift;
+
+    my $content_type = $content_options->{content_type};
+    my $content_type_options = $content_options->{content_type_options} || "";
+    my $includegraphics = $content_options->{includegraphics};
+    my $includegraphics_options = $content_options->{includegraphics_options} || "";
+    my $caption = $content_options->{caption};
+    my $caption_short = $content_options->{caption_short} || "";
+    my $label = $content_options->{label};
+
+# \begin{figure}
+# \fbox{\includegraphics[width=\linewidth]{/tmp/abcdef-output_graph_render.pdf}}
+# \end{figure}
+
+# % \begin{figure}[ht]
+# %   \includegraphics*[scale=0.1]{/tmp/abcdef-output_graph_render.pdf}
+# % %  \resizebox{2cm}{!} {\includegraphics{/tmp/abcdef-output_graph_render.pdf}}
+# %   \caption[Ten passive compartments voltage clamped]{\small Ten passive compartments clamped with command voltage of 0.1V using a perfect clamp object.}
+# %   \label{fig:perfectclamp}
+# % \end{figure}
+
+    # if there is content
+
+    if (defined $includegraphics)
+    {
+	# output the content begin marker
+
+	if ($content_type)
+	{
+	    print $output_file '\begin{' . $content_type . "}$content_type_options\n";
+	}
+
+# 	print $output_file '  \center'. "\n";
+
+	print $output_file '  \includegraphics' . $includegraphics_options . "{$includegraphics}\n";
+
+	if ($caption)
+	{
+	    print $output_file '  \caption[' . $caption_short . ']{\small ' . $caption . '}' . "\n";
+	}
+
+	if ($label)
+	{
+	    print $output_file '  \label{fig:'. $label . '}' . "\n";
+	}
+
+# \begin{figure}[ht]
+#   \center
+#   \includegraphics[scale=0.6]{figures/mstep.eps}
+#   \caption[Staggered Time Grid]{\small \index{staggered
+#       time grid} Mid step evaluation of membrane potential and
+#     Hodgkin-Huxley equations.  To calculate the conductance at time
+#     point 2, we need the membrane potential at time point 1.  To
+#     calculate the membrane potential at time point 3, we need the
+#     conductance at time point 2.  The membrane potential at time point
+#     2 is never computed, neither the conductance at time point 3.}
+#   \label{fig:midstep}
+# \end{figure}
+
+	# output the content end marker
+
+	if ($content_type)
+	{
+	    print $output_file '\end{' . $content_type . "}\n\n";
+	}
+    }
+}
+
+
 sub _output_latex_environment_minipage
 {
     my $outputfile = shift;
@@ -4537,8 +4733,9 @@ sub _output_latex_preamble
 \usepackage{amsthm}
 \usepackage{color}
 \usepackage[colorlinks=true]{hyperref}
-\usepackage[dvips]{epsfig}
+% \usepackage[dvips]{epsfig}
 \usepackage{enumitem} % [noitemsep,nolistsep] compact itemize/enumerate etc.
+\usepackage{graphicx}
 \usepackage{longtable}
 % \usepackage[margin=2cm]{geometry}
 \usepackage{url}
@@ -4549,6 +4746,16 @@ sub _output_latex_preamble
 % Typeface
 \usepackage[condensed,math]{iwona}
 \usepackage[T1]{fontenc}
+
+\setlength{\textwidth}{15.7cm}
+\setlength{\textheight}{22cm}
+
+\setlength{\oddsidemargin}{0pt}
+
+\setlength{\topmargin}{0cm}
+\setlength{\headheight}{1cm}
+\setlength{\headsep}{0.5cm}
+\setlength{\topskip}{0cm}
 
 ';
 
@@ -4813,7 +5020,7 @@ sub _output_latex_process
 	    }
 	    else
 	    {
-		if (scalar @$command_tests eq 1)
+		if (defined $command_tests and scalar @$command_tests eq 1)
 		{
 		    my $subdescription = $command_tests->[0]->{description};
 
@@ -4823,7 +5030,7 @@ sub _output_latex_process
 		_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
 	    }
 
-	    if (scalar @$command_tests eq 1)
+	    if (defined $command_tests and scalar @$command_tests eq 1)
 	    {
 		_output_latex($output_file, 'The test is started with system shell command: ');
 	    }
@@ -4900,8 +5107,6 @@ sub _output_latex_process
 			);
 		}
 
-		# 		_output_latex_table($output_file, $command_test->{read}, "This is the application output we expect:\n");
-
 		my $read = $command_test->{read} || "";
 
 		if ($read)
@@ -4920,6 +5125,48 @@ sub _output_latex_process
 			);
 		}
 
+		if ($option_output_figures)
+		{
+		    # loop over all the figures for this command test
+
+		    my $figures = $command_test->{figures};
+
+		    foreach my $figure (@$figures)
+		    {
+			# render the graph
+
+			my $context_path = $command_test->{context_path};
+
+			$context_path =~ s(/)(___)g;
+			$context_path =~ s(\.)(__)g;
+
+			my $filename_prefix = "/tmp/$context_path";
+
+			my $figure_filename = _output_graph_render($filename_prefix, $figure, $read);
+
+			if (defined $figure_filename)
+			{
+			    _output_latex_insert_figure_graph($output_file, $figure, $figure_filename);
+			}
+			else
+			{
+			    _output_latex_environment_minipage
+				(
+				 $output_file,
+				 {
+				  content => "Please install GD::Graph to render figures",
+				  content_type => "minipage",
+				  content_type_options => '{14cm}',
+				  content_type_embedding => "small",
+				  prompt => "ERROR\\::",
+				  prompt_type => 'textbf',
+				  suffix => "\n\n",
+				 },
+				);
+			}
+		    }
+		}
+
 		_output_latex_environment_minipage
 		    (
 		     $output_file,
@@ -4933,9 +5180,73 @@ sub _output_latex_process
 		      suffix => "\n\n",
 		     },
 		    );
-
 	    }
 	}
+    }
+}
+
+
+sub _output_graph_render
+{
+    my $filename_prefix = shift;
+
+    my $figure_definition = shift;
+
+    my $data_string = shift;
+
+    # create the data file
+
+    my $data_filename = $filename_prefix . "_output_graph_render_data";
+
+    my $fh_data = IO::File->new("> $data_filename");
+
+    if (defined $fh_data)
+    {
+	print $fh_data $data_string;;
+
+	$fh_data->close();
+
+	# create the figure_definition file
+
+	my $figure_definition_filename = $filename_prefix . "_output_graph_render_figure_definition.yml";
+
+	YAML::DumpFile($figure_definition_filename, $figure_definition);
+
+	# create the figure graph
+
+	my $figure_filename = "$filename_prefix-output_graph_render.png";
+
+	my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-filename '$data_filename' --output-filename '$figure_filename'";
+
+	if ($option_verbose)
+	{
+	    print $global_fd_output "$0: Executing '$command'\n";
+	}
+
+	system $command;
+
+	if ($?)
+	{
+	    if ($option_verbose)
+	    {
+		print $global_fd_output "$0: '$command' failed\n";
+	    }
+
+	    return undef;
+	}
+	else
+	{
+	    if ($option_verbose)
+	    {
+		print $global_fd_output "$0: '$command' succeeded\n";
+	    }
+
+	    return $figure_filename;
+	}
+    }
+    else
+    {
+	return undef;
     }
 }
 
@@ -4970,6 +5281,30 @@ sub _output_latex_prompt
     }
 
     _output_latex($output_file, $suffix);
+}
+
+
+sub _output_latex_insert_figure_graph
+{
+    my $output_file = shift;
+
+    my $figure = shift;
+
+    my $filename = shift;
+
+    _output_latex_environment_figure
+	(
+	 $output_file,
+	 {
+	  caption => $figure->{caption}->{full},
+	  caption_short => $figure->{caption}->{short},
+	  content_type => "figure",
+	  content_type_options => '[ht]',
+	  includegraphics => $filename,
+	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
+	  label => $figure->{name},
+	 },
+	);
 }
 
 
