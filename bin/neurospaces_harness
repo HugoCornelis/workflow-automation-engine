@@ -4589,7 +4589,7 @@ sub _output_latex_environment_figure
 
 	if ($label)
 	{
-	    print $output_file '  \label{fig:'. $label . '}' . "\n";
+	    print $output_file '  \label{'. $label . '}' . "\n";
 	}
 
 # \begin{figure}[ht]
@@ -5131,14 +5131,22 @@ sub _output_latex_process
 
 		    my $figures = $command_test->{figures};
 
+		    my $figure_references = [];
+
 		    foreach my $figure (@$figures)
 		    {
-			# render the graph
+			# create the reference label for this figure
 
 			my $context_path = $command_test->{context_path};
 
 			$context_path =~ s(/)(___)g;
 			$context_path =~ s(\.)(__)g;
+
+			my $figure_reference = "fig:$context_path-$figure->{name}";
+
+			push @$figure_references, $figure_reference;
+
+			# render the graph
 
 			my $filename_prefix = "/tmp/$context_path";
 
@@ -5146,7 +5154,13 @@ sub _output_latex_process
 
 			if (defined $figure_filename)
 			{
-			    _output_latex_insert_figure_graph($output_file, $figure, $figure_filename);
+			    _output_latex_insert_figure_graph
+				(
+				 $output_file,
+				 $figure_reference,
+				 $figure,
+				 $figure_filename
+				);
 			}
 			else
 			{
@@ -5163,6 +5177,36 @@ sub _output_latex_process
 				  suffix => "\n\n",
 				 },
 				);
+			}
+		    }
+
+		    if (scalar @$figure_references)
+		    {
+			if (scalar @$figure_references eq 1)
+			{
+			    print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
+			}
+			else
+			{
+			    print $output_file 'See figures';
+
+			    while (my $figure_reference = pop @$figure_references)
+			    {
+				if (scalar @$figure_references eq 0)
+				{
+				    print $output_file '~\ref{' . $figure_reference . '}';
+				}
+				elsif (scalar @$figure_references eq 1)
+				{
+				    print $output_file '~\ref{' . $figure_reference . '} and~';
+				}
+				else
+				{
+				    print $output_file '~\ref{' . $figure_reference . '},~';
+				}
+			    }
+
+			    print $output_file ".\n\n";
 			}
 		    }
 		}
@@ -5288,6 +5332,8 @@ sub _output_latex_insert_figure_graph
 {
     my $output_file = shift;
 
+    my $figure_reference = shift;
+
     my $figure = shift;
 
     my $filename = shift;
@@ -5302,7 +5348,7 @@ sub _output_latex_insert_figure_graph
 	  content_type_options => '[ht]',
 	  includegraphics => $filename,
 	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
-	  label => $figure->{name},
+	  label => $figure_reference,,
 	 },
 	);
 }
