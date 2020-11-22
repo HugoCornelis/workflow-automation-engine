@@ -5148,7 +5148,7 @@ sub _output_latex_process
 
 			# render the graph
 
-			my $filename_prefix = "/tmp/$context_path";
+			my $filename_prefix = "/tmp/$context_path-$figure->{name}";
 
 			my $figure_filename = _output_graph_render($filename_prefix, $figure, $read);
 
@@ -5198,11 +5198,11 @@ sub _output_latex_process
 				}
 				elsif (scalar @$figure_references eq 1)
 				{
-				    print $output_file '~\ref{' . $figure_reference . '} and~';
+				    print $output_file '~\ref{' . $figure_reference . '} and';
 				}
 				else
 				{
-				    print $output_file '~\ref{' . $figure_reference . '},~';
+				    print $output_file '~\ref{' . $figure_reference . '},';
 				}
 			    }
 
