@@ -31,6 +31,7 @@ my $option_output_figures;
 my $option_output_html;
 my $option_output_latex;
 my $option_output_levels = [];
+my $option_output_pdf;
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -359,6 +360,7 @@ sub parse_options
 	     "output-html" => \$option_output_html,
 	     "output-latex" => \$option_output_latex,
 	     "output-levels=s" => $option_output_levels,
+	     "output-pdf" => \$option_output_pdf,
 	     "randomize-order=s" => \$option_random_order,
 	     "regex-selector=s" => \$option_regex_selector,
 	     "report-disabled!" => \$option_report_disabled,
@@ -389,6 +391,12 @@ sub parse_options
 	    $global_test_report->{output_format} = 'latex';
 
 	    $option_output = "Heterarch::Test::Output::Formatter::Latex";
+	}
+	elsif ($option_output_pdf)
+	{
+	    $global_test_report->{output_format} = 'pdf';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::PDF";
 	}
 	elsif ($option_show)
 	{
@@ -432,6 +440,7 @@ sub parse_options
 	   output_html => $option_output_html,
 	   output_latex => $option_output_latex,
 	   output_levels => $option_output_levels,
+	   output_pdf => $option_output_pdf,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
@@ -466,6 +475,7 @@ options:
     --output-html        generate HTML output.
     --output-latex       generate Latex output.
     --output-levels      generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
+    --output-pdf         generate PDF output.
     --randomize-order    randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector     defines a regex to run specific tests.
     --report-disabled    include information of disabled tests in the test report.
@@ -536,7 +546,8 @@ sub report_exit
     {
 	print $global_fd_output "$report_text\n";
     }
-    elsif ($global_test_report->{output_format} eq 'latex')
+    elsif ($global_test_report->{output_format} eq 'latex'
+	   or $global_test_report->{output_format} eq 'pdf')
     {
 	my $test_module_library_contents = ref($description) eq 'HASH' ? $description : {};
 
@@ -544,14 +555,26 @@ sub report_exit
 
 	my $extension = join '-', sort keys %$selected_output_levels;
 
-	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension.tex";
+	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension";
 
-	Heterarch::Test::Output::Formatter::Latex::process
-		(
-		 $output_filename,
-		 $test_module_library_contents,
-		 $global_test_report,
-		);
+	if ($global_test_report->{output_format} eq 'latex')
+	{
+	    Heterarch::Test::Output::Formatter::Latex::process
+		    (
+		     $output_filename,
+		     $test_module_library_contents,
+		     $global_test_report,
+		    );
+	}
+	elsif ($global_test_report->{output_format} eq 'pdf')
+	{
+	    Heterarch::Test::Output::Formatter::PDF::process
+		    (
+		     $output_filename,
+		     $test_module_library_contents,
+		     $global_test_report,
+		    );
+	}
 
 	my $testing = 1;
 
@@ -559,12 +582,24 @@ sub report_exit
 	{
 	    my $output_filename = "/tmp/test_report_$global_config->{package}->{name}.tex";
 
-	    Heterarch::Test::Output::Formatter::Latex::process
-		    (
-		     $output_filename,
-		     $test_module_library_contents,
-		     $global_test_report,
-		    );
+	    if ($global_test_report->{output_format} eq 'latex')
+	    {
+		Heterarch::Test::Output::Formatter::Latex::process
+			(
+			 $output_filename,
+			 $test_module_library_contents,
+			 $global_test_report,
+			);
+	    }
+	    elsif ($global_test_report->{output_format} eq 'pdf')
+	    {
+		Heterarch::Test::Output::Formatter::PDF::process
+			(
+			 $output_filename,
+			 $test_module_library_contents,
+			 $global_test_report,
+			);
+	    }
 	}
     }
 
@@ -4333,6 +4368,31 @@ sub ex_cd_start
 }
 
 
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    my $selected_output_levels = $Heterarch::Test::Element::selected_output_levels;
+
+    my $extension = join '-', sort keys %$selected_output_levels;
+
+    my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension";
+
+    $self->process($output_filename, $test_module_library_contents, $global_test_report);
+
+    my $testing = 1;
+
+    if ($testing)
+    {
+	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}";
+
+	$self->process($output_filename, $test_module_library_contents, $global_test_report);
+    }
+}
+
+
 package Heterarch::Test::Output::Formatter::HTMLTable;
 
 # the Formatter:: HTMLTable package converts the test specifications
@@ -4721,7 +4781,7 @@ sub _output_latex_preamble
 
     my $html_introduction = shift;
 
-    $output_file = IO::File->new(">$output_filename");
+    $output_file = IO::File->new(">$output_filename.tex");
 
     my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
 
@@ -5371,6 +5431,47 @@ sub process
     _output_latex_process($global_test_report);
 
     _output_latex_postamble();
+}
+
+
+package Heterarch::Test::Output::Formatter::PDF;
+
+# The Heterarch::Test::Output::Formatter::Latex package converts the test specifications
+# to a Latex document.
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter::Latex");
+
+
+sub _output_pdf_process
+{
+    my $output_filename = shift;
+
+    my $command = "cd /tmp && pdflatex '$output_filename' && pdflatex '$output_filename'";
+
+    system $command;
+}
+
+
+sub process
+{
+    # my $result = Heterarch::Test::Output::Formatter::PDF->SUPER::process(@_);
+
+    my $output_filename = shift;
+
+    my $test_module_library_contents = shift;
+
+    my $global_test_report = shift;
+
+    my $result
+	= Heterarch::Test::Output::Formatter::Latex::process
+	(
+	 $output_filename,
+	 $test_module_library_contents,
+	 $global_test_report
+	);
+
+    _output_pdf_process($output_filename);
 }
 
 
