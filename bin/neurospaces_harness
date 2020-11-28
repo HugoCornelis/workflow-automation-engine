@@ -322,6 +322,12 @@ sub main
 	$global_test_report->{global}->{test_counters}->{module_definition}++;
     }
 
+    $global_test_report->{global}->{time_end} = `date`;
+
+    # do final processing of the executor
+
+    $executor->ex_terminate($test_module_library_contents);
+
     # end the execution_context
 
     $execution_context->terminate();
@@ -500,110 +506,13 @@ sub report_exit
 
     my $description = shift;
 
-    $global_test_report->{global}->{time_end} = `date`;
-
     if (defined $description
         && $exit_code eq 3)
     {
 	print STDERR "*** die: $description\n";
     }
 
-    # yaml out the test report
-
-    my $report_yaml
-	= {
-	   description => $global_test_report->{description},
-	  };
-
-    # add output specific to the output selection
-
-    if ($option_report_disabled)
-    {
-	$report_yaml->{disabled} = $global_test_report->{disabled};
-    }
-
-    # add output specific to the output_format
-
-    if ($global_test_report->{output_format} eq 'executor')
-    {
-	$report_yaml->{errors} = $global_test_report->{errors};
-	$report_yaml->{global} = $global_test_report->{global};
-    }
-    elsif ($global_test_report->{output_format} eq 'yaml_exit')
-    {
-	$report_yaml->{selected} = $global_test_report->{selected};
-    }
-
-    # generate ascii text based on the content of the output
-
-    my $report_text = "\n" . Dump($report_yaml);
-
-    if ($global_test_report->{output_format} eq 'executor')
-    {
-	print $global_fd_output "$report_text\n";
-    }
-    elsif ($global_test_report->{output_format} eq 'yaml_exit')
-    {
-	print $global_fd_output "$report_text\n";
-    }
-    elsif ($global_test_report->{output_format} eq 'latex'
-	   or $global_test_report->{output_format} eq 'pdf')
-    {
-	my $test_module_library_contents = ref($description) eq 'HASH' ? $description : {};
-
-	my $selected_output_levels = $Heterarch::Test::Element::selected_output_levels;
-
-	my $extension = join '-', sort keys %$selected_output_levels;
-
-	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension";
-
-	if ($global_test_report->{output_format} eq 'latex')
-	{
-	    Heterarch::Test::Output::Formatter::Latex::process
-		    (
-		     $output_filename,
-		     $test_module_library_contents,
-		     $global_test_report,
-		    );
-	}
-	elsif ($global_test_report->{output_format} eq 'pdf')
-	{
-	    Heterarch::Test::Output::Formatter::PDF::process
-		    (
-		     $output_filename,
-		     $test_module_library_contents,
-		     $global_test_report,
-		    );
-	}
-
-	my $testing = 1;
-
-	if ($testing)
-	{
-	    my $output_filename = "/tmp/test_report_$global_config->{package}->{name}.tex";
-
-	    if ($global_test_report->{output_format} eq 'latex')
-	    {
-		Heterarch::Test::Output::Formatter::Latex::process
-			(
-			 $output_filename,
-			 $test_module_library_contents,
-			 $global_test_report,
-			);
-	    }
-	    elsif ($global_test_report->{output_format} eq 'pdf')
-	    {
-		Heterarch::Test::Output::Formatter::PDF::process
-			(
-			 $output_filename,
-			 $test_module_library_contents,
-			 $global_test_report,
-			);
-	    }
-	}
-    }
-
-    # and write the full report to a file
+    # write the full report to a file
 
     my $report_filename = ">/tmp/report_$global_config->{package}->{name}.yml";
 
@@ -3378,6 +3287,41 @@ sub ex_cd_start
 }
 
 
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    # yaml out the test report
+
+    my $report_yaml
+	= {
+	   description => $global_test_report->{description},
+	  };
+
+    # add output specific to the output selection
+
+    if ($option_report_disabled)
+    {
+	$report_yaml->{disabled} = $global_test_report->{disabled};
+    }
+
+    $report_yaml->{errors} = $global_test_report->{errors};
+    $report_yaml->{global} = $global_test_report->{global};
+
+    use YAML;
+
+    my $report_text = "\n" . Dump($report_yaml);
+
+    print $global_fd_output "$report_text\n";
+
+    #! this could be an error message
+
+    return undef;
+}
+
+
 package Heterarch::Test::Library;
 
 
@@ -4141,12 +4085,6 @@ sub md_run
 
 package Heterarch::Test::Output;
 
-#
-# A Heterarch::Test::Output::Summarizer implements ->ex_mo_prepare(),
-# ex_cd_start() and ex_ct_run() methods that select content and
-# prepare a structured for generating a summary in YAML of this
-# selection.
-#
 
 our @ISA = ("Heterarch::Test::Executor");
 
@@ -5416,6 +5354,8 @@ sub _output_latex_insert_figure_graph
 
 sub process
 {
+    my $self = shift;
+
     my $output_filename = shift;
 
     my $test_module_library_contents = shift;
@@ -5455,6 +5395,8 @@ sub _output_pdf_process
 
 sub process
 {
+    my $self = shift;
+
     # my $result = Heterarch::Test::Output::Formatter::PDF->SUPER::process(@_);
 
     my $output_filename = shift;
@@ -5464,7 +5406,7 @@ sub process
     my $global_test_report = shift;
 
     my $result
-	= Heterarch::Test::Output::Formatter::Latex::process
+	= $self->SUPER::process
 	(
 	 $output_filename,
 	 $test_module_library_contents,
@@ -5583,6 +5525,39 @@ sub ex_cd_start
 }
 
 
+# note that this implementation is the same as the one of ex_terminate() in
+# Heterarch::Test::Output::Formatter::YAML::CommandTests
+
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    # yaml out the test report
+
+    my $report_yaml
+	= {
+	   description => $global_test_report->{description},
+	  };
+
+    # add output specific to the output selection
+
+    if ($option_report_disabled)
+    {
+	$report_yaml->{disabled} = $global_test_report->{disabled};
+    }
+
+    $report_yaml->{selected} = $global_test_report->{selected};
+
+    use YAML;
+
+    my $report_text = "\n" . Dump($report_yaml);
+
+    print $global_fd_output "$report_text\n";
+}
+
+
 package Heterarch::Test::Output::Formatter::YAML::CommandTests;
 
 # The Formatter:YAML::CommandTests package converts the test
@@ -5697,6 +5672,39 @@ sub ex_cd_start
 
 	push @$selected_module, { command => $command_string, };
     }
+}
+
+
+# note that this implementation is the same as the one of ex_terminate() in
+# Heterarch::Test::Output::Formatter::YAML::Summary
+
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    # yaml out the test report
+
+    my $report_yaml
+	= {
+	   description => $global_test_report->{description},
+	  };
+
+    # add output specific to the output selection
+
+    if ($option_report_disabled)
+    {
+	$report_yaml->{disabled} = $global_test_report->{disabled};
+    }
+
+    $report_yaml->{selected} = $global_test_report->{selected};
+
+    use YAML;
+
+    my $report_text = "\n" . Dump($report_yaml);
+
+    print $global_fd_output "$report_text\n";
 }
 
 
