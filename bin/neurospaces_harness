@@ -326,7 +326,7 @@ sub main
 
     # do final processing of the executor
 
-    $executor->ex_terminate($test_module_library_contents);
+    $executor->ex_terminate($global_fd_output, $test_module_library_contents);
 
     # end the execution_context
 
@@ -3291,6 +3291,8 @@ sub ex_terminate
 {
     my $self = shift;
 
+    my $fd_output = shift;
+
     my $test_module_library_contents = shift;
 
     # yaml out the test report
@@ -4310,23 +4312,58 @@ sub ex_terminate
 {
     my $self = shift;
 
+    my $fd_output = shift;
+
     my $test_module_library_contents = shift;
 
     my $selected_output_levels = $Heterarch::Test::Element::selected_output_levels;
 
     my $extension = join '-', sort keys %$selected_output_levels;
 
-    my $output_filename = "/tmp/test_report_$global_config->{package}->{name}_$extension";
+    my $output_directory = "/tmp/test_report_$global_config->{package}->{name}";
 
-    $self->process($output_filename, $test_module_library_contents, $global_test_report);
+    my $created;
 
-    my $testing = 1;
-
-    if ($testing)
+    if ( !-d $output_directory )
     {
-	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}";
+	use File::Path qw( make_path );
 
-	$self->process($output_filename, $test_module_library_contents, $global_test_report);
+	$created = make_path($output_directory);
+    }
+    else
+    {
+	$created = "exists";
+    }
+
+    if ($created)
+    {
+	my $output_filename = "test_report_$global_config->{package}->{name}_$extension";
+
+	my $output_pathname = "$output_directory/$output_filename";
+
+	$self->process($output_pathname, $test_module_library_contents, $global_test_report);
+
+	# my $testing = 1;
+
+	# if ($testing)
+	# {
+	# 	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}";
+
+	# 	$self->process($output_filename, $test_module_library_contents, $global_test_report);
+	# }
+    }
+    else
+    {
+	Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		  description => "error creating the output_directory ($created)",
+		  error => "this test was tagged with the error flag",
+		  module_name => "END",
+		  subdescription => "error creating the output_directory ($created)",
+		 },
+		);
     }
 }
 
@@ -4883,6 +4920,8 @@ sub _output_latex_preamble_title
 
 sub _output_latex_process
 {
+    my $output_filename = shift;
+
     my $test_report = shift;
 
     my $module_definitions = $test_report->{selected};
@@ -5133,48 +5172,18 @@ sub _output_latex_process
 
 		    foreach my $figure (@$figures)
 		    {
-			# create the reference label for this figure
-
-			my $context_path = $command_test->{context_path};
-
-			$context_path =~ s(/)(___)g;
-			$context_path =~ s(\.)(__)g;
-
-			my $figure_reference = "fig:$context_path-$figure->{name}";
-
-			push @$figure_references, $figure_reference;
-
-			# render the graph
-
-			my $filename_prefix = "/tmp/$context_path-$figure->{name}";
-
-			my $figure_filename = _output_graph_render($filename_prefix, $figure, $read);
-
-			if (defined $figure_filename)
+			if (exists $figure->{class})
 			{
-			    _output_latex_insert_figure_graph
-				(
-				 $output_file,
-				 $figure_reference,
-				 $figure,
-				 $figure_filename
-				);
+			    my $class = $figure->{class};
+
+			    if ($class eq 'compound-figure')
+			    {
+				_output_figure_compound_insert($output_filename, $figure, $command_test, $figure_references, $read);
+			    }
 			}
 			else
 			{
-			    _output_latex_environment_minipage
-				(
-				 $output_file,
-				 {
-				  content => "Please install GD::Graph to render figures",
-				  content_type => "minipage",
-				  content_type_options => '{14cm}',
-				  content_type_embedding => "small",
-				  prompt => "ERROR\\::",
-				  prompt_type => 'textbf',
-				  suffix => "\n\n",
-				 },
-				);
+			    _output_figure_single_insert($output_filename, $figure, $command_test, $figure_references, $read);
 			}
 		    }
 
@@ -5258,7 +5267,7 @@ sub _output_graph_render
 
 	my $figure_filename = "$filename_prefix-output_graph_render.png";
 
-	my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-filename '$data_filename' --output-filename '$figure_filename'";
+	my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-data '$data_filename' --output-filename '$figure_filename'";
 
 	if ($option_verbose)
 	{
@@ -5289,6 +5298,122 @@ sub _output_graph_render
     else
     {
 	return undef;
+    }
+}
+
+
+sub _output_figure_single_insert
+{
+    my $output_filename = shift;
+
+    my $figure = shift;
+
+    my $command_test = shift;
+
+    my $figure_references = shift;
+
+    my $data_string = shift;
+
+    # create the reference label for this figure
+
+    my $context_path = $command_test->{context_path};
+
+    $context_path =~ s(/)(___)g;
+    $context_path =~ s(\.)(__)g;
+
+    my $figure_reference = "fig:$context_path-$figure->{name}";
+
+    push @$figure_references, $figure_reference;
+
+    # render the graph
+
+    my $filename_prefix = "$output_filename$context_path-$figure->{name}";
+
+    my $figure_filename = _output_graph_render($filename_prefix, $figure, $data_string);
+
+    if (defined $figure_filename)
+    {
+	_output_latex_insert_figure_graph
+	    (
+	     $output_file,
+	     $figure_reference,
+	     $figure,
+	     $figure_filename
+	    );
+    }
+    else
+    {
+	_output_latex_environment_minipage
+	    (
+	     $output_file,
+	     {
+	      content => "Please install GD::Graph to render figures",
+	      content_type => "minipage",
+	      content_type_options => '{14cm}',
+	      content_type_embedding => "small",
+	      prompt => "ERROR\\::",
+	      prompt_type => 'textbf',
+	      suffix => "\n\n",
+	     },
+	    );
+    }
+}
+
+
+sub _output_figure_compound_insert
+{
+    my $output_filename = shift;
+
+    my $figure = shift;
+
+    my $command_test = shift;
+
+    my $figure_references = shift;
+
+    my $data_string = shift;
+
+    # create the reference label for this figure
+
+    my $context_path = $command_test->{context_path};
+
+    $context_path =~ s(/)(___)g;
+    $context_path =~ s(\.)(__)g;
+
+    my $figure_reference = "fig:$context_path-$figure->{name}";
+
+    push @$figure_references, $figure_reference;
+
+    # render the graph
+
+    my $filename_prefix = "$output_filename$context_path-$figure->{name}";
+
+    my $figure_filename = _output_graph_render($filename_prefix, $figure, $data_string);
+
+    if (defined $figure_filename)
+    {
+	_output_latex_insert_figure_graph
+	    (
+	     $output_file,
+	     $figure_reference,
+	     $figure,
+	     $figure_filename
+	    );
+    }
+    else
+    {
+	_output_latex_environment_minipage
+	    (
+	     $output_file,
+	     {
+	      content => "Please install GD::Graph to render figures",
+	      content_type => "minipage",
+	      content_type_options => '{14cm}',
+	      content_type_embedding => "small",
+	      prompt => "ERROR\\::",
+	      prompt_type => 'textbf',
+	      suffix => "\n\n",
+	     },
+	    );
     }
 }
 
@@ -5368,7 +5493,7 @@ sub process
 	 $test_module_library_contents->{html_introduction},
 	);
 
-    _output_latex_process($global_test_report);
+    _output_latex_process($output_filename, $global_test_report);
 
     _output_latex_postamble();
 }
@@ -5385,9 +5510,15 @@ our @ISA = ("Heterarch::Test::Output::Formatter::Latex");
 
 sub _output_pdf_process
 {
+    use File::Basename qw( fileparse );
+    use File::Path qw( make_path );
+    use File::Spec;
+
     my $output_filename = shift;
 
-    my $command = "cd /tmp && pdflatex '$output_filename' && pdflatex '$output_filename'";
+    my ( $logfile, $directory ) = fileparse($output_filename);
+
+    my $command = "cd '$directory' && pdflatex '$output_filename' && pdflatex '$output_filename'";
 
     system $command;
 }
@@ -5531,6 +5662,8 @@ sub ex_cd_start
 sub ex_terminate
 {
     my $self = shift;
+
+    my $fd_output = shift;
 
     my $test_module_library_contents = shift;
 
@@ -5681,6 +5814,8 @@ sub ex_cd_start
 sub ex_terminate
 {
     my $self = shift;
+
+    my $fd_output = shift;
 
     my $test_module_library_contents = shift;
 
