@@ -5176,8 +5176,8 @@ sub _output_latex_process
 
 			my $figure_class_2_package
 			    = {
-			       simple => "Heterarch::Test::Output::Formatter::Latex::Figure::Simple",
-			       hh_gates => "Heterarch::Test::Output::Formatter::Latex::Figure::HHGates",
+			       simple => "Heterarch::Test::Output::Formatter::Figure::Simple",
+			       hh_gates => "Heterarch::Test::Output::Formatter::Figure::HHGates",
 			      };
 
 			my $figure_package = $figure_class_2_package->{$figure_class};
@@ -5188,26 +5188,31 @@ sub _output_latex_process
 
 			# generate its reference
 
-			my $figure_reference = $figure_object->generate_reference();
+			my $figure_reference = $figure_object->generate_reference('latex');
 
 			# render the graph
 
-			my $figure_filename = $figure_object->render();
+			my $figure_filenames = $figure_object->render();
 
 			# insert the figure filename in the latex file
 
-			if (defined $figure_filename)
+			if (ref $figure_filenames eq 'ARRAY')
 			{
-			    _output_latex_insert_figure_graph
-				(
-				 $output_file,
-				 $figure_reference,
-				 $figure,
-				 $figure_filename
-				);
+			    foreach my $figure_filename (@$figure_filenames)
+			    {
+				_output_latex_insert_figure_graph
+				    (
+				     $output_file,
+				     $figure_reference,
+				     $figure,
+				     $figure_filename
+				    );
+			    }
 			}
 			else
 			{
+			    #! note that this does not generate a label for referencing
+
 			    _output_latex_environment_minipage
 				(
 				 $output_file,
@@ -5355,7 +5360,35 @@ sub process
 }
 
 
-package Heterarch::Test::Output::Formatter::Latex::Figure::Simple;
+package Heterarch::Test::Output::Formatter::Figure;
+
+
+sub generate_reference
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    # create the reference label for this figure
+
+    my $figure_definition = $self->{figure_definition};
+
+    my $context_path = $self->{context_path};
+
+    #! this may be latex specific
+
+    my $figure_reference = "fig:$context_path-$figure_definition->{name}";
+
+    # add it to the list of references
+
+    my $figure_references = $self->{figure_references};
+
+    push @$figure_references, $figure_reference;
+
+    # return result: figure reference
+
+    return $figure_reference;
+}
 
 
 sub new
@@ -5377,13 +5410,16 @@ sub new
     $context_path =~ s(/)(___)g;
     $context_path =~ s(\.)(__)g;
 
+    my $pathname_prefix = "$filename_prefix$context_path-$figure_definition->{name}";
+
     my $self
 	= {
-	   figure_definition => $figure_definition,
-	   filename_prefix => $filename_prefix,
 	   context_path => $context_path,
-	   figure_references => $figure_references,
 	   data_string => $data_string,
+	   figure_definition => $figure_definition,
+	   figure_references => $figure_references,
+	   filename_prefix => $filename_prefix,
+	   pathname_prefix => $pathname_prefix,
 	  };
 
     bless $self, $package;
@@ -5392,27 +5428,134 @@ sub new
 }
 
 
+sub render_raw_data
+{
+    my $self = shift;
+
+    my $output_filename = shift;
+
+    my $data_string = shift;
+
+    # create the data file
+
+    my $figure_definition = $self->{figure_definition};
+
+    my $pathname_prefix = $self->{pathname_prefix};
+
+    my $data_filename = $pathname_prefix . "_output_graph_render_data";
+
+    my $fh_data = IO::File->new("> $data_filename");
+
+    if (not defined $fh_data)
+    {
+	return \ "$0: render_raw_data(): error opening result data file";
+    }
+
+    # write the data
+
+    print $fh_data $data_string;;
+
+    $fh_data->close();
+
+    # create the figure_definition file
+
+    my $figure_definition_filename = $pathname_prefix . "_output_graph_render_figure_definition.yml";
+
+    YAML::DumpFile($figure_definition_filename, $figure_definition);
+
+    # create the figure graph
+
+    my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-data '$data_filename' --output-filename '$output_filename'";
+
+    if ($option_verbose)
+    {
+	print $global_fd_output "$0: Executing '$command'\n";
+    }
+
+    system $command;
+
+    if ($?)
+    {
+	return \ "$0: render_raw_data: '$command' failed";
+    }
+    else
+    {
+	return undef;
+    }
+}
+
+
+sub render_array
+{
+    my $self = shift;
+
+    my $output_filename = shift;
+
+    my $array = shift;
+
+    my $start = shift;
+
+    my $end = shift;
+
+    my $step = shift;
+
+    # convert the array to raw_data
+
+    my $raw_data = "";
+
+    foreach my $entry (@$array)
+    {
+	$raw_data .= "$start $entry\n";
+
+	$start += $step;
+    }
+
+    # render the raw data, result is the figure filename
+
+    my $error = $self->render_raw_data($output_filename, $raw_data);
+
+    if ($error)
+    {
+	return $error;
+    }
+    else
+    {
+	return $output_filename;
+    }
+}
+
+
+package Heterarch::Test::Output::Formatter::Figure::HHGates;
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
+
+
 sub generate_reference
 {
     my $self = shift;
 
-    # create the reference label for this figure
+    return $self->SUPER::generate_reference(@_);
+}
 
-    my $figure_definition = $self->{figure_definition};
 
-    my $context_path = $self->{context_path};
+sub new
+{
+    my $self = shift;
 
-    my $figure_reference = "fig:$context_path-$figure_definition->{name}";
+    $self = $self->SUPER::new(@_);
 
-    # add it to the list of references
+    my $variables
+	= [
+	   {
+	    name => "Activation",
+	    regex_parser => '-?[0-9]+\.[-e0-9]+ (-?[0-9]+\.[-e0-9]+)',
+	   },
+	  ];
 
-    my $figure_references = $self->{figure_references};
+    $self->{figure_definition}->{variables} = $variables;
 
-    push @$figure_references, $figure_reference;
-
-    # return result: figure reference
-
-    return $figure_reference;
+    return $self;
 }
 
 
@@ -5420,73 +5563,90 @@ sub render
 {
     my $self = shift;
 
-    # create the data file
+    # convert the data string to a data structure
 
-    my $filename_prefix = $self->{filename_prefix};
+    use YAML;
 
-    my $context_path = $self->{context_path};
+    my $data_string = "---
+$self->{data_string}";
 
-    my $figure_definition = $self->{figure_definition};
+    # remove object class references
 
-    my $pathname_prefix = "$filename_prefix$context_path-$figure_definition->{name}";
+    $data_string =~ s(!!.*?\n)();
 
-    my $data_filename = $pathname_prefix . "_output_graph_render_data";
+    my $data_structured = Load($data_string);
 
-    my $fh_data = IO::File->new("> $data_filename");
+    # split the data into its two components
 
-    if (defined $fh_data)
+    my $data_a = $data_structured->{A};
+
+    my $hi = $data_structured->{hi};
+
+    my $pathname_prefix = $self->{pathname_prefix};
+
+    my $output_filename_a = "$pathname_prefix-a-output_graph_render.png";
+
+    my $figure_filename_a = $self->render_array($output_filename_a, $data_a, $hi->{start}, $hi->{end}, $hi->{step});
+
+    if (ref $figure_filename_a)
     {
-	# write the data
+	return $figure_filename_a;
+    }
 
-	my $data_string = $self->{data_string};
+    my $data_b = $data_structured->{B};
 
-	print $fh_data $data_string;;
+    my $output_filename_b = "$pathname_prefix-b-output_graph_render.png";
 
-	$fh_data->close();
+    my $figure_filename_b = $self->render_array($output_filename_b, $data_b, $hi->{start}, $hi->{end}, $hi->{step});
 
-	# create the figure_definition file
+    if (ref $figure_filename_b)
+    {
+	return $figure_filename_b;
+    }
 
-	my $figure_definition_filename = $pathname_prefix . "_output_graph_render_figure_definition.yml";
+    return [ $figure_filename_a, $figure_filename_b, ];
+}
 
-	YAML::DumpFile($figure_definition_filename, $figure_definition);
 
-	# create the figure graph
+package Heterarch::Test::Output::Formatter::Figure::Simple;
 
-	my $result = "$pathname_prefix-output_graph_render.png";
 
-	my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-data '$data_filename' --output-filename '$result'";
+our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
 
-	if ($option_verbose)
-	{
-	    print $global_fd_output "$0: Executing '$command'\n";
-	}
 
-	system $command;
+sub generate_reference
+{
+    my $self = shift;
 
-	if ($?)
-	{
-	    if ($option_verbose)
-	    {
-		print $global_fd_output "$0: '$command' failed\n";
-	    }
+    return $self->SUPER::generate_reference(@_);
+}
 
-	    return undef;
-	}
-	else
-	{
-	    if ($option_verbose)
-	    {
-		print $global_fd_output "$0: '$command' succeeded\n";
-	    }
 
-	    # return result: figure filename
+sub new
+{
+    my $self = shift;
 
-	    return $result;
-	}
+    return $self->SUPER::new(@_);
+}
+
+
+sub render
+{
+    my $self = shift;
+
+    my $pathname_prefix = $self->{pathname_prefix};
+
+    my $output_filename = "$pathname_prefix-output_graph_render.png";
+
+    my $error = $self->SUPER::render_raw_data($output_filename, $self->{data_string});
+
+    if ($error)
+    {
+	return $error;
     }
     else
     {
-	return undef;
+	return [ $output_filename, ];
     }
 }
 
