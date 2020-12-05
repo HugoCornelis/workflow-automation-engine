@@ -5172,18 +5172,55 @@ sub _output_latex_process
 
 		    foreach my $figure (@$figures)
 		    {
-			if (exists $figure->{class})
-			{
-			    my $class = $figure->{class};
+			my $figure_class = exists $figure->{class} ? $figure->{class} : "simple";
 
-			    if ($class eq 'compound-figure')
-			    {
-				_output_figure_compound_insert($output_filename, $figure, $command_test, $figure_references, $read);
-			    }
+			my $figure_class_2_package
+			    = {
+			       simple => "Heterarch::Test::Output::Formatter::Latex::Figure::Simple",
+			       hh_gates => "Heterarch::Test::Output::Formatter::Latex::Figure::HHGates",
+			      };
+
+			my $figure_package = $figure_class_2_package->{$figure_class};
+
+			# create the figure object, link it with the generated references
+
+			my $figure_object = $figure_package->new($figure, $output_filename, $command_test, $figure_references, $read);
+
+			# generate its reference
+
+			my $figure_reference = $figure_object->generate_reference();
+
+			# render the graph
+
+			my $figure_filename = $figure_object->render();
+
+			# insert the figure filename in the latex file
+
+			if (defined $figure_filename)
+			{
+			    _output_latex_insert_figure_graph
+				(
+				 $output_file,
+				 $figure_reference,
+				 $figure,
+				 $figure_filename
+				);
 			}
 			else
 			{
-			    _output_figure_single_insert($output_filename, $figure, $command_test, $figure_references, $read);
+			    _output_latex_environment_minipage
+				(
+				 $output_file,
+				 {
+				  content => "Please install GD::Graph to render figures",
+				  content_type => "minipage",
+				  content_type_options => '{14cm}',
+				  content_type_embedding => "small",
+				  prompt => "ERROR\\::",
+				  prompt_type => 'textbf',
+				  suffix => "\n\n",
+				 },
+				);
 			}
 		    }
 
@@ -5197,7 +5234,7 @@ sub _output_latex_process
 			{
 			    print $output_file 'See figures';
 
-			    while (my $figure_reference = pop @$figure_references)
+			    while (my $figure_reference = shift @$figure_references)
 			    {
 				if (scalar @$figure_references eq 0)
 				{
@@ -5304,9 +5341,9 @@ sub _output_graph_render
 
 sub _output_figure_single_insert
 {
-    my $output_filename = shift;
-
     my $figure = shift;
+
+    my $output_filename = shift;
 
     my $command_test = shift;
 
@@ -5362,9 +5399,9 @@ sub _output_figure_single_insert
 
 sub _output_figure_compound_insert
 {
-    my $output_filename = shift;
-
     my $figure = shift;
+
+    my $output_filename = shift;
 
     my $command_test = shift;
 
@@ -5496,6 +5533,142 @@ sub process
     _output_latex_process($output_filename, $global_test_report);
 
     _output_latex_postamble();
+}
+
+
+package Heterarch::Test::Output::Formatter::Latex::Figure::Simple;
+
+
+sub new
+{
+    my $package = shift;
+
+    my $figure_definition = shift;
+
+    my $filename_prefix = shift;
+
+    my $command_test = shift;
+
+    my $figure_references = shift;
+
+    my $data_string = shift;
+
+    my $context_path = $command_test->{context_path};
+
+    $context_path =~ s(/)(___)g;
+    $context_path =~ s(\.)(__)g;
+
+    my $self
+	= {
+	   figure_definition => $figure_definition,
+	   filename_prefix => $filename_prefix,
+	   context_path => $context_path,
+	   figure_references => $figure_references,
+	   data_string => $data_string,
+	  };
+
+    bless $self, $package;
+
+    return $self;
+}
+
+
+sub generate_reference
+{
+    my $self = shift;
+
+    # create the reference label for this figure
+
+    my $figure_definition = $self->{figure_definition};
+
+    my $context_path = $self->{context_path};
+
+    my $figure_reference = "fig:$context_path-$figure_definition->{name}";
+
+    # add it to the list of references
+
+    my $figure_references = $self->{figure_references};
+
+    push @$figure_references, $figure_reference;
+
+    # return result: figure reference
+
+    return $figure_reference;
+}
+
+
+sub render
+{
+    my $self = shift;
+
+    # create the data file
+
+    my $filename_prefix = $self->{filename_prefix};
+
+    my $context_path = $self->{context_path};
+
+    my $figure_definition = $self->{figure_definition};
+
+    my $pathname_prefix = "$filename_prefix$context_path-$figure_definition->{name}";
+
+    my $data_filename = $pathname_prefix . "_output_graph_render_data";
+
+    my $fh_data = IO::File->new("> $data_filename");
+
+    if (defined $fh_data)
+    {
+	# write the data
+
+	my $data_string = $self->{data_string};
+
+	print $fh_data $data_string;;
+
+	$fh_data->close();
+
+	# create the figure_definition file
+
+	my $figure_definition_filename = $pathname_prefix . "_output_graph_render_figure_definition.yml";
+
+	YAML::DumpFile($figure_definition_filename, $figure_definition);
+
+	# create the figure graph
+
+	my $result = "$pathname_prefix-output_graph_render.png";
+
+	my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-data '$data_filename' --output-filename '$result'";
+
+	if ($option_verbose)
+	{
+	    print $global_fd_output "$0: Executing '$command'\n";
+	}
+
+	system $command;
+
+	if ($?)
+	{
+	    if ($option_verbose)
+	    {
+		print $global_fd_output "$0: '$command' failed\n";
+	    }
+
+	    return undef;
+	}
+	else
+	{
+	    if ($option_verbose)
+	    {
+		print $global_fd_output "$0: '$command' succeeded\n";
+	    }
+
+	    # return result: figure filename
+
+	    return $result;
+	}
+    }
+    else
+    {
+	return undef;
+    }
 }
 
 
