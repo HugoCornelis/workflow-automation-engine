@@ -4952,9 +4952,16 @@ sub _output_latex_process
 
 	_output_latex($output_file, '\section{' . ucfirst $module_definition_description . "}\n\n");
 
+	# create indexes into the styling table
+
+	my $cd_0 = scalar @$command_definitions eq 0 ? 1 : 0;
+	my $cd_1 = scalar @$command_definitions eq 1 ? 1 : 0;
+
+	my $cd_1_comment = $cd_1 && exists $command_definitions->[0]->{comment};
+
 	# output the filename
 
-	if (scalar @$command_definitions eq 0)
+	if ($cd_0)
 	{
 	    _output_latex($output_file, 'File ');
 
@@ -4969,7 +4976,7 @@ sub _output_latex_process
 		_output_latex($output_file, '.');
 	    }
 	}
-	elsif (scalar @$command_definitions eq 1)
+	elsif ($cd_1)
 	{
 	    _output_latex($output_file, 'The file ');
 
@@ -5003,7 +5010,7 @@ sub _output_latex_process
 
 	# output the preparation and reparation
 
-	if (scalar @$command_definitions ne 0)
+	if ($cd_0)
 	{
 	    my $harnessing = $module_definition->{harnessing};
 
@@ -5047,13 +5054,18 @@ sub _output_latex_process
 
 	    my $command_tests = $command_definition->{command_tests};
 
+	    # create indexes into the styling table
+
+	    my $ct_0 = defined $command_tests && scalar @$command_tests eq 0 ? 1 : 0;
+	    my $ct_1 = defined $command_tests && scalar @$command_tests eq 1 ? 1 : 0;
+
 	    # output the command and its arguments
 
 	    my $arguments = $command_definition->{arguments};
 
 	    my $command = join ' ', $command_definition->{command}, @$arguments;
 
-	    if (scalar @$command_definitions eq 1)
+	    if ($cd_1)
 	    {
 		print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
 
@@ -5063,7 +5075,7 @@ sub _output_latex_process
 	    }
 	    else
 	    {
-		if (defined $command_tests and scalar @$command_tests eq 1)
+		if ($ct_1)
 		{
 		    my $subdescription = $command_tests->[0]->{description};
 
@@ -5073,12 +5085,12 @@ sub _output_latex_process
 		_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
 	    }
 
-	    if (scalar @$command_definitions eq 1)
+	    if ($cd_1)
 	    {
 		print $output_file '\item [$\bullet$]';
 	    }
 
-	    if (defined $command_tests and scalar @$command_tests eq 1)
+	    if ($ct_1)
 	    {
 		_output_latex($output_file, 'The test is started with system shell command: ');
 	    }
@@ -5089,25 +5101,24 @@ sub _output_latex_process
 
 	    _output_latex_prompt($output_file, "textbf", $command, "", "\n\n");
 
-	    if (scalar @$command_definitions eq 1
-	        and $command_definition->{comment})
+	    if ($cd_1_comment)
 	    {
 		print $output_file '\item [$\bullet$]';
-	    }
 
-	    _output_latex_environment_minipage
-		(
-		 $output_file,
-		 {
-		  content => $command_definition->{comment},
-		  content_type => "minipage",
-		  content_type_options => '{14cm}',
-		  content_type_embedding => "small",
-		  prompt => "NOTE\\::",
-		  prompt_type => 'textbf',
-		  suffix => "\n\n",
-		 },
-		);
+		_output_latex_environment_minipage
+		    (
+		     $output_file,
+		     {
+		      content => $command_definition->{comment},
+		      content_type => "minipage",
+		      content_type_options => '{14cm}',
+		      content_type_embedding => "small",
+		      prompt => "NOTE\\::",
+		      prompt_type => 'textbf',
+		      suffix => "\n\n",
+		     },
+		    );
+	    }
 
 	    # output the preparation and reparation
 
@@ -5115,7 +5126,7 @@ sub _output_latex_process
 
 	    if ($harnessing->{preparation})
 	    {
-		if (scalar @$command_definitions eq 1)
+		if ($cd_1)
 		{
 		    print $output_file '\item [$\bullet$]';
 		}
@@ -5135,7 +5146,11 @@ sub _output_latex_process
 
 	    foreach my $command_test (@$command_tests)
 	    {
-		if (scalar @$command_definitions eq 1
+		#! this seems to be wrong, cannot have the disabled
+		#! clause of each command test in a isolated bullet,
+		#! maybe this also needs a $ct_1?
+
+		if ($cd_1
 		    and $command_test->{disabled})
 		{
 		    print $output_file '\item [$\bullet$]';
@@ -5145,7 +5160,7 @@ sub _output_latex_process
 
 		my $description = $command_test->{description};
 
-		if (scalar @$command_tests eq 1)
+		if ($ct_1)
 		{
 		    # _output_latex($output_file, "This test is described as: $description\n\n");
 		}
@@ -5158,7 +5173,7 @@ sub _output_latex_process
 
 		if ($write)
 		{
-		    if (scalar @$command_definitions eq 1)
+		    if ($cd_1)
 		    {
 			print $output_file '\item [$\bullet$]';
 		    }
@@ -5181,7 +5196,7 @@ sub _output_latex_process
 
 		if ($read)
 		{
-		    if (scalar @$command_definitions eq 1)
+		    if ($cd_1)
 		    {
 			print $output_file '\item [$\bullet$]';
 		    }
@@ -5269,12 +5284,15 @@ sub _output_latex_process
 
 		    if (scalar @$figure_references)
 		    {
-			if (scalar @$command_definitions eq 1)
+			my $fr_0 = scalar @$figure_references eq 0 ? 1 : 0;
+			my $fr_1 = scalar @$figure_references eq 1 ? 1 : 0;
+
+			if ($cd_1)
 			{
 			    print $output_file '\item [$\bullet$]';
 			}
 
-			if (scalar @$figure_references eq 1)
+			if ($fr_1)
 			{
 			    print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
 			}
@@ -5284,11 +5302,11 @@ sub _output_latex_process
 
 			    while (my $figure_reference = shift @$figure_references)
 			    {
-				if (scalar @$figure_references eq 0)
+				if ($fr_0)
 				{
 				    print $output_file '~\ref{' . $figure_reference . '}';
 				}
-				elsif (scalar @$figure_references eq 1)
+				elsif ($fr_1)
 				{
 				    print $output_file '~\ref{' . $figure_reference . '} and';
 				}
@@ -5305,7 +5323,7 @@ sub _output_latex_process
 
 		if ($command_test->{comments})
 		{
-		    if (scalar @$command_definitions eq 1)
+		    if ($cd_1)
 		    {
 			print $output_file '\item [$\bullet$]';
 		    }
@@ -5326,7 +5344,7 @@ sub _output_latex_process
 		}
 	    }
 
-	    if (scalar @$command_definitions eq 1)
+	    if ($cd_1)
 	    {
 		print $output_file '\end{enumerate}' . "\n";
 	    }
