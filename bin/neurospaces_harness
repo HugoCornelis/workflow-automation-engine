@@ -5055,6 +5055,10 @@ sub _output_latex_process
 
 	    if (scalar @$command_definitions eq 1)
 	    {
+		print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
+
+		print $output_file '\item [$\bullet$]';
+
 		_output_latex($output_file, "The following test is described as: $description\n");
 	    }
 	    else
@@ -5069,6 +5073,11 @@ sub _output_latex_process
 		_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
 	    }
 
+	    if (scalar @$command_definitions eq 1)
+	    {
+		print $output_file '\item [$\bullet$]';
+	    }
+
 	    if (defined $command_tests and scalar @$command_tests eq 1)
 	    {
 		_output_latex($output_file, 'The test is started with system shell command: ');
@@ -5079,6 +5088,12 @@ sub _output_latex_process
 	    }
 
 	    _output_latex_prompt($output_file, "textbf", $command, "", "\n\n");
+
+	    if (scalar @$command_definitions eq 1
+	        and $command_definition->{comment})
+	    {
+		print $output_file '\item [$\bullet$]';
+	    }
 
 	    _output_latex_environment_minipage
 		(
@@ -5100,6 +5115,11 @@ sub _output_latex_process
 
 	    if ($harnessing->{preparation})
 	    {
+		if (scalar @$command_definitions eq 1)
+		{
+		    print $output_file '\item [$\bullet$]';
+		}
+
 		_output_latex($output_file, '\begin{' . "itemize" . "}\n");
 
 		_output_latex($output_file, '\item ');
@@ -5115,7 +5135,13 @@ sub _output_latex_process
 
 	    foreach my $command_test (@$command_tests)
 	    {
-		_output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
+		if (scalar @$command_definitions eq 1
+		    and $command_test->{disabled})
+		{
+		    print $output_file '\item [$\bullet$]';
+
+		    _output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
+		}
 
 		my $description = $command_test->{description};
 
@@ -5132,6 +5158,11 @@ sub _output_latex_process
 
 		if ($write)
 		{
+		    if (scalar @$command_definitions eq 1)
+		    {
+			print $output_file '\item [$\bullet$]';
+		    }
+
 		    _output_latex_environment_prompt
 			(
 			 $output_file,
@@ -5150,6 +5181,11 @@ sub _output_latex_process
 
 		if ($read)
 		{
+		    if (scalar @$command_definitions eq 1)
+		    {
+			print $output_file '\item [$\bullet$]';
+		    }
+
 		    _output_latex_environment_prompt
 			(
 			 $output_file,
@@ -5233,6 +5269,11 @@ sub _output_latex_process
 
 		    if (scalar @$figure_references)
 		    {
+			if (scalar @$command_definitions eq 1)
+			{
+			    print $output_file '\item [$\bullet$]';
+			}
+
 			if (scalar @$figure_references eq 1)
 			{
 			    print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
@@ -5262,19 +5303,32 @@ sub _output_latex_process
 		    }
 		}
 
-		_output_latex_environment_minipage
-		    (
-		     $output_file,
-		     {
-		      content => $command_test->{comment},
-		      content_type => "minipage",
-		      content_type_options => '{14cm}',
-		      content_type_embedding => "small",
-		      prompt => "NOTE\\::",
-		      prompt_type => 'textbf',
-		      suffix => "\n\n",
-		     },
-		    );
+		if ($command_test->{comments})
+		{
+		    if (scalar @$command_definitions eq 1)
+		    {
+			print $output_file '\item [$\bullet$]';
+		    }
+
+		    _output_latex_environment_minipage
+			(
+			 $output_file,
+			 {
+			  content => $command_test->{comment},
+			  content_type => "minipage",
+			  content_type_options => '{14cm}',
+			  content_type_embedding => "small",
+			  prompt => "NOTE\\::",
+			  prompt_type => 'textbf',
+			  suffix => "\n\n",
+			 },
+			);
+		}
+	    }
+
+	    if (scalar @$command_definitions eq 1)
+	    {
+		print $output_file '\end{enumerate}' . "\n";
 	    }
 	}
     }
