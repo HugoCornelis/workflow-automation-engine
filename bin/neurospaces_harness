@@ -4761,7 +4761,7 @@ sub _output_latex_preamble
     my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
 
     my $preamble1
-	= '\documentclass[12pt]{article}
+	= '\documentclass[12pt,a4paper]{article}
 \usepackage[a4paper, total={6in, 9in}]{geometry}
 \usepackage{amsfonts}
 \usepackage{amsmath}
@@ -4777,6 +4777,8 @@ sub _output_latex_preamble
 \usepackage{verbatim}
 \usepackage{fancyvrb}
 \usepackage{relsize}
+
+\usepackage{footmisc}	% ADC: Added footnote referencing capacity for text editing comments
 
 % Typeface
 \usepackage[condensed,math]{iwona}
@@ -4973,7 +4975,7 @@ sub _output_latex_process
 
 	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
 
-	    _output_latex($output_file, " defines the test that is explained in the following section.\n\n");
+	    _output_latex($output_file, " defines the test that is explained in this section.\n\n");
 	}
 	else
 	{
@@ -4981,7 +4983,7 @@ sub _output_latex_process
 
 	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
 
-	    _output_latex($output_file, " defines the tests that are explained in the following sections.\n\n");
+	    _output_latex($output_file, " defines the tests that are explained in this section.\n\n");
 	}
 
 	# output the documentation and explanation
@@ -5156,7 +5158,7 @@ sub _output_latex_process
 			  content_line_limit => 10,
 			  content_type => "Verbatim",
 			  content_type_options => '[fontsize=\relsize{-2}]',
-			  prompt => "The application output we expect:\n",
+			  prompt => "Expected application output:\n",
 			  suffix => "\n\n",
 			 },
 			);
