@@ -4733,6 +4733,257 @@ sub _output_latex_environment_minipage
 }
 
 
+sub _output_latex_figure_generate_insert
+{
+    my $figure = shift;
+
+    my $figure_class = exists $figure->{class} ? $figure->{class} : "simple";
+
+    my $output_filename = shift;
+
+    my $command_test = shift;
+
+    my $figure_references = shift;
+
+    my $read = shift;
+
+    my $figure_class_2_package
+	= {
+	   simple => "Heterarch::Test::Output::Formatter::Figure::Simple",
+	   hh_gates => "Heterarch::Test::Output::Formatter::Figure::HHGates",
+	  };
+
+    my $figure_package = $figure_class_2_package->{$figure_class};
+
+    # create the figure object, link it with the generated references
+
+    my $figure_object = $figure_package->new($figure, $output_filename, $command_test, $figure_references, $read);
+
+    # generate its reference
+
+    my $figure_reference = $figure_object->generate_reference('latex');
+
+    # render the graph
+
+    my $figure_filenames = $figure_object->render();
+
+    # insert the figure filename in the latex file
+
+    if (ref $figure_filenames eq 'ARRAY')
+    {
+	foreach my $figure_filename (@$figure_filenames)
+	{
+	    _output_latex_figure_insert_graph
+		(
+		 $output_file,
+		 $figure_reference,
+		 $figure,
+		 $figure_filename
+		);
+	}
+    }
+    else
+    {
+	#! note that this does not generate a label for referencing
+
+	_output_latex_environment_minipage
+	    (
+	     $output_file,
+	     {
+	      content => "Please install GD::Graph to render figures",
+	      content_type => "minipage",
+	      content_type_options => '{14cm}',
+	      content_type_embedding => "small",
+	      prompt => "ERROR\\::",
+	      prompt_type => 'textbf',
+	      suffix => "\n\n",
+	     },
+	    );
+    }
+}
+
+
+sub _output_latex_figure_insert_graph
+{
+    my $output_file = shift;
+
+    my $figure_reference = shift;
+
+    my $figure = shift;
+
+    my $filename = shift;
+
+    _output_latex_environment_figure
+	(
+	 $output_file,
+	 {
+	  caption => $figure->{caption}->{full},
+	  caption_short => $figure->{caption}->{short},
+	  content_type => "figure",
+	  content_type_options => '[ht]',
+	  includegraphics => $filename,
+	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
+	  label => $figure_reference,,
+	 },
+	);
+}
+
+
+sub _output_latex_figure_references_insert
+{
+    my $figure_references = shift;
+
+    my $cd_1 = shift;
+
+    my $fr_0 = shift;
+
+    my $fr_1 = shift;
+
+    if ($cd_1)
+    {
+	print $output_file '\item [$\bullet$]';
+    }
+
+    if ($fr_1)
+    {
+	print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
+    }
+    else
+    {
+	print $output_file 'See figures';
+
+	while (my $figure_reference = shift @$figure_references)
+	{
+	    if ($fr_0)
+	    {
+		print $output_file '~\ref{' . $figure_reference . '}';
+	    }
+	    elsif ($fr_1)
+	    {
+		print $output_file '~\ref{' . $figure_reference . '} and';
+	    }
+	    else
+	    {
+		print $output_file '~\ref{' . $figure_reference . '},';
+	    }
+	}
+
+	print $output_file ".\n\n";
+    }
+}
+
+
+sub _output_latex_module_comments
+{
+    my $module_definition = shift;
+
+    _output_latex_environment_minipage
+	(
+	 $output_file,
+	 {
+	  content => $module_definition->{comment},
+	  content_type => "minipage",
+	  content_type_options => '{14cm}',
+	  content_type_embedding => "small",
+	  prompt => "NOTE\\::",
+	  prompt_type => 'textbf',
+	  suffix => "\n\n",
+	 },
+	);
+}
+
+
+sub _output_latex_module_documentation
+{
+    my $module_definition_documentation = shift;
+
+    if ($module_definition_documentation)
+    {
+	_output_latex($output_file, "$module_definition_documentation->{purpose}\n\n");
+
+	_output_latex($output_file, "$module_definition_documentation->{explanation}\n\n");
+
+	# _output_latex($output_file, "Test commands follow.\n\n");
+    }
+    else
+    {
+	_output_latex($output_file, "\n\n");
+    }
+}
+
+
+sub _output_latex_module_filename_insert
+{
+    my $module_definition = shift;
+
+    my $module_definition_documentation = shift;
+
+    my $cd_0 = shift;
+
+    my $cd_1 = shift;
+
+    if ($cd_0)
+    {
+	_output_latex($output_file, 'File ');
+
+	_output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	if ($module_definition_documentation)
+	{
+	    _output_latex($output_file, ':  ');
+	}
+	else
+	{
+	    _output_latex($output_file, '.');
+	}
+    }
+    elsif ($cd_1)
+    {
+	_output_latex($output_file, 'The file ');
+
+	_output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	_output_latex($output_file, " defines the test that is explained in this section.\n\n");
+    }
+    else
+    {
+	_output_latex($output_file, 'The file ');
+
+	_output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	_output_latex($output_file, " defines the tests that are explained in this section.\n\n");
+    }
+}
+
+
+sub _output_latex_module_harnessing
+{
+    my $module_definition = shift;
+
+    my $cd_0 = shift;
+
+    if ($cd_0)
+    {
+	my $harnessing = $module_definition->{harnessing};
+
+	if ($harnessing->{preparation})
+	{
+	    _output_latex($output_file, '\begin{' . "itemize" . "}\n");
+
+	    _output_latex($output_file, '\item ');
+
+	    _output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+
+	    _output_latex($output_file, '\item ');
+
+	    _output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+
+	    _output_latex($output_file, '\end{' . "itemize" . "}\n");
+	}
+    }
+}
+
+
 sub _output_latex_postamble
 {
     my $postamble
@@ -4920,6 +5171,256 @@ sub _output_latex_preamble_title
 }
 
 
+sub _output_latex_command_definition_command_arguments
+{
+    my $command_definition = shift;
+
+    my $cd_1 = shift;
+
+    my $ct_1 = shift;
+
+    my $arguments = $command_definition->{arguments};
+
+    my $command = join ' ', $command_definition->{command}, @$arguments;
+
+    if ($cd_1)
+    {
+	print $output_file '\item [$\bullet$]';
+    }
+
+    if ($ct_1)
+    {
+	_output_latex($output_file, 'The test is started with system shell command: ');
+    }
+    else
+    {
+	_output_latex($output_file, 'The tests are started with the system shell command: ');
+    }
+
+    _output_latex_prompt($output_file, "textbf", $command, "", "\n\n");
+}
+
+
+sub _output_latex_command_definition_comments
+{
+    my $command_definition = shift;
+
+    my $cd_1_comment = shift;
+
+    if ($cd_1_comment)
+    {
+	print $output_file '\item [$\bullet$]';
+
+	_output_latex_environment_minipage
+	    (
+	     $output_file,
+	     {
+	      content => $command_definition->{comment},
+	      content_type => "minipage",
+	      content_type_options => '{14cm}',
+	      content_type_embedding => "small",
+	      prompt => "NOTE\\::",
+	      prompt_type => 'textbf',
+	      suffix => "\n\n",
+	     },
+	    );
+    }
+}
+
+
+sub _output_latex_command_definition_description
+{
+    my $command_definition = shift;
+
+    my $cd_1 = shift;
+
+    my $ct_1 = shift;
+
+    my $description = $command_definition->{description};
+
+    my $command_tests = $command_definition->{command_tests};
+
+    if ($cd_1)
+    {
+	print $output_file '\item [$\bullet$]';
+
+	_output_latex($output_file, "The following test is described as: $description\n");
+    }
+    else
+    {
+	if ($ct_1)
+	{
+	    my $subdescription = $command_tests->[0]->{description};
+
+	    $description .= ": $subdescription";
+	}
+
+	_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
+    }
+}
+
+
+sub _output_latex_command_definition_harnessing
+{
+    my $command_definition = shift;
+
+    my $cd_1 = shift;
+
+    my $harnessing = $command_definition->{harnessing};
+
+    if ($harnessing->{preparation})
+    {
+	if ($cd_1)
+	{
+	    print $output_file '\item [$\bullet$]';
+	}
+
+	_output_latex($output_file, '\begin{' . "itemize" . "}\n");
+
+	_output_latex($output_file, '\item ');
+
+	_output_latex_prompt($output_file, "textit", $command_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
+
+	_output_latex($output_file, '\item ');
+
+	_output_latex_prompt($output_file, "textit", $command_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
+
+	_output_latex($output_file, '\end{' . "itemize" . "}\n");
+    }
+}
+
+
+sub _output_latex_command_test_comments
+{
+    my $command_test = shift;
+
+    my $cd_1 = shift;
+
+    if ($command_test->{comments})
+    {
+	if ($cd_1)
+	{
+	    print $output_file '\item [$\bullet$]';
+	}
+
+	_output_latex_environment_minipage
+	    (
+	     $output_file,
+	     {
+	      content => $command_test->{comment},
+	      content_type => "minipage",
+	      content_type_options => '{14cm}',
+	      content_type_embedding => "small",
+	      prompt => "NOTE\\::",
+	      prompt_type => 'textbf',
+	      suffix => "\n\n",
+	     },
+	    );
+    }
+}
+
+
+sub _output_latex_command_test_description
+{
+    my $command_test = shift;
+
+    my $ct_1 = shift;
+
+    my $description = $command_test->{description};
+
+    if ($ct_1)
+    {
+	# _output_latex($output_file, "This test is described as: $description\n\n");
+    }
+    else
+    {
+	_output_latex($output_file, '\subsubsection{' . ucfirst $description . "}\n\n");
+    }
+}
+
+
+sub _output_latex_command_test_disabled
+{
+    my $command_test = shift;
+
+    my $cd_1 = shift;
+
+    #! this seems to be wrong, cannot have the disabled
+    #! clause of each command test in a isolated bullet,
+    #! maybe this also needs a $ct_1?
+
+    if ($cd_1
+	and $command_test->{disabled})
+    {
+	print $output_file '\item [$\bullet$]';
+
+	_output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
+    }
+}
+
+
+sub _output_latex_command_test_read
+{
+    my $command_test = shift;
+
+    my $cd_1 = shift;
+
+    my $read = $command_test->{read} || "";
+
+    if ($read)
+    {
+	if ($cd_1)
+	{
+	    print $output_file '\item [$\bullet$]';
+	}
+
+	_output_latex_environment_prompt
+	    (
+	     $output_file,
+	     {
+	      content => $read,
+	      content_line_limit => 10,
+	      content_type => "Verbatim",
+	      content_type_options => '[fontsize=\relsize{-2}]',
+	      prompt => "Expected application output:\n",
+	      suffix => "\n\n",
+	     },
+	    );
+    }
+}
+
+
+sub _output_latex_command_test_write
+{
+    my $command_test = shift;
+
+    my $cd_1 = shift;
+
+    my $write = $command_test->{write} || "";
+
+    if ($write)
+    {
+	if ($cd_1)
+	{
+	    print $output_file '\item [$\bullet$]';
+	}
+
+	_output_latex_environment_prompt
+	    (
+	     $output_file,
+	     {
+	      content => $write,
+	      content_line_limit => 10,
+	      content_type => "Verbatim",
+	      content_type_options => '[fontsize=\relsize{-2}]',
+	      prompt => "The input to the application is:\n",
+	      suffix => "\n\n",
+	     },
+	    );
+    }
+}
+
+
 sub _output_latex_process
 {
     my $output_filename = shift;
@@ -4961,259 +5462,73 @@ sub _output_latex_process
 
 	# output the filename
 
-	if ($cd_0)
-	{
-	    _output_latex($output_file, 'File ');
-
-	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
-
-	    if ($module_definition_documentation)
-	    {
-		_output_latex($output_file, ':  ');
-	    }
-	    else
-	    {
-		_output_latex($output_file, '.');
-	    }
-	}
-	elsif ($cd_1)
-	{
-	    _output_latex($output_file, 'The file ');
-
-	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
-
-	    _output_latex($output_file, " defines the test that is explained in this section.\n\n");
-	}
-	else
-	{
-	    _output_latex($output_file, 'The file ');
-
-	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
-
-	    _output_latex($output_file, " defines the tests that are explained in this section.\n\n");
-	}
+	_output_latex_module_filename_insert($module_definition, $module_definition_documentation, $cd_0, $cd_1);
 
 	# output the documentation and explanation
 
-	if ($module_definition_documentation)
-	{
-	    _output_latex($output_file, "$module_definition_documentation->{purpose}\n\n");
-
-	    _output_latex($output_file, "$module_definition_documentation->{explanation}\n\n");
-
-	    # _output_latex($output_file, "Test commands follow.\n\n");
-	}
-	else
-	{
-	    _output_latex($output_file, "\n\n");
-	}
+	_output_latex_module_documentation($module_definition_documentation);
 
 	# output the preparation and reparation
 
-	if ($cd_0)
-	{
-	    my $harnessing = $module_definition->{harnessing};
+	_output_latex_module_harnessing($module_definition, $cd_0);
 
-	    if ($harnessing->{preparation})
-	    {
-		_output_latex($output_file, '\begin{' . "itemize" . "}\n");
+	# output comments / notes
 
-		_output_latex($output_file, '\item ');
-
-		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
-
-		_output_latex($output_file, '\item ');
-
-		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
-
-		_output_latex($output_file, '\end{' . "itemize" . "}\n");
-	    }
-	}
-
-	# output notes
-
-	_output_latex_environment_minipage
-	    (
-	     $output_file,
-	     {
-	      content => $module_definition->{comment},
-	      content_type => "minipage",
-	      content_type_options => '{14cm}',
-	      content_type_embedding => "small",
-	      prompt => "NOTE\\::",
-	      prompt_type => 'textbf',
-	      suffix => "\n\n",
-	     },
-	    );
+	_output_latex_module_comments($module_definition);
 
 	# output the command definitions
 
 	foreach my $command_definition (@$command_definitions)
 	{
-	    my $description = $command_definition->{description};
+	    # create indexes into the styling table
 
 	    my $command_tests = $command_definition->{command_tests};
-
-	    # create indexes into the styling table
 
 	    my $ct_0 = defined $command_tests && scalar @$command_tests eq 0 ? 1 : 0;
 	    my $ct_1 = defined $command_tests && scalar @$command_tests eq 1 ? 1 : 0;
 
-	    # output the command and its arguments
-
-	    my $arguments = $command_definition->{arguments};
-
-	    my $command = join ' ', $command_definition->{command}, @$arguments;
-
 	    if ($cd_1)
 	    {
 		print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
-
-		print $output_file '\item [$\bullet$]';
-
-		_output_latex($output_file, "The following test is described as: $description\n");
-	    }
-	    else
-	    {
-		if ($ct_1)
-		{
-		    my $subdescription = $command_tests->[0]->{description};
-
-		    $description .= ": $subdescription";
-		}
-
-		_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
 	    }
 
-	    if ($cd_1)
-	    {
-		print $output_file '\item [$\bullet$]';
-	    }
+	    # output the command_definition description
 
-	    if ($ct_1)
-	    {
-		_output_latex($output_file, 'The test is started with system shell command: ');
-	    }
-	    else
-	    {
-		_output_latex($output_file, 'The tests are started with the system shell command: ');
-	    }
+	    _output_latex_command_definition_description($command_definition, $cd_1, $ct_1);
 
-	    _output_latex_prompt($output_file, "textbf", $command, "", "\n\n");
+	    # output the command and its arguments
 
-	    if ($cd_1_comment)
-	    {
-		print $output_file '\item [$\bullet$]';
+	    _output_latex_command_definition_command_arguments($command_definition, $cd_1, $ct_1);
 
-		_output_latex_environment_minipage
-		    (
-		     $output_file,
-		     {
-		      content => $command_definition->{comment},
-		      content_type => "minipage",
-		      content_type_options => '{14cm}',
-		      content_type_embedding => "small",
-		      prompt => "NOTE\\::",
-		      prompt_type => 'textbf',
-		      suffix => "\n\n",
-		     },
-		    );
-	    }
+	    # output the command comments
+
+	    _output_latex_command_definition_comments($command_definition, $cd_1_comment);
 
 	    # output the preparation and reparation
 
-	    my $harnessing = $command_definition->{harnessing};
+	    _output_latex_command_definition_harnessing($command_definition, $cd_1);
 
-	    if ($harnessing->{preparation})
-	    {
-		if ($cd_1)
-		{
-		    print $output_file '\item [$\bullet$]';
-		}
-
-		_output_latex($output_file, '\begin{' . "itemize" . "}\n");
-
-		_output_latex($output_file, '\item ');
-
-		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{preparation}, "Preparation: ", "\n");
-
-		_output_latex($output_file, '\item ');
-
-		_output_latex_prompt($output_file, "textit", $module_definition->{harnessing}->{reparation}, "Reparation: ", "\n");
-
-		_output_latex($output_file, '\end{' . "itemize" . "}\n");
-	    }
+	    # loop over all the command tests
 
 	    foreach my $command_test (@$command_tests)
 	    {
-		#! this seems to be wrong, cannot have the disabled
-		#! clause of each command test in a isolated bullet,
-		#! maybe this also needs a $ct_1?
+		# output the disabled clause
 
-		if ($cd_1
-		    and $command_test->{disabled})
-		{
-		    print $output_file '\item [$\bullet$]';
+		_output_latex_command_test_disabled($command_test, $cd_1);
 
-		    _output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
-		}
+		# output the description clause
 
-		my $description = $command_test->{description};
+		_output_latex_command_test_description($command_test, $ct_1);
 
-		if ($ct_1)
-		{
-		    # _output_latex($output_file, "This test is described as: $description\n\n");
-		}
-		else
-		{
-		    _output_latex($output_file, '\subsubsection{' . ucfirst $description . "}\n\n");
-		}
+		# output the write clause
 
-		my $write = $command_test->{write} || "";
+		_output_latex_command_test_write($command_test, $cd_1);
 
-		if ($write)
-		{
-		    if ($cd_1)
-		    {
-			print $output_file '\item [$\bullet$]';
-		    }
+		# output the read clause
 
-		    _output_latex_environment_prompt
-			(
-			 $output_file,
-			 {
-			  content => $write,
-			  content_line_limit => 10,
-			  content_type => "Verbatim",
-			  content_type_options => '[fontsize=\relsize{-2}]',
-			  prompt => "The input to the application is:\n",
-			  suffix => "\n\n",
-			 },
-			);
-		}
+		_output_latex_command_test_read($command_test, $cd_1);
 
-		my $read = $command_test->{read} || "";
-
-		if ($read)
-		{
-		    if ($cd_1)
-		    {
-			print $output_file '\item [$\bullet$]';
-		    }
-
-		    _output_latex_environment_prompt
-			(
-			 $output_file,
-			 {
-			  content => $read,
-			  content_line_limit => 10,
-			  content_type => "Verbatim",
-			  content_type_options => '[fontsize=\relsize{-2}]',
-			  prompt => "Expected application output:\n",
-			  suffix => "\n\n",
-			 },
-			);
-		}
+		# if figures should be generated
 
 		if ($option_output_figures)
 		{
@@ -5223,63 +5538,11 @@ sub _output_latex_process
 
 		    my $figure_references = [];
 
+		    my $read = $command_test->{read} || "";
+
 		    foreach my $figure (@$figures)
 		    {
-			my $figure_class = exists $figure->{class} ? $figure->{class} : "simple";
-
-			my $figure_class_2_package
-			    = {
-			       simple => "Heterarch::Test::Output::Formatter::Figure::Simple",
-			       hh_gates => "Heterarch::Test::Output::Formatter::Figure::HHGates",
-			      };
-
-			my $figure_package = $figure_class_2_package->{$figure_class};
-
-			# create the figure object, link it with the generated references
-
-			my $figure_object = $figure_package->new($figure, $output_filename, $command_test, $figure_references, $read);
-
-			# generate its reference
-
-			my $figure_reference = $figure_object->generate_reference('latex');
-
-			# render the graph
-
-			my $figure_filenames = $figure_object->render();
-
-			# insert the figure filename in the latex file
-
-			if (ref $figure_filenames eq 'ARRAY')
-			{
-			    foreach my $figure_filename (@$figure_filenames)
-			    {
-				_output_latex_insert_figure_graph
-				    (
-				     $output_file,
-				     $figure_reference,
-				     $figure,
-				     $figure_filename
-				    );
-			    }
-			}
-			else
-			{
-			    #! note that this does not generate a label for referencing
-
-			    _output_latex_environment_minipage
-				(
-				 $output_file,
-				 {
-				  content => "Please install GD::Graph to render figures",
-				  content_type => "minipage",
-				  content_type_options => '{14cm}',
-				  content_type_embedding => "small",
-				  prompt => "ERROR\\::",
-				  prompt_type => 'textbf',
-				  suffix => "\n\n",
-				 },
-				);
-			}
+			_output_latex_figure_generate_insert($figure, $output_filename,  $command_test, $figure_references, $read);
 		    }
 
 		    if (scalar @$figure_references)
@@ -5287,61 +5550,13 @@ sub _output_latex_process
 			my $fr_0 = scalar @$figure_references eq 0 ? 1 : 0;
 			my $fr_1 = scalar @$figure_references eq 1 ? 1 : 0;
 
-			if ($cd_1)
-			{
-			    print $output_file '\item [$\bullet$]';
-			}
-
-			if ($fr_1)
-			{
-			    print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
-			}
-			else
-			{
-			    print $output_file 'See figures';
-
-			    while (my $figure_reference = shift @$figure_references)
-			    {
-				if ($fr_0)
-				{
-				    print $output_file '~\ref{' . $figure_reference . '}';
-				}
-				elsif ($fr_1)
-				{
-				    print $output_file '~\ref{' . $figure_reference . '} and';
-				}
-				else
-				{
-				    print $output_file '~\ref{' . $figure_reference . '},';
-				}
-			    }
-
-			    print $output_file ".\n\n";
-			}
+			_output_latex_figure_references_insert($figure_references, $cd_1, $fr_0, $fr_1);
 		    }
 		}
 
-		if ($command_test->{comments})
-		{
-		    if ($cd_1)
-		    {
-			print $output_file '\item [$\bullet$]';
-		    }
+		# output the comments clause
 
-		    _output_latex_environment_minipage
-			(
-			 $output_file,
-			 {
-			  content => $command_test->{comment},
-			  content_type => "minipage",
-			  content_type_options => '{14cm}',
-			  content_type_embedding => "small",
-			  prompt => "NOTE\\::",
-			  prompt_type => 'textbf',
-			  suffix => "\n\n",
-			 },
-			);
-		}
+		_output_latex_command_test_comments($command_test, $cd_1);
 	    }
 
 	    if ($cd_1)
@@ -5383,32 +5598,6 @@ sub _output_latex_prompt
     }
 
     _output_latex($output_file, $suffix);
-}
-
-
-sub _output_latex_insert_figure_graph
-{
-    my $output_file = shift;
-
-    my $figure_reference = shift;
-
-    my $figure = shift;
-
-    my $filename = shift;
-
-    _output_latex_environment_figure
-	(
-	 $output_file,
-	 {
-	  caption => $figure->{caption}->{full},
-	  caption_short => $figure->{caption}->{short},
-	  content_type => "figure",
-	  content_type_options => '[ht]',
-	  includegraphics => $filename,
-	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
-	  label => $figure_reference,,
-	 },
-	);
 }
 
 
