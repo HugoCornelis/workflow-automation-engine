@@ -3193,7 +3193,7 @@ package Heterarch::Test::Executor;
 #
 # This is the default Heterarch::Test::Executor.  It provides a link
 # with the execution context and implements ->ex_mo_prepare(),
-# ex_cd_start() and ex_ct_run() methods that call the appropriate
+# ->ex_cd_start() and ->ex_ct_run() methods that call the appropriate
 # module, command_definition and command_test methods for implementing
 # test execution.
 #
@@ -4107,8 +4107,17 @@ package Heterarch::Test::Output::Formatter;
 
 #
 # A Heterarch::Test::Output::Formatter implements ->ex_mo_prepare(),
-# ex_cd_start() and ex_ct_run() methods that prepare structured
+# ->ex_cd_start() and ->ex_ct_run() methods that prepare structured
 # content for the output formatter to convert to its target format.
+#
+# The result of the conversion is stored in the hash
+# $global_test_report->{selected}.
+#
+# This hash has the selected module names as keys.  Each value is a
+# hash with the contents of the module and a key
+# ->{command_definitions} with as value an array for the contents of
+# the command_definitions.  Each command_definition value has again
+# the content of a command_definition and a key ->{command_tests}.
 #
 # Each element in the result receives a key ->{context_path} that is
 # unique and identifies the path from the root to the element.
