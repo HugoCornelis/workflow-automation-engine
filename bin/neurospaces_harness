@@ -4842,11 +4842,13 @@ sub _output_latex_figure_references_insert
 {
     my $figure_references = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
 
-    my $fr_0 = shift;
+    my $cd_1 = $ss->{cd_1};
 
-    my $fr_1 = shift;
+    my $fr_0 = $ss->{fr_0};
+
+    my $fr_1 = $ss->{fr_1};
 
     if ($cd_1)
     {
@@ -4927,9 +4929,11 @@ sub _output_latex_module_filename_insert
 
     my $module_definition_documentation = shift;
 
-    my $cd_0 = shift;
+    my $ss = shift;
 
-    my $cd_1 = shift;
+    my $cd_0 = $ss->{cd_0};
+
+    my $cd_1 = $ss->{cd_1};
 
     if ($cd_0)
     {
@@ -4969,7 +4973,9 @@ sub _output_latex_module_harnessing
 {
     my $module_definition = shift;
 
-    my $cd_0 = shift;
+    my $ss = shift;
+
+    my $cd_0 = $ss->{cd_0};
 
     if ($cd_0)
     {
@@ -5184,9 +5190,11 @@ sub _output_latex_command_definition_command_arguments
 {
     my $command_definition = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
 
-    my $ct_1 = shift;
+    my $cd_1 = $ss->{cd_1};
+
+    my $ct_1 = $ss->{ct_1};
 
     my $arguments = $command_definition->{arguments};
 
@@ -5214,7 +5222,9 @@ sub _output_latex_command_definition_comments
 {
     my $command_definition = shift;
 
-    my $cd_1_comment = shift;
+    my $ss = shift;
+
+    my $cd_1_comment = $ss->{cd_1_comment};
 
     if ($cd_1_comment)
     {
@@ -5241,9 +5251,11 @@ sub _output_latex_command_definition_description
 {
     my $command_definition = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
 
-    my $ct_1 = shift;
+    my $cd_1 = $ss->{cd_1};
+
+    my $ct_1 = $ss->{ct_1};
 
     my $description = $command_definition->{description};
 
@@ -5273,7 +5285,9 @@ sub _output_latex_command_definition_harnessing
 {
     my $command_definition = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
+
+    my $cd_1 = $ss->{cd_1};
 
     my $harnessing = $command_definition->{harnessing};
 
@@ -5303,7 +5317,9 @@ sub _output_latex_command_test_comments
 {
     my $command_test = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
+
+    my $cd_1 = $ss->{cd_1};
 
     if ($command_test->{comments})
     {
@@ -5333,7 +5349,9 @@ sub _output_latex_command_test_description
 {
     my $command_test = shift;
 
-    my $ct_1 = shift;
+    my $ss = shift;
+
+    my $ct_1 = $ss->{ct_1};
 
     my $description = $command_test->{description};
 
@@ -5352,7 +5370,9 @@ sub _output_latex_command_test_disabled
 {
     my $command_test = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
+
+    my $cd_1 = $ss->{cd_1};
 
     #! this seems to be wrong, cannot have the disabled
     #! clause of each command test in a isolated bullet,
@@ -5372,7 +5392,9 @@ sub _output_latex_command_test_read
 {
     my $command_test = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
+
+    my $cd_1 = $ss->{cd_1};
 
     my $read = $command_test->{read} || "";
 
@@ -5403,7 +5425,9 @@ sub _output_latex_command_test_write
 {
     my $command_test = shift;
 
-    my $cd_1 = shift;
+    my $ss = shift;
+
+    my $cd_1 = $ss->{cd_1};
 
     my $write = $command_test->{write} || "";
 
@@ -5438,6 +5462,8 @@ sub _output_latex_process
 
     my $module_definitions = $test_report->{selected};
 
+    my $ss = Heterarch::Test::Output::StructureSummary->new();
+
     foreach my $module_definition_key (sort
 				       {
 					   my $selected_a = $a;
@@ -5464,14 +5490,11 @@ sub _output_latex_process
 
 	# create indexes into the styling table
 
-	my $cd_0 = scalar @$command_definitions eq 0 ? 1 : 0;
-	my $cd_1 = scalar @$command_definitions eq 1 ? 1 : 0;
-
-	my $cd_1_comment = $cd_1 && exists $command_definitions->[0]->{comment};
+	$ss->ss_command_definitions($command_definitions);
 
 	# output the filename
 
-	_output_latex_module_filename_insert($module_definition, $module_definition_documentation, $cd_0, $cd_1);
+	_output_latex_module_filename_insert($module_definition, $module_definition_documentation, $ss);
 
 	# output the documentation and explanation
 
@@ -5479,7 +5502,7 @@ sub _output_latex_process
 
 	# output the preparation and reparation
 
-	_output_latex_module_harnessing($module_definition, $cd_0);
+	_output_latex_module_harnessing($module_definition, $ss);
 
 	# output comments / notes
 
@@ -5493,29 +5516,28 @@ sub _output_latex_process
 
 	    my $command_tests = $command_definition->{command_tests};
 
-	    my $ct_0 = defined $command_tests && scalar @$command_tests eq 0 ? 1 : 0;
-	    my $ct_1 = defined $command_tests && scalar @$command_tests eq 1 ? 1 : 0;
+	    $ss->ss_command_tests($command_tests);
 
-	    if ($cd_1)
+	    if ($ss->{cd_1})
 	    {
 		print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
 	    }
 
 	    # output the command_definition description
 
-	    _output_latex_command_definition_description($command_definition, $cd_1, $ct_1);
+	    _output_latex_command_definition_description($command_definition, $ss);
 
 	    # output the command and its arguments
 
-	    _output_latex_command_definition_command_arguments($command_definition, $cd_1, $ct_1);
+	    _output_latex_command_definition_command_arguments($command_definition, $ss);
 
 	    # output the command comments
 
-	    _output_latex_command_definition_comments($command_definition, $cd_1_comment);
+	    _output_latex_command_definition_comments($command_definition, $ss);
 
 	    # output the preparation and reparation
 
-	    _output_latex_command_definition_harnessing($command_definition, $cd_1);
+	    _output_latex_command_definition_harnessing($command_definition, $ss);
 
 	    # loop over all the command tests
 
@@ -5523,19 +5545,19 @@ sub _output_latex_process
 	    {
 		# output the disabled clause
 
-		_output_latex_command_test_disabled($command_test, $cd_1);
+		_output_latex_command_test_disabled($command_test, $ss);
 
 		# output the description clause
 
-		_output_latex_command_test_description($command_test, $ct_1);
+		_output_latex_command_test_description($command_test, $ss);
 
 		# output the write clause
 
-		_output_latex_command_test_write($command_test, $cd_1);
+		_output_latex_command_test_write($command_test, $ss);
 
 		# output the read clause
 
-		_output_latex_command_test_read($command_test, $cd_1);
+		_output_latex_command_test_read($command_test, $ss);
 
 		# if figures should be generated
 
@@ -5556,19 +5578,18 @@ sub _output_latex_process
 
 		    if (scalar @$figure_references)
 		    {
-			my $fr_0 = scalar @$figure_references eq 0 ? 1 : 0;
-			my $fr_1 = scalar @$figure_references eq 1 ? 1 : 0;
+			$ss->ss_figure_references($figure_references);
 
-			_output_latex_figure_references_insert($figure_references, $cd_1, $fr_0, $fr_1);
+			_output_latex_figure_references_insert($figure_references, $ss);
 		    }
 		}
 
 		# output the comments clause
 
-		_output_latex_command_test_comments($command_test, $cd_1);
+		_output_latex_command_test_comments($command_test, $ss);
 	    }
 
-	    if ($cd_1)
+	    if ($ss->{cd_1})
 	    {
 		print $output_file '\end{enumerate}' . "\n";
 	    }
@@ -6300,6 +6321,64 @@ sub ex_ct_run
 
     my $module_definition = $execution_context->get_module_definition();
 
+}
+
+
+package Heterarch::Test::Output::StructureSummary;
+
+
+sub ss_command_definitions
+{
+    my $self = shift;
+
+    my $command_definitions = shift;
+
+    $self->{cd_0} = scalar @$command_definitions eq 0 ? 1 : 0;
+    $self->{cd_1} = scalar @$command_definitions eq 1 ? 1 : 0;
+    $self->{cd_1_comment} = $self->{cd_1} && exists $command_definitions->[0]->{comment};
+}
+
+
+sub ss_command_tests
+{
+    my $self = shift;
+
+    my $command_tests = shift;
+
+    $self->{ct_0} = defined $command_tests && scalar @$command_tests eq 0 ? 1 : 0;
+    $self->{ct_1} = defined $command_tests && scalar @$command_tests eq 1 ? 1 : 0;
+}
+
+
+sub ss_figure_references
+{
+    my $self = shift;
+
+    my $figure_references = shift;
+
+    $self->{fr_0} = scalar @$figure_references eq 0 ? 1 : 0;
+    $self->{fr_1} = scalar @$figure_references eq 1 ? 1 : 0;
+}
+
+
+sub new
+{
+    my $package = shift;
+
+    my $self
+	= {
+	   cd_0 => undef,
+	   cd_1 => undef,
+	   cd_1_comment => undef,
+	   ct_0 => undef,
+	   ct_1 => undef,
+	   fr_0 => undef,
+	   fr_1 => undef,
+	  };
+
+    bless $self, $package;
+
+    return $self
 }
 
 
