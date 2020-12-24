@@ -5022,6 +5022,23 @@ sub _output_latex_preamble
 
     my $html_introduction = shift;
 
+    my $main_figures_directory = "$output_filename/figures";
+
+    {
+	use File::Basename qw( fileparse );
+	use File::Path qw( make_path );
+	use File::Spec;
+
+	my $created = make_path($main_figures_directory);
+
+	use File::Copy;
+
+	my $logo_source_filename = "$ENV{HOME}/projects/neurocampus/source/snapshots/master/invoices/inv-draft-only/figures/ns-main-logo-dark2.jpg";
+
+	copy($logo_source_filename, "$main_figures_directory")
+	    or die "Copy of $logo_source_filename failed: $!";
+    }
+
     $output_file = IO::File->new(">$output_filename.tex");
 
     my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
@@ -5064,17 +5081,71 @@ sub _output_latex_preamble
 
     print $output_file $preamble1;
 
-    _output_latex_preamble_title($title_paragraphs);
+    my $use_title_page = "";
+
+    if ($use_title_page)
+    {
+	_output_latex_preamble_configure_title_page($title_paragraphs);
+    }
 
     my $preamble2
 	= '
 \begin{document}
 
-\maketitle
+\begin{center}
+   \includegraphics[scale=0.5]{' . $main_figures_directory . '/ns-main-logo-dark2.jpg}
+%   \caption{{\bf A Dummy Figure:} Example of \LaTeX\,\,\,code to incorporate a figure into documentation.}
+  \label{fig:logo}
+\end{center}
+\vspace{-10ex}
 
 ';
 
+    if ($use_title_page)
+    {
+	$preamble2 .= '
+       \maketitle
+
+';
+    }
+
     print $output_file $preamble2;
+
+    if (not $use_title_page)
+    {
+	_output_latex($output_file, '\section*{\center \Huge ' . $title_paragraphs->{title} . "}\n\n");
+
+	_output_latex($output_file, '\vspace{-6ex}' . "\n\n");
+
+	_output_latex($output_file, '\section*{\center \scriptsize ' . "Automatically generated draft document" . "}\n\n");
+
+	_output_latex($output_file, '\vspace{-6ex}' . "\n\n");
+
+	_output_latex($output_file, '\section*{\center \small \textbf ' . $title_paragraphs->{author} . "}\n\n");
+
+	_output_latex($output_file, '\vspace{-6ex}' . "\n\n");
+
+	use POSIX qw(strftime);
+
+	# my $now_string = strftime("%a %b %e %H:%M:%S %Y", localtime());
+
+	my $now_string = strftime("%a %b %e, %Y", localtime());
+
+	my ( $day, $month_number, $year ) = ( localtime ) [3,4,5];
+
+	$year += 1900;
+
+	my $month = (
+		     qw/ January   February  March
+			 April     May       June
+			 July      August    September
+			 October   November  December  /
+		    ) [$month_number];
+
+	$now_string = "$day $month, $year";
+
+	_output_latex($output_file, '\section*{\center \small \textbf ' . $now_string . "}\n\n");
+    }
 
     _output_latex_preamble_abstract($title_paragraphs);
 
@@ -5171,7 +5242,7 @@ sub _output_latex_preamble_summary
 }
 
 
-sub _output_latex_preamble_title
+sub _output_latex_preamble_configure_title_page
 {
     my $title_paragraphs = shift;
 
