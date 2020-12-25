@@ -4761,8 +4761,11 @@ sub _output_latex_figure_generate_insert
 
     my $figure_class_2_package
 	= {
+	   hh_gates_A_B => "Heterarch::Test::Output::Formatter::Figure::HHGatesAB",
+	   hh_gates_alpha_beta => "Heterarch::Test::Output::Formatter::Figure::HHGatesAlphaBeta",
+	   hh_gates_internal => "Heterarch::Test::Output::Formatter::Figure::HHGatesInternal",
+	   hh_gates_steady_state_tau => "Heterarch::Test::Output::Formatter::Figure::HHGatesSteadyStateTau",
 	   simple => "Heterarch::Test::Output::Formatter::Figure::Simple",
-	   hh_gates => "Heterarch::Test::Output::Formatter::Figure::HHGates",
 	  };
 
     my $figure_package = $figure_class_2_package->{$figure_class};
@@ -5889,7 +5892,123 @@ sub render_array
 }
 
 
-package Heterarch::Test::Output::Formatter::Figure::HHGates;
+package Heterarch::Test::Output::Formatter::Figure::HHGatesAB;
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
+
+
+package Heterarch::Test::Output::Formatter::Figure::HHGatesAlphaBeta;
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
+
+
+sub new
+{
+    my $self = shift;
+
+    $self = $self->SUPER::new(@_);
+
+    my $variables
+	= [
+	   {
+	    name => "Activation",
+	    regex_parser => '-?[0-9]+\.[-e0-9]+ (-?[0-9]+\.[-e0-9]+)',
+	   },
+	  ];
+
+    $self->{figure_definition}->{variables} = $variables;
+
+    return $self;
+}
+
+
+sub render
+{
+    my $self = shift;
+
+    # convert the data string to a data structure
+
+    use YAML;
+
+    my $data_string = $self->{data_string};
+
+    # remove object class references
+
+    $data_string =~ s(!!.*?\n)(\n)g;
+
+    # load all documents
+
+    my $data_structured = [ Load($data_string), ];
+
+    # split the data into its two components
+
+    my $data_structured_forward = $data_structured->[0];
+
+    my $data_structured_backward = $data_structured->[1];
+
+    # render the values: forward kinetics
+
+    my $data_a_forward = $data_structured_forward->{alpha};
+
+    my $hi_forward = $data_structured_forward->{hi};
+
+    my $pathname_prefix = $self->{pathname_prefix};
+
+    my $output_filename_a_forward = "$pathname_prefix-a-forward-output_graph_render.png";
+
+    my $figure_filename_a_forward = $self->render_array($output_filename_a_forward, $data_a_forward, $hi_forward->{start}, $hi_forward->{end}, $hi_forward->{step});
+
+    if (ref $figure_filename_a_forward)
+    {
+	return $figure_filename_a_forward;
+    }
+
+    my $data_b_forward = $data_structured_forward->{beta};
+
+    my $output_filename_b_forward = "$pathname_prefix-b-forward-output_graph_render.png";
+
+    my $figure_filename_b_forward = $self->render_array($output_filename_b_forward, $data_b_forward, $hi_forward->{start}, $hi_forward->{end}, $hi_forward->{step});
+
+    if (ref $figure_filename_b_forward)
+    {
+	return $figure_filename_b_forward;
+    }
+
+    # render the values: backward kinetics
+
+    my $data_a_backward = $data_structured_backward->{alpha};
+
+    my $hi_backward = $data_structured_backward->{hi};
+
+    my $output_filename_a_backward = "$pathname_prefix-a-backward-output_graph_render.png";
+
+    my $figure_filename_a_backward = $self->render_array($output_filename_a_backward, $data_a_backward, $hi_backward->{start}, $hi_backward->{end}, $hi_backward->{step});
+
+    if (ref $figure_filename_a_backward)
+    {
+	return $figure_filename_a_backward;
+    }
+
+    my $data_b_backward = $data_structured_backward->{beta};
+
+    my $output_filename_b_backward = "$pathname_prefix-b-backward-output_graph_render.png";
+
+    my $figure_filename_b_backward = $self->render_array($output_filename_b_backward, $data_b_backward, $hi_backward->{start}, $hi_backward->{end}, $hi_backward->{step});
+
+    if (ref $figure_filename_b_backward)
+    {
+	return $figure_filename_b_backward;
+    }
+
+    # return the filenames of the rendered graphs
+
+    return [ $figure_filename_a_forward, $figure_filename_b_forward, $figure_filename_a_backward, $figure_filename_b_backward, ];
+}
+
+
+package Heterarch::Test::Output::Formatter::Figure::HHGatesInternal;
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
@@ -5970,6 +6089,12 @@ $self->{data_string}";
 
     return [ $figure_filename_a, $figure_filename_b, ];
 }
+
+
+package Heterarch::Test::Output::Formatter::Figure::HHGatesSteadyStateTau;
+
+
+our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
 
 
 package Heterarch::Test::Output::Formatter::Figure::Simple;
