@@ -4624,7 +4624,10 @@ sub _output_latex_environment_figure
 
 # 	print $output_file '  \center'. "\n";
 
-	print $output_file '  \includegraphics' . $includegraphics_options . "{$includegraphics}\n";
+	foreach my $includegraphic (@$includegraphics)
+	{
+	    print $output_file '  \includegraphics' . $includegraphics_options . "{$includegraphic}\n";
+	}
 
 	if ($caption)
 	{
@@ -4780,16 +4783,13 @@ sub _output_latex_figure_generate_insert
 
     if (ref $figure_filenames eq 'ARRAY')
     {
-	foreach my $figure_filename (@$figure_filenames)
-	{
-	    _output_latex_figure_insert_graph
-		(
-		 $output_file,
-		 $figure_reference,
-		 $figure,
-		 $figure_filename
-		);
-	}
+	_output_latex_figure_insert_graph
+	    (
+	     $output_file,
+	     $figure_reference,
+	     $figure,
+	     $figure_filenames
+	    );
     }
     else
     {
@@ -4820,7 +4820,7 @@ sub _output_latex_figure_insert_graph
 
     my $figure = shift;
 
-    my $filename = shift;
+    my $filenames = shift;
 
     _output_latex_environment_figure
 	(
@@ -4830,7 +4830,7 @@ sub _output_latex_figure_insert_graph
 	  caption_short => $figure->{caption}->{short},
 	  content_type => "figure",
 	  content_type_options => '[ht]',
-	  includegraphics => $filename,
+	  includegraphics => $filenames,
 	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
 	  label => $figure_reference,,
 	 },
