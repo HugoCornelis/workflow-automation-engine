@@ -4846,16 +4846,16 @@ sub _output_latex_figure_references_insert
 
     my $cd_1 = $ss->{cd_1};
 
-    my $fr_0 = $ss->{fr_0};
+    # my $fr_0 = $ss->{fr_0};
 
-    my $fr_1 = $ss->{fr_1};
+    # my $fr_1 = $ss->{fr_1};
 
     if ($cd_1)
     {
 	print $output_file '\item [$\bullet$]';
     }
 
-    if ($fr_1)
+    if (scalar @$figure_references eq 1)
     {
 	print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
     }
@@ -4865,11 +4865,11 @@ sub _output_latex_figure_references_insert
 
 	while (my $figure_reference = shift @$figure_references)
 	{
-	    if ($fr_0)
+	    if (scalar @$figure_references eq 0)
 	    {
 		print $output_file '~\ref{' . $figure_reference . '}';
 	    }
-	    elsif ($fr_1)
+	    elsif (scalar @$figure_references eq 1)
 	    {
 		print $output_file '~\ref{' . $figure_reference . '} and';
 	    }
@@ -6427,8 +6427,8 @@ sub ss_figure_references
 
     my $figure_references = shift;
 
-    $self->{fr_0} = scalar @$figure_references eq 0 ? 1 : 0;
-    $self->{fr_1} = scalar @$figure_references eq 1 ? 1 : 0;
+    # $self->{fr_0} = scalar @$figure_references eq 0 ? 1 : 0;
+    # $self->{fr_1} = scalar @$figure_references eq 1 ? 1 : 0;
 }
 
 
@@ -6443,8 +6443,8 @@ sub new
 	   cd_1_comment => undef,
 	   ct_0 => undef,
 	   ct_1 => undef,
-	   fr_0 => undef,
-	   fr_1 => undef,
+	   # fr_0 => undef,
+	   # fr_1 => undef,
 	  };
 
     bless $self, $package;
