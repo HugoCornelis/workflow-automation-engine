@@ -4586,82 +4586,6 @@ sub _output_latex_environment_prompt
 }
 
 
-sub _output_latex_environment_figure
-{
-    my $outputfile = shift;
-
-    my $content_options = shift;
-
-    my $content_type = $content_options->{content_type};
-    my $content_type_options = $content_options->{content_type_options} || "";
-    my $includegraphics = $content_options->{includegraphics};
-    my $includegraphics_options = $content_options->{includegraphics_options} || "";
-    my $caption = $content_options->{caption};
-    my $caption_short = $content_options->{caption_short} || "";
-    my $label = $content_options->{label};
-
-# \begin{figure}
-# \fbox{\includegraphics[width=\linewidth]{/tmp/abcdef-output_graph_render.pdf}}
-# \end{figure}
-
-# % \begin{figure}[ht]
-# %   \includegraphics*[scale=0.1]{/tmp/abcdef-output_graph_render.pdf}
-# % %  \resizebox{2cm}{!} {\includegraphics{/tmp/abcdef-output_graph_render.pdf}}
-# %   \caption[Ten passive compartments voltage clamped]{\small Ten passive compartments clamped with command voltage of 0.1V using a perfect clamp object.}
-# %   \label{fig:perfectclamp}
-# % \end{figure}
-
-    # if there is content
-
-    if (defined $includegraphics)
-    {
-	# output the content begin marker
-
-	if ($content_type)
-	{
-	    print $output_file '\begin{' . $content_type . "}$content_type_options\n";
-	}
-
-# 	print $output_file '  \center'. "\n";
-
-	foreach my $includegraphic (@$includegraphics)
-	{
-	    print $output_file '  \includegraphics' . $includegraphics_options . "{$includegraphic}\n";
-	}
-
-	if ($caption)
-	{
-	    print $output_file '  \caption[' . $caption_short . ']{\small ' . $caption . '}' . "\n";
-	}
-
-	if ($label)
-	{
-	    print $output_file '  \label{'. $label . '}' . "\n";
-	}
-
-# \begin{figure}[ht]
-#   \center
-#   \includegraphics[scale=0.6]{figures/mstep.eps}
-#   \caption[Staggered Time Grid]{\small \index{staggered
-#       time grid} Mid step evaluation of membrane potential and
-#     Hodgkin-Huxley equations.  To calculate the conductance at time
-#     point 2, we need the membrane potential at time point 1.  To
-#     calculate the membrane potential at time point 3, we need the
-#     conductance at time point 2.  The membrane potential at time point
-#     2 is never computed, neither the conductance at time point 3.}
-#   \label{fig:midstep}
-# \end{figure}
-
-	# output the content end marker
-
-	if ($content_type)
-	{
-	    print $output_file '\end{' . $content_type . "}\n\n";
-	}
-    }
-}
-
-
 sub _output_latex_environment_minipage
 {
     my $outputfile = shift;
@@ -4776,25 +4700,17 @@ sub _output_latex_figure_generate_insert
 
     # generate its reference
 
-    my $figure_reference = $figure_object->generate_reference('latex');
+    my $label_error = $figure_object->generate_label('latex');
 
     # render the graph
 
-    my $figure_filenames = $figure_object->render();
+    my $render_error = $figure_object->render();
 
     # insert the figure filename in the latex file
 
-    if (ref $figure_filenames eq 'ARRAY')
-    {
-	_output_latex_figure_insert_graph
-	    (
-	     $output_file,
-	     $figure_reference,
-	     $figure,
-	     $figure_filenames
-	    );
-    }
-    else
+    my $insert_error = $figure_object->insert($figure->{caption}->{full}, $figure->{caption}->{short});
+
+    if ($label_error or $render_error or $insert_error)
     {
 	#! note that this does not generate a label for referencing
 
@@ -4812,32 +4728,6 @@ sub _output_latex_figure_generate_insert
 	     },
 	    );
     }
-}
-
-
-sub _output_latex_figure_insert_graph
-{
-    my $output_file = shift;
-
-    my $figure_reference = shift;
-
-    my $figure = shift;
-
-    my $filenames = shift;
-
-    _output_latex_environment_figure
-	(
-	 $output_file,
-	 {
-	  caption => $figure->{caption}->{full},
-	  caption_short => $figure->{caption}->{short},
-	  content_type => "figure",
-	  content_type_options => '[ht]',
-	  includegraphics => $filenames,
-	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
-	  label => $figure_reference,,
-	 },
-	);
 }
 
 
@@ -5730,13 +5620,13 @@ sub process
 package Heterarch::Test::Output::Formatter::Figure;
 
 
-sub generate_reference
+sub generate_label
 {
     my $self = shift;
 
     my $type = shift;
 
-    # create the reference label for this figure
+    # create the label for this figure
 
     my $figure_definition = $self->{figure_definition};
 
@@ -5744,17 +5634,142 @@ sub generate_reference
 
     #! this may be latex specific
 
-    my $figure_reference = "fig:$context_path-$figure_definition->{name}";
+    if ($type eq 'latex')
+    {
+	my $figure_label = "fig:$context_path-$figure_definition->{name}";
 
-    # add it to the list of references
+	# add it to the list of references
 
-    my $figure_references = $self->{figure_references};
+	my $figure_references = $self->{figure_references};
 
-    push @$figure_references, $figure_reference;
+	push @$figure_references, $figure_label;
 
-    # return result: figure reference
+	# set figure label
 
-    return $figure_reference;
+	$self->{figure_label} = $figure_label;
+
+	# return: no error
+
+	return undef;
+    }
+    else
+    {
+	return  \ "$0: only latex labels have been implemented.";
+    }
+}
+
+
+sub insert
+{
+    my $self = shift;
+
+    my $full_caption = shift;
+
+    my $short_caption = shift;
+
+    my $filenames = $self->{filenames};
+
+    # insert the figure filename in the latex file
+
+    $self->insert_figure_environment
+	(
+	 $output_file,
+	 {
+	  caption => $full_caption,
+	  caption_short => $short_caption,
+	  content_type => "figure",
+	  content_type_options => '[ht]',
+	  includegraphics => $filenames,
+	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
+	  label => $self->{figure_label},
+	 },
+	);
+
+    # return result: no error
+
+    return undef;
+}
+
+
+sub insert_figure_environment
+{
+    my $self = shift;
+
+    my $outputfile = shift;
+
+    my $content_options = shift;
+
+    my $content_type = $content_options->{content_type};
+    my $content_type_options = $content_options->{content_type_options} || "";
+    my $includegraphics = $content_options->{includegraphics};
+    my $includegraphics_options = $content_options->{includegraphics_options} || "";
+    my $caption = $content_options->{caption};
+    my $caption_short = $content_options->{caption_short} || "";
+    my $label = $content_options->{label};
+
+# \begin{figure}
+# \fbox{\includegraphics[width=\linewidth]{/tmp/abcdef-output_graph_render.pdf}}
+# \end{figure}
+
+# % \begin{figure}[ht]
+# %   \includegraphics*[scale=0.1]{/tmp/abcdef-output_graph_render.pdf}
+# % %  \resizebox{2cm}{!} {\includegraphics{/tmp/abcdef-output_graph_render.pdf}}
+# %   \caption[Ten passive compartments voltage clamped]{\small Ten passive compartments clamped with command voltage of 0.1V using a perfect clamp object.}
+# %   \label{fig:perfectclamp}
+# % \end{figure}
+
+    # if there is content
+
+    if (defined $includegraphics)
+    {
+	# output the content begin marker
+
+	if ($content_type)
+	{
+	    print $output_file '\begin{' . $content_type . "}$content_type_options\n";
+	}
+
+# 	print $output_file '  \center'. "\n";
+
+	foreach my $includegraphic (@$includegraphics)
+	{
+	    print $output_file '  \includegraphics' . $includegraphics_options . "{$includegraphic}\n";
+	}
+
+	if ($caption)
+	{
+	    print $output_file '  \caption[' . $caption_short . ']{\small ' . $caption . '}' . "\n";
+	}
+
+	if ($label)
+	{
+	    print $output_file '  \label{'. $label . '}' . "\n";
+	}
+
+# \begin{figure}[ht]
+#   \center
+#   \includegraphics[scale=0.6]{figures/mstep.eps}
+#   \caption[Staggered Time Grid]{\small \index{staggered
+#       time grid} Mid step evaluation of membrane potential and
+#     Hodgkin-Huxley equations.  To calculate the conductance at time
+#     point 2, we need the membrane potential at time point 1.  To
+#     calculate the membrane potential at time point 3, we need the
+#     conductance at time point 2.  The membrane potential at time point
+#     2 is never computed, neither the conductance at time point 3.}
+#   \label{fig:midstep}
+# \end{figure}
+
+	# output the content end marker
+
+	if ($content_type)
+	{
+	    print $output_file '\end{' . $content_type . "}\n\n";
+	}
+    }
+
+    # return result: no error
+
+    return undef;
 }
 
 
@@ -5904,6 +5919,34 @@ package Heterarch::Test::Output::Formatter::Figure::HHGatesAlphaBeta;
 our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
 
 
+sub insert
+{
+    my $self = shift;
+
+    my $full_caption = shift;
+
+    my $short_caption = shift;
+
+    my $filenames = $self->{filenames};
+
+    # insert the figure filename in the latex file
+
+    $self->insert_figure_environment
+	(
+	 $output_file,
+	 {
+	  caption => $full_caption,
+	  caption_short => $short_caption,
+	  content_type => "figure",
+	  content_type_options => '[ht]',
+	  includegraphics => $filenames,
+	  includegraphics_options => '[width=0.5\linewidth]', # '[scale=0.01]',
+	  label => $self->{figure_label},
+	 },
+	);
+}
+
+
 sub new
 {
     my $self = shift;
@@ -6002,9 +6045,15 @@ sub render
 	return $figure_filename_b_backward;
     }
 
-    # return the filenames of the rendered graphs
+    # set the filenames of the rendered graphs
 
-    return [ $figure_filename_a_forward, $figure_filename_b_forward, $figure_filename_a_backward, $figure_filename_b_backward, ];
+    my $filenames = [ $figure_filename_a_forward, $figure_filename_b_forward, $figure_filename_a_backward, $figure_filename_b_backward, ];
+
+    $self->{filenames} = $filenames;
+
+    # return: no error
+
+    return undef;
 }
 
 
@@ -6014,11 +6063,39 @@ package Heterarch::Test::Output::Formatter::Figure::HHGatesInternal;
 our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
 
 
-sub generate_reference
+sub generate_label
 {
     my $self = shift;
 
-    return $self->SUPER::generate_reference(@_);
+    return $self->SUPER::generate_label(@_);
+}
+
+
+sub insert
+{
+    my $self = shift;
+
+    my $full_caption = shift;
+
+    my $short_caption = shift;
+
+    my $filenames = $self->{filenames};
+
+    # insert the figure filename in the latex file
+
+    $self->insert_figure_environment
+	(
+	 $output_file,
+	 {
+	  caption => $full_caption,
+	  caption_short => $short_caption,
+	  content_type => "figure",
+	  content_type_options => '[ht]',
+	  includegraphics => $filenames,
+	  includegraphics_options => '[width=0.5\linewidth]', # '[scale=0.01]',
+	  label => $self->{figure_label},
+	 },
+	);
 }
 
 
@@ -6087,7 +6164,15 @@ $self->{data_string}";
 	return $figure_filename_b;
     }
 
-    return [ $figure_filename_a, $figure_filename_b, ];
+    # set the filenames of the rendered graphs
+
+    my $filenames = [ $figure_filename_a, $figure_filename_b, ];
+
+    $self->{filenames} = $filenames;
+
+    # return: no error
+
+    return undef;
 }
 
 
@@ -6103,11 +6188,11 @@ package Heterarch::Test::Output::Formatter::Figure::Simple;
 our @ISA = ("Heterarch::Test::Output::Formatter::Figure");
 
 
-sub generate_reference
+sub generate_label
 {
     my $self = shift;
 
-    return $self->SUPER::generate_reference(@_);
+    return $self->SUPER::generate_label(@_);
 }
 
 
@@ -6135,7 +6220,15 @@ sub render
     }
     else
     {
-	return [ $output_filename, ];
+	# set the filenames of the rendered graphs
+
+	my $filenames = [ $output_filename, ];
+
+	$self->{filenames} = $filenames;
+
+	# return: no error
+
+	return undef;
     }
 }
 
