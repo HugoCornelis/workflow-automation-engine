@@ -4708,7 +4708,7 @@ sub _output_latex_figure_generate_insert
 
     # insert the figure filename in the latex file
 
-    my $insert_error = $figure_object->insert($figure->{caption}->{full}, $figure->{caption}->{short});
+    my $insert_error = $figure_object->insert($figure);
 
     if ($label_error or $render_error or $insert_error)
     {
@@ -4750,7 +4750,7 @@ sub _output_latex_figure_references_insert
 
     if (scalar @$figure_references eq 1)
     {
-	print $output_file 'See figure~\ref{' . $figure_references->[0] . "}.";
+	print $output_file 'See figure~\ref{' . $figure_references->[0] . "}";
     }
     else
     {
@@ -4771,9 +4771,9 @@ sub _output_latex_figure_references_insert
 		print $output_file '~\ref{' . $figure_reference . '},';
 	    }
 	}
-
-	print $output_file ".\n\n";
     }
+
+    print $output_file ".\n\n";
 }
 
 
@@ -4949,6 +4949,7 @@ sub _output_latex_preamble
 \usepackage{graphicx}
 \usepackage{longtable}
 % \usepackage[margin=2cm]{geometry}
+\usepackage{subcaption}
 \usepackage{url}
 \usepackage{verbatim}
 \usepackage{fancyvrb}
@@ -5663,9 +5664,11 @@ sub insert
 {
     my $self = shift;
 
-    my $full_caption = shift;
+    my $figure_definition = shift;
 
-    my $short_caption = shift;
+    my $full_caption = $figure_definition->{caption}->{full};
+
+    my $short_caption = $figure_definition->{caption}->{short};
 
     my $filenames = $self->{filenames};
 
@@ -5675,12 +5678,10 @@ sub insert
 	(
 	 $output_file,
 	 {
-	  caption => $full_caption,
-	  caption_short => $short_caption,
-	  content_type => "figure",
+	  caption => [ $full_caption, ],
+	  caption_short => [ $short_caption, ],
 	  content_type_options => '[ht]',
 	  includegraphics => $filenames,
-	  includegraphics_options => '[width=\linewidth]', # '[scale=0.01]',
 	  label => $self->{figure_label},
 	 },
 	);
@@ -5699,10 +5700,8 @@ sub insert_figure_environment
 
     my $content_options = shift;
 
-    my $content_type = $content_options->{content_type};
     my $content_type_options = $content_options->{content_type_options} || "";
     my $includegraphics = $content_options->{includegraphics};
-    my $includegraphics_options = $content_options->{includegraphics_options} || "";
     my $caption = $content_options->{caption};
     my $caption_short = $content_options->{caption_short} || "";
     my $label = $content_options->{label};
@@ -5724,21 +5723,26 @@ sub insert_figure_environment
     {
 	# output the content begin marker
 
-	if ($content_type)
-	{
-	    print $output_file '\begin{' . $content_type . "}$content_type_options\n";
-	}
+	print $output_file '\begin{figure}' . "$content_type_options\n";
 
 # 	print $output_file '  \center'. "\n";
+
+	my $width_divider = 1 / scalar @$includegraphics;
+
+	my $includegraphics_options = "[width=$width_divider" . '\linewidth]';
 
 	foreach my $includegraphic (@$includegraphics)
 	{
 	    print $output_file '  \includegraphics' . $includegraphics_options . "{$includegraphic}\n";
 	}
 
-	if ($caption)
+	for (my $index = 0 ; $index < scalar @$caption ; $index++)
 	{
-	    print $output_file '  \caption[' . $caption_short . ']{\small ' . $caption . '}' . "\n";
+# 	    print $output_file '  \begin{minipage}' . '{' . $width_divider . '\linewidth}' . "\n";
+
+	    print $output_file '    \caption[' . $caption_short->[$index] . ']{\small \textbf{' . $caption->[$index] . '}}' . "\n";
+
+# 	    print $output_file '  \end{minipage}' . "\n";
 	}
 
 	if ($label)
@@ -5761,10 +5765,7 @@ sub insert_figure_environment
 
 	# output the content end marker
 
-	if ($content_type)
-	{
-	    print $output_file '\end{' . $content_type . "}\n\n";
-	}
+	print $output_file '\end{figure}' . "\n\n";
     }
 
     # return result: no error
@@ -5923,9 +5924,11 @@ sub insert
 {
     my $self = shift;
 
-    my $full_caption = shift;
+    my $figure_definition = shift;
 
-    my $short_caption = shift;
+    my $full_caption = $figure_definition->{caption}->{full};
+
+    my $short_caption = $figure_definition->{caption}->{short};
 
     my $filenames = $self->{filenames};
 
@@ -5935,15 +5938,77 @@ sub insert
 	(
 	 $output_file,
 	 {
-	  caption => $full_caption,
-	  caption_short => $short_caption,
-	  content_type => "figure",
+	  caption_main => $full_caption,
+	  caption_main_short => $short_caption,
 	  content_type_options => '[ht]',
 	  includegraphics => $filenames,
-	  includegraphics_options => '[width=0.5\linewidth]', # '[scale=0.01]',
 	  label => $self->{figure_label},
 	 },
 	);
+}
+
+
+sub insert_figure_environment
+{
+    my $self = shift;
+
+    my $outputfile = shift;
+
+    my $content_options = shift;
+
+    my $content_type_options = $content_options->{content_type_options} || "";
+    my $includegraphics = $content_options->{includegraphics};
+    my $caption = $content_options->{caption};
+    my $caption_main = $content_options->{caption_main} || "";
+    my $caption_main_short = $content_options->{caption_main_short} || "";
+    my $caption_short = $content_options->{caption_short} || "";
+    my $label = $content_options->{label};
+
+    # if there is content
+
+    if (defined $includegraphics)
+    {
+	# output the content begin marker
+
+	print $output_file '\begin{figure}' . "$content_type_options\n";
+
+	my $width_divider = 2 / scalar @$includegraphics;
+
+	for (my $index = 0 ; $index < scalar @$includegraphics ; $index++)
+	{
+	    my $includegraphic = $includegraphics->[$index];
+
+	    print $output_file '  \begin{subfigure}' . '{' . $width_divider . '\textwidth}' . "\n";
+
+	    print $output_file '  \centering' . "\n";
+
+	    my $includegraphics_options = "[width=.9" . '\linewidth]';
+
+	    print $output_file '    \includegraphics' . $includegraphics_options . "{$includegraphic}\n";
+
+# 	    print $output_file '    \caption[' . $caption_short->[$index] . ']{\small \textbf{' . $caption->[$index] . '}}' . "\n";
+
+ 	    print $output_file '  \end{subfigure}' . "\n";
+	}
+
+	if ($caption_main)
+	{
+	    print $output_file '    \caption[' . $caption_main_short . ']{\small \textbf{' . $caption_main . '}}' . "\n";
+	}
+
+	if ($label)
+	{
+	    print $output_file '  \label{'. $label . '}' . "\n";
+	}
+
+	# output the content end marker
+
+	print $output_file '\end{figure}' . "\n\n";
+    }
+
+    # return result: no error
+
+    return undef;
 }
 
 
@@ -6075,9 +6140,11 @@ sub insert
 {
     my $self = shift;
 
-    my $full_caption = shift;
+    my $figure_definition = shift;
 
-    my $short_caption = shift;
+    my $full_caption = $figure_definition->{caption}->{full};
+
+    my $short_caption = $figure_definition->{caption}->{short};
 
     my $filenames = $self->{filenames};
 
@@ -6087,15 +6154,85 @@ sub insert
 	(
 	 $output_file,
 	 {
-	  caption => $full_caption,
-	  caption_short => $short_caption,
-	  content_type => "figure",
+	  caption => [
+		      $figure_definition->{caption_A}->{full},
+		      $figure_definition->{caption_B}->{full},
+		     ],
+	  caption_main => $figure_definition->{caption}->{full},
+	  caption_main_short => $figure_definition->{caption}->{short},
+	  caption_short => [
+			    $figure_definition->{caption_A}->{short},
+			    $figure_definition->{caption_B}->{short},
+			   ],
 	  content_type_options => '[ht]',
 	  includegraphics => $filenames,
-	  includegraphics_options => '[width=0.5\linewidth]', # '[scale=0.01]',
 	  label => $self->{figure_label},
 	 },
 	);
+}
+
+
+sub insert_figure_environment
+{
+    my $self = shift;
+
+    my $outputfile = shift;
+
+    my $content_options = shift;
+
+    my $content_type_options = $content_options->{content_type_options} || "";
+    my $includegraphics = $content_options->{includegraphics};
+    my $caption = $content_options->{caption};
+    my $caption_main = $content_options->{caption_main} || "";
+    my $caption_main_short = $content_options->{caption_main_short} || "";
+    my $caption_short = $content_options->{caption_short} || "";
+    my $label = $content_options->{label};
+
+    # if there is content
+
+    if (defined $includegraphics)
+    {
+	# output the content begin marker
+
+	print $output_file '\begin{figure}' . "$content_type_options\n";
+
+	my $width_divider = 1 / scalar @$includegraphics;
+
+	for (my $index = 0 ; $index < scalar @$includegraphics ; $index++)
+	{
+	    my $includegraphic = $includegraphics->[$index];
+
+	    print $output_file '  \begin{subfigure}' . '{' . $width_divider . '\textwidth}' . "\n";
+
+	    print $output_file '  \centering' . "\n";
+
+	    my $includegraphics_options = "[width=.9" . '\linewidth]';
+
+	    print $output_file '    \includegraphics' . $includegraphics_options . "{$includegraphic}\n";
+
+	    print $output_file '    \caption[' . $caption_short->[$index] . ']{\small \textbf{' . $caption->[$index] . '}}' . "\n";
+
+ 	    print $output_file '  \end{subfigure}' . "\n";
+	}
+
+	if ($caption_main)
+	{
+	    print $output_file '    \caption[' . $caption_main_short . ']{\small \textbf{' . $caption_main . '}}' . "\n";
+	}
+
+	if ($label)
+	{
+	    print $output_file '  \label{'. $label . '}' . "\n";
+	}
+
+	# output the content end marker
+
+	print $output_file '\end{figure}' . "\n\n";
+    }
+
+    # return result: no error
+
+    return undef;
 }
 
 
