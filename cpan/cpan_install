@@ -11,8 +11,14 @@ print "Installing CPAN modules\n";
 
 print Dumper($module_filenames);
 
+# loop over all required modules
+
 foreach my $module_filename (@$module_filenames)
 {
+    # skip inline python
+
+    #t why?
+
     $module_filename =~ /^...(.*)\.tar\.gz$/i;
 
     my $module_name = $1;
@@ -21,6 +27,8 @@ foreach my $module_filename (@$module_filenames)
     {
 	next;
     }
+
+    # is this module already installed?
 
     $module_name =~ /([^0-9\.]+)-([0-9\.]+)/;
 
@@ -37,6 +45,8 @@ foreach my $module_filename (@$module_filenames)
 
     if ($installed)
     {
+	# module is already installed, skip it
+
 	print "Not installing $module_name ($module_filename), it looks like it is already installed\n";
 
 	next;
@@ -46,24 +56,44 @@ foreach my $module_filename (@$module_filenames)
 
     print `pwd`;
 
+    # unpack the module
+
     system "tar xfz $module_filename --no-same-owner --no-same-permissions";
 
     chdir $module_name;
 
     print `pwd`;
 
+    # run the perl makefile
+
+    # inline python ...
+
     if ($module_name =~ /inline-python/i)
     {
+	# ... uses an interactive perl makefile
+
 	system "echo '' | perl Makefile.PL";
     }
+
+    # ... other inline modules ...
+
     elsif ($module_name =~ /inline/i)
     {
+	# ... have perl makefiles that ask questions that should be answered with 'y'es.
+
 	system "echo y | perl Makefile.PL";
     }
+
+    # ... other modules ...
+
     else
     {
+	# ... don't require special handling
+
 	system "perl Makefile.PL";
     }
+
+    # build and install
 
     system "make";
 
