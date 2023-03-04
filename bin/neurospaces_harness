@@ -2501,13 +2501,13 @@ sub ec_end
 
 	if (defined $command_test)
 	{
-	    $description = "*** Test: $command_test->{description}";
+	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Error: no description of this command_test)";
 
 	    $name = "";
 	}
 	elsif (defined $command_definition)
 	{
-	    $description = "command $command_definition->{description}";
+	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Error: no description of this command_definition)";
 
 	    $name = " ($command_definition->{command})";
 	}
@@ -3111,7 +3111,7 @@ sub ec_examine
 	{
 	    $comment = $command_test->{comment};
 
-	    $description = "*** Test: $command_test->{description}";
+	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Error: no description of this command_test)";
 
 	    $name = "";
 	}
@@ -3119,7 +3119,7 @@ sub ec_examine
 	{
 	    $comment = $command_definition->{comment};
 
-	    $description = "command $command_definition->{description}";
+	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Error: no description of this command_definition)";
 
 	    $name = " ($command_definition->{command})";
 	}
