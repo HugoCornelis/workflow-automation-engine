@@ -705,6 +705,34 @@ package Heterarch::Test::CommandDefinition;
 our @ISA = ("Heterarch::Test::Element");
 
 
+sub parse_command_line
+{
+    my $command_definition = shift;
+
+    my $command;
+
+    my $arguments;
+
+    if (exists $command_definition->{command})
+    {
+	$command = $command_definition->{command};
+    }
+
+    if (exists $command_definition->{arguments})
+    {
+	$arguments = $command_definition->{arguments};
+    }
+    else
+    {
+	$arguments = [ split '\s', $command, ];
+
+	$command = shift @$arguments;
+    }
+
+    return ($command, $arguments);
+}
+
+
 sub rebless
 {
     my $command_definition = shift;
@@ -779,72 +807,28 @@ sub spawn_new
 
     my $fd_output = shift;
 
-    # a command can be an absolute pathname,
-    # can come from the _build directory
-    # or from the sources for a script
+    # retrieve the shell command and its arguments
 
-# 		-f $command and print "Found command $command\n";
-# 		-f $built_exe_directory . $command and print "Found built $built_exe_directory$command\n";
-# 		-f $core_directory . $command and print "Found core $core_directory$command\n";
+    my ($command, $arguments) = $command_definition->parse_command_line();
 
-    my $command = $command_definition->{command};
-
-    my $test_command = $command;
-    # = (-f $command
-    #    ? $command
-    #    : (defined $built_exe_directory
-    #       ? (-f $built_exe_directory . $command
-    #        ? $built_exe_directory . $command
-    #        : $core_directory . $command)
-    #       : $command));
-
-    # find differences between how to run this command and
-    # the one already running
+    # compare the running command with this command
 
     my $new_command_definition
 	= {
-	    arguments => $command_definition->{arguments},
-	    command => $test_command,
+	    arguments => $arguments,
+	    command => $command,
 	  };
 
     my $differences = data_comparator($new_command_definition, $global_running_command_definition);
 
     # remember to spawn a new command
 
-    my $spawn_new;
-
-    $spawn_new = not $command_definition->{recycle};
-
-    # (
-	#  # if we do not have a previous command
-
-	#  (not $global_exp)
-
-	#  # or if there were differences with the previous command
-
-	#  || (not $differences->is_empty())
-
-	#  # or if the previous command had side effects
-
-	#  || $global_previous_command_side_effects
-
-	#  # or if we had to prepare this command
-
-	#  || $command_definition->{preparation}
-	# )
-	# && (not $command_definition->{recycle});
-
-    # prefix the command with the core directory
-
-    $command = $new_command_definition->{command};
-
-    my $arguments = $command_definition->{arguments};
+    my $spawn_new = not $command_definition->{recycle};
 
     # if the command can be executed
 
     my $test_startup;
 
-# 		    if (-x $command)
     if (defined $command)
     {
 	if ($spawn_new)
@@ -903,21 +887,8 @@ sub spawn_new
 	    $test_startup = 0;
 	}
     }
-    # else
-    # {
-    # 	my $error = "$command is not executable";
 
-    # 	Heterarch::Test::Reporting::report_error_add
-    # 	    (
-    # 	     {
-    # 	      description => $description,
-    # 	      error => $error,
-    # 	      module_name => $module_name,
-    # 	     },
-    # 	    );
-
-    # 	next;
-    # }
+    # return the expect object and whether a new command has been started
 
     return $global_exp, $test_startup;
 }
@@ -2988,16 +2959,6 @@ sub _reparation
 
     my $reparation = $harnessing->{reparation};
 
-    my $reparation_name
-        = ($command_definition
-	    ? ($command_definition->{command}
-		? "command '$command_definition->{command}'"
-		: "module '$module_definition->{name}'")
-	    : ($command_definition->{recycle}
-		? "these tests use the previous running command ($command_definition->{recycle})"
-		: "*** Warning: this command definition is incomplete (no command and no recycle clause) -- this warning message is wrong and needs to be check")
-	);
-
     my $reparation_error;
 
     # if there is a reparation clause
@@ -3009,7 +2970,9 @@ sub _reparation
 
 	my $fd_output = $self->{fd_output};
 
-	Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing $reparation_name ($reparation->{description})");
+	my $reparation_description = $reparation->{description};
+
+	Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
 
 	# execute the reparation clause
 
@@ -3032,7 +2995,7 @@ sub _reparation
 		(
 		 $fd_output,
 		 {
-		     description => $reparation_name,
+		     description => $reparation_description,
 		     error => $reparation_error,
 		     module_name => $module_name,
 		     subdescription => $subdescription,
@@ -4096,7 +4059,7 @@ package Heterarch::Test::Output::Summarizer;
 #
 # A Heterarch::Test::Output::Summarizer implements ->ex_mo_prepare(),
 # ex_cd_start() and ex_ct_run() methods that select content and
-# prepare a structured for generating a summary in YAML of this
+# prepare a structure for generating a summary in YAML of this
 # selection.
 #
 
@@ -4107,7 +4070,7 @@ package Heterarch::Test::Output::Formatter;
 
 #
 # A Heterarch::Test::Output::Formatter implements ->ex_mo_prepare(),
-# ->ex_cd_start() and ->ex_ct_run() methods that prepare structured
+# ->ex_cd_start() and ->ex_ct_run() methods that prepare structure
 # content for the output formatter to convert to its target format.
 #
 # The result of the conversion is stored in the hash
@@ -4436,13 +4399,13 @@ sub ex_cd_start
 
 	# my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
 
-	my $command = $command_definition->{command};
-
 	# remember to spawn a new command
 
 	my $spawn_new = not $command_definition->{recycle};
 
-	my $arguments = $command_definition->{arguments};
+	# retrieve the shell command and its arguments
+
+	my ($command, $arguments) = $command_definition->parse_command_line();
 
 	# if the command can be executed
 
@@ -5161,9 +5124,11 @@ sub _output_latex_command_definition_command_arguments
 
     my $ct_1 = $ss->{ct_1};
 
-    my $arguments = $command_definition->{arguments};
+    # retrieve the shell command and its arguments
 
-    my $command = join ' ', $command_definition->{command}, @$arguments;
+    my ($command, $arguments) = $command_definition->parse_command_line();
+
+    my $command_string = join ' ', $command, @$arguments;
 
     if ($cd_1)
     {
@@ -5179,7 +5144,7 @@ sub _output_latex_command_definition_command_arguments
 	_output_latex($output_file, 'The tests are started with the system shell command: ');
     }
 
-    _output_latex_prompt($output_file, "textbf", $command, "", "\n\n");
+    _output_latex_prompt($output_file, "textbf", $command_string, "", "\n\n");
 }
 
 
@@ -6668,9 +6633,9 @@ sub ex_cd_start
 
 	my $selected_module = $global_test_report->{selected}->{$module_name};
 
-	my $command = $command_definition->{command};
+	# retrieve the shell command and its arguments
 
-	my $arguments = $command_definition->{arguments};
+	my ($command, $arguments) = $command_definition->parse_command_line();
 
 	my $command_string = $command . ' ' . join ' ', @ { $arguments || [] };
 
