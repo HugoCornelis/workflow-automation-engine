@@ -705,6 +705,23 @@ package Heterarch::Test::CommandDefinition;
 our @ISA = ("Heterarch::Test::Element");
 
 
+sub process_clauses
+{
+    my $command_definition = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    if (exists $command_definition->{wait})
+    {
+	my $wait = $command_definition->{wait};
+
+	$execution_context->wait($fd_output, $wait);
+    }
+}
+
+
 sub parse_command_line
 {
     my $command_definition = shift;
@@ -1648,17 +1665,12 @@ sub _process_wait
 
     my $fd_output = shift;
 
-    my $wait = $self->{wait};
-
-    # wait
-
-    if ($wait)
+    if (exists $self->{wait})
     {
-	print $fd_output "*** Wait: $wait\n";
+	my $wait = $self->{wait};
 
-	select(undef, undef, undef, $wait);
+	$execution_context->wait($fd_output, $wait);
     }
-
 }
 
 
@@ -3151,6 +3163,25 @@ sub terminate
 }
 
 
+sub wait
+{
+    my $self = shift;
+
+    my $fd_output = shift;
+
+    my $wait = shift;
+
+    # wait
+
+    if ($wait)
+    {
+	print $fd_output "*** Wait: $wait seconds\n";
+
+	select(undef, undef, undef, $wait);
+    }
+}
+
+
 package Heterarch::Test::Executor;
 
 #
@@ -3247,6 +3278,14 @@ sub ex_cd_start
     my $fd_output = $self->{fd_output};
 
     $command_definition->cd_start($self, $fd_output);
+
+    # process the command_definition specific clauses
+
+    #! this sloppy implementation works around a too elaborate
+    #! object-oriented based implementation that would require
+    #! to call SUPER class methods inside ->cd_start().
+
+    $command_definition->process_clauses($execution_context, $fd_output);
 }
 
 
