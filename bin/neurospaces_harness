@@ -2472,13 +2472,13 @@ sub ec_end
 
 	if (defined $command_test)
 	{
-	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Error: no description of this command_test)";
+	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Warning: no description of this command_test when ending the execution context)";
 
 	    $name = "";
 	}
 	elsif (defined $command_definition)
 	{
-	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Error: no description of this command_definition)";
+	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Warning: no description of this command_definition when ending the execution context)";
 
 	    $name = " ($command_definition->{command})";
 	}
@@ -3074,7 +3074,7 @@ sub ec_examine
 	{
 	    $comment = $command_test->{comment};
 
-	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Error: no description of this command_test)";
+	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Warning: no description of this command_test when examining the execution context)";
 
 	    $name = "";
 	}
@@ -3082,7 +3082,7 @@ sub ec_examine
 	{
 	    $comment = $command_definition->{comment};
 
-	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Error: no description of this command_definition)";
+	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Warning: no description of this command_definition when examining the execution context)";
 
 	    $name = " ($command_definition->{command})";
 	}
