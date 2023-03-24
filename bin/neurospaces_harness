@@ -1034,6 +1034,71 @@ sub cd_start
 }
 
 
+package Heterarch::Test::CommandDefinition::IsFileExecutable;
+
+
+our @ISA = ("Heterarch::Test::CommandDefinition");
+
+
+#
+# sub start
+#
+
+sub cd_start
+{
+    my $self = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # code is already instantiated, nothing to do here
+
+    my $sub = $self->{command};
+
+    my $error;
+
+    if (-x "workflow-tests-commands-data/examples_sh/sh_single_command.sh")
+    {
+    }
+    else
+    {
+	$error = "workflow-tests-commands-data/examples_sh/sh_single_command.sh does not have its execute bit set"
+    }
+
+    if ($error)
+    {
+	# my $command_definition = $execution_context->get_command_definition();
+
+	# my $current = $self->_get_current();
+
+	# my $module_definition = $current->[0];
+
+	# my $command_definition = $current->[1];
+
+	# my $command_test = $current->[2];
+
+	my $execution_context = $executor->{execution_context};
+
+	my $module_definition = $execution_context->get_module_definition();
+
+	my $module_name = $module_definition->{name};
+
+	Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		  description => "Heterarch::Test::CommandDefinition::IsFileExecutable $self->{description}",
+		  error => $error,
+		  module_name => $module_name,
+		 },
+		);
+    }
+
+    return $error;
+}
+
+
 package Heterarch::Test::CommandTest;
 
 
