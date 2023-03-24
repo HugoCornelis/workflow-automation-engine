@@ -973,7 +973,7 @@ sub cd_start
 }
 
 
-package Heterarch::Test::CommandDefinition::PerlCode;;
+package Heterarch::Test::CommandDefinition::PerlCode;
 
 
 our @ISA = ("Heterarch::Test::CommandDefinition");
@@ -996,6 +996,41 @@ sub cd_start
     my $fd_output = shift;
 
     # code is already instantiated, nothing to do here
+
+    my $sub = $self->{command};
+
+    my $error = &$sub();
+
+    if ($error)
+    {
+	# my $command_definition = $execution_context->get_command_definition();
+
+	# my $current = $self->_get_current();
+
+	# my $module_definition = $current->[0];
+
+	# my $command_definition = $current->[1];
+
+	# my $command_test = $current->[2];
+
+	my $execution_context = $executor->{execution_context};
+
+	my $module_definition = $execution_context->get_module_definition();
+
+	my $module_name = $module_definition->{name};
+
+	Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		  description => "command_definition $self->{description}",
+		  error => $error,
+		  module_name => $module_name,
+		 },
+		);
+    }
+
+    return $error;
 }
 
 
