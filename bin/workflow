@@ -2189,6 +2189,12 @@ sub _install_script_grc_symbolic_links
 
 	my $target_file_configuration = "$target_directory/$grc_configuration";
 
+	if (not -e $target_directory)
+	{
+		my $command = "mkdir -p $target_directory";
+		execute_shell_command($command, { sudo => 1, }, );
+	}
+
 	if ($option_verbose)
 	{
 	    use Data::Dumper;
