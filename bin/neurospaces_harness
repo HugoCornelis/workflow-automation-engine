@@ -1955,9 +1955,21 @@ sub ct_run
     {
 	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 	{
-	    print $fd_output "*** Converting seen 0a to 0d 0a newlines\n";
+	    print $fd_output "*** Converting seen \\x0a to \\x0d \\x0a newlines\n";
 
 	    $read =~ s(\x0a)(\x0d\x0a)g;
+	}
+	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
+	{
+	    print $fd_output "*** Converting seen \\x0d \\x0a to \\x0a newlines\n";
+
+	    $read =~ s(\x0d\x0a)(\x0a)g;
+	}
+	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
+	{
+	    print $fd_output "*** Converting seen \\x0d \\x0a to \\x0a newlines\n";
+
+	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
     }
 
