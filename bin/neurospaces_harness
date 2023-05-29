@@ -2388,6 +2388,8 @@ sub _prepre_engine
 
     # ... or instantiate the object that will do the preparation
 
+    #! this is used to instantiate a web browser and initialize it.
+
     elsif (exists $executor_element->{class})
     {
 	# instantiate the object
@@ -3287,10 +3289,13 @@ sub _reparation
 
 
 #
-# sub start
+# sub ec_examine
 #
 # Apply selection criteria to the current context.
-# Prepare the test environment.
+# Prepare the test environment by execution the preparation clause.
+#
+# This is called for a module definition, a command definition and a
+# test.
 #
 
 sub ec_examine
