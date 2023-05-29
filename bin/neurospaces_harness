@@ -2887,6 +2887,120 @@ sub is_selected
 }
 
 
+my $global_harnessing_identifiers = {};
+
+
+sub _harness_create_or_fetch
+{
+    my $harnessing_class = shift;
+
+    my $harnessing_identifier = shift;
+
+    my $result;
+
+    # if this was not executed yet
+
+    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
+    {
+	# prepare the docker image and container
+
+	my $build = $harnessing_class->{build};
+	my $identifier = $harnessing_class->{identifier};
+	my $name_container = $harnessing_class->{name_container};
+	my $name_image = $harnessing_class->{name_image};
+	my $type = $harnessing_class->{type};
+
+	my $docker_preparer
+	    = (sub
+	       {
+		   system "$build";
+
+		   system "sudo docker container stop $name_container";
+		   system "sudo docker container rm $name_container";
+
+		   system "sudo docker run -d -t --name $name_container $name_image";
+
+		   # return no errors
+
+		   return '';
+	       });
+
+	my $docker_reparer
+	    = (sub
+	       {
+		   print "The Docker container is still running.\n
+You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
+
+		   system "sudo docker container ls";
+
+		   # return no errors
+
+		   return '';
+	       });
+
+	my $docker_preparation
+	    = {
+	       description => "create the Docker image and start it as a container for running the tests",
+	       preparer => $docker_preparer,
+	      };
+
+	my $docker_reparation
+	    = {
+	       description => "leave the Docker container for running manual tests",
+	       reparer => $docker_reparer,
+	      };
+
+	use Clone 'clone';
+
+	$global_harnessing_identifiers->{$harnessing_identifier}
+	    = {
+	       class => clone($harnessing_class),
+	       description => 'Instantiated',
+	       docker_preparation => $docker_preparation,
+	       docker_reparation => $docker_reparation,
+	      };
+
+	$result = $global_harnessing_identifiers->{$harnessing_identifier};
+    }
+    else
+    {
+	# the harnessing identifier exists means that the docker container is running
+
+	$result = $global_harnessing_identifiers->{$harnessing_identifier};
+    }
+
+    # return the result
+
+    return $result;
+}
+
+
+sub _harness_fetch
+{
+    my $harnessing_class = shift;
+
+    my $harnessing_identifier = shift;
+
+    my $result;
+
+    # if this was not executed yet
+
+    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
+    {
+    }
+    else
+    {
+	# the harnessing identifier exists means that the docker container is running
+
+	$result = $global_harnessing_identifiers->{$harnessing_identifier};
+    }
+
+    # return the result
+
+    return $result;
+}
+
+
 sub _preparation
 {
     my $self = shift;
@@ -2961,58 +3075,79 @@ sub _preparation
 
     my $preparation_result;
 
-    # if we are really running tests and there is a preparation clause
+    my $all_preparations = [ $preparation, ];
 
-    if (($global_test_report->{output_format} eq 'executor')
-	and $preparation)
+    # if we are really running tests
+
+    if ($global_test_report->{output_format} eq 'executor')
     {
-	# give diagnostics
+	# if there is a docker container preparation
 
-	my $preparation_name
-	    = ($command_definition
-	       ? "command '$command_definition->{command}'"
-	       : "module '$module_definition->{name}'");
-
-	Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
-
-	# execute the preparation clause
-
-	my $preparer = $preparation->{preparer};
-
-	$preparation_result = _prepre_engine($preparer, 'preparation');
-
-	# if the preparer returned an error string
-
-	my $preparation_error;
-
-	if (ref $preparation_result eq 'SCALAR')
+	if (exists $harnessing->{class})
 	{
-	    # obtain the error string
+	    my $harnessing_class = $harnessing->{class};
 
-	    $preparation_error = $$preparation_result;
+	    my $harnessing_identifier = $harnessing_class->{identifier};
+
+	    my $harness = _harness_create_or_fetch($harnessing_class, $harnessing_identifier);
+
+	    my $docker_preparation = $harness->{docker_preparation};
+
+	    unshift @$all_preparations, $docker_preparation;
 	}
 
-	# process errors
+	# while there are preparation clauses
 
-	if ($preparation_error)
+	foreach my $preparation (@$all_preparations)
 	{
-	    my $module_name = $module_definition->{name};
+	    # give diagnostics
 
-	    my $subdescription
+	    my $preparation_name
 		= ($command_definition
-		   ? $command_definition->{description}
-		   : $module_definition->{description});
+		   ? "command '$command_definition->{command}'"
+		   : "module '$module_definition->{name}'");
 
-	    Heterarch::Test::Reporting::report_error_add
-		(
-		 $fd_output,
-		 {
-		     description => $preparation_name,
-		     error => $preparation_error,
-		     module_name => $module_name,
-		     subdescription => $subdescription,
-		 },
-		);
+	    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
+
+	    # execute the preparation clause
+
+	    my $preparer = $preparation->{preparer};
+
+	    $preparation_result = _prepre_engine($preparer, 'preparation');
+
+	    # if the preparer returned an error string
+
+	    my $preparation_error;
+
+	    if (ref $preparation_result eq 'SCALAR')
+	    {
+		# obtain the error string
+
+		$preparation_error = $$preparation_result;
+	    }
+
+	    # process errors
+
+	    if ($preparation_error)
+	    {
+		my $module_name = $module_definition->{name};
+
+		my $subdescription
+		    = ($command_definition
+		       ? $command_definition->{description}
+		       : $module_definition->{description});
+
+		Heterarch::Test::Reporting::report_error_add
+			(
+			 $fd_output,
+			 {
+			  description => $preparation_name,
+			  error => $preparation_error,
+			  module_name => $module_name,
+			  subdescription => $subdescription,
+			 },
+			);
+	    }
 	}
     }
 
@@ -3085,46 +3220,65 @@ sub _reparation
 
     my $reparation_error;
 
+    my $all_reparations = [ $reparation ];
+
     # if there is a reparation clause
 
-    if (($global_test_report->{output_format} eq 'executor')
-	and $reparation)
+    if ($global_test_report->{output_format} eq 'executor')
     {
-	# give diagnostics
+	# if there is a docker container reparation
 
-	my $fd_output = $self->{fd_output};
-
-	my $reparation_description = $reparation->{description};
-
-	Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
-
-	# execute the reparation clause
-
-	my $reparer = $reparation->{reparer};
-
-	$reparation_error = _prepre_engine($reparer, 'reparation', $preparation_result);
-
-	# process errors
-
-	if ($reparation_error)
+	if (exists $harnessing->{class})
 	{
-	    my $module_name = $module_definition->{name};
+	    my $harnessing_class = $harnessing->{class};
 
-	    my $subdescription
-		= ($command_definition
-		   ? $command_definition->{description}
-		   : $module_definition->{description});
+	    my $harnessing_identifier = $harnessing_class->{identifier};
 
-	    Heterarch::Test::Reporting::report_error_add
-		(
-		 $fd_output,
-		 {
-		     description => $reparation_description,
-		     error => $reparation_error,
-		     module_name => $module_name,
-		     subdescription => $subdescription,
-		 },
-		);
+	    my $harness = _harness_fetch($harnessing_class, $harnessing_identifier);
+
+	    my $docker_reparation = $harness->{docker_reparation};
+
+	    push @$all_reparations, $docker_reparation;
+	}
+
+	foreach my $reparation (@$all_reparations)
+	{
+	    # give diagnostics
+
+	    my $fd_output = $self->{fd_output};
+
+	    my $reparation_description = $reparation->{description};
+
+	    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+
+	    # execute the reparation clause
+
+	    my $reparer = $reparation->{reparer};
+
+	    $reparation_error = _prepre_engine($reparer, 'reparation', $preparation_result);
+
+	    # process errors
+
+	    if ($reparation_error)
+	    {
+		my $module_name = $module_definition->{name};
+
+		my $subdescription
+		    = ($command_definition
+		       ? $command_definition->{description}
+		       : $module_definition->{description});
+
+		Heterarch::Test::Reporting::report_error_add
+			(
+			 $fd_output,
+			 {
+			  description => $reparation_description,
+			  error => $reparation_error,
+			  module_name => $module_name,
+			  subdescription => $subdescription,
+			 },
+			);
+	    }
 	}
     }
 
