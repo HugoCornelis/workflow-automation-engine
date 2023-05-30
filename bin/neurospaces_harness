@@ -826,6 +826,8 @@ sub spawn_new
 {
     my $command_definition = shift;
 
+    my $execution_context = shift;
+
     my $fd_output = shift;
 
     # retrieve the shell command and its arguments
@@ -933,7 +935,9 @@ sub cd_start
 
     #! this is similar to having a class clause with value 'Expect' and calling Expect->new()
 
-    my ($exp, $test_startup) = $self->spawn_new($fd_output);
+    my $execution_context = $executor->{execution_context};
+
+    my ($exp, $test_startup) = $self->spawn_new($execution_context, $fd_output);
 
     $executor->{expect_object} = $exp;
 
@@ -4711,7 +4715,7 @@ sub ex_cd_start
     {
 	# start the command and connect with its I/O channels
 
-	# my ($exp, $test_startup) = $command_definition->spawn_new($fd_output);
+	# my ($exp, $test_startup) = $command_definition->spawn_new($execution_context, $fd_output);
 
 	# remember to spawn a new command
 
