@@ -19,6 +19,7 @@ use YAML;
 
 
 my $option_check_test_names;
+our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
 my $option_dump_yaml;
@@ -354,6 +355,7 @@ sub parse_options
 	= GetOptions
 	    (
 	     "check-test-names!" => \$option_check_test_names,
+	     "debugging=s" => \$option_debugging,
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
 	     "dump-yaml!" => \$option_dump_yaml,
@@ -434,6 +436,7 @@ sub parse_options
     $global_test_report->{options}
 	= {
 	   check_test_names => $option_check_test_names,
+	   debugging => $option_debugging,
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
 	   dump_yaml => $option_dump_yaml,
@@ -467,6 +470,7 @@ $0: test definition executor
 
 options:
     --check-test-names   check the pathnames of the specification files against the names of the tests.
+    --debugging          enable specific debugging options.
     --dump-json          dump test specifications to json files in /tmp/.
     --dump-perl          dump test specifications to perl files in /tmp/.
     --dump-yaml          dump test specifications to yaml files in /tmp/.
@@ -7101,6 +7105,15 @@ sub report_error_add
     my $subdescription = $arguments->{subdescription};
 
     my $package_name = $global_test_report->{description}->{package}->{name};
+
+    if ($::option_debugging eq 'errors')
+    {
+	use Carp;
+
+	warn "$0: DEBUG errors";
+
+	print Carp::cluck(@_);
+    }
 
     $global_error_count++;
 
