@@ -2373,11 +2373,14 @@ package Heterarch::Test::ExecutionContext;
 
 
 #
-# _prepre_engine() implements the engine for both preparation and
+# _prepare_engine() implements the engine for both preparation and
 # reparation that are used for test modules and command definitions.
 #
+# Returns a ref to a string if an error occurs.  The string describes
+# the error that occurred.
+#
 
-sub _prepre_engine
+sub _prepare_engine
 {
     my $executor_element = shift;
 
@@ -3123,7 +3126,7 @@ sub _preparation
 
 	    my $preparer = $preparation->{preparer};
 
-	    $preparation_result = _prepre_engine($preparer, 'preparation');
+	    $preparation_result = _prepare_engine($preparer, 'preparation');
 
 	    # if the preparer returned an error string
 
@@ -3265,7 +3268,7 @@ sub _reparation
 
 	    my $reparer = $reparation->{reparer};
 
-	    $reparation_error = _prepre_engine($reparer, 'reparation', $preparation_result);
+	    $reparation_error = _prepare_engine($reparer, 'reparation', $preparation_result);
 
 	    # process errors
 
