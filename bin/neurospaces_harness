@@ -3088,7 +3088,12 @@ sub _preparation
 
     my $preparation_result;
 
-    my $all_preparations = [ $preparation, ];
+    my $all_preparations = [];
+
+    if (defined $preparation)
+    {
+	push @$all_preparations, $preparation;
+    }
 
     # if we are really running tests
 
@@ -3233,7 +3238,12 @@ sub _reparation
 
     my $reparation_error;
 
-    my $all_reparations = [ $reparation ];
+    my $all_reparations = [];
+
+    if (defined $reparation)
+    {
+	push @$all_reparations, $reparation;
+    }
 
     # if there is a reparation clause
 
