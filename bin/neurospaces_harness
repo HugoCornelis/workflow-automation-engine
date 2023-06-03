@@ -2969,8 +2969,8 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 	    = {
 	       class => clone($harnessing_class),
 	       description => 'Instantiated',
-	       docker_preparation => $docker_preparation,
-	       docker_reparation => $docker_reparation,
+	       preparation => $docker_preparation,
+	       reparation => $docker_reparation,
 	      };
 
 	$result = $global_harnessing_identifiers->{$harnessing_identifier};
@@ -3084,15 +3084,17 @@ sub _preparation
 
     my $harnessing = $active_element->{harnessing};
 
-    my $preparation = $harnessing->{preparation};
+    use Clone 'clone';
+
+    my $preparation = clone($harnessing->{preparation});
 
     my $preparation_result;
 
-    my $all_preparations = [];
+    my $all_preparation_harnessess = [];
 
     if (defined $preparation)
     {
-	push @$all_preparations, $preparation;
+	push @$all_preparation_harnessess, { description => 'Instantiated', preparation => $preparation, };
     }
 
     # if we are really running tests
@@ -3109,62 +3111,84 @@ sub _preparation
 
 	    my $harness = _harness_create_or_fetch($harnessing_class, $harnessing_identifier);
 
-	    my $docker_preparation = $harness->{docker_preparation};
-
-	    unshift @$all_preparations, $docker_preparation;
+	    unshift @$all_preparation_harnessess, $harness;
 	}
 
 	# while there are preparation clauses
 
-	foreach my $preparation (@$all_preparations)
+	foreach my $preparation_harness (@$all_preparation_harnessess)
 	{
-	    # give diagnostics
-
-	    my $preparation_name
-		= ($command_definition
-		   ? "command '$command_definition->{command}'"
-		   : "module '$module_definition->{name}'");
-
-	    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
-
-	    # execute the preparation clause
-
-	    my $preparer = $preparation->{preparer};
-
-	    $preparation_result = _prepare_engine($preparer, 'preparation');
-
-	    # if the preparer returned an error string
-
-	    my $preparation_error;
-
-	    if (ref $preparation_result eq 'SCALAR')
+	    if ($preparation_harness->{description} eq 'Executed')
 	    {
-		# obtain the error string
+		my $preparation = $preparation_harness->{preparation};
 
-		$preparation_error = $$preparation_result;
-	    }
+		# give diagnostics
 
-	    # process errors
-
-	    if ($preparation_error)
-	    {
-		my $module_name = $module_definition->{name};
-
-		my $subdescription
+		my $preparation_name
 		    = ($command_definition
-		       ? $command_definition->{description}
-		       : $module_definition->{description});
+		       ? "command '$command_definition->{command}'"
+		       : "module '$module_definition->{name}'");
 
-		Heterarch::Test::Reporting::report_error_add
-			(
-			 $fd_output,
-			 {
-			  description => $preparation_name,
-			  error => $preparation_error,
-			  module_name => $module_name,
-			  subdescription => $subdescription,
-			 },
-			);
+		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparation $preparation_name was already executed ($preparation->{description})");
+	    }
+	    elsif ($preparation_harness->{description} eq 'Instantiated')
+	    {
+		my $preparation = $preparation_harness->{preparation};
+
+		# give diagnostics
+
+		my $preparation_name
+		    = ($command_definition
+		       ? "command '$command_definition->{command}'"
+		       : "module '$module_definition->{name}'");
+
+		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
+
+		# execute the preparation clause
+
+		my $preparer = $preparation->{preparer};
+
+		$preparation_result = _prepare_engine($preparer, 'preparation');
+
+		# if the preparer returned an error string
+
+		my $preparation_error;
+
+		if (ref $preparation_result eq 'SCALAR')
+		{
+		    # obtain the error string
+
+		    $preparation_error = $$preparation_result;
+		}
+
+		# process errors
+
+		if ($preparation_error)
+		{
+		    my $module_name = $module_definition->{name};
+
+		    my $subdescription
+			= ($command_definition
+			   ? $command_definition->{description}
+			   : $module_definition->{description});
+
+		    Heterarch::Test::Reporting::report_error_add
+			    (
+			     $fd_output,
+			     {
+			      description => $preparation_name,
+			      error => $preparation_error,
+			      module_name => $module_name,
+			      subdescription => $subdescription,
+			     },
+			    );
+
+		    $preparation_harness->{description} = 'In error ($preparation_error)';
+		}
+		else
+		{
+		    $preparation_harness->{description} = 'Executed';
+		}
 	    }
 	}
     }
@@ -3234,15 +3258,17 @@ sub _reparation
 	   ? $command_definition->{harnessing}
 	   : $module_definition->{harnessing});
 
-    my $reparation = $harnessing->{reparation};
+    use Clone 'clone';
+
+    my $reparation = clone($harnessing->{reparation});
 
     my $reparation_error;
 
-    my $all_reparations = [];
+    my $all_reparation_harnesses = [];
 
     if (defined $reparation)
     {
-	push @$all_reparations, $reparation;
+	push @$all_reparation_harnesses, { description => 'Instantiated', reparation => $reparation, };
     }
 
     # if there is a reparation clause
@@ -3259,13 +3285,13 @@ sub _reparation
 
 	    my $harness = _harness_fetch($harnessing_class, $harnessing_identifier);
 
-	    my $docker_reparation = $harness->{docker_reparation};
-
-	    push @$all_reparations, $docker_reparation;
+	    push @$all_reparation_harnesses, $harness;
 	}
 
-	foreach my $reparation (@$all_reparations)
+	foreach my $reparation_harness (@$all_reparation_harnesses)
 	{
+	    my $reparation = $reparation_harness->{reparation};
+
 	    # give diagnostics
 
 	    my $fd_output = $self->{fd_output};
