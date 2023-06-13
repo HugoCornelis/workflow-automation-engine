@@ -7149,7 +7149,8 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    if ($::option_debugging eq 'errors')
+    if (defined $option_debugging
+	and $option_debugging eq 'errors')
     {
 	use Carp;
 
