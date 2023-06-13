@@ -3677,14 +3677,21 @@ sub expand
 
     my $html_introduction;
 
+    my $html_introduction_filename = $global_config->{introduction_filename};
+
+    if (-e $html_introduction_filename)
     {
 	local $/; # enable 'slurp' mode
 
-	my $file = IO::File->new("<$global_config->{introduction_filename}");
+	my $file = IO::File->new("<$html_introduction_filename");
 
 	$html_introduction = <$file>;
 
 	$file->close();
+    }
+    else
+    {
+	$html_introduction = '';
     }
 
     # parse all modules
