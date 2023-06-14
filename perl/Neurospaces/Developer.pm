@@ -142,10 +142,16 @@ sub default_packages_read()
 				  ],
 			  version_control => {
 					      git => {
-						      remote => 'github',
+						      # https://github.com/HugoCornelis/experiment.git
+						      remote => {
+								 host => 'github.com',
+								 name => 'github',
+								 protocol => 'https',
+								 url => 'experiment.git',
+								 user => 'HugoCornelis',
+								},
 						     },
-					      branch_name => 0,
-					      port_number => 4703,
+					      branch_name => 'master',
 					     },
 			 },
 	   chemesis3 => {
@@ -169,11 +175,16 @@ sub default_packages_read()
 			 order => 2.5,
 			 version_control => {
 					     git => {
-						     remote => 'github',
+						     # https://github.com/HugoCornelis/chemesis3.git
+						     remote => {
+								host => 'github.com',
+								name => 'github',
+								protocol => 'https',
+								url => 'chemesis3.git',
+								user => 'HugoCornelis',
+							       },
 						    },
-					     branch_name => 0,
-					     port_number => 4706,
-					     #server => '91.183.94.6',
+					     branch_name => 'master',
 					    },
 			},
 	   configurator => {
@@ -185,11 +196,16 @@ sub default_packages_read()
 				    ],
 			    version_control => {
 						git => {
-							remote => 'github',
+							# https://github.com/HugoCornelis/configurator.git
+							remote => {
+								   host => 'github.com',
+								   name => 'github',
+								   protocol => 'https',
+								   url => 'configurator.git',
+								   user => 'HugoCornelis',
+								  },
 						       },
-						branch_name => 0,
-						port_number => 4707,
-						server => '91.183.94.6',
+						branch_name => 'master',
 					       },
 			    version_script => 0,
 			   },
@@ -231,10 +247,16 @@ sub default_packages_read()
 			      ],
 		      version_control => {
 					  git => {
-						  remote => 'github',
+						  # https://github.com/HugoCornelis/gshell.git
+						  remote => {
+							     host => 'github.com',
+							     name => 'github',
+							     protocol => 'https',
+							     url => 'gshell.git',
+							     user => 'HugoCornelis',
+							    },
 						 },
-					  branch_name => 0,
-					  port_number => 4699,
+					  branch_name => 'master',
 					 },
 		      version_script => 'genesis-g3 --version',
 		     },
@@ -279,10 +301,16 @@ sub default_packages_read()
 			      ],
 		      version_control => {
 					  git => {
-						  remote => 'github',
+						  # https://github.com/HugoCornelis/heccer.git
+						  remote => {
+							     host => 'github.com',
+							     name => 'github',
+							     protocol => 'https',
+							     url => 'heccer.git',
+							     user => 'HugoCornelis',
+							    },
 						 },
-					  branch_name => 0,
-					  port_number => 4694,
+					  branch_name => 'master',
 					 },
 		     },
 	   developer => {
@@ -295,10 +323,16 @@ sub default_packages_read()
 				 ],
 			 version_control => {
 					     git => {
-						     remote => 'github',
+						     # https://github.com/HugoCornelis/developer.git
+						     remote => {
+								host => 'github.com',
+								name => 'github',
+								protocol => 'https',
+								url => 'developer.git',
+								user => 'HugoCornelis',
+							       },
 						    },
-					     branch_name => 0,
-					     port_number => 4696,
+					     branch_name => 'master',
 					    },
 			 version_script => 'neurospaces_build --version',
 			},
@@ -322,10 +356,16 @@ sub default_packages_read()
 					 ],
 				 version_control => {
 						     git => {
-							     remote => 'github',
+							     # https://github.com/HugoCornelis/model-container.git
+							     remote => {
+									host => 'github.com',
+									name => 'github',
+									protocol => 'https',
+									url => 'model-container.git',
+									user => 'HugoCornelis',
+								       },
 							    },
-						     branch_name => 0,
-						     port_number => 4693,
+						     branch_name => 'master',
 						    },
 				},
 	   exchange => {
@@ -340,10 +380,16 @@ sub default_packages_read()
 				],
 			version_control => {
 					    git => {
-						    remote => 'github',
+						    # https://github.com/HugoCornelis/exchange.git
+						    remote => {
+							       host => 'github.com',
+							       name => 'github',
+							       protocol => 'https',
+							       url => 'exchange.git',
+							       user => 'HugoCornelis',
+							      },
 						   },
-					    branch_name => 0,
-					    port_number => 4701,
+					    branch_name => 'master',
 					   },
 			version_script => 'neurospaces_exchange --version',
 		       },
@@ -395,10 +441,15 @@ sub default_packages_read()
 				],
 			version_control => {
 					    git => {
-						    remote => 'github',
+						    remote => {
+							       host => 'github.com',
+							       name => 'github',
+							       protocol => 'https',
+							       url => 'ns-sli.git',
+							       user => 'HugoCornelis',
+							      },
 						   },
-					    branch_name => 0,
-					    port_number => 4692,
+					    branch_name => 'master',
 					   },
 			version_script => 0,
 		       },
@@ -417,10 +468,15 @@ sub default_packages_read()
 					 ],
 				 version_control => {
 						     git => {
-							     remote => 'github',
+							     remote => {
+									host => 'github.com',
+									name => 'github',
+									protocol => 'https',
+									url => 'project-browser.git',
+									user => 'HugoCornelis',
+								       },
 							    },
-						     port_number => 4697,
-						     repository => "$ENV{HOME}/$new_projects_directory/MTN/neurospacesweb.mtn",
+						     branch_name => 'master',
 						    },
 				 version_script => 'pb-version',
 				},
@@ -434,10 +490,15 @@ sub default_packages_read()
 				    ],
 			    version_control => {
 						git => {
-							remote => 'github',
+							remote => {
+								   host => 'github.com',
+								   name => 'github',
+								   protocol => 'https',
+								   url => 'publications.git',
+								   user => 'HugoCornelis',
+								  },
 						       },
-						branch_name => 0,
-						port_number => 4702,
+						branch_name => 'master',
 					       },
 			    version_script => 0,
 			   },
@@ -451,10 +512,15 @@ sub default_packages_read()
 			    ],
 		    version_control => {
 					git => {
-						remote => 'github',
+						remote => {
+							   host => 'github.com',
+							   name => 'github',
+							   protocol => 'https',
+							   url => 'rtxi.git',
+							   user => 'HugoCornelis',
+							  },
 					       },
-					branch_name => 0,
-					port_number => 4704,
+					branch_name => 'master',
 				       },
 		    version_script => 0,
 		   },
@@ -472,10 +538,15 @@ sub default_packages_read()
 			   ],
 		   version_control => {
 				       git => {
-					       remote => 'github',
+					       remote => {
+							  host => 'github.com',
+							  name => 'github',
+							  protocol => 'https',
+							  url => 'ssp.git',
+							  user => 'HugoCornelis',
+							 },
 					      },
-				       branch_name => 0,
-				       port_number => 4695,
+				       branch_name => 'master',
 				      },
 		  },
 	   sspy => {
@@ -491,10 +562,15 @@ sub default_packages_read()
 			    ],
 		    version_control => {
 					git => {
-						remote => 'github',
+						remote => {
+							   host => 'github.com',
+							   name => 'github',
+							   protocol => 'https',
+							   url => 'sspy.git',
+							   user => 'HugoCornelis',
+							  },
 					       },
-					branch_name => 0,
-					port_number => 4705,
+					branch_name => 'master',
 				       },
 		   },
 	   studio => {
@@ -511,10 +587,15 @@ sub default_packages_read()
 			      ],
 		      version_control => {
 					  git => {
-						  remote => 'github',
+						  remote => {
+							     host => 'github.com',
+							     name => 'github',
+							     protocol => 'https',
+							     url => 'studio.git',
+							     user => 'HugoCornelis',
+							    },
 						 },
-					  branch_name => 0,
-					  port_number => 4698,
+					  branch_name => 'master',
 					 },
 		      version_script => 'neurospaces --version',
 		     },
@@ -538,10 +619,15 @@ sub default_packages_read()
 				],
 			version_control => {
 					    git => {
-						    remote => 'github',
+						    remote => {
+							       host => 'github.com',
+							       name => 'github',
+							       protocol => 'https',
+							       url => 'userdocs.git',
+							       user => 'HugoCornelis',
+							      },
 						   },
-					    branch_name => 0,
-					    port_number => 4700,
+					    branch_name => 'master',
 					   },
 			version_script => 0,
 		       },

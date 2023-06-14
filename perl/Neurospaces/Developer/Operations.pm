@@ -2490,11 +2490,10 @@ sub implementation
 
 	    # add the default git remote
 
-	    my $user = $remote->{user};
-
-	    my $url = $remote->{url};
-
+	    my $host = $remote->{host};
 	    my $protocol = $remote->{protocol};
+	    my $url = $remote->{url};
+	    my $user = $remote->{user};
 
 	    Neurospaces::Developer::Operations::operation_execute
 		    (
@@ -2505,7 +2504,7 @@ sub implementation
 		      package_name => $package_name,
 		     },
 		     [
-		      'git', '-C', "$directory", 'remote', 'add', $remote_name, "$protocol://$user/$url",
+		      'git', '-C', "$directory", 'remote', 'add', $remote_name, "$protocol://$host/$user/$url",
 		     ],
 		    );
 	}
