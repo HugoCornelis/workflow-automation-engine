@@ -123,7 +123,7 @@ case "$host_os" in
         echo ""
         echo "Error, the standard version of perl for Mac OSX is not found."
         echo "Non standard versions of perl are known to cause problems."
-        AC_ERROR([Perl for Mac OSX is not found.])
+        AC_MSG_ERROR([Perl for Mac OSX is not found.])
         ;;
       *)
         AC_MSG_RESULT([ $PERL ])
