@@ -1,0 +1,16 @@
+$files = {
+           '_<bin/neurospaces-workflow' => [
+                                             {
+                                               'expr' => undef,
+                                               'text' => 'my $global_business_project_configuration_filename = "project.pl";
+',
+                                               'value' => '1',
+                                               'type' => 'user',
+                                               'line' => '95',
+                                               'fname' => 'bin/neurospaces-workflow'
+                                             }
+                                           ]
+         };
+$expr_list = [];
+$eval_saved_text = undef;
+$main_win_geometry = '1920x1001+0+0';

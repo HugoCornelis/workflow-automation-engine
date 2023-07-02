@@ -1,0 +1,5901 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+use Data::Dumper;
+
+$Data::Dumper::Sortkeys = 'always';
+
+use Getopt::Long qw(GetOptionsFromArray);;
+
+
+$SIG{'__DIE__'}
+    = sub
+      {
+	  require Carp;
+
+	  print STDERR Carp::longmess(@_);
+      };
+
+
+$SIG{'INT'}
+    = sub
+      {
+	  require Carp;
+
+	  print STDERR Carp::longmess(@_);
+
+	  exit 1;
+      };
+
+
+our $option_bash_completion;
+our $option_branch = "master";
+our $option_build_server;
+our $option_built_image_directory;
+our $option_commands = [];
+our $option_dry_run = '';
+our $option_dump_all_interaction_roles;
+our $option_dump_interaction_roles;
+our $option_dump_module_interaction_roles;
+our $option_dump_schedule;
+our $option_dump_specific_workflow_roles;
+our $option_export_remote;
+our $option_export_sh;
+our $option_export_sudo;
+our $option_export_times;
+our $option_export_verbose;
+our $option_force_rebuild;
+our $option_forward_destination_server = "laptop";
+our $option_forward_source_server = "laptop";
+our $option_help;
+our $option_help_build_servers;
+our $option_help_commands;
+our $option_help_field_project_name;
+our $option_help_module;
+our $option_help_options;
+our $option_help_packages;
+our $option_help_projects;
+our $option_help_targets;
+our $option_incremental = 1;
+our $option_interactions;
+our $option_interactions_all;
+our $option_interactions_module;
+our $option_interactions_module_all_roles;
+our $option_packages = [];
+our $option_remote = "gitlab";
+our $option_ssh_server;
+our $option_ssh_port;
+our $option_ssh_user;
+our $option_tftp_directory;
+our $option_target;
+our $option_verbose;
+
+our $global_options
+    = {
+       "bash-completion=s" => \$option_bash_completion,
+       "branch=s" => \$option_branch,
+       "build-server=s" => \$option_build_server,
+       "built-image-directory=s" => \$option_built_image_directory,
+       "command=s" => $option_commands,
+       "dry-run!" => \$option_dry_run,
+       "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
+       "dump-interaction-roles!" => \$option_dump_interaction_roles,
+       "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
+       "dump-schedule!" => \$option_dump_schedule,
+       "export-remote=s" => \$option_export_remote,
+       "export-sh:s" => \$option_export_sh,
+       "export-sudo" => \$option_export_sudo,
+       "export-times!" => \$option_export_times,
+       "export-verbose!" => \$option_export_verbose,
+       "force-rebuild!" => \$option_force_rebuild,
+       "forward-destination-server=s" => \$option_forward_destination_server,
+       "forward-source-server=s" => \$option_forward_source_server,
+       "help!" => \$option_help,
+       "help-build-servers!" => \$option_help_build_servers,
+       "help-commands!" => \$option_help_commands,
+       "help-field-project-name!" => \$option_help_field_project_name,
+       "help-module!" => \$option_help_module,
+       "help-options!" => \$option_help_options,
+       "help-packages!" => \$option_help_packages,
+       "help-projects!" => \$option_help_projects,
+       "help-targets!" => \$option_help_targets,
+       "incremental!" => \$option_incremental,
+       "interactions!" => \$option_interactions,
+       "interactions-all!" => \$option_interactions_all,
+       "interactions-module!" => \$option_interactions_module,
+       "interactions-module-all-roles!" => \$option_interactions_module_all_roles,
+       "package=s" => $option_packages,
+       "ssh-port=s" => \$option_ssh_port,
+       "ssh-server=s" => \$option_ssh_server,
+       "ssh-user=s" => \$option_ssh_user,
+       "target=s" => \$option_target,
+       "tftp-directory=s" => \$option_tftp_directory,
+       "v|verbose+" => \$option_verbose,
+      };
+
+our $global_command_line = join " ", $0, @ARGV;
+our $global_overriden_packages;
+our $global_program_abs_directory;
+our $global_program_rel_directory;
+our $global_program_name;
+our $global_scheduled_commands = [];
+
+{
+    use Cwd;
+
+    ($0 =~ m((.*)/(\S+)));
+
+    $global_program_rel_directory = $1;
+    # $global_program_name = $2;
+
+    my $program_name_full = $0;
+
+    my $program_name_full_abs = Cwd::abs_path($program_name_full);
+
+    ($program_name_full_abs =~ m((.*)/(\S+)));
+
+    $global_program_abs_directory = $1;
+
+    ($0 =~ m((.*)/(\S+)));
+
+    $global_program_name = $2;
+}
+
+
+our $all_path_globals
+    = {
+       global_command_line => $global_command_line,
+       global_program_abs_directory => $global_program_abs_directory,
+       global_program_rel_directory => $global_program_rel_directory,
+       global_program_name => $global_program_name,
+      };
+
+
+our $global_target_command;
+
+our $global_field_project_configuration;
+
+our $global_technical_project_configuration;
+
+
+package Command;
+
+
+sub _all_install_scripts_execute_shell_command_array
+{
+    my $install_force = shift;
+
+    my $install_report = shift;
+
+    my $description = shift;
+
+    my $commands = shift;
+
+    if ($install_force)
+    {
+	if ($install_report)
+	{
+	    print $description;
+	}
+	else
+	{
+	    execute_shell_command_array($commands);
+	}
+    }
+}
+
+
+sub _builtin_project_bash_completion_create
+{
+    my $project_name = shift;
+
+    my $project_name_dash = $project_name;
+
+    $project_name_dash =~ s(_)(-)g;
+
+    my $project_name_underscore = $project_name;
+
+    $project_name_underscore =~ s(-)(_)g;
+
+    my $bash_completion_code
+	= "#/usr/bin/env bash
+_${project_name_underscore}_configuration_completions()
+{
+    COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+
+    COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
+}
+
+complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
+complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
+
+
+_${project_name_underscore}_workflow_completions()
+{
+    COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+
+    COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
+}
+
+complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
+complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $project_name-bash-completion.sh");
+
+    if (defined $file)
+    {
+	print $file $bash_completion_code;
+
+	$file->close();
+
+	chmod 0700, "$project_name-bash-completion.sh";
+    }
+    else
+    {
+	$error = "cannot open $project_name-bash-completion.sh";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_configuration_browser_code
+{
+    my $code = '($0 =~ m(.*/(\S+)));
+
+my $program_name = $1;
+
+
+if ($program_name =~ m(configuration$))
+{
+    # loop over the command line arguments
+
+    while (@ARGV)
+    {
+	my $argument = shift @ARGV;
+
+	# "--" means list keys
+
+	if ($argument eq "--")
+	{
+	    $configuration = [ sort keys %$configuration, ];
+	}
+
+	# "-1" means list keys one level deep
+
+	elsif ($argument eq "-1")
+	{
+	    if (ref $configuration eq "HASH")
+	    {
+		$configuration
+		    = {
+		       map
+		       {
+			   my $result;
+
+			   if (ref $configuration eq "HASH")
+			   {
+			       $result = "$configuration->{$_}";
+			   }
+			   elsif (ref $configuration eq "ARRAY")
+			   {
+			       $result = join ", ", map { "$_" } @$configuration;
+			   }
+			   else
+			   {
+			       $result = "$configuration";
+			   }
+
+			   $_ => $result;
+		       }
+		       keys %$configuration,
+		      };
+	    }
+	}
+
+	# "-2" means list keys two levels deep
+
+	elsif ($argument eq "-2")
+	{
+	    $configuration
+		= {
+		   map
+		   {
+		       my $result;
+
+		       my $configuration_snippet = $configuration->{$_};
+
+		       if (ref $configuration_snippet eq "HASH")
+		       {
+			   $result
+			       = {
+				  map
+				  {
+				      my $result;
+
+				      if (ref $configuration_snippet eq "HASH")
+				      {
+					  $result = "$configuration_snippet->{$_}";
+				      }
+				      elsif (ref $configuration_snippet eq "ARRAY")
+				      {
+					  $result = join ", ", map { "$_" } @$configuration_snippet;
+				      }
+				      else
+				      {
+					  $result = "$configuration_snippet";
+				      }
+
+				      $_ => $result;
+				  }
+				  keys %$configuration_snippet,
+				 };
+		       }
+		       else
+		       {
+			   $result = "$configuration";
+		       }
+
+		       $_ => $result;
+		   }
+		   keys %$configuration,
+		  };
+	}
+
+	# "-3" means list keys three levels deep
+
+	elsif ($argument eq "-3")
+	{
+	    $configuration
+		= {
+		   map
+		   {
+		       my $result;
+
+		       my $configuration_snippet_a = $configuration->{$_};
+
+		       if (ref $configuration_snippet_a eq "HASH")
+		       {
+			   $result
+			       = {
+				  map
+				  {
+				      my $result;
+
+				      my $configuration_snippet_b = $configuration_snippet_a->{$_};
+
+				      if (ref $configuration_snippet_b eq "HASH")
+				      {
+					  $result
+					      = {
+						 map
+						 {
+						     my $result;
+
+						     if (ref $configuration_snippet_b eq "HASH")
+						     {
+							 $result = "$configuration_snippet_b->{$_}";
+						     }
+						     elsif (ref $configuration_snippet_b eq "ARRAY")
+						     {
+							 $result = join ", ", map { "$_" } @$configuration_snippet_b;
+						     }
+						     else
+						     {
+							 $result = "$configuration_snippet_b";
+						     }
+
+						     $_ => $result;
+						 }
+						 keys %$configuration_snippet_b,
+						};
+				      }
+				      else
+				      {
+					  $result = "$configuration_snippet_b";
+				      }
+
+				      $_ => $result;
+				  }
+				  keys %$configuration_snippet_a,
+				 };
+		       }
+		       else
+		       {
+			   $result = "$configuration_snippet_a";
+		       }
+
+		       $_ => $result;
+		   }
+		   keys %$configuration,
+		  };
+	}
+
+	# else use the argument to descend in the hierarchy
+
+	else
+	{
+	    if (ref $configuration eq "HASH")
+	    {
+		#! note that regex selection will only work for the
+		#! last argument because the rest of the selection code
+		#! assumes there is a single result
+
+		if ($argument =~ /\*|\+/)
+		{
+		    $configuration
+			= {
+			   map
+			   {
+			       $_ => $configuration->{$_}
+			   }
+			   grep
+			   {
+			       $_ =~ /$argument/
+			   }
+			   keys %$configuration,
+			  };
+		}
+		else
+		{
+		    $configuration = $configuration->{$argument};
+		}
+	    }
+	    elsif (ref $configuration eq "ARRAY")
+	    {
+		# give output consistent with other use cases
+
+		$configuration = $argument;
+	    }
+	}
+    }
+
+    # choose one of "Data::Dumper", "yaml", "json", "json_pretty"
+
+    my $output_format = "yaml";
+
+    if ($output_format eq "yaml")
+    {
+	require YAML;
+
+	print YAML::Dump($configuration);
+    }
+    elsif ($output_format eq "json")
+    {
+	require JSON;
+
+        my $json = JSON->new(); # ->allow_nonref;
+
+	$json->allow_unknown(1);
+
+	my $encoded = $json->encode($configuration);
+
+	print $encoded;
+    }
+    elsif ($output_format eq "json_pretty")
+    {
+	require JSON;
+
+        my $json = JSON->new(); # ->allow_nonref;
+
+	$json->allow_unknown(1);
+
+	my $encoded = $json->pretty()->encode($configuration);
+
+	print $encoded;
+    }
+    else
+    {
+	require Data::Dumper;
+
+	no warnings;
+
+	$Data::Dumper::Sortkeys = "always";
+
+	print Data::Dumper::Dumper($configuration);
+    }
+}
+else
+{
+    return $configuration;
+}
+
+
+';
+
+    return $code;
+}
+
+
+sub _builtin_project_commands_template_create
+{
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $filename_suffix = shift;
+
+    my $commands_template_code
+	= "#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our \$option_verbose;
+
+our \$global_technical_project_configuration;
+
+
+package Command;
+
+
+sub ${target_name}_single_command
+{
+    my \$force = \$ARGV[0] || \"\";
+
+    my \$command = 'echo an example of the invocation of a single command';
+
+    execute_shell_command(\$command);
+
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   dry_run: do not execute this command.
+    #   remote: a remote that is defined in $project_name-configuration.
+    #   silent: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #
+    # execute_shell_command(\$command, { remote => '<name of a remote that is defined in $project_name-configuration>, } );
+    #
+    # These options can given to any of the functions that execute commands.
+}
+
+
+sub ${target_name}_single_command_help
+{
+    my \$command = shift;
+
+    return \"\$command: an example of the invocation a single command.
+
+arguments:
+
+    force: command arguments can be parsed from \@ARGV.
+\";
+}
+
+
+sub ${target_name}_array_of_commands
+{
+    my \$force = \$ARGV[0] || \"\";
+
+    my \$local_commands
+	= [
+	   'echo an example of the invocation of an array of commands',
+	   'echo this is the second command in the array',
+	  ];
+
+    execute_shell_command_array(\$local_commands);
+}
+
+
+sub ${target_name}_array_of_commands_help
+{
+    my \$command = shift;
+
+    return \"\$command: an example of the invocation an array of commands.
+
+arguments:
+
+    force: command arguments can be parsed from \\\@ARGV.
+\";
+}
+
+
+our \$target_servers = \$::global_technical_project_configuration->{target_servers};
+
+sub ${target_name}_array_of_commands_remote_execution
+{
+    my \$force = \$ARGV[0] || \"\";
+
+    my \$remote = \$target_servers->{build};
+
+    my \$remote_commands
+	= [
+	   'echo',
+	   'echo an example of the invocation of an array of remote commands',
+	   'echo this is the second command in the array',
+	   'echo',
+	  ];
+
+    execute_shell_command_array
+	(
+	 \$remote_commands,
+	 {
+	  remote => \$remote,
+	 },
+	);
+
+    my \$local_commands
+	= [
+	   'echo a few locally executed commands',
+	   'echo more locally executed commands',
+	  ];
+
+    execute_shell_command_array(\$local_commands);
+
+    execute_shell_command_array
+	(
+	 \$remote_commands,
+	 {
+	  remote => \$remote,
+	 },
+	);
+}
+
+
+sub ${target_name}_array_of_commands_remote_execution_help
+{
+    my \$command = shift;
+
+    return \"\$command: an example of the invocation an array of commands that are executed on a remote machine.
+
+arguments:
+
+    none.
+\";
+}
+
+
+sub ${target_name}_sequencing_and_composition
+{
+    my \$force = \$ARGV[0] || \"\";
+
+    my \$local_commands
+	= [
+	   'echo this examples composes other examples into one sequence of commands',
+	  ];
+
+    execute_shell_command_array(\$local_commands);
+
+    examples_single_command();
+    examples_array_of_commands();
+}
+
+
+sub ${target_name}_sequencing_and_composition_help
+{
+    my \$command = shift;
+
+    return \"\$command: an example that composes other examples into one sequence of commands.
+
+arguments:
+
+    none.
+\";
+}
+
+
+# return success
+
+1;
+
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    if ($filename_suffix)
+    {
+	$filename_suffix = "-$filename_suffix";
+    }
+    else
+    {
+	$filename_suffix = '';
+    }
+
+    my $file = IO::File->new("> $project_name-commands$filename_suffix");
+
+    if (defined $file)
+    {
+	print $file $commands_template_code;
+
+	$file->close();
+
+	chmod 0700, "$project_name-commands$filename_suffix";
+    }
+    else
+    {
+	$error = "cannot open $project_name-commands$filename_suffix";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_sh_create
+{
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $command_name = shift;
+
+    my $sh_string = shift;
+
+    my $commands_data_directory = "$project_name-commands-data";
+
+    my $error = '';
+
+    my $filename = "$commands_data_directory/$target_name/$command_name.sh";
+
+    _builtin_create_directories($filename);
+
+    use IO::File;
+
+    my $file = IO::File->new("> $filename");
+
+    if (defined $file)
+    {
+	print $file $sh_string;
+
+	$file->close();
+
+	chmod 0755, $filename;
+    }
+    else
+    {
+	$error = "cannot open $filename";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_yml_create
+{
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $command_name = shift;
+
+    my $yml_string = shift;
+
+    my $commands_data_directory = "$project_name-commands-data";
+
+    my $error = '';
+
+    my $filename = "$commands_data_directory/$target_name/$command_name.yml";
+
+    _builtin_create_directories($filename);
+
+    use IO::File;
+
+    my $file = IO::File->new("> $filename");
+
+    if (defined $file)
+    {
+	print $file $yml_string;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $filename";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_sh_template_create
+{
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $error = '';
+
+    my $array_of_commands_remote_execution_sh_example
+	= "#!/bin/sh
+echo
+echo an example of the invocation of an array of remote commands
+echo this is the second command in the array
+echo
+# remote: build
+echo a few locally executed commands
+echo more locally executed commands
+# remote: localhost
+echo
+echo an example of the invocation of an array of remote commands
+echo this is the second command in the array
+echo
+# remote: build
+# help: an example of the invocation of an array of commands that are executed on a remote machine.
+";
+
+    if (not $error)
+    {
+	$error = _builtin_project_commands_sh_create($project_name, $target_name, "sh_remote_execution", $array_of_commands_remote_execution_sh_example);
+    }
+
+    my $array_of_commands_sh_example
+	= "#!/bin/sh
+echo an example of the invocation of an array of commands
+echo this is the second command in the array
+# allow_fail: describe here the reason why this command is allowed to fail or remove the allow_fail clause
+# help: these commands echo a string to the terminal
+";
+
+    if (not $error)
+    {
+	$error = _builtin_project_commands_sh_create($project_name, $target_name, "sh_array_of_commands", $array_of_commands_sh_example);
+    }
+
+    my $single_command_sh_example
+	= "#!/bin/sh
+echo an example of the invocation of a single command
+# allow_fail: describe here the reason why this command is allowed to fail or remove the allow_fail clause
+# help: this command echos a string to the terminal
+";
+
+    if (not $error)
+    {
+	$error = _builtin_project_commands_sh_create($project_name, $target_name, "sh_single_command", $single_command_sh_example);
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_yml_template_create
+{
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $error = '';
+
+    my $array_of_commands_remote_execution_yml_example
+	= "---
+- commands:
+  - echo
+  - echo an example of the invocation of an array of remote commands
+  - echo this is the second command in the array
+  - echo
+  options:
+    remote: build
+- commands:
+  - echo a few locally executed commands
+  - echo more locally executed commands
+- commands:
+  - echo
+  - echo an example of the invocation of an array of remote commands
+  - echo this is the second command in the array
+  - echo
+  options:
+    remote: build
+help: an example of the invocation of an array of commands that are executed on a remote machine.
+";
+
+    if (not $error)
+    {
+	$error = _builtin_project_commands_yml_create($project_name, $target_name, "remote_execution", $array_of_commands_remote_execution_yml_example);
+    }
+
+    my $array_of_commands_yml_example
+	= "---
+commands:
+  - echo an example of the invocation of an array of commands
+  - echo this is the second command in the array
+options:
+  allow_fail: describe here the reason why this command is allowed to fail or remove the allow_fail clause
+help: these commands echo a string to the terminal
+";
+
+    if (not $error)
+    {
+	$error = _builtin_project_commands_yml_create($project_name, $target_name, "array_of_commands", $array_of_commands_yml_example);
+    }
+
+    my $single_command_yml_example
+	= "---
+command: echo an example of the invocation of a single command
+options:
+  allow_fail: describe here the reason why this command is allowed to fail or remove the allow_fail clause
+help: this command echos a string to the terminal
+";
+
+    if (not $error)
+    {
+	$error = _builtin_project_commands_yml_create($project_name, $target_name, "single_command", $single_command_yml_example);
+    }
+
+    return $error;
+}
+
+
+sub _builtin_create_directories
+{
+    my $pathname = shift;
+
+    use File::Basename;
+    use File::Path qw/make_path/;
+
+    my $directory = dirname($pathname);
+
+    make_path($directory);
+
+    my $filename = basename($pathname);
+
+    return ($directory, $filename);
+}
+
+
+sub _builtin_create_directory
+{
+    my $directory = shift;
+
+    my $error = '';
+
+    if (not mkdir $directory)
+    {
+	$error = "error: $!";
+    }
+}
+
+
+sub _builtin_project_configuration_create
+{
+    my $project_name = shift;
+
+    # create a configuration file
+
+    my $user = `whoami`;
+
+    my $configuration_data_directory = "$project_name-configuration-data";
+
+    # note that the relative pathnames are correct by a matching cd when reading the project configuration
+
+    my $configuration_file_part
+	= "#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+require YAML;
+
+my \$build_servers = YAML::LoadFile('$configuration_data_directory/build_servers.yml');
+
+my \$command_filenames = YAML::LoadFile('$configuration_data_directory/command_filenames.yml');
+
+my \$node_configuration = YAML::LoadFile('$configuration_data_directory/node_configuration.yml');
+
+my \$target_servers = YAML::LoadFile('$configuration_data_directory/target_servers.yml');
+
+my \$targets = YAML::LoadFile('$configuration_data_directory/targets.yml');
+
+my \$configuration = {
+		      \%\$build_servers,
+		      \%\$command_filenames,
+		      \%\$node_configuration,
+		      \%\$target_servers,
+		      \%\$targets,
+		     };
+
+";
+
+    my $error = '';
+
+    if (not $error)
+    {
+	$error = _builtin_create_directory($configuration_data_directory);
+    }
+
+    if (not $error)
+    {
+	$error = _builtin_project_configuration_targets_create($project_name, $configuration_data_directory);
+    }
+
+    if (not $error)
+    {
+	$error = _builtin_project_configuration_build_servers_create($project_name, $configuration_data_directory, $user);
+    }
+
+    if (not $error)
+    {
+	$error = _builtin_project_configuration_command_filenames_create($project_name, $configuration_data_directory);
+    }
+
+    if (not $error)
+    {
+	$error = _builtin_project_configuration_node_configuration_create($project_name, $configuration_data_directory);
+    }
+
+    if (not $error)
+    {
+	$error = _builtin_project_configuration_target_servers_create($project_name, $configuration_data_directory, $user);
+    }
+
+    use IO::File;
+
+    my $file = IO::File->new("> $project_name-configuration");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	my $configuration_browser = _builtin_configuration_browser_code();
+
+	print $file $configuration_browser;
+
+	$file->close();
+
+	chmod 0700, "$project_name-configuration";
+    }
+    else
+    {
+	$error = "cannot open $project_name-configuration";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_build_servers_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $user = shift;
+
+    my $configuration_file_part
+	= "---
+build_servers:
+  laptop:
+    description: local laptop
+    name: laptop
+    ssh_port: 22
+    ssh_server: localhost
+    ssh_user: $user
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/build_servers.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/build_servers.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_command_filenames_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $configuration_file_part
+	= "---
+command_filenames:
+  - $project_name-commands
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/command_filenames.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/command_filenames.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_node_configuration_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $configuration_file_part
+	= "---
+node_configuration:
+  0_concepts:
+    description00: The design goals of this IP address plan is to separate administration networks from operations networks.
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/node_configuration.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/node_configuration.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_targets_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $configuration_file_part
+	= "---
+targets:
+  all:
+    description: used for processing of target files that are produced by other targets
+  docker:
+    description: interaction with the docker build container
+  examples:
+    description: these are examples that explain how to use the APIs
+  source_code:
+    description: operations on the source code that is used for testing
+  wiki_gitlab:
+    description: pulls the wiki pages from gitlab (and possibly other sources) and converts them PDF (or other formats)
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/targets.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/targets.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_target_servers_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $user = shift;
+
+    my $configuration_file_part
+	= "---
+target_servers:
+  build:
+    description: your build server that does builds and is used for testing
+    name: build
+    ssh_server: build.your.local.domain
+    ssh_user: tester
+  docker_build:
+    description: interaction with the docker build container
+    name: docker_build
+    remote_policy: 'sudo docker exec -it --workdir ~/projects/digital-engineering/source/build gitlab_interactive '
+  laptop:
+    description: the local computer of the developer
+    localuser: yes
+    name: laptop
+    ssh_port: 22
+    ssh_server: 192.168.4.70
+    ssh_user: $user
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/target_servers.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/target_servers.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_gc_configuration_create
+{
+    my $project_name = shift;
+
+    my $conf_gc_project_configuration
+	= "# this file should be copied to /usr/share/grc/
+#
+# Colors available for configuration are:
+#
+#    Black
+#    Red
+#    Green
+#    Yellow
+#    Blue
+#    Magenta
+#    Cyan
+#    White
+#
+# add this at the top of /etc/grc.conf
+#
+#
+# # $project_name configuration
+# (^|[/\\w\\.]+/)$project_name-configuration
+# conf.$project_name-configuration
+#
+#
+# maintainance laptop according to the documentation
+regexp=laptop_slave
+colours=yellow
+-
+# trusted laptop according to the documentation
+regexp=laptop_developer
+colours=yellow
+-
+# target
+regexp=$project_name
+colours=yellow
+-
+# descriptions
+regexp=^ *description:.*\$
+colours=green
+-
+# IP addresses
+regexp=([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})
+colours=green bold
+-
+# MAC addresses
+regexp=(([a-zA-Z0-9][a-zA-Z0-9]:){5}[a-zA-Z0-9][a-zA-Z0-9])
+colours=blue
+-
+# vlans
+regexp=(vlan_id: [0-9]{1,4})
+colours=cyan bold
+-
+# interfaces
+regexp=(enp[03456]\\w*)
+colours=white underline
+-
+regexp=(eth[012]\\w*)
+colours=white underline
+-
+regexp=(lan[1234]\\w*)
+colours=white underline
+-
+regexp=(enx............)
+colours=white underline
+-
+regexp=wlp1s0
+colours=white underline
+-
+regexp=wlo1
+colours=white underline
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> conf.$project_name-configuration");
+
+    if (defined $file)
+    {
+	print $file $conf_gc_project_configuration;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open conf.$project_name-configuration";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_gc_workflow_create
+{
+    my $project_name = shift;
+
+    my $conf_gc_project_workflow
+	= "# this file should be copied to /usr/share/grc/
+#
+#    Black: \\u001b[30m.
+#    Red: \\u001b[31m.
+#    Green: \\u001b[32m.
+#    Yellow: \\u001b[33m.
+#    Blue: \\u001b[34m.
+#    Magenta: \\u001b[35m.
+#    Cyan: \\u001b[36m.
+#    White: \\u001b[37m.
+#
+# targets
+# -
+# regexp=all
+# colours=green bold
+# -
+# regexp=cr(?!-workflow)
+# colours=green bold
+# -
+# commands
+regexp=(\\S+) --dry
+colours=yellow bold
+-
+regexp= --dry
+colours=white
+-
+# specific IP addresses
+regexp=^.*192\\.168\\.[345]\\..*\$
+colours=green bold
+-
+# MAC addresses
+regexp=(([a-zA-Z0-9][a-zA-Z0-9]:){5}[a-zA-Z0-9][a-zA-Z0-9])
+colours=blue
+-
+# vlans
+regexp=(vlan_id: [0-9]{1,4})
+colours=cyan bold
+-
+# devices and interfaces
+regexp=(enp[03456]\\w*)
+colours=white underline
+-
+regexp=(eth[012]\\w*)
+colours=white underline
+-
+regexp=(lan[1234]\\w*)
+colours=white underline
+-
+regexp=(enx............)
+colours=white underline
+-
+regexp=wlp1s0
+colours=white underline
+-
+regexp=wlo1
+colours=white underline
+-
+regexp=/dev/\\S*
+colours=yellow underline
+count=more
+-
+regexp=/mnt/\\S*
+colours=magenta underline
+count=more
+-
+regexp=/media/\\S*
+colours=magenta underline
+count=more
+-
+# interaction diagram
+regexp=ROLE:.*\$
+colours=magenta bold underline
+-
+regexp=COMMAND:.*\$
+colours=cyan underline
+
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> conf.$project_name-workflow");
+
+    if (defined $file)
+    {
+	print $file $conf_gc_project_workflow;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open conf.$project_name-workflow";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_template_create
+{
+    my $project_name = shift;
+
+    my $project_file
+	= "#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+my \$configuration
+    = {
+       field_project_name => '$project_name',
+      };
+
+return \$configuration;
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> workflow-project-template.pl");
+
+    if (defined $file)
+    {
+	print $file $project_file;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open workflow-project-template.pl";
+    }
+
+    return $error;
+}
+
+
+sub builtin_add_target
+{
+    my $option_install_command_pl;
+    my $option_install_command_sh;
+    my $option_install_command_yml;
+
+    our $install_options
+      = {
+	 "install-commands-pl!" => \$option_install_command_pl,
+	 "install-commands-sh!" => \$option_install_command_sh,
+	 "install-commands-yml!" => \$option_install_command_yml,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray(\@ARGV, %$install_options);
+
+    if (!$result)
+    {
+        die "$0: *** error in option processing, try --help";
+    }
+
+    if ($option_verbose)
+    {
+	use Data::Dumper;
+
+	print "$0: builtin_add_target, installation options:\n";
+
+	print Dumper( { install_options => $install_options, }, );
+    }
+
+    my $error = '';
+
+    my $target_name = $ARGV[0];
+
+    if (not $error)
+    {
+	if (not defined $target_name)
+	{
+	    $error = 'no target_name found on the command line';
+	}
+    }
+
+    my $target_description = $ARGV[1];
+
+    if (not $error)
+    {
+	if (not defined $target_description)
+	{
+	    $error = 'no target_description found on the command line';
+	}
+    }
+
+#     use Data::Dumper;
+
+#     print Dumper($global_technical_project_configuration);
+
+#     print Dumper($global_field_project_configuration);
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    if (not $error)
+    {
+	if (not $field_project_name)
+	{
+	    $error = 'no valid field_project_name found in the field_project_configuration';
+	}
+    }
+
+    my $configuration_data_directory = $global_field_project_configuration->{true_technical_project_data_configuration_directory};
+
+    if (not $error)
+    {
+	if (not $configuration_data_directory)
+	{
+	    $error = 'no valid configuration_data_directory found in the field_project_configuration';
+	}
+    }
+
+    use YAML;
+
+    if (not $error)
+    {
+	if (not $target_name)
+	{
+	    $error = "target name is not given on the command line";
+	}
+    }
+
+    if (not $error)
+    {
+	if (not $target_description)
+	{
+	    $error = "target description is not given on the command line";
+	}
+    }
+
+    # read the targets configuration file
+
+    my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
+
+    my $targets = YAML::LoadFile($targets_configuration_filename);
+
+    if (not $error)
+    {
+	if (exists $targets->{targets}->{$target_name})
+	{
+	    $error = "target $target_name already exists";
+	}
+    }
+
+    # add the new target
+
+    if (not $error)
+    {
+	$targets->{targets}->{$target_name}->{description} = $target_description;
+    }
+
+    # write the new targets configuration file
+
+    if (not $error)
+    {
+	YAML::DumpFile($targets_configuration_filename, $targets);
+
+	print "$global_program_name: added target $target_name to $targets_configuration_filename\n";
+    }
+
+    if ($option_install_command_pl)
+    {
+	# read the commands configuration file
+
+	my $command_filenames;
+
+	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+
+	if (not $error)
+	{
+	    $command_filenames = YAML::LoadFile($command_filenames_configuration_filename);
+	}
+
+	# add the commands filename corresponding to the new target name
+
+	my $new_command_filename = "$field_project_name-commands-$target_name";
+
+	if (not $error)
+	{
+	    my $command_filenames_array = $command_filenames->{command_filenames};
+
+	    push @$command_filenames_array, $new_command_filename;
+	}
+
+	# write the commands configuration file
+
+	if (not $error)
+	{
+	    YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
+
+	    print "$global_program_name: registered the perl command file name $new_command_filename for target $target_name\n";
+	}
+
+	# add a template commands file with the given name
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_template_create($field_project_name, $target_name, $target_name);
+
+	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_sh)
+    {
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_sh_template_create($field_project_name, $target_name);
+
+	    print "$global_program_name: created the shell command file for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_yml)
+    {
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_yml_template_create($field_project_name, $target_name);
+
+	    print "$global_program_name: created the yml command file for target $target_name\n";
+	}
+    }
+
+    # return errors
+
+    return $error;
+}
+
+
+sub builtin_add_target_help
+{
+    my $command = shift;
+
+    return "$command: add a new target and update the configuration to integrate it.
+synopsis:
+
+$command <target-name> <target-description> [-- <options>]
+
+arguments:
+
+    ARGV[0]: name of the new target.
+    ARGV[1]: description of the new target.
+
+options:
+
+    --install-commands-pl: install a perl command file template.
+    --install-commands-sh: install a shell command file template.
+";
+}
+
+
+sub builtin_install_scripts
+{
+    use Data::Dumper;
+
+#     print Dumper(\@_);
+
+    my $option_install_bash_completion;
+    my $option_install_commands;
+    my $option_install_engine;
+    my $option_install_force;
+    my $option_install_git;
+    my $option_install_report;
+
+    our $install_options
+      = {
+	 "bash-completion=s" => \$option_install_bash_completion,
+	 "commands!" => \$option_install_commands,
+	 "engine!" => \$option_install_engine,
+	 "force!" => \$option_install_force,
+	 "git!" => \$option_install_git,
+	 "report!" => \$option_install_report,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray(\@ARGV, %$install_options);
+
+    if (!$result)
+    {
+        die "$0: *** error in option processing, try --help";
+    }
+
+    # need to do four things:
+    #
+    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+    # 2. Install to ~/bin: symbolic links for commands
+    # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
+    # 4. Install to /etc/grc.conf: text addition
+    # 5. Install to /usr/share/grc/: symbolic links
+    # 6. Create and populate the git repository
+
+    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+
+    my $field_configuration = FieldProject::_init_get_field_project_configuration();
+
+    if (!$field_configuration)
+    {
+        die "$0: *** error: no valid field_configuration found";
+    }
+
+    my $source = "/usr/local/bin/workflow";
+
+    my $project_name = $field_configuration->{field_project_name};
+
+    if (!$project_name)
+    {
+        die "$0: *** error: no valid project_name in the field_configuration found";
+    }
+
+    my $command_mkdir = "mkdir --parents $ENV{HOME}/bin";
+
+    execute_shell_command($command_mkdir);
+
+    my $target = "$ENV{HOME}/bin/$project_name-workflow";
+
+    my $command = "ln -sf $source $target";
+
+    if (not -e $target)
+    {
+	if ($option_verbose)
+	{
+	    print "$0: executing installation of the workflow engine with (force == $option_install_engine)\n";
+	}
+
+	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
+    }
+    else
+    {
+	if ($option_verbose)
+	{
+	    print "$0: NOT executing installation of the workflow engine with (force == $option_install_engine)\n";
+	}
+    }
+
+    # $configuration_filename normally becomes 'workflow-project.pl'
+
+    # my $configuration_filename = "$field_configuration->{field_project_configuration_directory}/$field_configuration->{field_project_configuration_filename}";
+
+    my $configuration_filenames_found_2
+	= {
+	   map
+	   {
+	       $_ => 1,
+	   }
+	   @{ _init_command_filenames_found('full-paths-configuration') },
+	  };
+
+    # print Dumper( { configuration_filenames_found_2 => $configuration_filenames_found_2, }, );
+
+    my $configurations_found = _init_filenames_2_symlink_commands( [ keys %$configuration_filenames_found_2, ], );
+
+    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 1. Install to ~/bin: symbolic links for workflow engine configuration
+", $configurations_found);
+
+    # 2. Install to ~/bin: symbolic links for commands
+
+    # 2.a. from files found in the commands directory to configuration.
+    # 2.b. from configured filenames to symbolic links.
+
+    # 2.a. from files found in the commands directory to configuration.
+
+    # my $command_filenames
+    # 	= [
+    # 	   `ls 2>/dev/null "$project_name"-commands-*[^~]`,
+    # 	  ];
+
+    # all the command files, including those not in mentioned in the configuration
+
+    my $command_filenames_found_2
+	= {
+	   map
+	   {
+	       $_ => 1,
+	   }
+	   @{ _init_command_filenames_found('full-paths') },
+	  };
+
+    # only those command files mentioned in the configuration
+
+    my $command_filenames_configured_2
+	= {
+	   map
+	   {
+	       $_ => 1,
+	   }
+	   @{ _init_command_filenames_configured('full-paths') },
+	  };
+
+    my $command_filenames_found_but_not_configured
+	= {
+	   map
+	   {
+	       $_ => 1,
+	   }
+	   grep
+	   {
+	       not $command_filenames_configured_2->{$_};
+	   }
+	   keys %$command_filenames_found_2,
+	  };
+
+    # print Dumper(
+    # 		 {
+    # 		  command_filenames_found_2 => $command_filenames_found_2,
+    # 		  command_filenames_configured_2 => $command_filenames_configured_2,
+    # 		  command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
+    # 		 },
+    # 		);
+
+    my $commands_found = _init_filenames_2_symlink_commands( [ keys %$command_filenames_configured_2, ], );
+
+    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin: symbolic links for commands
+
+    # 2.a. from files found in the commands directory to configuration.
+", $commands_found);
+
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	use Data::Dumper;
+
+	print Dumper( {
+		       command_filenames_found_2 => $command_filenames_found_2,
+		       command_filenames_configured_2 => $command_filenames_configured_2,
+		       command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
+		       commands_found => $commands_found,
+		      }, );
+    }
+
+    # 2.b. from configured filenames to symbolic links.
+
+    # generate list of scripts
+
+    # my $command_filenames_configured = _init_command_filenames_configured('');
+
+    my $command_filenames_configured = $global_technical_project_configuration->{command_filenames};
+
+    # install each script to the ~/bin directory
+
+    # TODO: use case if a script exists but does not have a symbolic
+    # link in ~/bin yet, a new script that was just created:
+    # 1. requires adding the symbolic link.
+    # 2. requires adding the targets defined in the script to the configuration
+    # -- this requires to guess the targets.
+
+    my $commands_configured = _init_filenames_2_symlink_commands($command_filenames_configured);
+
+    _all_install_scripts_execute_shell_command_array($option_install_force, $option_install_report, "    # 2. Install to ~/bin: symbolic links for commands
+
+    # 2.b. from configured filenames to symbolic links.
+", $commands_configured);
+
+    # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
+
+    my $alias_marker = "alias $project_name-workflow=\"grc $project_name-workflow\"";
+
+    my $alias_additions
+	= "# $project_name-workflow
+
+alias $project_name-workflow=\"grc $project_name-workflow\"
+alias $project_name-configuration=\"grc $project_name-configuration\"
+";
+
+    my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $alias_marker);
+
+    if ($option_verbose)
+    {
+	if (not $bashrc_matches)
+	{
+	    print "$0: all_install_scripts: .bashrc does not match\n";
+	}
+	else
+	{
+	    print "$0: all_install_scripts: .bashrc matches\n";
+	}
+    }
+
+    if (not $bashrc_matches)
+    {
+	{
+	    _file_append_string("$ENV{HOME}/.bashrc", $alias_additions);
+	}
+
+	my $command_filename_directory = $global_field_project_configuration->{field_project_configuration_directory};
+
+	use Cwd;
+
+	my $abs_command_filename_directory = Cwd::abs_path($command_filename_directory);
+
+	my $bash_completion_filename = "$abs_command_filename_directory/$project_name-bash-completion.sh";
+
+	if (-e $bash_completion_filename)
+	{
+	    my $bash_completion_additions
+		= ". $bash_completion_filename
+";
+
+	    _file_append_string("$ENV{HOME}/.bashrc", $bash_completion_additions);
+	}
+    }
+
+    # 4. Install to /etc/grc.conf: text addition
+
+    my $etc_grc_conf_filename = "/etc/grc.conf";
+
+    my $etc_grc_conf_marker = "$project_name-workflow";
+
+    my $grc_conf_matches = _file_contains_regex($etc_grc_conf_filename, $etc_grc_conf_marker);
+
+    if ($option_verbose)
+    {
+	if (not $grc_conf_matches)
+	{
+	    print "$0: all_install_scripts: grc_conf does not match\n";
+	}
+	else
+	{
+	    print "$0: all_install_scripts: grc_conf matches\n";
+	}
+    }
+
+    if (not $grc_conf_matches)
+    {
+	my $etc_grc_conf_additions
+	    = "
+# $project_name-workflow
+(^|[/\\w\\.]+/)$project_name-workflow\\s?
+conf.$project_name-workflow
+
+# $project_name-configuration
+(^|[/\\w\\.]+/)$project_name-configuration\\s?
+conf.$project_name-configuration
+
+";
+
+	_file_append_string($etc_grc_conf_filename, $etc_grc_conf_additions, { sudo => 1, }, );
+    }
+
+    # 5. Install to /usr/share/grc/: symbolic links
+
+    {
+	my $grc_configuration = "conf.$project_name-configuration";
+
+	my $grc_workflow = "conf.$project_name-workflow";
+
+	my $source_directory = $field_configuration->{technical_project_configuration_directory};
+
+	use Cwd;
+
+	my $abs_source_directory = Cwd::abs_path($source_directory);
+
+	my $target_directory = "/usr/share/grc";
+
+	my $source_file_configuration = "$abs_source_directory/$grc_configuration";
+
+	my $target_file_configuration = "$target_directory/$grc_configuration";
+
+	if (-e $source_file_configuration
+	    and not -e $target_file_configuration)
+	{
+	    my $command = "ln -sf $source_file_configuration $target_file_configuration";
+
+	    execute_shell_command($command, { sudo => 1, }, );
+	}
+
+	my $source_file_workflow = "$abs_source_directory/$grc_workflow";
+
+	my $target_file_workflow = "$target_directory/$grc_workflow";
+
+	if (-e $source_file_workflow
+	    and not -e $target_file_workflow)
+	{
+	    my $command = "ln -sf $source_file_workflow $target_file_workflow";
+
+	    execute_shell_command($command, { sudo => 1, }, );
+	}
+    }
+
+    {
+	# 6. Create and populate the git repository
+
+	if ($option_install_git)
+	{
+	    my $command = "git init -b master";
+
+	    execute_shell_command($command, );
+	}
+
+	if ($option_install_git)
+    	{
+	    my $commands
+		= [
+		   "git add --all",
+		   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
+		  ];
+
+	    execute_shell_command_array($commands);
+	}
+    }
+}
+
+
+sub builtin_install_scripts_help
+{
+    my $command = shift;
+
+    return "$command : upgrade the workflow scripts for this project.
+
+arguments:
+
+    force: force the upgrade
+";
+}
+
+
+sub builtin_print_configuration_directory
+{
+    my $project_name = shift;
+
+    my $error = '';
+
+    return $error;
+}
+
+
+sub builtin_print_configuration_directory_help
+{
+    my $command = shift;
+
+    return "$command : print the directory where the configuration of this project is found.
+
+arguments:
+
+    none.
+";
+}
+
+
+sub builtin_start_project
+{
+    my $command_files = [ split '\n', `ls -1 2>/dev/null *-commands*`, ];
+
+    my $result;
+
+    if (not $::option_dry_run)
+    {
+	my $project_name = $ARGV[0] || $command_files->[0];
+
+	if (not defined $project_name)
+	{
+	    die "$0: *** Error: no suitable project name could be determined, please give one as argument";
+	}
+
+	$project_name =~ s((.*)-commands*)($1);
+
+	print "Using '$project_name' as name for your project.\n";
+
+	my $error;
+
+	if (not $error)
+	{
+	    $error = _builtin_project_template_create($project_name);
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_configuration_create($project_name);
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_template_create($project_name, "examples");
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_sh_template_create($project_name, "examples_sh");
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_yml_template_create($project_name, "examples_yml");
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_gc_configuration_create($project_name);
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_gc_workflow_create($project_name);
+	}
+
+	if (not $error)
+	{
+	    $error = _builtin_project_bash_completion_create($project_name);
+	}
+
+	if (not $error)
+	{
+	    print "Created a template configuration file for project '$project_name'\n";
+
+	    print "Created a template workflow-project in 'workflow-project-template.pl' with contents:\n---\n";
+
+	    print `cat 'workflow-project-template.pl'`;
+
+	    print "---\nIf this looks good, please rename it to 'workflow-project.pl' using the command:\n\n";
+	    print "  mv 'workflow-project-template.pl' 'workflow-project.pl'\n\n";
+	    print "And test it with the command:\n\n";
+	    print "  workflow --help-field-project-name\n\n";
+	    print "Afterwards install the scripts on your system using the command:\n\n";
+	    print "  workflow builtin install_scripts -- --engine --commands --git\n\n";
+	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
+	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
+	    print "  $project_name-workflow examples sequencing_and_composition --interactions-module\n\n";
+	    print "  $project_name-workflow examples single_command --dry-run\n\n";
+	    print "  $project_name-workflow examples array_of_commands --help\n\n";
+	    print "To enable bash completion after installation of the scripts, either execute:\n\n";
+	    print "  . ~/.bashrc\n\n";
+	    print "Or:\n\n";
+	    print "  . $project_name-bash-completion.sh\n\n";
+	}
+	else
+	{
+	    print STDERR "$0: *** Error: could not initialize the project $project_name ($error)\n";
+
+	    $result = "$0: *** Error: could not initialize the project $project_name ($error)\n";
+	}
+    }
+    else
+    {
+	# schedule one shell command such that it is visible in diagrams for this command
+
+	my $commands = [ "cat 'workflow-project-template.pl'", ];
+
+	execute_shell_command_array($commands);
+    }
+
+    return $result;
+}
+
+
+sub builtin_start_project_help
+{
+    my $command = shift;
+
+    return "$command: start a new project with a given name in the current directory.
+
+This will install a project descriptor, a configuration file and an
+empty command file.
+
+arguments:
+
+    name: name of the new project.
+";
+}
+
+
+sub execute_shell_command
+{
+    return Engine::execute_shell_command(@_);
+}
+
+
+sub execute_shell_command_array
+{
+    if (not ref $_[0] eq 'ARRAY')
+    {
+	die "$0: *** Error: execute_shell_command_array() requires an ARRAY reference as its first argument";
+    }
+    elsif (defined $_[1] and not ref $_[1] eq 'HASH')
+    {
+	die "$0: *** Error: execute_shell_command_array() requires a HASH reference as its second argument";
+    }
+
+    return Engine::execute_shell_command_array(@_);
+}
+
+
+sub execute_shell_command_schedule
+{
+    return Engine::execute_shell_command_schedule(@_);
+}
+
+
+sub execute_shell_command_schedule_array
+{
+    return Engine::execute_shell_command_schedule_array(@_);
+}
+
+
+sub execute_shell_script
+{
+    my $filename = shift;
+
+    # assumes $/ has its default value of a newline
+
+    use IO::File;
+
+    my $file = IO::File->new("<$filename");
+
+    if (not $file)
+    {
+	die "$0: *** Error: no valid commands available in file '$filename'\n";
+    }
+
+    my $commands
+	= [
+	   map
+	   {
+	       chomp; $_;
+	   }
+	   <$file>,
+	  ];
+
+    # use Data::Dumper;
+
+    # print Dumper($commands);
+
+    return Engine::execute_shell_command_array($commands, @_);
+}
+
+
+# given a local script filename, execute the script remotely
+
+sub execute_shell_script_remote
+{
+    my $local_filename_arguments = shift;
+
+    my $options = shift;
+
+    $local_filename_arguments =~ m(^(\S+)(\s+(.*))?$);
+
+    my $local_filename = $1;
+
+    my $arguments = $3;
+
+    if (not -e $local_filename)
+    {
+	die "$0: *** Error: no valid script file '$local_filename'\n";
+    }
+
+    my $remote = $options->{remote};
+
+    my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $remote, "scp");
+
+    my $ssh_options = $remote_and_interaction_role->{ssh_options} || "";
+
+#    my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
+
+    my $interaction_role_with_policy_syntax = $remote_and_interaction_role->{interaction_role_with_policy_syntax} || "";
+
+    use File::Spec;
+
+    my ($volume, $directories, $remote_filename) = File::Spec->splitpath( $local_filename );
+
+    $remote_filename = "/tmp/$remote_filename";
+
+    # copy the local file to the remote
+
+    my $scp_command = "scp -pr $ssh_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+
+    # execute_shell_command($scp_command, { %$options, remote => undef, }, @_);
+    execute_shell_command($scp_command, { remote => undef, }, @_);
+
+    # execute the remote file with the remote role
+
+    return Engine::execute_shell_command("$remote_filename $arguments", $options, @_);
+}
+
+
+sub _file_append_string
+{
+    my $filename = shift;
+
+    my $string = shift;
+
+    my $options = shift;
+
+    $string =~ s(")(\\")g;
+
+    my $command = "bash -c \"echo '$string' | cat >>$filename\"";
+
+    execute_shell_command($command, $options);
+
+    # open(my $fh, ">>$filename");
+
+    # print $fh $string;
+
+    # close $fh;
+}
+
+
+sub _file_contains_regex
+{
+    my $filename = shift;
+
+    my $string = shift;
+
+    my $data
+	= do {
+	    open my $fh, '<', $filename;
+	    local $/;
+	    <$fh>;
+	};
+
+    my $result = ($data =~ /$string/);
+
+    if ($option_verbose
+	and $option_verbose > 1)
+    {
+	if ($result)
+	{
+	    print "$0: _file_contains_regex(): match file '$filename' with '$string' (result is $result)\n";
+	}
+	else
+	{
+	    print "$0: _file_contains_regex(): no match file '$filename' with '$string' (result is $result)\n";
+	}
+    }
+
+    return $result;
+}
+
+
+# initialize the command module
+
+sub _init
+{
+    my $commands_seen;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    # all the command files, including those not in mentioned in the configuration
+
+    # my $command_filenames_found = _init_command_filenames_found('true-paths');
+
+    #! options haven't been processed yet
+
+    # if ($option_verbose
+    # 	and $option_verbose > 1)
+
+    # use Data::Dumper;
+
+    # print STDERR Dumper( { command_filenames_found => $command_filenames_found, }, );
+
+    # only those command files mentioned in the configuration
+
+    my $command_filenames_configured = _init_command_filenames_configured('true-paths');
+
+    # print STDERR Dumper( { command_filenames_configured => $command_filenames_configured, } );
+
+    my $command_filenames_to_use
+	= [
+	   grep
+	   {
+	       # remove duplicate filenames to avoid duplicate command definitions
+
+	       if ($commands_seen->{$_})
+	       {
+		   print "$0: *** Warning: $_ is mentioned $commands_seen->{$_} time(s) in the configuration (hint: sort your filenames to spot such errors quickly).\n";
+	       }
+
+	       not $commands_seen->{$_}++;
+	   }
+	   @$command_filenames_configured,
+	   #        @$command_filenames_found,
+	  ];
+
+    foreach my $command_filename (@$command_filenames_to_use)
+    {
+	# print STDERR "Executing $command_filename\n";
+
+	my $file_type;
+
+	if ($command_filename =~ m(\.yml$))
+	{
+	    $file_type = 'yaml';
+	}
+	else
+	{
+	    $file_type = 'perl';
+	}
+
+	if ($file_type eq 'perl')
+	{
+	    my ($commands, $eval_status) = FieldProject::_init_do_eval_perl_file($command_filename);
+
+	    if ($eval_status)
+	    {
+		die "$0: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+	    }
+	}
+	elsif ($file_type eq 'yaml')
+	{
+	    my ($commands, $eval_status) = FieldProject::_init_do_eval_yaml_command_file($command_filename);
+
+	    if ($eval_status)
+	    {
+		die "$0: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+	    }
+	}
+	else
+	{
+	    die "$0: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
+	}
+    }
+}
+
+
+sub _init_command_filenames_configured
+{
+    # full_paths is either the empty string '' or 'full-paths' or 'true-paths'.
+
+    my $full_paths = shift;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    # when invoked as just 'workflow' the directory where to search
+    # for command files will not necessarily be /usr/local/bin'
+    # it may also be the current working directory
+
+    # default to the directory with the main executable
+
+    my $command_filename_directory = $global_field_project_configuration->{technical_project_configuration_directory};
+
+    my $result
+	= [
+	   sort
+	   map
+	   {
+	       # map the command filename to its true path if this was requested
+
+	       my $command_filename = $_;
+
+	       if ($full_paths eq 'true-paths')
+	       {
+		   use Cwd;
+
+		   $command_filename = Cwd::abs_path($command_filename);
+	       }
+
+	       $command_filename;
+	   }
+	   grep
+	   {
+	       # select filenames with the correct project name prefix
+
+	       /$field_project_name-commands[-a-z0-9]*$/;
+	   }
+	   grep
+	   {
+	       my $command_filename = $_;
+
+	       # select filenames that have the string -commands
+
+	       my $result = ($command_filename =~ m(-commands));
+
+	       if (not $result)
+	       {
+		   print STDERR "$0: *** Error: $command_filename does not follow command filename conventions (must have '-commands')\n";
+	       }
+
+	       $result;
+	   }
+	   map
+	   {
+	       # map the command filename to its full path
+
+	       $full_paths ? "$command_filename_directory/$_" : "$_";
+	   }
+	   @{ $global_technical_project_configuration->{command_filenames} },
+	  ];
+
+    #! options haven't been processed yet
+
+    # if ($option_verbose
+    # 	and $option_verbose > 1)
+    # {
+    # 	use Data::Dumper;
+
+    # 	print STDERR Dumper(
+    # 			    {
+    # 			     command_filenames => $global_technical_project_configuration->{command_filenames},
+    # 			     _init_command_filenames_configured => $result,
+    # 			    },
+    # 			   );
+    # }
+
+    return $result;
+}
+
+
+sub _init_command_filenames_found
+{
+    # full_paths is either the empty string '' or 'full-paths' or 'full-paths-configuration' or 'true-paths'.
+
+    my $full_paths = shift;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    # when invoked as just 'workflow' the directory where to search
+    # for command files will not necessarily be /usr/local/bin'
+    # it may also be the current working directory
+
+    my $command_filename_directory = $global_field_project_configuration->{technical_project_configuration_directory};
+
+    my $result
+	= [
+	   sort
+	   map
+	   {
+	       # map the command filename to its true path if this was requested
+
+	       my $command_filename = $_;
+
+	       if ($full_paths eq 'true-paths')
+	       {
+		   use Cwd;
+
+		   $command_filename = Cwd::abs_path($command_filename);
+	       }
+
+	       $command_filename;
+	   }
+	   grep
+	   {
+	       ($full_paths =~ "configuration"
+		? m/$field_project_name-configuration[-a-z0-9]*$/
+		: m/$field_project_name-commands[-a-z0-9]*$/);
+	   }
+	   map
+	   {
+	       if (not $full_paths)
+	       {
+		   s($command_filename_directory/)();
+	       }
+
+	       $_;
+	   }
+	   map
+	   {
+	       chomp; $_;
+	   }
+	   ($full_paths =~ "configuration"
+	    ? `ls 2>/dev/null $command_filename_directory/$field_project_name-configuration*`
+	    : `ls 2>/dev/null $command_filename_directory/$field_project_name-commands*`),
+	  ];
+
+    # system "ls 2>/dev/null $command_filename_directory/$field_project_name-configuration*";
+    # system "ls 2>/dev/null $command_filename_directory/$field_project_name-commands*";
+
+    # use Data::Dumper;
+
+    # print STDERR "ls $command_filename_directory/$field_project_name-commands*\n";
+
+    # print STDERR Dumper(
+    # 			{
+    # 			 global_field_project_configuration => $global_field_project_configuration,
+    # 			 _init_command_filenames_found => $result,
+    # 			 all_path_globals => $all_path_globals,
+    # 			},
+    # 		       );
+
+    return $result;
+}
+
+
+sub _init_filenames_2_symlink_commands
+{
+    my $filenames = shift;
+
+    use Data::Dumper;
+
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
+    }
+
+    my $commands
+	= [
+	   map
+	   {
+	       # $_ =~ m(.*/(.*)$);
+
+	       my $command_filename = $_;
+
+	       use Cwd;
+
+	       my $source = Cwd::abs_path($command_filename);
+
+	       my $target = "$ENV{HOME}/bin/$command_filename";
+
+	       if (defined $option_verbose
+		   and $option_verbose > 2)
+	       {
+		   print "$command_filename: ln -sf $source $target";
+	       }
+
+	       my $result = "ln -sf $source $target";
+
+	       $result;
+	   }
+	   grep
+	   {
+	       my $command_filename = $_;
+
+	       my $result = ($command_filename =~ m(-commands|-configuration));
+
+	       if (not $result)
+	       {
+		   print STDERR "$0: *** Error: $command_filename does not follow command filename conventions (must have '-commands|-configuration')\n";
+	       }
+
+	       $result;
+	   }
+	   grep
+	   {
+	       my $command_filename = $_;
+
+	       my $target = "$ENV{HOME}/bin/$command_filename";
+
+	       not -e $target;
+	   }
+	   @$filenames,
+	  ];
+
+    return $commands;
+}
+
+
+package Command::Net::IPerf;
+
+
+my $iperf_configuration
+    = {
+       command => "iperf3",
+       server => {
+		  command => "/home/fio/iperf3-arm32v7",
+		  options_old => "-s -f K -D",
+		  options => "-s -D",
+		 },
+       client => {
+		  options_old => "-f M",
+		  options => "-i 1 -t 5 -b 0",
+		 },
+      };
+
+
+sub _iperf_test
+{
+    my $test_file = shift;
+
+    my $server = shift;
+
+    my $client = shift;
+
+    if ($client eq 'local')
+    {
+	$client = undef;
+    }
+
+    if ($server eq 'local')
+    {
+	$server = undef;
+    }
+
+    my $iperf_command = $iperf_configuration->{command};
+
+    my $iperf_command_server = $iperf_configuration->{server}->{command} || $iperf_command;
+
+    my $iperf_command_client = $iperf_configuration->{client}->{command} || $iperf_command;
+
+    my $iperf_server_options = $iperf_configuration->{server}->{options};
+
+    my $schedule_server
+	= {
+	   commands => [
+			"$iperf_command_server $iperf_server_options",
+		       ],
+	   options => [
+		       {
+			remote => $server,
+		       },
+		      ],
+	  };
+
+    my $iperf_client_options = $iperf_configuration->{client}->{options};
+
+    my $ip_server = $server ? $server->{ssh_server} : '127.0.0.1';
+
+    my $schedule_client
+	= {
+	   commands => [
+			"$iperf_command_client $iperf_client_options -c $ip_server",
+		       ],
+	   options => [
+		       {
+			remote => $client,
+		       },
+		      ],
+	  };
+
+    my $schedule_terminate_server
+	= {
+	   commands => [
+			"killall $iperf_command_server",
+		       ],
+	   options => [
+		       {
+			remote => $server,
+		       },
+		      ],
+	  };
+
+    Command::execute_shell_command_schedule_array
+	(
+	 [
+	  $schedule_server,
+	  $schedule_client,
+	  $schedule_terminate_server,
+	 ],
+	);
+
+}
+
+
+package Engine;
+
+
+our $global_exported_sh_file;
+
+our $global_exported_sh_filename;
+
+our $global_exported_times_file;
+
+our $global_exported_times_filename;
+
+
+# note: keys are interaction_roles, values are working directories
+
+our $global_remote_working_directory = {};
+
+
+sub working_directory_for_interaction_role_apply
+{
+    my $interaction_role = shift;
+
+    my $command = shift;
+
+    my $result = $command;
+
+    if ($interaction_role ne "localuser\@localhost")
+    {
+	my $current_working_directory = $global_remote_working_directory->{$interaction_role};
+
+	if (defined $current_working_directory)
+	{
+	    $result = "'cd $current_working_directory && $command'";
+	}
+    }
+
+    return $result;
+}
+
+
+# keep track of the possibly remote working directory
+
+sub _working_directory_for_interaction_role_change
+{
+    my $interaction_role = shift;
+
+    my $working_directory = shift;
+
+    my $current_working_directory = $global_remote_working_directory->{$interaction_role};
+
+    if (not defined $current_working_directory
+	and $interaction_role eq 'localuser@localhost')
+    {
+	$current_working_directory = '.';
+    }
+    else
+    {
+	$current_working_directory = '~';
+    }
+
+    use File::Spec;
+
+    my $is_absolute = File::Spec->file_name_is_absolute( $working_directory );
+
+    my $new_working_directory;
+
+    if ($is_absolute)
+    {
+	$new_working_directory = $working_directory;
+    }
+    else
+    {
+	if (not defined $current_working_directory)
+	{
+	    die "*** Error: $0: current_working_directory not defined when parsing directories for interaction role '$interaction_role'.";
+	}
+
+	if (not defined $working_directory)
+	{
+	    die "*** Error: $0: working_directory not defined when parsing directories for interaction role '$interaction_role'.";
+	}
+
+	$new_working_directory = File::Spec->catdir( $current_working_directory, $working_directory );
+    }
+
+    $global_remote_working_directory->{$interaction_role} = $new_working_directory;
+}
+
+
+sub working_directory_for_interaction_role_parse
+{
+    my $executable_command = shift;
+
+    my $dry_run = shift;
+
+    my $interaction_role = shift;
+
+    my $arguments;
+
+    # if this is a chdir executable_command
+
+    if ($executable_command =~ /^\s*chdir\s+(.*)$/
+	or $executable_command =~ /^\s*cd\s*$/
+	or $executable_command =~ /^\s*cd\s+(.*)$/)
+    {
+	# process its arguments
+
+	my $arguments = $1 || "";
+
+	# remove quotes, they are invalid in directory names for the purpose of this script
+
+	$arguments =~ s/^'//g;
+	$arguments =~ s/'$//g;
+
+	# some forms of chdir require an argument,
+	# some forms of cd don't and use a default of $HOME
+
+	if ($arguments =~ /^\s*$/)
+	{
+	    $arguments = $ENV{HOME};
+	}
+
+	$executable_command = "cd $arguments";
+
+	# keep track of the possibly remote working directory
+
+	_working_directory_for_interaction_role_change($interaction_role, $arguments);
+    }
+    else
+    {
+#  	$executable_command = working_directory_for_interaction_role_apply($interaction_role, $executable_command);
+    }
+
+    # return the possibly processed result
+
+    return $executable_command;
+}
+
+
+sub build_tree_needs_rebuild
+{
+    my $build_tree = shift;
+
+    my $options = shift;
+
+    my $result = "default is to rebuild";
+
+    my $remote_prefix = $options->{remote_prefix};
+
+    if ($option_force_rebuild)
+    {
+	if ($option_verbose
+	    and $option_verbose > 1)
+	{
+	    print "build_tree_needs_rebuild(): option_force_rebuild is set\n";
+	}
+
+	return "option_force_rebuild";
+    }
+
+    # if we have sources and targets
+
+    if ($build_tree->{sources}
+	and $build_tree->{targets})
+    {
+	# determine the youngest source file
+
+	my $source_youngest = 0;
+
+	my $sources = $build_tree->{sources};
+
+	foreach my $source (@$sources)
+	{
+	    #! %Y gives second accuracy, %y gives a higher resolution
+	    #! but its output requires more parsing
+
+	    my $source_stat_command = 'stat --format="%Y" ' . "'$source'";
+
+	    if ($remote_prefix)
+	    {
+		$source_stat_command = "$remote_prefix   $source_stat_command";
+	    }
+
+	    my $source_stat_output = `$source_stat_command 2>/dev/null`;
+
+	    if ($option_verbose
+		and $option_verbose > 1)
+	    {
+		print "build_tree_needs_rebuild(): source_stat_output: $source_stat_output ($source)\n";
+	    }
+
+	    if ($?)
+	    {
+		return 1;
+	    }
+
+	    # the youngest source file is the one with the highest seconds value
+
+	    if ($source_stat_output > $source_youngest)
+	    {
+		$source_youngest = $source_stat_output;
+	    }
+	}
+
+	# determine the oldest target file
+
+	my $target_oldest = 16127117390; # GMT: Friday, January 17, 2481 10:49:50 AM
+
+	my $targets = $build_tree->{targets};
+
+	foreach my $target (@$targets)
+	{
+	    #! %Y gives second accuracy, %y gives a higher resolution
+	    #! but its output requires more parsing
+
+	    my $target_stat_command = 'stat --format="%Y" ' . "'$target'";
+
+	    if ($remote_prefix)
+	    {
+		$target_stat_command = "$remote_prefix   $target_stat_command";
+	    }
+
+	    my $target_stat_output = `$target_stat_command 2>/dev/null`;
+
+	    if ($option_verbose
+		and $option_verbose > 1)
+	    {
+		print "build_tree_needs_rebuild(): target_stat_output: $target_stat_output ($target)\n";
+	    }
+
+	    if ($?)
+	    {
+		return 1;
+	    }
+
+	    # the oldest target file is the one with the smallest seconds value
+
+	    if ($target_stat_output < $target_oldest)
+	    {
+		$target_oldest = $target_stat_output;
+	    }
+	}
+
+	# if the youngest source file is younger than the oldest target file
+
+	if ($source_youngest >= $target_oldest)
+	{
+	    # we need to rebuild
+
+	    $result = 1;
+	}
+
+	# else all the target files  are younger than the youngest source file
+
+	else
+	{
+	    # so we don't need to rebuild
+
+	    $result = 0;
+	}
+
+	if ($option_verbose
+	    and $option_verbose > 1)
+	{
+	    print "build_tree_needs_rebuild(): source_youngest: $source_youngest, target_oldest: $target_oldest ==> needs_rebuild: $result\n";
+	}
+
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+sub display_commented_command
+{
+    my $command = shift;
+
+    my $options = shift;
+
+    if (not $options->{quiet})
+    {
+	# print "# $command (length: $command_length)\n#\n";
+
+	print "# $command\n#\n";
+    }
+}
+
+
+# TODO: this needs refactoring to appear as an argument to function calls
+
+our $global_interaction_roles = {};
+
+my $current_interaction_role;
+
+
+# apply the remoting prefix
+
+sub apply_remote_record_exported_command
+{
+    my $interaction_roles = shift;
+
+    my $remote_prefix = shift;
+
+    my $command = shift;
+
+    my $export_remote = shift;
+
+    my $export_sh_command = shift;
+
+    if ($remote_prefix)
+    {
+	# if we are exporting this one role
+
+	if (defined $export_remote
+	    and (($export_remote eq $interaction_roles->{$current_interaction_role}->{name})
+		 or $export_remote eq $interaction_roles->{$current_interaction_role}->{number}))
+	{
+	    # we export the command without the remoting information
+
+	    $export_sh_command = $command;
+	}
+
+	# this is a command for a different role
+
+	else
+	{
+	    # export as a comment
+
+	    $export_sh_command = "# <remote command at $remote_prefix: $command>";
+	}
+
+	$command = "$remote_prefix   $command";
+
+	# if we are exporting all roles
+
+	if (defined $export_remote
+	    and ($export_remote eq 0))
+	{
+	    # we export the command with the remoting information prefixed
+
+	    $export_sh_command = $command;
+	}
+    }
+
+    return ($command, $export_sh_command);
+}
+
+
+# apply the sudo prefix
+
+sub apply_sudo
+{
+    my $sudo_prefix = shift;
+
+    my $command = shift;
+
+    my $option_export_sudo = shift;
+
+    my $export_sh_command = shift;
+
+    if ($sudo_prefix)
+    {
+	$command = "$sudo_prefix   $command";
+
+	if ($option_export_sudo)
+	{
+	    $export_sh_command = $command;
+	}
+    }
+
+    return ($command, $export_sh_command);
+}
+
+
+# apply the timeout prefix
+
+sub apply_timeout
+{
+    my $timeout_prefix = shift;
+
+    my $command = shift;
+
+    my $option_export_timeout = shift;
+
+    my $export_sh_command = shift;
+
+    if ($timeout_prefix)
+    {
+	$command = "$timeout_prefix   $command";
+
+	$export_sh_command = $command;
+    }
+
+    return ($command, $export_sh_command);
+}
+
+
+sub compute_remote_and_interaction_role
+{
+    my $command = shift;
+
+    my $option_remote = shift;
+
+    my $remote_policy = shift;
+
+    # default result: an empty string
+
+    my $remote_prefix = "";
+
+    my $interaction_role;
+
+    my $interaction_role_with_policy_syntax;
+
+    my $ssh_options;
+
+    if ($option_verbose)
+    {
+	use Data::Dumper;
+
+	print Dumper
+	    (
+	     {
+	      compute_remote_and_interaction_role => {
+						      command => $command,
+						      option_remote => $option_remote,
+						      remote_policy => $remote_policy,
+						     },
+	     },
+	    );
+    }
+
+    # remote_policy should be 'ssh', 'scp', or something with docker exec
+
+    # 'ssh' is used for regular ssh remote execution
+    # 'scp' is used before remotely executing a local script
+
+    if (not defined $remote_policy)
+    {
+	$remote_policy = 'ssh';
+    }
+    else
+    {
+	# remote_policy is 'scp'
+    }
+
+    if ($option_remote)
+    {
+	# if we need to skip remoting for this command?
+
+	if (exists $option_remote->{skip}
+	    and $command =~ /$option_remote->{skip}/)
+	{
+	    # use the localuser interaction role to prevent remoting
+
+	    $interaction_role = "localuser\@localhost";
+	}
+
+	# if this is the local account
+
+	elsif (exists $option_remote->{localuser}
+	       and $option_remote->{localuser} eq 'yes')
+	{
+	    # use the localuser interaction role to prevent remoting
+
+	    $interaction_role = "localuser\@localhost";
+	}
+
+	# else construct the remote role
+
+	else
+	{
+	    # a hardcoded remote policy in the configuration options
+	    # overrides any configuration options for ssh or scp
+
+	    if (exists $option_remote->{remote_policy})
+	    {
+		$remote_policy = $option_remote->{remote_policy};
+
+		$remote_prefix = $option_remote->{remote_policy};
+
+		$interaction_role = $option_remote->{name};
+
+	    }
+
+	    # no hardcoded remote_policy, try something ssh / scp related
+
+	    else
+	    {
+		if (exists $option_remote->{ssh_password})
+		{
+		    my $ssh_password = $option_remote->{ssh_password};
+
+		    $remote_prefix .= "sshpass -p $ssh_password ";
+		}
+
+		if (exists $option_remote->{ssh_options})
+		{
+		    $ssh_options = "$option_remote->{ssh_options} ";
+		}
+		else
+		{
+		    $ssh_options = '';
+		}
+
+		if (exists $option_remote->{ssh_server})
+		{
+		    $interaction_role = "";
+
+		    my $ssh_server = $option_remote->{ssh_server};
+
+		    my $remote_role = exists $option_remote->{name} ? $option_remote->{name} : $ssh_server;
+
+		    if (exists $option_remote->{ssh_user})
+		    {
+			my $ssh_user = $option_remote->{ssh_user};
+
+			$interaction_role = "$ssh_user\@$remote_role";
+
+			#t where is the scp use case?
+
+			#t execute_shell_script_remote seems to be a use case?
+
+			$remote_prefix .= "$remote_policy $ssh_options$ssh_user\@$ssh_server ";
+
+			# either ssh syntax ...
+
+			if ($remote_policy eq 'ssh')
+			{
+			    $interaction_role_with_policy_syntax = "$ssh_user\@$ssh_server";
+			}
+
+			# ... or scp syntax (the filename should be appended -- is this clumsy?)
+
+			#t where is the scp use case?
+
+			else
+			{
+			    $interaction_role_with_policy_syntax = "$ssh_user\@$ssh_server:";
+			}
+		    }
+		    else
+		    {
+			$interaction_role = $remote_role;
+
+			$remote_prefix .= "$remote_policy $ssh_options$ssh_server ";
+
+			# $remote_prefix .= "$remote_policy $ssh_options";
+		    }
+		}
+		else
+		{
+		    #t we could have a case here where we have a local user and no ssh_server
+
+		    $interaction_role = "localuser\@localhost";
+		}
+	    }
+
+	    if (defined $option_verbose and $option_verbose > 1)
+	    {
+		print STDERR "$0: *** result is $remote_prefix\n";
+	    }
+	}
+    }
+
+    # else no remoting information
+
+    else
+    {
+	# track the interaction role
+
+	$interaction_role = "localuser\@localhost";
+    }
+
+    $current_interaction_role = $interaction_role;
+
+    # return result
+
+    return
+    {
+     interaction_role => $interaction_role,
+     interaction_role_with_policy_syntax => $interaction_role_with_policy_syntax,
+     remote_prefix => $remote_prefix,
+     ssh_options => $ssh_options,
+    };
+}
+
+
+# prefix the given command with appropriate sudo options.
+
+sub compute_sudo
+{
+    my $command = shift;
+
+    my $option_sudo = shift;
+
+    # default result: an empty string
+
+    my $result = "";
+
+    if ($option_sudo)
+    {
+	# default: sudo the command
+
+	my $sudo_skip = 0;
+
+	# default: all commands are sudo'd
+
+	my $sudo_pattern = '.*';
+
+	# default: no additional sudo options
+
+	my $sudo_options = "";
+
+	# if there are specific sudo options
+
+	if (ref $option_sudo eq 'HASH')
+	{
+	    # get the specific sudo command pattern
+
+	    $sudo_pattern
+		= (exists $option_sudo->{pattern}
+		   ? $option_sudo->{pattern}
+		   : '.*');
+
+	    # if we need to skip sudo information
+
+	    if (exists $option_sudo->{skip}
+		and $command =~ /$option_sudo->{skip}/)
+	    {
+		# remember to skip
+
+		$sudo_skip = 1;
+	    }
+
+	    # remember the sudo options
+
+	    if (exists $option_sudo->{options})
+	    {
+		$sudo_options = $option_sudo->{options};
+	    }
+	}
+
+	# if the command matches the sudo pattern
+
+	if ($command =~ /$sudo_pattern/)
+	{
+	    # construct the sudo command prefix
+
+	    $result .= "sudo $sudo_options ";
+	}
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+# prefix the command with appropriate timeout options
+
+sub compute_timeout
+{
+    my $command = shift;
+
+    my $option_timeout = shift;
+
+    # default result: an empty string
+
+    my $result = "";
+
+    if ($option_timeout)
+    {
+	# if we need to skip timeout information
+
+	if (exists $option_timeout->{skip}
+	    and $command =~ /$option_timeout->{skip}/)
+	{
+	}
+
+	# else construct the timeout command
+
+	else
+	{
+	    if (exists $option_timeout->{sudo}
+		and $option_timeout->{sudo} eq 1)
+	    {
+		$result .= "sudo ";
+	    }
+
+	    $result .= "timeout ";
+
+	    if (exists $option_timeout->{options})
+	    {
+		$result .= "$option_timeout->{options} ";
+	    }
+
+	    if (not exists $option_timeout->{duration})
+	    {
+		die "*** Error: $0: the timeout option of '$command' does not have the mandatory duration specified";
+	    }
+
+	    $result .= "$option_timeout->{duration} ";
+	}
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+sub execute_scheduled_command_option_dry_run
+{
+    my $scheduled_command = shift;
+
+    my $command = $scheduled_command->{command};
+
+    my $dry_run = $scheduled_command->{dry_run};
+
+    my $executable_command = $scheduled_command->{executable_command};
+
+    my $export_sh = $scheduled_command->{export_sh};
+
+    my $interaction_role = $scheduled_command->{interaction_role};
+
+    my $options = $scheduled_command->{options};
+
+    if ($export_sh
+	and exists $export_sh->{prefix})
+    {
+	my $dry_run_prefix = "$0: *** Running in dry_run mode, export prefix: '";
+
+	print map { "$dry_run_prefix$_\n" } split "\n", $export_sh->{prefix};
+    }
+
+    #! when is this option a simple number?
+
+    if ($dry_run =~ /^[0-9]+$/)
+    {
+	print "$0: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
+    }
+
+    if ($executable_command =~ /cd\s+(.*)$/)
+    {
+	my $arguments = $1;
+
+	my $exit_status = not chdir $arguments;
+    }
+    else
+    {
+    }
+}
+
+
+sub identify_interaction_roles
+{
+    my $command = shift;
+
+    my $executable_command = shift;
+
+    my $indent_delta = 40;
+
+    # either we have already inserted a descriptive record for this interaction role
+
+    if (exists $global_interaction_roles->{$current_interaction_role})
+    {
+    }
+
+    # or we show the interaction diagram with all the interaction roles in the configuration.
+
+    elsif ($option_interactions_module_all_roles)
+    {
+	my $target_servers = $global_technical_project_configuration->{target_servers};
+
+	my $interaction_indent = 4;
+
+	my $interaction_number = 1;
+
+	# create a hash with a descriptive record for each interaction role
+
+	$global_interaction_roles
+	    = {
+	       # map each human readable role to a descriptive record with appropriate indent
+
+	       map
+	       {
+		   my $target = $_;
+
+		   my $result
+		       = {
+			  $target => {
+				      indent => $interaction_indent,
+				      is_new_and_needs_header => 'yes',
+				      name => $target,
+				      number => $interaction_number,
+				     },
+			 };
+
+		   $interaction_number += 1;
+
+		   $interaction_indent += 24;
+
+		   %$result;
+	       }
+
+	       # sort roles in a intuitive order
+
+	       sort
+	       {
+		   # make sure that localhost always comes first
+
+		   if ($a =~ /local/)
+		   {
+		       return -1;
+		   }
+		   elsif ($b =~ /local/)
+		   {
+		       return 1;
+		   }
+		   else
+		   {
+		       $a cmp $b;
+		   }
+	       }
+
+	       # convert each target server to a human readable role
+
+	       map
+	       {
+		   my $target_server_key = $_;
+
+		   my $target_server = $target_servers->{$target_server_key};
+
+		   my $result;
+
+		   if (exists $target_server->{localuser}
+		       and $target_server->{localuser} eq 'yes')
+		   {
+		       $result = "localuser\@localhost";
+		   }
+		   else
+		   {
+		       my $target_server_name = $target_server->{name} || $target_server->{ssh_server} || 'localhost';
+
+		       my $target_user = $target_server->{ssh_user} || 'localuser';
+
+		       $result = $target_user . '@' . $target_server_name;
+		   }
+
+		   $result;
+	       }
+
+	       # based on the target servers
+
+	       keys %$target_servers,
+	      };
+    }
+
+    # or we show only the interaction roles used in this workflow
+
+    else
+    {
+	my $sorted_roles = [ keys %$global_interaction_roles, ];
+
+	my $interaction_indent = 4 + scalar @$sorted_roles * $indent_delta;
+
+	$global_interaction_roles->{$current_interaction_role}
+	    = {
+	       indent => $interaction_indent,
+	       is_new_and_needs_header => 'yes',
+	       name => $current_interaction_role,
+	       number => (scalar @$sorted_roles) + 1,
+	      };
+    }
+}
+
+
+sub execute_option_interactions
+{
+    my $interaction_roles = shift;
+
+    my $scheduled_command = shift;
+
+    my $all = shift;
+
+    my $command = $scheduled_command->{command};
+
+    my $executable_command = $scheduled_command->{executable_command};
+
+    my $interaction_role_arg = $scheduled_command->{interaction_role};
+
+    # we must have a valid interaction role
+
+    if (not defined $interaction_role_arg)
+    {
+	# use Data::Dumper;
+
+	# print Dumper( { interaction_roles => $interaction_roles, }, );
+
+	die "*** Error: $0: option_interactions cannot compute an indentation level without a valid interaction role (is '$interaction_role_arg')";
+    }
+
+    # if we are printing all interaction roles in the configuration
+
+    if ($all)
+    {
+	# print the interaction header for all the configured roles
+
+	foreach my $interaction_role_name (sort
+					   {
+					       $interaction_roles->{$a}->{number} <=> $interaction_roles->{$b}->{number};
+					   }
+					   keys %$interaction_roles)
+	{
+	    my $interaction_role = $interaction_roles->{$interaction_role_name};
+
+	    if ($interaction_role->{is_new_and_needs_header} eq 'yes')
+	    {
+		_print_interaction_header($interaction_role);
+	    }
+	}
+    }
+
+    # if there is no interaction role
+
+    if ($interaction_role_arg eq 'none')
+    {
+	# print the command without indentation
+
+	print "$command\n";
+    }
+
+    # else with a defined interaction_role
+
+    else
+    {
+	my $interaction_role = $interaction_roles->{$interaction_role_arg};
+
+	# print the interaction_role header if this was not printed yet
+
+	if ($interaction_role->{is_new_and_needs_header} eq 'yes')
+	{
+	    _print_interaction_header($interaction_role);
+	}
+
+	# print the command with indentation
+
+	if ($executable_command !~ /^\s*$/)
+	{
+	    my $interaction_indent = $interaction_role->{indent};
+
+	    my $indent = " " x $interaction_indent;
+
+	    print "$indent'$executable_command'\n";
+	}
+    }
+}
+
+
+# see https://sequencediagram.org/
+
+sub _print_sequence_diagram_header
+{
+    my $interaction_role = shift;
+
+    my $interaction_role_name = $interaction_role->{name};
+
+    print "participant $interaction_role_name\n\n";
+}
+
+
+sub _print_interaction_header
+{
+    my $interaction_role = shift;
+
+    # calculate the indentation level
+
+    my $interaction_role_name = $interaction_role->{name};
+
+    my $interaction_indent = $global_interaction_roles->{$interaction_role_name}->{indent};
+
+    # TODO: this is here to figure out whether the above use of $global_interaction_roles can be removed.
+
+    if ($interaction_indent != $interaction_role->{indent})
+    {
+	print "$0: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
+    }
+
+    my $indent = " " x $interaction_indent;
+
+    my $header = "${indent}ROLE: '$interaction_role_name'";
+
+    # print the header
+
+    print "$header\n\n";
+
+    # remember that the header for this interaction_role has been printed
+
+    $interaction_role->{is_new_and_needs_header} = $header;
+}
+
+
+sub execute_option_export_sh
+{
+    my $interaction_roles = shift;
+
+    my $scheduled_command = shift;
+
+    my $executable_command = $scheduled_command->{executable_command};
+
+    my $export_sh = $scheduled_command->{export_sh};
+
+    my $export_sh_command = $scheduled_command->{export_sh_command};
+
+    my $interaction_role = $scheduled_command->{interaction_role};
+
+    if (not defined $global_exported_sh_file)
+    {
+	if (not defined $global_exported_sh_filename)
+	{
+	    $global_exported_sh_filename = $export_sh->{filename};
+	}
+
+	my $ok = open($global_exported_sh_file, ">", $global_exported_sh_filename);
+
+	if (not $ok)
+	{
+	    die "*** Error: $0: cannot open $global_exported_sh_filename for writing ($!)";
+	}
+
+	print $global_exported_sh_file "#!/bin/sh\n";
+	print $global_exported_sh_file "#\n";
+	print $global_exported_sh_file "# script generated with $::global_program_name\n";
+	print $global_exported_sh_file "#\n";
+	print $global_exported_sh_file "# the command line to generate this script was:\n";
+	print $global_exported_sh_file "#\n";
+	print $global_exported_sh_file "# $global_command_line\n";
+	print $global_exported_sh_file "#\n";
+
+	chmod 0755, $global_exported_sh_filename;
+    }
+
+    # 'cd' commands must both be exported and executed
+
+    if ($export_sh_command =~ /cd\s+(.*)$/)
+    {
+	my $arguments = $1;
+
+	my $exit_status = not chdir $arguments;
+    }
+
+    if ($export_sh_command =~ /^'/
+	and $export_sh_command =~ /'$/)
+    {
+	$export_sh_command =~ s/^'//;
+	$export_sh_command =~ s/'$//;
+    }
+
+    print "$0: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
+
+    if ((not defined $option_export_remote or $option_export_remote eq 0)
+	or $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
+	or $option_export_remote eq $interaction_roles->{$interaction_role}->{number})
+    {
+	if ($option_export_verbose)
+	{
+	    print $global_exported_sh_file "echo '$export_sh_command'\n";
+	}
+
+	if (exists $export_sh->{prefix})
+	{
+	    print $global_exported_sh_file $export_sh->{prefix};
+	}
+
+	print $global_exported_sh_file "$export_sh_command\n";
+    }
+    else
+    {
+	print $global_exported_sh_file "$export_sh_command\n";
+    }
+}
+
+
+sub execute_scheduled_command
+{
+    my $scheduled_command = shift;
+
+    my $command = $scheduled_command->{command};
+
+    my $dry_run = $scheduled_command->{dry_run};
+
+    my $executable_command = $scheduled_command->{executable_command};
+
+    my $interaction_role = $scheduled_command->{interaction_role};
+
+    my $options = $scheduled_command->{options};
+
+    my $exit_status;
+
+    #! note that the \s+ is a bug: it forces the use of white-space when no arguments are given
+
+    #! note the difference in processing and exit status for a local cd vs a remote cd
+
+    if ($interaction_role eq 'localuser@localhost'
+	and $executable_command =~ /cd\s+(.*)$/)
+    {
+	my $arguments = $1;
+
+	display_commented_command($command, $options);
+
+	$exit_status = not chdir $arguments;
+    }
+    elsif ($dry_run)
+    {
+	execute_scheduled_command_option_dry_run($scheduled_command);
+    }
+    else
+    {
+	my $export_output = $options->{export_output};
+
+	my $export_times = $options->{export_times};
+
+	if ($export_times)
+	{
+	    if (not defined $global_exported_times_file)
+	    {
+		if (not defined $global_exported_times_filename)
+		{
+		    $global_exported_times_filename = $export_times->{filename};
+		}
+
+		my $ok = open($global_exported_times_file, ">", $global_exported_times_filename);
+
+		if (not $ok)
+		{
+		    die "*** Error: $0: cannot open $global_exported_times_filename for writing ($!)";
+		}
+
+		print $global_exported_times_file "#!/bin/sh\n";
+		print $global_exported_times_file "#\n";
+		print $global_exported_times_file "# script generated with $::global_program_name\n";
+		print $global_exported_times_file "#\n";
+		print $global_exported_times_file "# the command line to generate this script was:\n";
+		print $global_exported_times_file "#\n";
+		print $global_exported_times_file "# $global_command_line\n";
+		print $global_exported_times_file "#\n";
+
+		chmod 0644, $global_exported_times_filename;
+	    }
+	}
+
+	# execute the command, collect start and end time
+
+	use IPC::System::Simple qw(capture);
+
+	my $start_time = time();
+
+	my $output = "";
+
+	my $command_is_empty = $executable_command =~ /^\s*$/ ? 'yes' : '';
+
+	if (not $command_is_empty)
+	{
+	    if (not $export_output)
+	    {
+		display_commented_command($command, $options);
+
+		$exit_status = system "$command";
+	    }
+	    else
+	    {
+		$output .= capture($command);
+
+		$exit_status = $IPC::System::Simple::EXITVAL;
+	    }
+	}
+
+	my $end_time = time();
+
+	if ($export_times)
+	{
+	    print $global_exported_times_file "$0: *** Starting ('$command') at " . localtime($start_time) . "\n";
+
+	    print $global_exported_times_file "$0: *** Ended    ('$command') at " . localtime($end_time) . "\n";
+
+	    print $global_exported_times_file "$0: *** Duration (s): " . ($end_time - $start_time) . "\n";
+
+	    print $global_exported_times_file "\n";
+	}
+
+	if ($export_output)
+	{
+	    my $filename = generate_output_filename($global_target_command, $command);
+
+	    my $output_file;
+
+	    my $ok = open($output_file, ">", $filename);
+
+	    if (not $ok)
+	    {
+		die "*** Error: $0: cannot open $filename for writing ($!)";
+	    }
+
+	    print $output_file "# $command\n#\n";
+
+	    print $output_file $output;
+
+	    close($output_file);
+	}
+	# else
+	# {
+	# 	print $output;
+	# }
+    }
+
+    my $output_path = $options->{output_path};
+
+#     my $exit_status = system "( $command ) >>$output_path 2>&1";
+
+    if ($exit_status)
+    {
+	my $allow_fail = $options->{allow_fail};
+
+	if ($allow_fail)
+	{
+# 	    system "echo >>$output_path 2>&1 failed with $exit_status: $command\n";
+
+	    print "$0: *** Note: $command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	}
+	else
+	{
+	    die "$0: *** Fatal: $command failed with exit status $exit_status\n";
+	}
+    }
+
+    # return the result of command execution
+
+    return $exit_status;
+}
+
+
+sub schedule_real_command
+{
+    my $command = shift;
+
+    my $executable_command = shift;
+
+    my $interaction_role = shift;
+
+    my $options = shift;
+
+    my $dry_run = shift;
+
+    my $export_sh = shift;
+
+    my $export_sh_command = shift;
+
+    my $scheduled_command
+	= {
+	   command => $command,
+	   dry_run => $dry_run,
+	   executable_command => $executable_command,
+	   export_sh => $export_sh,
+	   export_sh_command => $export_sh_command,
+	   interaction_role => $interaction_role,
+	   options => $options,
+	  };
+
+    push @$global_scheduled_commands, $scheduled_command;
+}
+
+
+sub execute_all_scheduled_commands
+{
+    my $interaction_roles = shift;
+
+    if ($option_dump_schedule)
+    {
+	use Data::Dumper;
+
+	print Dumper( { scheduled_commands => $global_scheduled_commands, }, );
+    }
+    elsif ($option_dump_interaction_roles)
+    {
+	use Data::Dumper;
+
+	print Dumper( { interaction_roles => $interaction_roles, }, );
+    }
+    elsif ($option_dump_module_interaction_roles)
+    {
+	print Dumper( { interaction_roles => $interaction_roles, }, );
+    }
+    else
+    {
+	foreach my $scheduled_command (@$global_scheduled_commands)
+	{
+	    # we are either in dry-run ...
+
+	    if ($option_dry_run =~ /^[0-9]+$/)
+	    {
+		execute_scheduled_command_option_dry_run($scheduled_command);
+	    }
+
+	    # ... or printing an interaction diagram
+
+	    elsif ($option_interactions
+		   or $option_interactions_all
+		   or $option_interactions_module
+		   or $option_interactions_module_all_roles)
+	    {
+		execute_option_interactions($interaction_roles, $scheduled_command, $option_interactions_module_all_roles || $option_interactions_all);
+	    }
+
+	    # ... or exporting to an executable shell script ...
+
+	    elsif (defined $option_export_sh)
+	    {
+		execute_option_export_sh($interaction_roles, $scheduled_command);
+	    }
+
+	    # or real-time executing the scheduled command
+
+	    else
+	    {
+		execute_scheduled_command($scheduled_command);
+	    }
+	}
+    }
+}
+
+
+sub execute_shell_command
+{
+    my $command = shift;
+
+    my $options = shift;
+
+    # keep a record of the command that will be executed
+
+    my $executable_command = $command;
+
+    $executable_command =~ s(^\s*#.*)()g;
+
+    my $command_length = length $executable_command;
+
+    # option preprocessing
+
+    my $verbose = $options->{verbose} || $option_verbose;
+
+    # the command to be exported defaults to the command given
+
+    my $export_sh_command = defined $option_export_sh ? $command : undef;
+
+    if (defined $verbose
+	and $verbose =~ /^[0-9]+$/)
+    {
+	$verbose = "*** INFO: ";
+    }
+
+    # start of meta option and information processing
+
+    # if exporting to a script for this command
+
+    my $export_sh = $options->{export_sh};
+
+    if (not defined $export_sh)
+    {
+	if (defined $option_export_sh)
+	{
+	    $export_sh = { filename => $option_export_sh, };
+	}
+    }
+    else
+    {
+	# if globally exporting all commands
+
+	if (defined $option_export_sh)
+	{
+	    $export_sh->{filename} = $option_export_sh;
+	}
+    }
+
+    # if we are not exporting timing information specifically for this command
+
+    my $export_times = $options->{export_times};
+
+    if (not defined $export_times)
+    {
+	# are we globally exporting all timing information?
+
+	if (defined $option_export_times)
+	{
+	    # configure the export_times option
+
+	    $export_times = { filename => $option_export_times, };
+	}
+	else
+	{
+	    # we are not exporting any timing information
+	}
+    }
+
+    # if we are exporting timing information specifically for this command
+
+    else
+    {
+	# if globally exporting all timing information to the same file
+
+	if (defined $option_export_times)
+	{
+	    # set the shared filename
+
+	    $export_times->{filename} = $option_export_times;
+	}
+	else
+	{
+	    # use the filename set in the command specific options
+	}
+    }
+
+    # start of peripheral option and command processing
+
+    # if there is remoting information
+
+    my $remote_and_interaction_role = compute_remote_and_interaction_role($command, $options->{remote});
+
+    my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
+
+    # identify the interaction roles
+
+    identify_interaction_roles($command, $executable_command);
+
+    # now that we know the remote, apply the working directory for the remote on the command to be executed
+
+    $command = working_directory_for_interaction_role_apply($current_interaction_role, $command);
+
+    # prefix the command with appropriate sudo options
+
+    my $sudo_prefix = compute_sudo($command, $options->{sudo});
+
+    # prefix the command with appropriate timeout options
+
+    my $timeout_prefix = compute_timeout($command, $options->{timeout});
+
+    # if we need to rebuild according to the (optionally remote) build_tree
+
+    my $needs_rebuild = build_tree_needs_rebuild($options->{build_tree}, { remote_prefix => $remote_prefix, }, );
+
+    if (not $needs_rebuild)
+    {
+	return 0;
+    }
+
+    # force the execution of a change of the working directory to this process
+
+    my $dry_run = $options->{dry_run} || $option_dry_run;
+
+    $executable_command = working_directory_for_interaction_role_parse($executable_command, $dry_run, $current_interaction_role);
+
+    #! note that the order of processing determines whether the options are locally or remotely applied
+
+    # apply the sudo prefix, possibly remote
+
+    ($command, $export_sh_command) = apply_sudo($sudo_prefix, $command, $option_export_sudo, $export_sh_command);
+
+    # apply the remoting prefix, always local
+
+    ($command, $export_sh_command) = apply_remote_record_exported_command($global_interaction_roles, $remote_prefix, $command, $option_export_remote, $export_sh_command);
+
+    # apply the timeout prefix, always local
+
+    ($command, $export_sh_command) = apply_timeout($timeout_prefix, $command, undef, $export_sh_command);
+
+    # schedule the given command
+
+    my $exit_code
+	= schedule_real_command
+	  (
+	   $command,
+	   $executable_command,
+	   $current_interaction_role,
+	   $options,
+	   $dry_run,
+	   $export_sh,
+	   $export_sh_command,
+	  );
+}
+
+
+sub execute_shell_command_array
+{
+    my $commands = shift;
+
+    my $options = shift;
+
+    my $needs_rebuild = build_tree_needs_rebuild($options->{build_tree}, );
+
+    if (not $needs_rebuild)
+    {
+	return 0;
+    }
+
+    foreach my $command (@$commands)
+    {
+	execute_shell_command($command, $options);
+    }
+}
+
+
+sub execute_shell_command_schedule
+{
+    my $schedule = shift;
+
+    my $command_array = $schedule->{commands};
+
+    my $option_array = $schedule->{options};
+
+    if (not defined $option_array)
+    {
+	$option_array = [ {}, ];
+    }
+
+    foreach my $options (@$option_array)
+    {
+	foreach my $command (@$command_array)
+	{
+	    execute_shell_command($command, $options);
+	}
+    }
+}
+
+
+sub execute_shell_command_schedule_array
+{
+    my $schedule_array = shift;
+
+    foreach my $schedule (@$schedule_array)
+    {
+	execute_shell_command_schedule($schedule);
+    }
+}
+
+
+# given a filename prefix and a 'command' generate an output filename
+# for logging the output of the command.
+
+our $output_filename_counter = 0;
+
+sub generate_output_filename
+{
+    my $prefix = shift;
+
+    my $command = shift;
+
+    # a command three alphanumeric sequences that are used to
+    # construct an abbreviation of the command for use in the
+    # generated output filename
+
+    #! I don't believe this has ever been fully tested, and I don't
+    #! believe the regex is correct, it seems to miss anchors between
+    #! the alphanumeric sequences.
+
+    $command =~ /([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)/i;
+
+    my $one = defined $1 ? $1 : "one";
+
+    my $two = defined $2 ? $2 : "two";
+
+    my $three = defined $3 ? $3 : "three";
+
+    # make sure the filename is unique to the given command
+
+    $output_filename_counter++;
+
+    # generate the filename
+
+    my $result = "$prefix-$output_filename_counter-$one-$two-$three";
+
+    # return result
+
+    return $result;
+}
+
+
+package FieldProject;
+
+
+our $status;
+
+
+# initiallize field project related global configuration
+
+sub _init
+{
+    # default result: empty
+
+    my $result_field;
+
+    my $result_technical;
+
+    # set the global field project name and field configuration data
+    # this is used to find configuration and command files
+
+    $result_field = _init_get_field_project_configuration();
+
+    # set the technical configuration
+
+    if ($result_field)
+    {
+	$result_technical = _init_get_technical_configuration($result_field, $result_field->{field_project_name});
+    }
+
+    # add what is builtin
+
+    {
+	# add the builtin targets, they are always available and possibly override the configured targets of the same name
+
+	$result_technical->{targets}->{builtin}->{description} = "the builtin target allows to start a new project and upgrade existing projects";
+
+    }
+
+    # return field project configuration data
+
+    return ($result_field, $result_technical);
+}
+
+
+sub _init_do_eval_perl_file
+{
+    my $filename = shift;
+
+    my $status;
+
+    # check if the file exists
+
+    if (not -r "$filename")
+    {
+	$status = "$0: *** Error: file '$filename' not found (because the file does not exist)\n";
+
+	return undef;
+    }
+
+    # make sure perl does not complain about '.' not in the INC path
+
+    if ($filename =~ m(^[^/]))
+    {
+	$filename = "./$filename";
+    }
+
+    # read and execute the perl file
+
+    my $result = do $filename;
+
+    # do error processing: perl problems
+
+    if ($@)
+    {
+	$status = "$0: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
+    }
+
+    # do error processing: file problems.
+
+    if (not defined $result
+	and $!)
+    {
+	$status = "$0: *** Error: no configuration file '$filename' ($!)\n";
+    }
+
+    # return configuration and status
+
+    return ($result, $status);
+}
+
+
+sub _init_do_eval_yaml_command_file
+{
+    my $filename = shift;
+
+    my $status;
+
+    # check if the file exists
+
+    if (not -r "$filename")
+    {
+	$status = "$0: *** Error: file '$filename' not found (because the file does not exist)\n";
+
+	return undef;
+    }
+
+    print "using $filename\n";
+
+    # read the yaml file
+
+    use YAML;
+
+    my $result = YAML::LoadFile($filename);
+
+    #t this needs more work
+
+    # do error processing: perl problems
+
+    if ($@)
+    {
+	$status = "$0: *** Error: no valid configuration file '$filename' found (syntax error: $@)\n";
+    }
+
+    # do error processing: file problems.
+
+    if (not defined $result
+	and $!)
+    {
+	$status = "$0: *** Error: no configuration file '$filename' found ($!)\n";
+    }
+
+    # return configuration and status
+
+    return ($result, $status);
+}
+
+
+sub _init_get_field_project_configuration
+{
+    # set default result: undefined
+
+    my $result;
+
+    # try to determine the field_project_name from the executable name
+
+    if ($0 =~ m((.*)/(.*)-workflow))
+    {
+	my $field_project_name = $2;
+
+	my $technical_project_configuration_directory = $1;
+
+	my $technical_project_configuration_filename = "$1/$2-configuration";
+
+	use Cwd 'abs_path';
+
+	my $true_technical_project_configuration_filename = abs_path($technical_project_configuration_filename) ;
+
+	$true_technical_project_configuration_filename =~ m((.*)/(.*)-configuration);
+
+	my $true_technical_project_configuration_directory = $1;
+
+	my $true_technical_project_data_configuration_directory = "$true_technical_project_configuration_directory/$field_project_name-configuration-data";
+
+	my $true_technical_project_data_commands_directory = "$true_technical_project_configuration_directory/$field_project_name-commands-data";
+
+	# set result
+
+	$result
+	    = {
+	       field_project_name => $field_project_name,
+	       from_executable => "dynamically_generated from the executable script name",
+	       technical_project_configuration_directory => $technical_project_configuration_directory,
+	       technical_project_configuration_filename => $technical_project_configuration_filename,
+	       true_technical_project_configuration_directory => $true_technical_project_configuration_directory,
+	       true_technical_project_configuration_filename => $true_technical_project_configuration_filename,
+	       true_technical_project_data_commands_directory => $true_technical_project_data_commands_directory,
+	       true_technical_project_data_configuration_directory => $true_technical_project_data_configuration_directory,
+	      };
+    }
+    else
+    {
+	# try to determine the field project name for a field_project_configuration file
+
+	my $field_project_configuration_filename = "workflow-project.pl";
+
+	# loop over the possible field project configuration directories
+
+	my $technical_project_configuration_directories
+	    = [
+	       ".",
+	       $global_program_rel_directory,
+	       $global_program_abs_directory,
+	      ];
+
+	my $technical_project_configuration_directory;
+
+	foreach my $tmp (@$technical_project_configuration_directories)
+	{
+	    # if a technical_project_configuration file can be found
+
+	    if (-d $tmp
+		and -e "$tmp/$field_project_configuration_filename"
+		and -r "$tmp/$field_project_configuration_filename")
+	    {
+		# this is the one we use
+
+		$technical_project_configuration_directory = $tmp;
+
+		last;
+	    }
+	}
+
+	# if the technical_project_configuration_directory was found
+
+	if (defined $technical_project_configuration_directory)
+	{
+	    # read the field project configuration
+
+	    my ($field_project_configuration, $eval_status) = _init_do_eval_perl_file("$technical_project_configuration_directory/$field_project_configuration_filename");
+
+	    my $field_project_name = $field_project_configuration->{field_project_name};
+
+	    $status = $eval_status;
+
+	    use Cwd 'abs_path';
+
+	    my $true_technical_project_configuration_filename = abs_path($field_project_configuration_filename) ;
+
+	    $true_technical_project_configuration_filename =~ m((.*)/$field_project_configuration_filename);
+
+	    my $true_technical_project_configuration_directory = $1;
+
+	    my $true_technical_project_data_configuration_directory = "$true_technical_project_configuration_directory/$field_project_name-configuration-data";
+
+	    my $true_technical_project_data_commands_directory = "$true_technical_project_configuration_directory/$field_project_name-commands-data";
+
+	    # set result: field project name, it is used to find configuration and command files
+
+	    $result
+		= {
+		   %$field_project_configuration,
+		   field_project_configuration_filename => $field_project_configuration_filename,
+		   from_directory => $technical_project_configuration_directory,
+		   from_executable => "workflow on the command line",
+		   technical_project_configuration_directory => $technical_project_configuration_directory,
+		   true_technical_project_configuration_directory => $true_technical_project_configuration_directory,
+		   true_technical_project_configuration_filename => $true_technical_project_configuration_filename,
+		   true_technical_project_data_commands_directory => $true_technical_project_data_commands_directory,
+		   true_technical_project_data_configuration_directory => $true_technical_project_data_configuration_directory,
+		  };
+	}
+
+	# no field_project_configuration_directory was found
+
+	else
+	{
+	    $status = "$0: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+
+	    return undef;
+	}
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+sub _init_get_technical_configuration
+{
+    my $field_project_configuration = shift;
+
+    my $project_name = shift;
+
+    my $technical_project_configuration_directories
+	= [
+	   ".",
+	   $global_program_rel_directory,
+	   $global_program_abs_directory,
+	  ];
+
+    my $technical_project_configuration_directory;
+
+    foreach my $tmp (@$technical_project_configuration_directories)
+    {
+	# if a technical_project_configuration file can be found
+
+	if (-d $tmp
+	    and -e "$tmp/$project_name-configuration"
+	    and -r "$tmp/$project_name-configuration")
+	{
+	    # this is the one we use
+
+	    $technical_project_configuration_directory = $tmp;
+
+	    last;
+	}
+    }
+
+    if (not defined $technical_project_configuration_directory)
+    {
+	$status = "$0: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
+
+	return undef;
+    }
+
+    my $technical_configuration_filename = "$technical_project_configuration_directory/$project_name-configuration";
+
+    # to ensure that the relative filenames in the configuration work,
+    # record the current workding directory
+    # cd to the configuration directory
+    # read the file using _init_do_eval_perl_file()
+    # cd back to the previous directory
+
+    my ($technical_configuration, $eval_status);
+
+    {
+	use File::chdir;
+
+	my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
+
+	local $CWD = $true_technical_project_configuration_directory;
+
+	($technical_configuration, $eval_status) = _init_do_eval_perl_file($technical_configuration_filename);
+    }
+
+    $status = $eval_status;
+
+    return $technical_configuration;
+}
+
+
+our $global_main_project_name = "ssp";
+
+
+package main;
+
+
+sub bash_completion
+{
+    my $command_line = $option_bash_completion || "";
+
+    my $command_line_words = [ split ' ', $command_line, ];
+
+    #! kind of sloppy ...
+
+    my $comp_cword = $option_target;
+
+    my $comp_point = $ARGV[0];
+
+    my $command_line_word = $command_line_words->[$comp_cword];
+
+    my $arguments = [ split ' ', $command_line, ];
+
+    my $command = shift @$arguments;
+
+    my $result;
+
+    if ($command =~ /configuration/)
+    {
+	$result = bash_completion_generate($command, $arguments, $global_technical_project_configuration);
+
+	push @$result, '--', '-1', '-2', '-3';
+    }
+    elsif ($command =~ /workflow/)
+    {
+	if (defined $command_line_word
+	    and $command_line_word =~ /^-/)
+	{
+	    $result = bash_completion_generate_options();
+
+	    unshift @$result, 'aa', 'bb';
+	}
+	else
+	{
+	    my $internal_commands = generate_command_hash_with_structure();
+
+	    $result = bash_completion_generate($command, $arguments, $internal_commands);
+
+	    push @$result, '--a', '--b';
+	}
+    }
+
+    print join " ", @$result;
+
+    exit 0;
+}
+
+
+sub bash_completion_generate
+{
+    my $command = shift;
+
+    my $arguments = shift;
+
+    my $configuration_or_commands = shift;
+
+    # search the given arguments in the configuration by following its path in the hash
+
+    while (@$arguments)
+    {
+	if (ref $configuration_or_commands eq 'HASH')
+	{
+	    my $argument = shift @$arguments;
+
+	    if (exists $configuration_or_commands->{$argument})
+	    {
+		$configuration_or_commands = $configuration_or_commands->{$argument};
+	    }
+	}
+	elsif (ref $configuration_or_commands eq 'ARRAY')
+	{
+	    last;
+	}
+	else
+	{
+	    last;
+	}
+    }
+
+    # return the result depending on its type
+
+    if (ref $configuration_or_commands eq 'HASH')
+    {
+	return [ keys %$configuration_or_commands, ];
+    }
+    elsif (ref $configuration_or_commands eq 'ARRAY')
+    {
+	return [ @$configuration_or_commands, ];
+    }
+    else
+    {
+	return [];
+    }
+}
+
+
+sub bash_completion_generate_options
+{
+    my $result = [
+		  qw(
+			--bash-completion
+			--branch
+			--build-server
+			--built-image-directory
+			--command
+			--dry-run
+			--dump-all-interaction-roles
+			--dump-interaction-roles
+			--dump-module-interaction-roles
+			--dump-schedule
+			--export-remote
+			--export-sh
+			--export-sudo
+			--export-times
+			--export-verbose
+			--force-rebuild
+			--forward-destination
+			--forward-source
+			--help
+			--help-build-servers
+			--help-commands
+			--help-field-project-name
+			--help-module
+			--help-options
+			--help-packages
+			--help-projects
+			--help-targets
+			--incremental
+			--interactions
+			--interactions-all
+			--interactions-module
+			--interactions-module-all-roles
+			--packages
+			--ssh-port
+			--ssh-server
+			--ssh-user
+			--target
+			--tftp-directory
+			--verbose
+		   )
+		 ];
+
+    return $result;
+}
+
+
+# generate a hash mapping targets and subroutine names to their full names.
+
+sub generate_command_hash_with_structure
+{
+    my $with_help_subs = shift;
+
+    my $commands = generate_command_list($with_help_subs);
+
+    # set default result
+
+    my $result = {};
+
+    # loop over all the found targets and commands
+
+    foreach my $command (@$commands)
+    {
+	# extract the target and the subroutine from the generated string
+
+	$command =~ m(([^ ]+) ([^ ]+))g;
+
+	my $target = $1;
+
+	my $subroutine = $2;
+
+	# insert them into the result
+
+	$result->{$target}->{$subroutine} = $command;
+    }
+
+    # return result
+
+    return $result;
+}
+
+
+sub generate_command_hash_typed
+{
+    my $with_help_subs = shift;
+
+    my $result = {};
+
+    my $commands_subs = generate_command_hash_subs($with_help_subs);
+
+    $result
+	= {
+	   %$result,
+	   %$commands_subs,
+	  };
+
+    my $commands_shell = generate_command_hash_shell($with_help_subs);
+
+    $result
+	= {
+	   %$result,
+	   %$commands_shell,
+	  };
+
+    my $commands_yaml = generate_command_hash_yaml($with_help_subs);
+
+    $result
+	= {
+	   %$result,
+	   %$commands_yaml,
+	  };
+
+    return $result;
+}
+
+
+sub generate_command_list
+{
+    my $with_help_subs = shift;
+
+    my $command_hash = generate_command_hash_typed($with_help_subs);
+
+    my $result = [ keys %$command_hash, ];
+
+    return $result;
+}
+
+
+sub generate_command_hash_data_directory
+{
+    my $type = shift;
+
+    my $with_help_subs = shift;
+
+    my $result = {};
+
+    if (defined $global_field_project_configuration)
+    {
+	my $commands_data_directory = $global_field_project_configuration->{true_technical_project_data_commands_directory};
+
+	$result
+	    = {
+	       map
+	       {
+		   $_ => $type,
+	       }
+	       sort
+	       map
+	       {
+		   s($commands_data_directory/)();
+
+		   s((.*)/(.*).$type)($1 $2);
+
+		   $_
+	       }
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       `ls 2>/dev/null $commands_data_directory/*/*.$type`,
+	      };
+    }
+
+    return $result;
+}
+
+
+sub generate_command_hash_shell
+{
+    my $with_help_subs = shift;
+
+    my $result = generate_command_hash_data_directory('sh', $with_help_subs);
+
+    return $result;
+}
+
+
+sub generate_command_hash_yaml
+{
+    my $with_help_subs = shift;
+
+    my $result = generate_command_hash_data_directory('yml', $with_help_subs);
+
+    return $result;
+}
+
+
+sub generate_command_hash_subs
+{
+    my $with_help_subs = shift;
+
+    # generate a list of the available command subroutines
+
+    my $subroutines = [
+		       # select only code references
+
+		       grep
+		       {
+		       	   defined &{"$_"};
+		       }
+
+		       # clarify that they belong to the Command:: package
+
+		       map
+		       {
+			   "Command::$_";
+		       }
+
+		       # select only code references
+
+		       # grep
+		       # {
+		       # 	   ref {Command::}->{$_} eq 'CODE';
+		       # }
+		       # grep
+		       # {
+		       # 	   not defined &$_;
+		       # }
+		       keys %Command::,
+		      ];
+
+    # rework, select and sort these commands
+
+    my $targets = $global_technical_project_configuration->{targets};
+
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper( { global_technical_project_configuration_targets => $targets, }, );
+    }
+
+    my $commands = {
+		    map
+		    {
+			$_ => 'sub';
+		    }
+
+		    # alphabatically group and make sense
+
+		    sort
+
+		    # remove internal commands and commands that don't belong to a target
+
+		    grep
+		    {
+			$_ !~ /Command::/;
+		    }
+
+		    # remove Command:: package name and split target name from operation name on that target
+
+		    map
+		    {
+			foreach my $target (sort keys %$targets)
+			{
+			    $target =~ s/-/_/g;
+
+			    s/Command::${target}_(.*)/${target} $1/g;
+			}
+
+			$_;
+		    }
+
+		    # no help subroutines if so asked
+
+		    grep
+		    {
+			$with_help_subs or $_ !~ /_help$/;
+		    }
+
+		    # all internal commands
+
+		    sort @$subroutines,
+		   };
+
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	use Data::Dumper;
+
+	print Dumper( { all_targets => $targets, }, );
+    }
+
+    return $commands;
+}
+
+
+sub main
+{
+    # this is YAML related, see for instance https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=707229
+
+    $INC{'Mo/builder.pm'} = 1;
+    $INC{'Mo/default.pm'} = 1;
+
+    # initiallize field project related global configuration
+
+    ($global_field_project_configuration, $global_technical_project_configuration) = FieldProject::_init();
+
+    if ($global_field_project_configuration
+	and $global_technical_project_configuration)
+    {
+	# initialize the command module
+
+	Command::_init();
+
+	# parse the local.mk packages to update the dynamically generated help pages
+
+	$global_overriden_packages = buildroot_parse_packages_directories();
+    }
+
+    # parse command line
+
+    parse_command_line();
+
+    # perform bash completion logic, this will exit the script
+
+    if ($option_bash_completion)
+    {
+	bash_completion();
+    }
+
+    # parse package directories
+
+    #t this will overwrite the code in the build directories with custom code for packages listed in local.mk.
+    #t should set a flag whether a build will be required and honor the flag in preprocessing stages.
+
+    buildroot_process_packages_directories($global_overriden_packages);
+
+    # figure out the target and the command
+
+    my $requested_target = (defined $option_interactions_all ? '.*' : $option_target);
+
+    my $command = $option_commands->[0] || "";
+
+    # # we allow finger laziness: the shift key is not necessary for the underscore
+
+    # $requested_target =~ s/-/_/g;
+    # $command =~ s/-/_/g;
+
+    $global_target_command = "$requested_target-$command";
+
+    # given the requested target and the command generate a useful filename for exporting commands to a shell script
+
+    if (defined $option_export_sh)
+    {
+	if ($option_export_sh eq 0)
+	{
+	    $option_export_sh = "/tmp/$global_target_command.sh";
+	}
+	elsif ($option_export_sh eq 1
+	       or $option_export_sh eq '')
+	{
+	    $option_export_sh = "$global_target_command.sh";
+	}
+
+	# again we prefer to not need to press the shift key
+
+	$option_export_sh =~ s/_/-/g;
+    }
+
+    # given the requested target and the command generate a useful filename for exporting execution times to a log file
+
+    if (defined $option_export_times)
+    {
+	if ($option_export_times eq 0)
+	{
+	    $option_export_times = "/tmp/$global_target_command.times";
+	}
+	elsif ($option_export_times eq 1
+	       or $option_export_times eq '')
+	{
+	    $option_export_times = "$global_target_command.times";
+	}
+
+	# again we prefer to not need to press the shift key
+
+	$option_export_times =~ s/_/-/g;
+    }
+
+    # if we are using a build server
+
+    if ($option_build_server)
+    {
+	die "$0: *** option_build_server is still in development";
+
+	my $build_source = "";
+
+	my $build_servers = $global_technical_project_configuration->{build_servers};
+
+	my $build_server = $build_servers->{$option_build_server};
+
+	if ($build_server->{name} ne 'laptop')
+	{
+	    my $ssh_user = $build_server->{ssh_user};
+
+	    my $ssh_server = $build_server->{ssh_server};
+
+	    my $tftp_directory = $build_server->{tftp_directory};
+
+	    $build_source .= "$ssh_user\@$ssh_server";
+	}
+
+	# this results in something like this:
+	#
+	# ssh cornelih@cbi.utsa.edu tmux new-session -d 'project-workflow ssp build && bash'
+	#
+	# but I will likely also need to use sendkeys to detach from the session
+	# also need to cd to the correct directory
+
+	Engine::execute_shell_command("ssh $build_source tmux new-session -d 'neurospaces-workflow $requested_target $command && bash'");
+    }
+
+    # we are not using a build server
+
+    else
+    {
+	# are we dry running all the commands of a module (target)?
+
+	my $dry_run_module_commands;
+
+	if ($option_interactions_all
+	    or $option_interactions_module
+	    or $option_interactions_module_all_roles)
+	{
+	    $dry_run_module_commands = 'option_interactions_module';
+
+	    # make sure we don't actually run any commands
+
+	    $option_dry_run = 'option_interactions_module';
+	}
+
+	if ($option_dump_module_interaction_roles)
+	{
+	    $dry_run_module_commands = 'option_dump_module_interaction_roles';
+
+	    # make sure we don't actually run any commands
+
+	    $option_dry_run = 'option_dump_module_interaction_roles';
+	}
+
+	if ($dry_run_module_commands)
+	{
+	    # generate the list of all commands
+
+	    my $all_commands = generate_command_hash_with_structure('with help subs');
+
+	    # loop over all the matching targets
+
+	    my $all_defined_targets = $global_technical_project_configuration->{targets};
+
+	    foreach my $defined_target (
+					grep
+					{
+					    m(^$requested_target$);
+					}
+					keys %$all_defined_targets
+				       )
+	    {
+		# reference subroutine names specific for the given target: they belong together
+
+		my $target_subroutines = $all_commands->{$defined_target};
+
+		# collect the subroutine names
+
+		my $command_implementations
+		    = [
+		       map
+		       {
+			   my $subroutine = $_;
+
+			   "Command::${defined_target}_${subroutine}";
+		       }
+		       keys %$target_subroutines,
+		      ];
+
+		# invoke all these subroutines in dry run mode to have them either generate or report the module roles
+
+		foreach my $command_implementation (sort @$command_implementations)
+		{
+		    if ($option_verbose)
+		    {
+			print "Invoking ($command_implementation)\n";
+		    }
+
+		    if ($command_implementation =~ /_help$/)
+		    {
+			next;
+		    }
+
+		    my $has_help = '';
+
+		    if (grep(/^${command_implementation}_help$/, @$command_implementations))
+		    {
+			$has_help = " (use --help to see the help page)";
+		    }
+
+		    $command_implementation =~ /Command::(.*)/;
+
+		    my $short_command = $1;
+
+		    # add a header to the schedule / diagram for this command
+
+		    my $scheduled_command
+			= {
+			   command => "---\nCOMMAND: $short_command$has_help",
+			   dry_run => $dry_run_module_commands,
+			   interaction_role => 'none',
+			  };
+
+		    push @$global_scheduled_commands, $scheduled_command;
+
+		    # add the command to the schedule / diagram
+
+		    {
+			no strict "refs";
+
+			&$command_implementation();
+		    }
+
+		    # end the command in the schedule / diagram
+
+		    $scheduled_command
+			= {
+			   command => "\n\n---\n",
+			   dry_run => $dry_run_module_commands,
+			   interaction_role => 'none',
+			  };
+
+		    push @$global_scheduled_commands, $scheduled_command;
+		}
+	    }
+	}
+	else
+	{
+	    # if help was requested for this command
+
+	    if ($option_help)
+	    {
+		# call the subroutine that implements the help function
+
+		$command .= "_help";
+	    }
+
+	    my $command_implementation = "Command::${requested_target}_${command}";
+
+	    if ($option_verbose)
+	    {
+		print "Invoking ($command_implementation)\n";
+	    }
+
+	    # if this command exists ...
+
+	    my $command_hash = generate_command_hash_typed('with help subs');
+
+	    if (defined $option_verbose
+		and $option_verbose > 2)
+	    {
+		use Data::Dumper;
+
+		print Dumper( { command_hash => $command_hash, }, );
+	    }
+
+	    if (exists $command_hash->{"$requested_target $command"})
+	    {
+		# ... either invoke the --help sub
+
+		if ($option_help)
+		{
+		    no strict "refs";
+
+		    my $command_name = $command_implementation;
+
+		    $command_name =~ s(^Command::)();
+		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
+		    $command_name =~ s(_help$)();
+
+		    my $help_string = &$command_implementation($command_name, \@ARGV);
+
+		    # old style help pages ...
+
+		    if ($help_string =~ /^[0-9]*$/)
+		    {
+			# ... are printed by the help function
+		    }
+
+		    # new style help pages ...
+
+		    else
+		    {
+			# ... are printed by us
+
+			print "$0 $help_string\n";
+		    }
+		}
+
+		# ... or invoke the implementation sub of the command ...
+
+		else
+		{
+		    # ... depending on the type of the requested command ...
+
+		    my $type = $command_hash->{"$requested_target $command"};
+
+		    # ... either as a regular perl sub ...
+
+		    if ($type eq 'sub')
+		    {
+			no strict "refs";
+
+			my $error = &$command_implementation(\@ARGV);
+
+			if ($error)
+			{
+			    # die "$0: *** Error: $error";
+
+			    warn "$0: *** Warning: $requested_target $command generated an warning response ($error)";
+			}
+		    }
+
+		    # ... or as a shell script ...
+
+		    elsif ($type eq 'sh')
+		    {
+			# invoke the script as a single command
+
+			my $commands_data_directory = $global_field_project_configuration->{true_technical_project_data_commands_directory};
+
+			my $shell_script = "$commands_data_directory/$requested_target/$command";
+
+			Command::execute_shell_command("$shell_script.sh");
+		    }
+
+		    # ... or as a yaml script ...
+
+		    elsif ($type eq 'yml')
+		    {
+		    }
+
+		    # ... or we have an error
+
+		    else
+		    {
+			die "$0: *** Error: unknown command type $type when invoking command '$requested_target $command'";
+		    }
+		}
+	    }
+	    else
+	    {
+		die "$0: *** Error: target '$requested_target' does not provide command '$command'.";
+	    }
+	}
+
+	Engine::execute_all_scheduled_commands($global_interaction_roles);
+    }
+}
+
+
+sub parse_command_line
+{
+    my $result = GetOptionsFromArray(\@ARGV, %$global_options);
+
+    if (!$result)
+    {
+        die "$0: *** error in option processing, try --help";
+    }
+
+    # my $asking_help = ($option_help
+    # 		       or $option_help_build_servers
+    # 		       or $option_help_commands
+    # 		       or $option_help_packages
+    # 		       or $option_help_projects
+    # 		       or $option_help_targets);
+
+    if (not defined $option_target
+	and scalar @ARGV)
+    {
+	$option_target = shift @ARGV;
+    }
+
+    if (not defined $option_commands->[0]
+	and scalar @ARGV)
+    {
+	$option_commands->[0] = shift @ARGV;
+    }
+
+    if ($option_help and (not $option_target) and (not $option_commands->[0]))
+    {
+        print
+            "
+$0: support for workflow design for embedded software engineers.
+
+SYNOPSIS
+
+$0 <options> <target> <command> -- < ... command specific options and arguments ... >
+
+EXAMPLES -- first try these with the --dry-run to understand what they do:
+
+  \$ $0 ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
+
+  \$ $0 --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
+
+  \$ $0 --help-targets                                       # display the available targets that are found in the configuration file.
+
+options:
+    --bash-completion               compute bash completion for the given command line.
+                                    hint: the bash completion script implements completion for options, targets and commands.
+    --branch                        git branch to work with.
+    --build-server                  the build server profile to work with.
+    --built-image-directory         the directory on the build server where the built images are to be found.
+    --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
+    --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
+    --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
+    --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
+    --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
+    --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+    --export-remote                 include the remote access part of exported commands.
+                                    this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
+    --export-sh                     export the commands to a file with the given name.
+    --export-sudo                   include the sudo commands when exporting commands to a file.
+    --export-times                  export the times when commands are started and ended to a file with the given name.
+    --export-verbose                when exporting the commands to a file, interleave them with echo commands.
+    --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
+    --forward-destination           the target file forward destination to copy to.
+    --forward-source                the target file forward source to copy from.
+    --help                          display usage information and stop execution.
+    --help-build-servers            display the known build servers.
+    --help-commands                 display the available commands, add a target name for restricted output.
+    --help-module                   display all the available help information about the commands of the module.
+    --help-field-project-name       print the field project name and exit.
+    --help-options                  print the option values.
+    --help-packages                 display known package and overriden package information and stop execution.
+    --help-projects                 display known project information and stop execution.
+    --help-targets                  display known targets and stop execution.
+    --incremental                   assume an incremental build (default is " . ($option_incremental ? "yes" : "no") . "
+    --interactions                  show the interaction diagram of the commands.
+    --interactions-all              show a diagram with all the commands and all the interaction roles.
+    --interactions-module           show the interaction diagram of all the commands in the module.
+    --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
+    --packages                      packages to operate on, can be given multiple times.
+    --ssh-port                      the ssh port.
+    --ssh-server                    the used ssh build server.
+    --ssh-user                      ssh-user on the build server (please configure your public key).
+    --target                        the target to apply the given commands to.
+    --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
+    --verbose                       set verbosity level.
+
+NOTES
+
+OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
+
+";
+
+	exit 0;
+    }
+
+    if (defined $option_build_server)
+    {
+	my $build_servers = $global_technical_project_configuration->{build_servers};
+
+	if (not exists $build_servers->{$option_build_server})
+	{
+	    die "$0: *** Error: unknown build server $option_build_server, use --help-build-servers to learn about the known servers";
+	}
+
+	# if (not defined $option_ssh_server)
+	# {
+	#     $option_ssh_server = $build_servers->{$option_build_server}->{ssh_server};
+	# }
+
+	# if (not defined $option_ssh_user)
+	# {
+	#     $option_ssh_user = $build_servers->{$option_build_server}->{ssh_user};
+	# }
+
+	if (not defined $option_ssh_port)
+	{
+	    $option_ssh_port = $build_servers->{$option_build_server}->{ssh_port};
+	}
+
+	# if (not defined $option_tftp_directory)
+	# {
+	#     $option_tftp_directory = $build_servers->{$option_build_server}->{tftp_directory};
+	# }
+
+	# if (not defined $option_built_image_directory)
+	# {
+	#     $option_built_image_directory = $build_servers->{$option_build_server}->{built_image_directory};
+	# }
+    }
+
+    my $build_servers = $global_technical_project_configuration->{build_servers};
+
+    my $status;
+
+    if (defined $option_forward_destination_server)
+    {
+	if (not exists $build_servers->{$option_forward_destination_server})
+	{
+	    $status = "$0: *** Error: unknown forwarding server $option_forward_destination_server, use --help-build-servers to learn about the known servers";
+	}
+    }
+
+    if (defined $option_forward_source_server)
+    {
+	if (not exists $build_servers->{$option_forward_source_server})
+	{
+	    $status = "$0: *** Error: unknown forwarding server $option_forward_source_server, use --help-build-servers to learn about the known servers";
+	}
+    }
+
+    if ($option_help_build_servers)
+    {
+	use YAML;
+
+	print Dump( { build_servers => $build_servers, }, );
+
+	exit 0;
+    }
+
+    if ($option_help_commands)
+    {
+	use YAML;
+
+	my $commands = generate_command_list();
+
+	if ($option_target)
+	{
+	    $commands
+		= [
+		   grep
+		   {
+		       /$option_target/;
+		   }
+		   @$commands,
+		  ];
+	}
+
+	$commands
+	    = [
+	       sort
+	       {
+		   $a cmp $b;
+	       }
+	       map
+	       {
+		   "$global_program_name $_ --help";
+	       }
+	       @$commands,
+	      ];
+
+	print Dump( { "available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)" => $commands, }, );
+
+	exit 0;
+    }
+
+    if ($option_help_options)
+    {
+	use YAML;
+
+	print Dump( { "global_options" => $global_options, }, );
+
+	exit 0;
+    }
+
+    if ($option_help_packages)
+    {
+	use YAML;
+
+	my $packages = $global_technical_project_configuration->{packages};
+
+	print Dump( { global_packages => $packages, }, );
+
+	print Dump( { global_overriden_packages => $global_overriden_packages, }, );
+
+	exit 0;
+    }
+
+    if ($option_help_field_project_name)
+    {
+	use YAML;
+
+	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+
+	exit 0;
+    }
+
+    # if ($option_help_node_configuration)
+    # {
+    # 	use YAML;
+
+    # 	print Dump( { configuration => $global_node_configuration, }, );
+
+    # 	exit 0;
+    # }
+
+    if ($option_help_projects)
+    {
+	use YAML;
+
+	my $projects = $global_technical_project_configuration->{projects};
+
+	print Dump( { global_projects => $projects, }, );
+
+	exit 0;
+    }
+
+    if ($option_help_targets)
+    {
+	use YAML;
+
+	my $targets = $global_technical_project_configuration->{targets};
+
+	print Dump( { targets => $targets, }, );
+
+	exit 0;
+    }
+
+    if ((not defined $option_interactions_all
+	 and not defined $option_interactions_module_all_roles)
+	and not defined $option_target)
+    {
+	die "$0: *** Error: neither a target option nor target argument given, try --help";
+    }
+
+    if ($FieldProject::status)
+    {
+	$status = $FieldProject::status;
+    }
+
+    # always allow the builtin commands (start a new project, add a new target, ...)
+
+    #! they should do their own checking for a valid
+    #! field_configuration, project_name as required.
+
+    my $builtin_commands
+	= {
+	   add_target => 1,
+	   install_scripts => 1,
+	   print_configuration_directory => 1,
+	   start_project => 1,
+	  };
+
+    if ($option_target eq 'builtin'
+	and exists $builtin_commands->{$option_commands->[0]})
+    {
+    }
+    else
+    {
+	if ($status)
+	{
+	    die $status;
+	}
+    }
+}
+
+
+# parse the package directories in local.mk
+
+sub buildroot_parse_packages_directories
+{
+#     "$ENV{HOME}/projects/developer/source/snapshots/$branch";
+
+    # packages listed in alphabetical order, dashes replaced with underscores
+
+    my $package_overrides_filename = "local.mk";
+
+    my $package_overrides;
+
+    {
+	# see also https://stackoverflow.com/questions/8963400/the-correct-way-to-read-a-data-file-into-an-array
+
+	# local $/;		# enable localized slurp mode
+
+	$package_overrides = [ `cat 2>/dev/null "$package_overrides_filename"` ];
+    }
+
+    # loop over all lines in local.mk
+
+    my $overriden_packages;
+
+    foreach my $package_override (@$package_overrides)
+    {
+	# we are only interested custom repositories
+
+	if ($package_override !~ /_OVERRIDE_SRCDIR/)
+	{
+	    next;
+	}
+
+	if ($package_override =~ /_RSYNC_EXCLUSIONS/)
+	{
+	    next;
+	}
+
+	# skip comment lines
+
+	if ($package_override =~ /^\s*#/)
+	{
+	    next;
+	}
+
+	#! beware of unmatched characters in the directory name
+
+	$package_override =~ /^\s*(\w+)_OVERRIDE_SRCDIR\s*=\s*([\w\/\.-]*)/;
+
+	my $package_name = lc $1;
+
+	# # skip gcc related overrides, buildroot ignores them, we deal with them elsewhere
+
+	# if ($package_name eq 'cr_gcc')
+	# {
+	#     next;
+	# }
+
+	my $package_directory = $2;
+
+	$overriden_packages->{$package_name}->{directory} = $package_directory;
+
+	if ($option_verbose)
+	{
+	    print "$0: *** added for package $package_name OVERRIDE_SRCDIR $package_directory\n";
+	}
+    }
+
+    # propagate the overriden_packages
+
+    return $overriden_packages;
+}
+
+
+# prepare the package directories in local.mk
+
+sub buildroot_process_packages_directories
+{
+    my $overriden_packages = shift;
+
+    # loop over all the overriden packages
+
+    foreach my $package_name (sort keys %$overriden_packages)
+    {
+	# skip gcc related overrides, buildroot ignores them, we deal
+	# with them in the build command of the toolchain target
+
+	if ($package_name eq 'cr_gcc')
+	{
+	    next;
+	}
+
+	# get the package source directory from the override
+
+	my $package_directory = $overriden_packages->{$package_name}->{directory};
+
+	# get the build directory from the globally known packages
+
+	my $packages = $global_technical_project_configuration->{packages};
+
+	my $build_directory = $packages->{$package_name}->{build_directory};
+
+	if (not defined $build_directory)
+	{
+	    die "$0: *** Fatal: package $package_name has no build_directory defined in the package list";
+	}
+
+	# Engine::execute_shell_command("mkdir --parents '$build_directory'");
+
+	# Engine::execute_shell_command("cp -a '$package_directory'/* '$build_directory'");
+
+	# my $stamp_filenames = $global_technical_project_configuration->{stamp_filenames};
+
+	# my $stamp_built = $stamp_filenames->[0];
+
+	# Engine::execute_shell_command("rm -f '$build_directory/$stamp_built'");
+    }
+}
+
+
+main();
+
+

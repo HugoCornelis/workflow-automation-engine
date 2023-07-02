@@ -1,0 +1,112 @@
+FROM debian:bullseye
+
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    locales
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    automake \
+    binutils-dev \
+    build-essential \
+    cpio \
+    cscope \
+    gawk \
+    gcc \
+    git \
+    libsdl1.2-dev \
+    libssl-dev \
+    mesa-common-dev \
+    openjdk-11-jre-headless \
+    screen \
+    socat \
+    sudo
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    chrpath \
+    cryptsetup-bin \
+    debianutils \
+    diffstat \
+    emacs \
+    file \
+    help2man \
+    iputils-ping \
+    libcurl4 \
+    libegl1-mesa \
+    liblz4-tool \
+    pylint3 \
+    python3-git \
+    python3-jinja2 \
+    python3-pexpect \
+    python3-pip \
+    python3-subunit \
+    python3.9 \
+    sqlite3 \
+    texinfo \
+    unzip \
+    vim \
+    wget \
+    xterm \
+    xz-utils \
+    zstd
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libyaml-perl \
+    libipc-system-simple-perl \
+    libfile-chdir-perl \
+    grc
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    efitools \
+    gnu-efi \
+    gnupg-pkcs11-scd \
+    gnutls-bin \
+    gpg \
+    libengine-pkcs11-openssl \
+    sbsigntool
+
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# note that the values given here are defaults, the --build-arg arguments on the command line may become the actual values
+
+ARG GROUP_ID=1000
+ARG USER_NAME=neurospaces
+ARG USER_ID=1000
+
+# create the user inside the docker image that creates this docker image
+
+RUN groupadd --gid ${GROUP_ID} ${USER_NAME} \
+    && useradd -ou ${USER_ID} -g ${USER_NAME} -d /home/${USER_NAME} ${USER_NAME} \
+    && mkdir /home/${USER_NAME} \
+    && chown -R ${USER_NAME}.${USER_NAME} /home/${USER_NAME}
+
+RUN echo "${USER_NAME}     ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME}
+
+USER ${USER_NAME}
+WORKDIR /home/${USER_NAME}
+
+# make sure the user working directory exists
+
+ARG WORKING_DIRECTORY=/home/${USER_NAME}
+
+RUN mkdir --parents ${WORKING_DIRECTORY}
+
+# RUN git clone git://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git \
+#     && cd sbsigntools \
+#     && git fetch --all --tags \
+#     && git checkout tags/v0.9.4 \
+#     && ./autogen.sh \
+#     && ./configure && make && sudo make install
+
+# COPY --chown=${USER_NAME} ./image /home/${USER_NAME}/image/
+
+RUN mkdir --parents /home/${USER_NAME}/projects/developer/source/snapshots/master
+
+# COPY --chown=${USER_NAME} /home/hugo/projects/developer/source/snapshots/master /home/${USER_NAME}/projects/developer/source/snapshots/master
+
+COPY --chown=${USER_NAME} . /home/${USER_NAME}/projects/developer/source/snapshots/master
+

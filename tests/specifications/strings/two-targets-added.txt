@@ -1,0 +1,16 @@
+---
+targets:
+  all:
+    description: used for processing of target files that are produced by other targets
+  docker:
+    description: interaction with the docker build container
+  examples:
+    description: these are examples that explain how to use the APIs
+  new_target:
+    description: Add commands to this new target that do new things
+  new_target2:
+    description: Add commands to this new target2 that do new things2
+  source_code:
+    description: operations on the source code that is used for testing
+  wiki_gitlab:
+    description: pulls the wiki pages from gitlab (and possibly other sources) and converts them PDF (or other formats)
