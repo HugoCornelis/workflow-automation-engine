@@ -17,11 +17,13 @@ dnl ##########################################################################
 
 AC_PREREQ(2.59)
 
-# $Format: "AC_INIT(${package}, ${major}.${minor}.${micro}-${label}, ${email})"$
-AC_INIT(workflow-automation, 0.0.0-alpha, hugo.cornelis@gmail.com)
-
 dnl Obtain operating system information.
 AC_CANONICAL_TARGET
+
+# $Format: "AC_INIT(${package}, ${major}.${minor}.${micro}-${label})"$
+AC_INIT([workflow-automation], [0.0.0-alpha], [hugo.cornelis@gmail.com])
+AC_CONFIG_SRCDIR([Makefile.am])
+AM_INIT_AUTOMAKE
 
 # see https://metacpan.org/source/ASPIERS/Stow-v2.1.2/configure.ac
 
@@ -182,18 +184,6 @@ case "$host_os" in
 
 esac
 
-
-
-# note that this leads to an infinite configure loop on my laptop (Ubuntu 21.10)
-
-dnl # $Format: "AC_INIT(${package}, ${major}.${minor}.${micro}-${label})"$
-dnl AC_INIT(workflow-automation, 0.0.0-alpha)
-dnl AC_CONFIG_SRCDIR([Makefile.am])
-dnl AM_INIT_AUTOMAKE
-
-AC_CONFIG_SRCDIR([Makefile.am])
-# $Format: "AM_INIT_AUTOMAKE(${package}, ${major}.${minor}.${micro}-${label})"$
-AM_INIT_AUTOMAKE(workflow-automation, 0.0.0-beta)
 
 
 PERL_MODULES=`(cd perl && find . -name "*.pm" | perl -pe 's/\n/ /g')`
