@@ -331,6 +331,7 @@ workflow-tests-workflow: created the shell command file for target new_target2',
 			       },
 			      ],
        description => "testing of the workflow automation engine",
+       disabled => 'does not use a docker container',
        documentation => {
 			 explanation => "
 
