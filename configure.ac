@@ -134,7 +134,7 @@ case "$host_os" in
 
 
     #-- Here we determine the install path for perl modules --
-    AC_MSG_CHECKING([Checking the perl module installation path])	
+    AC_MSG_CHECKING([Checking the perl module installation path])
     pmdir_relative_path=`\
       $PERL -MConfig \
         -wle '($_ = $Config{installsitelib})
