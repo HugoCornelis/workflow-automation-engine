@@ -17,14 +17,16 @@ The workflow automation engine offers the following functions:
 
 - Easy to start a new project, new _targets_ and new _commands_.
 - Integration with `bash` completion allows browsing project specific
-  _targets_, _commands_ and configuration.
+  _targets_, project specific _commands_ and project specific
+  _configuration_.
 - Integration with `grc` for project specific _keyword highlighting_.
 - Support for different _roles_ that allows remote execution, in a
   Docker container or a `tmux` session.
 
 ## Starting a new project
 
-Starting a new workflow project consists of these steps:
+Starting a new workflow project with name *abcd* consists of these
+steps:
 
 1. `workflow builtin start_project abcd`
 
