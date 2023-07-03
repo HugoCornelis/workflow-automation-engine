@@ -1007,6 +1007,12 @@ sub cd_start
 
     my $sub = $self->{command};
 
+    # previously, arguments were: self, config.  config has a key
+    # $config->{c_code}->{directory} pointing to the directory with
+    # the C source code.
+
+    # with the assumption that self has never been used.
+
     my $error = &$sub();
 
     if ($error)
