@@ -84,20 +84,19 @@ my $test
 				command_tests => [
 						  {
 						   description => "Can we configure the developer package in the Docker container ?",
-						   read => 'checking build system type... x86_64-pc-linux-gnu
-checking host system type... x86_64-pc-linux-gnu
-checking target system type... x86_64-pc-linux-gnu
-checking whether we build universal binaries.... no
-checking OS specifics...... Host is running linux-gnu.
-checking for perl5... no
-checking for perl... perl
-checking Checking the perl module installation path...  ${prefix}/share/perl/5.32.1 
-checking for a BSD-compatible install... /usr/bin/install -c
+						   read => 'checking for a BSD-compatible install... /usr/bin/install -c
 checking whether build environment is sane... yes
 checking for a thread-safe mkdir -p... /bin/mkdir -p
 checking for gawk... gawk
 checking whether make sets $(MAKE)... yes
 checking whether make supports nested variables... yes
+checking whether we build universal binaries.... no
+checking OS specifics...... Host is running .
+checking for perl5... no
+checking for perl... perl
+checking Checking the perl module installation path...  ${prefix}/share/perl/5.32.1 
+./configure: line 2457: cd: perl: No such file or directory
+./configure: line 2460: cd: perl: No such file or directory
 checking for mtn... no
 checking for monotone... no
 checking for dpkg-buildpackage... dpkg-buildpackage
@@ -113,10 +112,8 @@ checking for python extension module directory... ${exec_prefix}/lib/python3.9/s
 checking Python prefix is ... \'${prefix}\'
 find: \'tests/data\': No such file or directory
 checking that generated files are newer than configure... done
-configure: creating ./config.status
+: creating ./config.status
 config.status: creating Makefile
-config.status: creating perl/Makefile
-config.status: creating python/Makefile
 ',
 						   timeout => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -138,16 +135,7 @@ config.status: creating python/Makefile
 				command_tests => [
 						  {
 						   description => "Can we build the developer package in the Docker container ?",
-						   read => 'Making all in perl
-make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/perl\'
-make[1]: Nothing to be done for \'all\'.
-make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/perl\'
-Making all in python
-make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-echo "No need to build in python"
-No need to build in python
-make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
+						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
 make[1]: Nothing to be done for \'all-am\'.
 make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
 ',
@@ -171,54 +159,17 @@ make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapsho
 				command_tests => [
 						  {
 						   description => "Can we install the developer package in the Docker container ?",
-						   read => 'Making install in perl
-make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/perl\'
-make[2]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/perl\'
-make[2]: Nothing to be done for \'install-exec-am\'.
- /bin/mkdir -p \'/usr/local/share/perl/5.32.1\'
- /bin/mkdir -p \'/usr/local/share/perl/5.32.1/Neurospaces/Developer\'
- /usr/bin/install -c -m 644  ./Neurospaces/Developer/Operations.pm ./Neurospaces/Developer/Packages.pm \'/usr/local/share/perl/5.32.1/Neurospaces/Developer\'
- /bin/mkdir -p \'/usr/local/share/perl/5.32.1/Neurospaces/Developer/Manager\'
- /usr/bin/install -c -m 644  ./Neurospaces/Developer/Manager/GUI.pm \'/usr/local/share/perl/5.32.1/Neurospaces/Developer/Manager\'
- /bin/mkdir -p \'/usr/local/share/perl/5.32.1/Neurospaces\'
- /usr/bin/install -c -m 644  ./Neurospaces/Tester.pm ./Neurospaces/Developer.pm \'/usr/local/share/perl/5.32.1/Neurospaces\'
-make[2]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/perl\'
-make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/perl\'
-Making install in python
-make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-make[2]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-make  install-exec-hook
-make[3]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-echo "No install"
-No install
-make[3]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-make[2]: Nothing to be done for \'install-data-am\'.
-make[2]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master/python\'
-make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
+						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
 make[2]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
  /bin/mkdir -p \'/usr/local/bin\'
- /usr/bin/install -c bin/data_2_figure bin/mcad2doxy bin/mtn-ancestors bin/neurospaces-commands bin/neurospaces-manager-gui bin/neurospaces_build bin/neurospaces_check bin/neurospaces_clean bin/neurospaces_clone bin/neurospaces_configure bin/neurospaces_countcode bin/neurospaces_create_directories bin/neurospaces_cron bin/neurospaces_describe bin/neurospaces_dev_uninstall bin/neurospaces_diff bin/neurospaces_dist bin/neurospaces_docs bin/neurospaces_docs-level7 bin/neurospaces_harness bin/neurospaces_harness_2_html bin/neurospaces_history bin/neurospaces_init bin/neurospaces_install bin/neurospaces_kill_servers bin/neurospaces_migrate bin/neurospaces_mtn_2_git bin/neurospaces_new_component bin/neurospaces_packages bin/neurospaces_pkgdeb bin/neurospaces_pkgrpm bin/neurospaces_pkgtar bin/neurospaces_profile_set bin/neurospaces_pull bin/neurospaces_push bin/neurospaces_repo_keys bin/neurospaces_repositories bin/neurospaces_revert bin/neurospaces_serve bin/neurospaces_setup \'/usr/local/bin\'
- /usr/bin/install -c bin/neurospaces_status bin/neurospaces_sync bin/neurospaces_tags bin/neurospaces_tools_propagate bin/neurospaces_uninstall bin/neurospaces_update bin/neurospaces_upgrade bin/neurospaces_versions bin/neurospaces_website_prepare bin/nspkg-deb bin/nspkg-osx bin/nspkg-rpm bin/nstest_query bin/numerical_compare bin/release-expand bin/release-extract bin/signal_voltage_characteristics bin/td-labels bin/td-majors bin/workflow \'/usr/local/bin\'
+ /usr/bin/install -c bin/workflow \'/usr/local/bin\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/40_workflow-automator\'
  /usr/bin/install -c -m 644  tests/specifications/40_workflow-automator/20_new-project.t tests/specifications/40_workflow-automator/25_new-project-docker.t tests/specifications/40_workflow-automator/10_help-pages.t \'/usr/local/neurospaces/developer/tests/specifications/40_workflow-automator\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer/tests\'
  /usr/bin/install -c -m 644  tests/introduction.html \'/usr/local/neurospaces/developer/tests\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/strings\'
- /usr/bin/install -c -m 644  tests/specifications/strings/neurospaces_build--no-compile--no-configure--no-install--regex-developer--dry-run--developer--verbose--verbose--verbose.txt tests/specifications/strings/two-targets-added.txt tests/specifications/strings/neurospaces_build--tag-build-10--no-compile--no-configure--no-install--regex-developer--dry-run--developer--verbose--verbose--verbose.txt \'/usr/local/neurospaces/developer/tests/specifications/strings\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/70_harness\'
- /usr/bin/install -c -m 644  tests/specifications/70_harness/70_preparation.t tests/specifications/70_harness/75_preparation_checker.t tests/specifications/70_harness/10_help.t \'/usr/local/neurospaces/developer/tests/specifications/70_harness\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications\'
- /usr/bin/install -c -m 644  tests/specifications/50_downloads.t tests/specifications/10_global.t tests/specifications/30_developer.t \'/usr/local/neurospaces/developer/tests/specifications\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/90_yaml\'
- /usr/bin/install -c -m 644  tests/specifications/90_yaml/50_downloads.t tests/specifications/90_yaml/10_global.t tests/specifications/90_yaml/30_developer.t \'/usr/local/neurospaces/developer/tests/specifications/90_yaml\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/91_json/70_harness\'
- /usr/bin/install -c -m 644  tests/specifications/91_json/70_harness/70_preparation.t tests/specifications/91_json/70_harness/75_preparation_checker.t tests/specifications/91_json/70_harness/10_help.t \'/usr/local/neurospaces/developer/tests/specifications/91_json/70_harness\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/91_json\'
- /usr/bin/install -c -m 644  tests/specifications/91_json/50_downloads.t tests/specifications/91_json/10_global.t tests/specifications/91_json/30_developer.t \'/usr/local/neurospaces/developer/tests/specifications/91_json\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/90_yaml/70_harness\'
- /usr/bin/install -c -m 644  tests/specifications/90_yaml/70_harness/70_preparation.t tests/specifications/90_yaml/70_harness/75_preparation_checker.t tests/specifications/90_yaml/70_harness/10_help.t \'/usr/local/neurospaces/developer/tests/specifications/90_yaml/70_harness\'
+ /usr/bin/install -c -m 644  tests/specifications/strings/two-targets-added.txt \'/usr/local/neurospaces/developer/tests/specifications/strings\'
 make[2]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
 make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
 ',
