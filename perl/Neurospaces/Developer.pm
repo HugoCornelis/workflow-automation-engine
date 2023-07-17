@@ -809,7 +809,7 @@ sub packages_sort
 
 	       $result;
 	   }
-	   keys %$all_packages,
+	   sort keys %$all_packages,
 	  ];
 
     my $transitive_package_array
