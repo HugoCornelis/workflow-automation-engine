@@ -75,7 +75,7 @@ the correct execution of such clauses by the test harness.
 ",
 			      purpose => "Custom preparation and restoration of the test environment.",
 			     },
-	    name => '70_harness/75_preparation_checker.t',
+	    name => '70_harness/25_preparation_checker.t',
 	   };
 
 return $test;
