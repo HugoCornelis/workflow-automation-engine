@@ -730,27 +730,57 @@ sub parse_command_line
 {
     my $command_definition = shift;
 
-    my $command;
+    my $command_prefix = shift;
 
-    my $arguments;
+    # if we have a command_prefix
 
-    if (exists $command_definition->{command})
+    if ($command_prefix
+	and scalar @$command_prefix)
     {
-	$command = $command_definition->{command};
+	# the command is the first element of the command prefix, the rest are arguments
+
+	my $argument_array = [];
+
+	if (exists $command_definition->{arguments})
+	{
+	    $argument_array = $command_definition->{arguments};
+	}
+
+	my $command_line = $command_definition->{command} . " " . (join ' ', @$argument_array);
+
+	my $command_and_arguments = [ @$command_prefix, $command_line, ];
+
+	my $command = shift @$command_and_arguments;
+
+	return ($command, $command_and_arguments);
     }
 
-    if (exists $command_definition->{arguments})
-    {
-	$arguments = $command_definition->{arguments};
-    }
+    # if we don't have a command prefix
+
     else
     {
-	$arguments = [ split '\s', $command, ];
+	# the command is the first word, all the rest are arguments
 
-	$command = shift @$arguments;
+	my $command_array = [];
+
+	if (exists $command_definition->{command})
+	{
+	    $command_array = [ split '\s', $command_definition->{command}, ];
+	}
+
+	my $argument_array = [];
+
+	if (exists $command_definition->{arguments})
+	{
+	    $argument_array = $command_definition->{arguments};
+	}
+
+	my $command_arguments = [ @$command_array, @$argument_array, ];
+
+	my $command = shift @$command_arguments;
+
+	return ($command, $command_arguments);
     }
-
-    return ($command, $arguments);
 }
 
 
@@ -830,9 +860,20 @@ sub spawn_new
 
     my $fd_output = shift;
 
+    # apply the execution prefix from the harnessing clauses
+
+    my $command_prefix = [];
+
+    my $harness = Heterarch::Test::ExecutionContext::harness_current();
+
+    if ($harness)
+    {
+	$command_prefix = $harness->{command_prefix_long};
+    }
+
     # retrieve the shell command and its arguments
 
-    my ($command, $arguments) = $command_definition->parse_command_line();
+    my ($command, $arguments) = $command_definition->parse_command_line($command_prefix);
 
     # compare the running command with this command
 
@@ -2398,8 +2439,14 @@ sub _prepare_engine
 
     # either execute regular perl code
 
+    #! in the case of a docker based harness, the code that was
+    #! inserted to create the docker image and container, will be
+    #! executed here.
+
     if (ref $executor_element eq 'CODE')
     {
+	# print STDERR "sub _prepare_engine(): CODE\n";
+
 	$result = &$executor_element($previous_result);
     }
 
@@ -2409,6 +2456,8 @@ sub _prepare_engine
 
     elsif (exists $executor_element->{class})
     {
+	# print STDERR "sub _prepare_engine(): class\n";
+
 	# instantiate the object
 
 	my $class = $executor_element->{class};
@@ -2450,6 +2499,8 @@ sub _prepare_engine
 
     elsif (exists $executor_element->{system_commands})
     {
+	# print STDERR "sub _prepare_engine(): system_commands\n";
+
 	my $system_commands = $executor_element->{system_commands};
 
 	if (ref $system_commands eq 'ARRAY')
@@ -2908,6 +2959,24 @@ sub is_selected
 
 my $global_harnessing_identifiers = {};
 
+my $global_active_harness_identifiers = [];
+
+
+sub harness_current
+{
+    my $active_harness_identifier
+	= $global_active_harness_identifiers->[$#$global_active_harness_identifiers];
+
+    my $active_harness;
+
+    if (defined $active_harness_identifier)
+    {
+	$active_harness = $global_harnessing_identifiers->{$active_harness_identifier};
+    }
+
+    return $active_harness;
+}
+
 
 sub _harness_create_or_fetch
 {
@@ -2934,10 +3003,19 @@ sub _harness_create_or_fetch
 	       {
 		   system "$build";
 
+		   if ($?)
+		   {
+		       return 'docker_preparer build command failed';
+		   }
+
 		   system "sudo docker container stop $name_container";
 		   system "sudo docker container rm $name_container";
 
 		   system "sudo docker run -d -t --name $name_container $name_image";
+
+		   # make the docker harness available by pushing it
+
+		   push @$global_active_harness_identifiers, $harnessing_identifier;
 
 		   # return no errors
 
@@ -2947,6 +3025,10 @@ sub _harness_create_or_fetch
 	my $docker_reparer
 	    = (sub
 	       {
+		   # remove the docker harness
+
+		   pop @$global_active_harness_identifiers;
+
 		   print "The Docker container is still running.\n
 You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 
@@ -2975,6 +3057,22 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 	    = {
 	       class => clone($harnessing_class),
 	       description => 'Instantiated',
+	       command_prefix_long => [
+				       'sudo',
+				       'docker',
+				       'exec',
+				       '-it',
+				       $name_container,
+				       'bash',
+				       '-ic',
+				      ],
+	       command_prefix_short => [
+					'sudo',
+					'docker',
+					'exec',
+					'-it',
+					$name_container,
+				       ],
 	       preparation => $docker_preparation,
 	       reparation => $docker_reparation,
 	      };
@@ -3116,6 +3214,9 @@ sub _preparation
 	    my $harnessing_identifier = $harnessing_class->{identifier};
 
 	    my $harness = _harness_create_or_fetch($harnessing_class, $harnessing_identifier);
+
+	    # add it to the list of preparation harnesses, make sure
+	    # it gets executed before the other ones
 
 	    unshift @$all_preparation_harnessess, $harness;
 	}
@@ -3345,7 +3446,7 @@ sub _reparation
 # sub ec_examine
 #
 # Apply selection criteria to the current context.
-# Prepare the test environment by execution the preparation clause.
+# Prepare the test environment by execution of the preparation clause.
 #
 # This is called for a module definition, a command definition and a
 # test.
@@ -4255,6 +4356,8 @@ sub md_run
     }
 
     # create the infrastructure for keeping module test results
+
+    #! for a base executor, this is currently a no-op.
 
     $executor->ex_mo_prepare();
 
