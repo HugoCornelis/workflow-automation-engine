@@ -6,17 +6,9 @@ use strict;
 
 my $test
     = {
-#       disabled => 'the docker image needs additional packages.  Enter the docker image with "sudo docker exec -it neurospaces_harness bash"',
        command_definitions => [
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'pwd',
-					     ],
-				command => 'sudo',
+				command => 'pwd',
 				command_tests => [
 						  {
 						   description => "Are we in the correct working directory in the Docker container ?",
@@ -30,15 +22,7 @@ my $test
 				description => "showing that the container works: working directory",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'ls',
-					      '-1',
-					     ],
-				command => 'sudo',
+				command => 'ls -1',
 				command_tests => [
 						  {
 						   description => "Can we list the current directory in the Docker container ?",
@@ -51,16 +35,7 @@ my $test
 				description => "showing that the container works: current directory contents",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd projects/developer/source/snapshots/master/ && ./autogen.sh',
-					     ],
-				command => 'sudo',
+				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./autogen.sh',
 				command_tests => [
 						  {
 						   description => "Can generate configure scripts in the Docker container ?",
@@ -71,19 +46,10 @@ my $test
 				description => "showing that the container works: generation of configure scripts",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd projects/developer/source/snapshots/master/ && ./configure',
-					     ],
-				command => 'sudo',
+				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./configure',
 				command_tests => [
 						  {
-						   description => "Can we configure the developer package in the Docker container ?",
+						   description => "Can we configure the workflow automation engine in the Docker container ?",
 						   read => 'checking for a BSD-compatible install... /usr/bin/install -c
 checking whether build environment is sane... yes
 checking for a thread-safe mkdir -p... /bin/mkdir -p
@@ -119,48 +85,30 @@ config.status: creating Makefile
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: configuration of the developer package",
+				description => "showing that the container works: configuration of the workflow automation engine",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd projects/developer/source/snapshots/master/ && make',
-					     ],
-				command => 'sudo',
+				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && make',
 				command_tests => [
 						  {
-						   description => "Can we build the developer package in the Docker container ?",
-						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
+						   description => "Can we build the workflow automation engine in the Docker container ?",
+						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[1]: Nothing to be done for \'all-am\'.
-make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
+make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ',
 						   timeout => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: build of the developer package",
+				description => "showing that the container works: build of the workflow automation engine",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd projects/developer/source/snapshots/master/ && sudo make install',
-					     ],
-				command => 'sudo',
+				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && sudo make install',
 				command_tests => [
 						  {
-						   description => "Can we install the developer package in the Docker container ?",
-						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
-make[2]: Entering directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
+						   description => "Can we install the workflow automation engine in the Docker container ?",
+						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
  /bin/mkdir -p \'/usr/local/bin\'
  /usr/bin/install -c bin/workflow \'/usr/local/bin\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer\'
@@ -170,26 +118,17 @@ make[2]: Entering directory \'/home/neurospaces/projects/developer/source/snapsh
  /usr/bin/install -c -m 644  tests/introduction.html \'/usr/local/neurospaces/developer/tests\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/strings\'
  /usr/bin/install -c -m 644  tests/specifications/strings/two-targets-added.txt \'/usr/local/neurospaces/developer/tests/specifications/strings\'
-make[2]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
-make[1]: Leaving directory \'/home/neurospaces/projects/developer/source/snapshots/master\'
+make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ',
 						   timeout => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: installation of the developer package",
+				description => "showing that the container works: installation of the workflow automation engine",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'workflow --help',
-					     ],
-				command => 'sudo',
+				command => 'workflow --help',
 				command_tests => [
 						  {
 						   description => "Can we get the help page of the workflow engine in the Docker container ?",
@@ -262,16 +201,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				description => "showing that the container works: help page of the workflow engine",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'mkdir workflow-test && cd workflow-test && workflow builtin start_project workflow-tests',
-					     ],
-				command => 'sudo',
+				command => 'mkdir workflow-test && cd workflow-test && workflow builtin start_project workflow-tests',
 				command_tests => [
 						  {
 						   description => "Can we start a new project in the Docker container ?",
@@ -321,16 +251,7 @@ Then check if they work by inspecting the examples they provide (with various op
 				description => "showing that the container works: start of a new project",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd workflow-test && find .',
-					     ],
-				command => 'sudo',
+				command => 'cd workflow-test && find .',
 				command_tests => [
 						  {
 						   description => "Have the project files been created inside the Docker container?",
@@ -388,16 +309,7 @@ Then check if they work by inspecting the examples they provide (with various op
 			       # 	description => "check the execute bit of the generated shell scripts",
 			       # },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd workflow-test && mv --verbose workflow-project-template.pl workflow-project.pl',
-					     ],
-				command => 'sudo',
+				command => 'cd workflow-test && mv --verbose workflow-project-template.pl workflow-project.pl',
 				command_tests => [
 						  {
 						   description => "Can we rename the project configuration files to activate the project inside the container ?",
@@ -409,16 +321,7 @@ Then check if they work by inspecting the examples they provide (with various op
 				description => "showing that the container works: rename the field project file to its final name",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd workflow-test && workflow --help-field-project-name',
-					     ],
-				command => 'sudo',
+				command => 'cd workflow-test && workflow --help-field-project-name',
 				command_tests => [
 						  {
 						   description => "Has the project been correctly initialized inside the container?",
@@ -440,16 +343,7 @@ global_field_project_configuration:
 				description => "showing that the container works: correct creation of the field project file",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd workflow-test && workflow builtin install_scripts -- --engine --commands',
-					     ],
-				command => 'sudo',
+				command => 'cd workflow-test && workflow builtin install_scripts -- --engine --commands',
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required as a work around between the test engine and the workflow engine under test.",
@@ -492,16 +386,7 @@ conf.workflow-tests-configuration
 				description => "showing that the container works: correct installation of the new project files",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/neurospaces/bin" >~/.bashrc',
-					     ],
-				command => 'sudo',
+				command => 'echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/neurospaces/bin" >~/.bashrc',
 				command_tests => [
 						  {
 						   description => "Can we update .bashrc to make sure that the project specific workflow engine is found inside the container ?",
@@ -512,16 +397,7 @@ conf.workflow-tests-configuration
 				description => "showing that the container works: update .bashrc to make sure that the project specific workflow engine is found",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'cd workflow-test && workflow-tests-workflow --help-commands',
-					     ],
-				command => 'sudo',
+				command => 'cd workflow-test && workflow-tests-workflow --help-commands',
 				command_tests => [
 						  {
 						   description => "Have the project specific commands been correctly installed inside the container ?",
@@ -548,16 +424,7 @@ conf.workflow-tests-configuration
 				description => "showing that the container works: correct installation of the new project commands",
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'workflow-tests-workflow examples_sh sh_single_command --dry-run',
-					     ],
-				command => 'sudo',
+				command => 'workflow-tests-workflow examples_sh sh_single_command --dry-run',
 				command_tests => [
 						  {
 						   description => "Have the project specific commands been correctly installed inside the container ?",
@@ -569,16 +436,7 @@ conf.workflow-tests-configuration
 				description => 'showing that the container works: are the shell command templates installed and executed, --dry-run ?',
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'workflow-tests-workflow examples_sh sh_single_command',
-					     ],
-				command => 'sudo',
+				command => 'workflow-tests-workflow examples_sh sh_single_command',
 				command_tests => [
 						  {
 						   description => "Have the project specific commands been correctly installed inside the container ?",
@@ -592,16 +450,7 @@ an example of the invocation of a single command
 				description => 'showing that the container works: are the shell command templates installed and executed ?',
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      "cd .. && workflow-tests-workflow examples_sh sh_single_command",
-					     ],
-				command => 'sudo',
+				command => "cd .. && workflow-tests-workflow examples_sh sh_single_command",
 				command_tests => [
 						  {
 						   comment => "This test is the same as the previous one except for the cd command.",
@@ -616,16 +465,7 @@ an example of the invocation of a single command
 				description => 'showing that the container works: are the shell command templates installed and executed from a different directory?',
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'workflow-tests-workflow builtin add_target -- new_target "Add commands to this new target that do new things" --install-commands-sh',
-					     ],
-				command => 'sudo',
+				command => 'workflow-tests-workflow builtin add_target -- new_target "Add commands to this new target that do new things" --install-commands-sh',
 				command_tests => [
 						  {
 						   description => "Can we add a new target and a template for new shell commands for this target inside the container ?",
@@ -638,16 +478,7 @@ workflow-tests-workflow: created the shell command file for target new_target',
 				description => 'showing that the container works: can we add new targets with a shell template file for their commands ?',
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'workflow-tests-workflow builtin add_target -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
-					     ],
-				command => 'sudo',
+				command => 'workflow-tests-workflow builtin add_target -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
 				command_tests => [
 						  {
 						   description => "Can we add a new target and a template for new shell commands for this target2, inside the container ?",
@@ -666,16 +497,7 @@ workflow-tests-workflow: created the shell command file for target new_target2',
 				description => 'showing that the container works: can we add new targets2 with a shell template file for their commands ?',
 			       },
 			       {
-				arguments => [
-					      'docker',
-					      'exec',
-					      '-it',
-					      'neurospaces_harness',
-					      'bash',
-					      '-ic',
-					      'workflow --help-projects',
-					     ],
-				command => 'sudo',
+				command => 'workflow --help-projects',
 				command_tests => [
 						  {
 						   description => "Can we list the known workflow projects using the regular workflow executable, inside the container ?",
@@ -700,33 +522,13 @@ project-specific workflows that use shell commands.
 			 purpose => "This module tests the workflow automation engine.",
 			},
        harnessing => {
-		      preparation => {
-				      description => "create the Docker image and start it as a container for running the tests",
-				      preparer =>
-				      sub
-				      {
-					  system "./tests/specifications/40_workflow-automator/docker-build.bash";
-
-					  system "sudo docker container stop neurospaces_harness";
-					  system "sudo docker container rm neurospaces_harness";
-
-					  system "sudo docker run -d -t --name neurospaces_harness neurospaces_image";
-
-					  # return no errors
-
-					  return '';
-				      },
-				     },
-		      reparation => {
-				     description => "leave the directory for running the tests",
-				     reparer =>
-				     sub
-				     {
-					 # return no errors
-
-					 return '';
-				     },
-				    },
+		      class => {
+				build => "./tests/specifications/40_workflow-automator/docker-build.bash",
+				identifier => 'docker_based_harness',
+				name_container => 'workflow_automation_test_container',
+				name_image => 'workflow_automation_image',
+				type => '',
+			       },
 		     },
        name => '40_workflow-automator/25_new-project-docker.t',
       };
