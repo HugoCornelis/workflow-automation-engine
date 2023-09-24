@@ -45,7 +45,6 @@ EXTRA_DIST = \
 	cpan \
 	docs \
 	tests \
-	test_templates \
 	license.txt
 
 am__tar = ${AMTAR} chf - --format=posix "$$tardir"
@@ -65,7 +64,7 @@ clean-local:
 dist-hook:
 	$(srcdir)/install-sh -d $(distdir)/tests
 	$(srcdir)/install-sh -d $(distdir)/tests/html
-	( cd $(distdir)/tests && chmod -R u+w . && ../bin/neurospaces_harness_2_html --introduction introduction.html )
+	( cd $(distdir)/tests && chmod -R u+w . && neurospaces_harness_2_html --introduction introduction.html )
 
 install-data-local: neurospaces_cpan_modules
 
@@ -130,5 +129,5 @@ pkg-deb: dist
 pkg-rpm: dist
 	nspkg-rpm $(PACKAGE) $(VERSION)
 
-pkg-osx: 
-	nspkg-osx 
+pkg-osx:
+	nspkg-osx
