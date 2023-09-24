@@ -5719,9 +5719,22 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     {
 	use YAML;
 
-	my $projects = $global_technical_project_configuration->{projects};
+	my $workflow_projects
+	    = [
+	       map
+	       {
+		   s(^.*?/bin/)(); $_;
+	       }
+	       map
+	       {
+		   chomp; "$_ --help-commands";
+	       }
+	       `ls -1 ~/bin/*workflow`,
+	      ];
 
-	print Dump( { global_projects => $projects, }, );
+# 	my $projects = $global_technical_project_configuration->{projects};
+
+	print Dump( { "available_workflow automation projects (copy-paste the one you would like to get help for)" => $workflow_projects, }, );
 
 	exit 0;
     }

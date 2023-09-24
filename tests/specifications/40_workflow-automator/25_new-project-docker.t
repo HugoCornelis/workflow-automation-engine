@@ -665,6 +665,29 @@ workflow-tests-workflow: created the shell command file for target new_target2',
 						 ],
 				description => 'showing that the container works: can we add new targets2 with a shell template file for their commands ?',
 			       },
+			       {
+				arguments => [
+					      'docker',
+					      'exec',
+					      '-it',
+					      'neurospaces_harness',
+					      'bash',
+					      '-ic',
+					      'workflow --help-projects',
+					     ],
+				command => 'sudo',
+				command_tests => [
+						  {
+						   description => "Can we list the known workflow projects using the regular workflow executable, inside the container ?",
+						   read => '
+available_workflow automation projects (copy-paste the one you would like to get help for):
+  - workflow-tests-workflow --help-commands
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => 'showing that the container works: can we add new targets2 with a shell template file for their commands ?',
+			       },
 			      ],
        description => "testing of the workflow automation engine",
        documentation => {
