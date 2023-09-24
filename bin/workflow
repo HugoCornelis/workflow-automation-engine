@@ -48,8 +48,8 @@ our $option_export_sudo;
 our $option_export_times;
 our $option_export_verbose;
 our $option_force_rebuild;
-our $option_forward_destination_server = "laptop";
-our $option_forward_source_server = "laptop";
+our $option_forward_destination_server;
+our $option_forward_source_server;
 our $option_help;
 our $option_help_build_servers;
 our $option_help_commands;
@@ -4635,9 +4635,16 @@ sub _init_get_field_project_configuration
 
 	else
 	{
-	    $status = "$0: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+	    if ($0 eq '/usr/local/bin/workflow')
+	    {
+		#! this is ok, the user is maybe starting a new project or so.
+	    }
+	    else
+	    {
+		$status = "$0: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
 
-	    return undef;
+		return undef;
+	    }
 	}
     }
 
