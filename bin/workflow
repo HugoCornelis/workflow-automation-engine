@@ -255,6 +255,14 @@ sub _builtin_configuration_browser_code
 my $program_name = $1;
 
 
+if (defined $ARGV[0] and ($ARGV[0] eq \'--debug\'))
+{
+    use Data::Dumper;
+
+    print Dumper($configuration);
+}
+
+
 if ($program_name =~ m(configuration$))
 {
     # loop over the command line arguments
