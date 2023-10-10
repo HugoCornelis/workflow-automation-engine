@@ -5613,7 +5613,7 @@ sub _output_latex_command_definition_command_arguments
 
     if ($ct_1)
     {
-	_output_latex($output_file, 'The test is started with system shell command: ');
+	_output_latex($output_file, 'The test is started with the system shell command: ');
     }
     else
     {
