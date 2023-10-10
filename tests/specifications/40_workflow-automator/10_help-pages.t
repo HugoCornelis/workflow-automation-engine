@@ -21,11 +21,13 @@ SYNOPSIS
 
 EXAMPLES -- first try these with the --dry-run to understand what they do:
 
+  $ ../bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
+
+  $ ../bin/workflow --help-commands                                      # display the available commands that are found in the configuration file.
+
   $ ../bin/workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
 
   $ ../bin/workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
-
-  $ ../bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
 
 options:
     --bash-completion               compute bash completion for the given command line.
@@ -73,6 +75,7 @@ options:
 NOTES
 
 OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
+
 ',
 						  },
 						 ],

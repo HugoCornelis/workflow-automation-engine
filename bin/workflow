@@ -5532,11 +5532,13 @@ $0 <options> <target> <command> -- < ... command specific options and arguments 
 
 EXAMPLES -- first try these with the --dry-run to understand what they do:
 
+  \$ $0 --help-targets                                       # display the available targets that are found in the configuration file.
+
+  \$ $0 --help-commands                                      # display the available commands that are found in the configuration file.
+
   \$ $0 ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
 
   \$ $0 --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
-
-  \$ $0 --help-targets                                       # display the available targets that are found in the configuration file.
 
 options:
     --bash-completion               compute bash completion for the given command line.

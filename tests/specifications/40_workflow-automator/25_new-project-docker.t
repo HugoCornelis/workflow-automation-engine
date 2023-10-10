@@ -141,11 +141,13 @@ SYNOPSIS
 
 EXAMPLES -- first try these with the --dry-run to understand what they do:
 
+  $ /usr/local/bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
+
+  $ /usr/local/bin/workflow --help-commands                                      # display the available commands that are found in the configuration file.
+
   $ /usr/local/bin/workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
 
   $ /usr/local/bin/workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
-
-  $ /usr/local/bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
 
 options:
     --bash-completion               compute bash completion for the given command line.
