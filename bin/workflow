@@ -678,8 +678,8 @@ sub ${target_name}_sequencing_and_composition
 
     execute_shell_command_array(\$local_commands);
 
-    examples_single_command();
-    examples_array_of_commands();
+    ${target_name}_single_command();
+    ${target_name}_array_of_commands();
 }
 
 
