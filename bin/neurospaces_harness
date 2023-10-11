@@ -5527,6 +5527,14 @@ sub _output_latex_preamble_construct
 
     my $title = $1 || "";
 
+    # enumeration tags
+
+    $html_introduction =~ s(<ul>)(\\begin{itemize})gs;
+
+    $html_introduction =~ s(</ul>)(\\end{itemize})gs;
+
+    $html_introduction =~ s(<li>)(\\item )gs;
+
     # remove irrelevant html tags
 
     $html_introduction =~ s(<p/?>)()gs;
