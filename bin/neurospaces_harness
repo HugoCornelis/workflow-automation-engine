@@ -5376,7 +5376,7 @@ sub _output_latex_preamble
     my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
 
     my $preamble1
-	= '\documentclass[12pt,a4paper]{article}
+	= '\documentclass[10pt,a4paper,landscape]{article}
 \usepackage[a4paper, total={6in, 9in}]{geometry}
 \usepackage{amsfonts}
 \usepackage{amsmath}
@@ -5400,15 +5400,27 @@ sub _output_latex_preamble
 \usepackage[condensed,math]{iwona}
 \usepackage[T1]{fontenc}
 
-\setlength{\textwidth}{15.7cm}
-\setlength{\textheight}{22cm}
+% A4 portrait
 
-\setlength{\oddsidemargin}{0pt}
+% \setlength{\textwidth}{15.7cm}
+% \setlength{\textheight}{22cm}
+
+% \setlength{\topmargin}{0cm}
+% \setlength{\headheight}{1cm}
+% \setlength{\headsep}{0.5cm}
+% \setlength{\topskip}{0cm}
+
+% A4 landscape
+
+\setlength{\textwidth}{25cm}
+\setlength{\textheight}{15cm}
 
 \setlength{\topmargin}{0cm}
-\setlength{\headheight}{1cm}
-\setlength{\headsep}{0.5cm}
+\setlength{\headheight}{0cm}
+\setlength{\headsep}{0cm}
 \setlength{\topskip}{0cm}
+
+\setlength{\oddsidemargin}{0pt}
 
 ';
 
@@ -5529,7 +5541,7 @@ sub _output_latex_preamble_construct
 
     # enumeration tags
 
-    $html_introduction =~ s(<ul>)(\\begin{itemize})gs;
+    $html_introduction =~ s(<ul>)(\\begin{itemize}\n  \\setlength\\itemsep{-0.35em}\n)gs;
 
     $html_introduction =~ s(</ul>)(\\end{itemize})gs;
 
