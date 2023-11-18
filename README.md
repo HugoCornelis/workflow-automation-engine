@@ -23,6 +23,18 @@ The workflow automation engine offers the following functions:
 - Support for different _roles_ that allows remote execution, in a
   Docker container or a `tmux` session.
 
+## Installation
+
+### Prerequisites
+
+### Installation from a Tarball
+
+This will install the latest available release that was considered
+'stable' by the developer team.  It can be downloaded from:
+
+https://github.com/HugoCornelis/workflow-automation-engine/raw/master/workflow-automation-0.1.0-alpha.tar.gz
+
+
 ## Starting a new project
 
 Starting a new workflow project with name *abcd* consists of these
