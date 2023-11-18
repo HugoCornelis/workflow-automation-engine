@@ -19,20 +19,6 @@ SUBDIRS =
 dist_bin_SCRIPTS = \
 	bin/workflow
 
-developertestdir=$(prefix)/neurospaces/developer
-nobase_dist_developertest_DATA=@TEST_SPECIFICATION_FILES@
-
-RELEASE_MAJOR=`release-extract --major`
-RELEASE_MINOR=`release-extract --minor`
-RELEASE_MICRO=`release-extract --micro`
-
-show-release-labels:
-	echo "Release information (major-minor-micro): $(RELEASE_MAJOR)-$(RELEASE_MINOR)-$(RELEASE_MICRO)"
-
-dist-keywords:
-	release-expand developer $(RELEASE_MAJOR) $(RELEASE_MINOR) $(RELEASE_MICRO) $(RELEASE_MAJOR).$(RELEASE_MINOR) hugo.cornelis@gmail.com --verbose
-#	release-expand developer des 10 0 des-10 hugo.cornelis@gmail.com --verbose
-
 # the tests are copied overhere.
 #
 # The variable EXTRA_DIST could also be used here.
@@ -58,8 +44,8 @@ clean-local:
 	$(RM) -f $(top_srcdir)/*.dsc
 	$(RM) -f $(top_srcdir)/build_*.log
 	$(RM) -rf $(top_srcdir)/*_BUILD/
-	$(RM) $(top_srcdir)/developer-*.tar.gz
-	$(RM) -rf $(top_srcdir)/developer-*
+	$(RM) $(top_srcdir)/workflow-automation-*.tar.gz
+	$(RM) -rf $(top_srcdir)/workflow-automation-*
 
 dist-hook:
 	$(srcdir)/install-sh -d $(distdir)/tests
@@ -114,9 +100,6 @@ docs-level7:
 
 docs: docs-level1 docs-level2 docs-level3 docs-level4 docs-level5 docs-level6 docs-level7
 
-APP_NAME=neurospacesdeveloper
-
-# the pkg-src target must create pkg/$(APP_NAME)-$(VERSION).tar.gz
 pkg-src: dist
 	mkdir -p pkg
 	cp $(PACKAGE)-$(VERSION).tar.gz pkg/$(PACKAGE)-$(VERSION).tar.gz

@@ -21,7 +21,7 @@ dnl Obtain operating system information.
 AC_CANONICAL_TARGET
 
 # $Format: "AC_INIT(${package}, ${major}.${minor}.${micro}-${label})"$
-AC_INIT([workflow-automation], [0.0.0-alpha], [hugo.cornelis@gmail.com])
+AC_INIT([workflow-automation], [0.1.0-alpha], [hugo.cornelis@gmail.com])
 AC_CONFIG_SRCDIR([Makefile.am])
 AM_INIT_AUTOMAKE
 
