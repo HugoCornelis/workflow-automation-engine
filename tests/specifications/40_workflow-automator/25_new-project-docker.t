@@ -107,7 +107,7 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation engine in the Docker container ?",
-						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+						   read_old_from_the_developer_package => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
  /bin/mkdir -p \'/usr/local/bin\'
  /usr/bin/install -c bin/workflow \'/usr/local/bin\'
@@ -118,6 +118,14 @@ make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-eng
  /usr/bin/install -c -m 644  tests/introduction.html \'/usr/local/neurospaces/developer/tests\'
  /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/strings\'
  /usr/bin/install -c -m 644  tests/specifications/strings/two-targets-added.txt \'/usr/local/neurospaces/developer/tests/specifications/strings\'
+make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+',
+						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+ /bin/mkdir -p \'/usr/local/bin\'
+ /usr/bin/install -c bin/workflow \'/usr/local/bin\'
+make[2]: Nothing to be done for \'install-data-am\'.
 make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ',
