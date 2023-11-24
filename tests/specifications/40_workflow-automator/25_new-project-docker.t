@@ -534,6 +534,7 @@ project-specific workflows that use shell commands.
        harnessing => {
 		      class => {
 				build => "./tests/specifications/40_workflow-automator/docker-build.bash",
+				comment => 'Enter this container with "sudo docker exec -it workflow_automation_test_container bash"',
 				identifier => 'docker_based_harness',
 				name_container => 'workflow_automation_test_container',
 				name_image => 'workflow_automation_image',
