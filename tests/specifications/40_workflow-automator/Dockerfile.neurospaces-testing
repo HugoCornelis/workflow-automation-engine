@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 RUN apt-get update
 RUN apt-get upgrade -y
@@ -18,10 +18,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libsdl1.2-dev \
     libssl-dev \
     mesa-common-dev \
-    openjdk-11-jre-headless \
+    net-tools \
     screen \
     socat \
     sudo
+
+# removed from debian bookworm
+# see https://www.reddit.com/r/debian/comments/14fjgus/need_help_installing_openjdk11_on_debian_12/
+#    openjdk-11-jre-headless \
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     chrpath \
@@ -35,13 +39,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libcurl4 \
     libegl1-mesa \
     liblz4-tool \
-    pylint3 \
+    pylint \
     python3-git \
     python3-jinja2 \
     python3-pexpect \
     python3-pip \
     python3-subunit \
-    python3.9 \
     sqlite3 \
     texinfo \
     unzip \
@@ -82,7 +85,7 @@ ARG USER_ID=1000
 RUN groupadd --gid ${GROUP_ID} ${USER_NAME} \
     && useradd -ou ${USER_ID} -g ${USER_NAME} -d /home/${USER_NAME} ${USER_NAME} \
     && mkdir /home/${USER_NAME} \
-    && chown -R ${USER_NAME}.${USER_NAME} /home/${USER_NAME}
+    && chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}
 
 RUN echo "${USER_NAME}     ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME}
 
