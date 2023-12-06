@@ -109,29 +109,65 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation engine in the Docker container ?",
-						   read_old_from_the_developer_package => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
- /bin/mkdir -p \'/usr/local/bin\'
- /usr/bin/install -c bin/workflow \'/usr/local/bin\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/40_workflow-automator\'
- /usr/bin/install -c -m 644  tests/specifications/40_workflow-automator/20_new-project.t tests/specifications/40_workflow-automator/25_new-project-docker.t tests/specifications/40_workflow-automator/10_help-pages.t \'/usr/local/neurospaces/developer/tests/specifications/40_workflow-automator\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests\'
- /usr/bin/install -c -m 644  tests/introduction.html \'/usr/local/neurospaces/developer/tests\'
- /bin/mkdir -p \'/usr/local/neurospaces/developer/tests/specifications/strings\'
- /usr/bin/install -c -m 644  tests/specifications/strings/two-targets-added.txt \'/usr/local/neurospaces/developer/tests/specifications/strings\'
-make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-',
 						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
- /bin/mkdir -p \'/usr/local/bin\'
+ /usr/bin/mkdir -p \'/usr/local/bin\'
  /usr/bin/install -c bin/workflow \'/usr/local/bin\'
-make[2]: Nothing to be done for \'install-data-am\'.
-make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+======================== Installing CPAN modules
+( cd cpan ; ./cpan_install [0-9][0-9]*.gz )
+Installing CPAN modules
+$VAR1 = [
+          \'13-Data-Utilities-0.04.tar.gz\'
+        ];
+checking for perl -e \'use Data::Utilities 0.04\'
+Can\'t locate Data/Utilities.pm in @INC (you may need to install the Data::Utilities module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at -e line 1.
+BEGIN failed--compilation aborted at -e line 1.
+Installing Data-Utilities-0.04 (13-Data-Utilities-0.04.tar.gz)
+/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan
+/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04
+Checking if your kit is complete...
+Looks good
+Generating a Unix-style Makefile
+Writing Makefile for Data::Utilities
+Writing MYMETA.yml and MYMETA.json
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
 ',
-						   timeout => 5,
+# cp lib/Data/.*
+# cp lib/Data/.*
+# cp lib/Data/.*
+# cp lib/Data/.*
+# cp lib/Data/.*
+# Manifying 4 pod documents
+# make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+# make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+# PERL_DL_NONLAZY=1 "/usr/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, \'blib/lib\', \'blib/arch\')" t/*.t
+# t/0.t ............ t/0.t ............ 1/2                         t/0.t ............ ok
+# t/001_load.t ..... t/001_load.t ..... 1/1                         t/001_load.t ..... ok
+# t/1.t ............ t/1.t ............ 1/?                          t/1.t ............ ok
+# t/array1.t ....... t/array1.t ....... 1/6                         t/array1.t ....... ok
+# t/comparator1.t .. t/comparator1.t .. 1/9                         t/comparator1.t .. ok
+# t/merger1.t ...... t/merger1.t ...... 1/9                         t/merger1.t ...... ok
+# t/merger2.t ...... t/merger2.t ...... 1/10                           t/merger2.t ...... ok
+# All tests successful.
+# Files=.*
+# Result: PASS
+# make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+# Manifying 4 pod documents
+# Installing /usr/local/share/perl/5.36.0/Data/Merger.pm
+# Installing /usr/local/share/perl/5.36.0/Data/Differences.pm
+# Installing /usr/local/share/perl/5.36.0/Data/Comparator.pm
+# Installing /usr/local/share/perl/5.36.0/Data/Utilities.pm
+# Installing /usr/local/share/perl/5.36.0/Data/Transformator.pm
+# Installing /usr/local/man/man3/Data::Comparator.3pm
+# Installing /usr/local/man/man3/Data::Merger.3pm
+# Installing /usr/local/man/man3/Data::Transformator.3pm
+# Installing /usr/local/man/man3/Data::Utilities.3pm
+# Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perllocal.pod
+# touch ./neurospaces_cpan_modules
+# make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+# make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+# ',
+						   wait => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
