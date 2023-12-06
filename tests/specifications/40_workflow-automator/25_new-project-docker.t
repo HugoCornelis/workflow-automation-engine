@@ -52,7 +52,7 @@ my $test
 						   description => "Can we configure the workflow automation engine in the Docker container ?",
 						   read => 'checking for a BSD-compatible install... /usr/bin/install -c
 checking whether build environment is sane... yes
-checking for a thread-safe mkdir -p... /bin/mkdir -p
+checking for a race-free mkdir -p... /usr/bin/mkdir -p
 checking for gawk... gawk
 checking whether make sets $(MAKE)... yes
 checking whether make supports nested variables... yes
@@ -60,9 +60,9 @@ checking whether we build universal binaries.... no
 checking OS specifics...... Host is running .
 checking for perl5... no
 checking for perl... perl
-checking Checking the perl module installation path...  ${prefix}/share/perl/5.32.1 
-./configure: line 2457: cd: perl: No such file or directory
-./configure: line 2460: cd: perl: No such file or directory
+checking Checking the perl module installation path...  ${prefix}/share/perl/5.36.0 
+./configure: line 2663: cd: perl: No such file or directory
+./configure: line 2666: cd: perl: No such file or directory
 checking for mtn... no
 checking for monotone... no
 checking for dpkg-buildpackage... dpkg-buildpackage
@@ -71,10 +71,12 @@ checking for rpmbuild... no
 checking for python... no
 checking for python2... no
 checking for python3... /usr/bin/python3
-checking for python version... 3.9
+checking for python version... 3.11
 checking for python platform... linux
-checking for python script directory... ${prefix}/lib/python3.9/site-packages
-checking for python extension module directory... ${exec_prefix}/lib/python3.9/site-packages
+checking for GNU default python prefix... ${prefix}
+checking for GNU default python exec_prefix... ${exec_prefix}
+checking for python script directory (pythondir)... ${PYTHON_PREFIX}/lib/python3.11/site-packages
+checking for python extension module directory (pyexecdir)... ${PYTHON_EXEC_PREFIX}/lib/python3.11/site-packages
 checking Python prefix is ... \'${prefix}\'
 find: \'tests/data\': No such file or directory
 checking that generated files are newer than configure... done
