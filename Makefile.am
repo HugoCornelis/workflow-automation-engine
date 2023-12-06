@@ -56,7 +56,7 @@ install-data-local: neurospaces_cpan_modules
 
 neurospaces_cpan_modules:
 	@echo "======================== Installing CPAN modules"
-	( cd cpan ; ./cpan_install *.gz )
+	( cd cpan ; ./cpan_install [0-9][0-9]*.gz )
 	touch $(top_srcdir)/neurospaces_cpan_modules
 
 test: check
