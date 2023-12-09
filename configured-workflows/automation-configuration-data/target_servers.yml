@@ -1,0 +1,19 @@
+---
+target_servers:
+  build:
+    description: your build server that does builds and is used for testing
+    name: build
+    ssh_server: build.your.local.domain
+    ssh_user: tester
+  docker_build:
+    description: interaction with the docker build container
+    name: docker_build
+    remote_policy: 'sudo docker exec -it --workdir ~/projects/digital-engineering/source/build gitlab_interactive '
+  laptop:
+    description: the local computer of the developer
+    localuser: yes
+    name: laptop
+    ssh_port: 22
+    ssh_server: 192.168.4.70
+    ssh_user: hugo
+

@@ -1,0 +1,75 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our $option_verbose;
+
+our $global_technical_project_configuration;
+
+
+package Command;
+
+
+sub documentation_build
+{
+    my $commands
+	= [
+	   "cd /home/hugo/projects/workflow-automation-engine/source/snapshots/master",
+	   "neurospaces_harness --output-pdf --output-figures --verbose --output-content-line-limit 3000",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub documentation_build_help
+{
+    my $command = shift;
+
+    return "$command: Build the documentation of the workflow engine.
+
+no arguments.
+
+Note: This command converts the regression test specifications first to latex, then to pdf.
+";
+}
+
+
+sub documentation_build_show
+{
+    documentation_build();
+
+    my $commands
+	= [
+	   "setsid okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf >/dev/null 2>&1 < /dev/null &"
+
+# 	   "nohup okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub documentation_build_show_help
+{
+    my $command = shift;
+
+    return "$command: Build and show the documentation of the workflow engine.
+
+no arguments.
+
+Note: This command converts the regression test specifications first to latex, then to pdf.
+";
+}
+
+
+# return success
+
+1;
+
+
