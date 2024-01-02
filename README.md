@@ -3,13 +3,12 @@
 The workflow automation engine helps automating complicated system
 shell tasks during the development of a software project.
 
-Typical examples of workflow automation are shell commands to compile
-source code on a build server or convert documentation to a web page
-where these commands take arguments and options that are hard to
-remember.
-
-Other examples are commands to flash a binary image such as the Linux
-kernel to a small or embedded device.
+Typical examples of workflow automation are shell commands with
+arguments and options that are hard to remember, to compile source
+code on a build server, to convert documentation to a web page, to
+flash a binary image such as the Linux kernel to a small or embedded
+device, or start the execution of command sequences in synchrony on
+different virtual machines.
 
 ## Overview
 
