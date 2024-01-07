@@ -172,7 +172,7 @@ project-specific workflows that use system shell commands.
 				     },
 				    },
 		     },
-       name => '10_help-pages.t',
+       name => '40_workflow-automator/10_help-pages.t',
       };
 
 
