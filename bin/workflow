@@ -1525,14 +1525,14 @@ sub builtin_add_target
 
     if (!$result)
     {
-        die "$0: *** error in option processing, try --help";
+        die "$global_program_name: *** error in option processing, try --help";
     }
 
     if ($option_verbose)
     {
 	use Data::Dumper;
 
-	print "$0: builtin_add_target, installation options:\n";
+	print "$global_program_name: builtin_add_target, installation options:\n";
 
 	print Dumper( { install_options => $install_options, }, );
     }
@@ -1753,7 +1753,7 @@ sub builtin_install_scripts
 
     if (!$result)
     {
-        die "$0: *** error in option processing, try --help";
+        die "$global_program_name: *** error in option processing, try --help";
     }
 
     # need to do four things:
@@ -1771,7 +1771,7 @@ sub builtin_install_scripts
 
     if (!$field_configuration)
     {
-        die "$0: *** error: no valid field_configuration found";
+        die "$global_program_name: *** error: no valid field_configuration found";
     }
 
     my $source = "/usr/local/bin/workflow";
@@ -1780,7 +1780,7 @@ sub builtin_install_scripts
 
     if (!$project_name)
     {
-        die "$0: *** error: no valid project_name in the field_configuration found";
+        die "$global_program_name: *** error: no valid project_name in the field_configuration found";
     }
 
     my $command_mkdir = "mkdir --parents $ENV{HOME}/bin";
@@ -1795,7 +1795,7 @@ sub builtin_install_scripts
     {
 	if ($option_verbose)
 	{
-	    print "$0: executing installation of the workflow engine with (force == $option_install_engine)\n";
+	    print "$global_program_name: executing installation of the workflow engine with (force == $option_install_engine)\n";
 	}
 
 	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
@@ -1804,7 +1804,7 @@ sub builtin_install_scripts
     {
 	if ($option_verbose)
 	{
-	    print "$0: NOT executing installation of the workflow engine with (force == $option_install_engine)\n";
+	    print "$global_program_name: NOT executing installation of the workflow engine with (force == $option_install_engine)\n";
 	}
     }
 
@@ -1943,11 +1943,11 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
     {
 	if (not $bashrc_matches)
 	{
-	    print "$0: all_install_scripts: .bashrc does not match\n";
+	    print "$global_program_name: all_install_scripts: .bashrc does not match\n";
 	}
 	else
 	{
-	    print "$0: all_install_scripts: .bashrc matches\n";
+	    print "$global_program_name: all_install_scripts: .bashrc matches\n";
 	}
     }
 
@@ -1987,11 +1987,11 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
     {
 	if (not $grc_conf_matches)
 	{
-	    print "$0: all_install_scripts: grc_conf does not match\n";
+	    print "$global_program_name: all_install_scripts: grc_conf does not match\n";
 	}
 	else
 	{
-	    print "$0: all_install_scripts: grc_conf matches\n";
+	    print "$global_program_name: all_install_scripts: grc_conf matches\n";
 	}
     }
 
@@ -2124,7 +2124,7 @@ sub builtin_start_project
 
 	if (not defined $project_name)
 	{
-	    die "$0: *** Error: no suitable project name could be determined, please give one as argument";
+	    die "$global_program_name: *** Error: no suitable project name could be determined, please give one as argument";
 	}
 
 	$project_name =~ s((.*)-commands*)($1);
@@ -2199,9 +2199,9 @@ sub builtin_start_project
 	}
 	else
 	{
-	    print STDERR "$0: *** Error: could not initialize the project $project_name ($error)\n";
+	    print STDERR "$global_program_name: *** Error: could not initialize the project $project_name ($error)\n";
 
-	    $result = "$0: *** Error: could not initialize the project $project_name ($error)\n";
+	    $result = "$global_program_name: *** Error: could not initialize the project $project_name ($error)\n";
 	}
     }
     else
@@ -2243,11 +2243,11 @@ sub execute_shell_command_array
 {
     if (not ref $_[0] eq 'ARRAY')
     {
-	die "$0: *** Error: execute_shell_command_array() requires an ARRAY reference as its first argument";
+	die "$global_program_name: *** Error: execute_shell_command_array() requires an ARRAY reference as its first argument";
     }
     elsif (defined $_[1] and not ref $_[1] eq 'HASH')
     {
-	die "$0: *** Error: execute_shell_command_array() requires a HASH reference as its second argument";
+	die "$global_program_name: *** Error: execute_shell_command_array() requires a HASH reference as its second argument";
     }
 
     return Engine::execute_shell_command_array(@_);
@@ -2278,7 +2278,7 @@ sub execute_shell_script
 
     if (not $file)
     {
-	die "$0: *** Error: no valid commands available in file '$filename'\n";
+	die "$global_program_name: *** Error: no valid commands available in file '$filename'\n";
     }
 
     my $commands
@@ -2314,7 +2314,7 @@ sub execute_shell_script_remote
 
     if (not -e $local_filename)
     {
-	die "$0: *** Error: no valid script file '$local_filename'\n";
+	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
     }
 
     my $remote = $options->{remote};
@@ -2388,11 +2388,11 @@ sub _file_contains_regex
     {
 	if ($result)
 	{
-	    print "$0: _file_contains_regex(): match file '$filename' with '$string' (result is $result)\n";
+	    print "$global_program_name: _file_contains_regex(): match file '$filename' with '$string' (result is $result)\n";
 	}
 	else
 	{
-	    print "$0: _file_contains_regex(): no match file '$filename' with '$string' (result is $result)\n";
+	    print "$global_program_name: _file_contains_regex(): no match file '$filename' with '$string' (result is $result)\n";
 	}
     }
 
@@ -2435,7 +2435,7 @@ sub _init
 
 	       if ($commands_seen->{$_})
 	       {
-		   print "$0: *** Warning: $_ is mentioned $commands_seen->{$_} time(s) in the configuration (hint: sort your filenames to spot such errors quickly).\n";
+		   print "$global_program_name: *** Warning: $_ is mentioned $commands_seen->{$_} time(s) in the configuration (hint: sort your filenames to spot such errors quickly).\n";
 	       }
 
 	       not $commands_seen->{$_}++;
@@ -2465,7 +2465,7 @@ sub _init
 
 	    if ($eval_status)
 	    {
-		die "$0: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
 	    }
 	}
 	elsif ($file_type eq 'yaml')
@@ -2474,12 +2474,12 @@ sub _init
 
 	    if ($eval_status)
 	    {
-		die "$0: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
 	    }
 	}
 	else
 	{
-	    die "$0: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
+	    die "$global_program_name: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
 	}
     }
 }
@@ -2535,7 +2535,7 @@ sub _init_command_filenames_configured
 
 	       if (not $result)
 	       {
-		   print STDERR "$0: *** Error: $command_filename does not follow command filename conventions (must have '-commands')\n";
+		   print STDERR "$global_program_name: *** Error: $command_filename does not follow command filename conventions (must have '-commands')\n";
 	       }
 
 	       $result;
@@ -2687,7 +2687,7 @@ sub _init_filenames_2_symlink_commands
 
 	       if (not $result)
 	       {
-		   print STDERR "$0: *** Error: $command_filename does not follow command filename conventions (must have '-commands|-configuration')\n";
+		   print STDERR "$global_program_name: *** Error: $command_filename does not follow command filename conventions (must have '-commands|-configuration')\n";
 	       }
 
 	       $result;
@@ -2876,12 +2876,12 @@ sub _working_directory_for_interaction_role_change
     {
 	if (not defined $current_working_directory)
 	{
-	    die "*** Error: $0: current_working_directory not defined when parsing directories for interaction role '$interaction_role'.";
+	    die "*** Error: $global_program_name: current_working_directory not defined when parsing directories for interaction role '$interaction_role'.";
 	}
 
 	if (not defined $working_directory)
 	{
-	    die "*** Error: $0: working_directory not defined when parsing directories for interaction role '$interaction_role'.";
+	    die "*** Error: $global_program_name: working_directory not defined when parsing directories for interaction role '$interaction_role'.";
 	}
 
 	$new_working_directory = File::Spec->catdir( $current_working_directory, $working_directory );
@@ -3363,7 +3363,7 @@ sub compute_remote_and_interaction_role
 
 	    if (defined $option_verbose and $option_verbose > 1)
 	    {
-		print STDERR "$0: *** result is $remote_prefix\n";
+		print STDERR "$global_program_name: *** result is $remote_prefix\n";
 	    }
 	}
     }
@@ -3502,7 +3502,7 @@ sub compute_timeout
 
 	    if (not exists $option_timeout->{duration})
 	    {
-		die "*** Error: $0: the timeout option of '$command' does not have the mandatory duration specified";
+		die "*** Error: $global_program_name: the timeout option of '$command' does not have the mandatory duration specified";
 	    }
 
 	    $result .= "$option_timeout->{duration} ";
@@ -3534,7 +3534,7 @@ sub execute_scheduled_command_option_dry_run
     if ($export_sh
 	and exists $export_sh->{prefix})
     {
-	my $dry_run_prefix = "$0: *** Running in dry_run mode, export prefix: '";
+	my $dry_run_prefix = "$global_program_name: *** Running in dry_run mode, export prefix: '";
 
 	print map { "$dry_run_prefix$_\n" } split "\n", $export_sh->{prefix};
     }
@@ -3543,7 +3543,7 @@ sub execute_scheduled_command_option_dry_run
 
     if ($dry_run =~ /^[0-9]+$/)
     {
-	print "$0: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
+	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
     }
 
     if ($executable_command =~ /cd\s+(.*)$/)
@@ -3703,7 +3703,7 @@ sub execute_option_interactions
 
 	# print Dumper( { interaction_roles => $interaction_roles, }, );
 
-	die "*** Error: $0: option_interactions cannot compute an indentation level without a valid interaction role (is '$interaction_role_arg')";
+	die "*** Error: $global_program_name: option_interactions cannot compute an indentation level without a valid interaction role (is '$interaction_role_arg')";
     }
 
     # if we are printing all interaction roles in the configuration
@@ -3789,7 +3789,7 @@ sub _print_interaction_header
 
     if ($interaction_indent != $interaction_role->{indent})
     {
-	print "$0: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
+	print "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
     }
 
     my $indent = " " x $interaction_indent;
@@ -3831,7 +3831,7 @@ sub execute_option_export_sh
 
 	if (not $ok)
 	{
-	    die "*** Error: $0: cannot open $global_exported_sh_filename for writing ($!)";
+	    die "*** Error: $global_program_name: cannot open $global_exported_sh_filename for writing ($!)";
 	}
 
 	print $global_exported_sh_file "#!/bin/sh\n";
@@ -3862,7 +3862,7 @@ sub execute_option_export_sh
 	$export_sh_command =~ s/'$//;
     }
 
-    print "$0: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
+    print "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
 
     if ((not defined $option_export_remote or $option_export_remote eq 0)
 	or $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
@@ -3939,7 +3939,7 @@ sub execute_scheduled_command
 
 		if (not $ok)
 		{
-		    die "*** Error: $0: cannot open $global_exported_times_filename for writing ($!)";
+		    die "*** Error: $global_program_name: cannot open $global_exported_times_filename for writing ($!)";
 		}
 
 		print $global_exported_times_file "#!/bin/sh\n";
@@ -4004,7 +4004,7 @@ sub execute_scheduled_command
 
 	    if (not $ok)
 	    {
-		die "*** Error: $0: cannot open $filename for writing ($!)";
+		die "*** Error: $global_program_name: cannot open $filename for writing ($!)";
 	    }
 
 	    print $output_file "# $command\n#\n";
@@ -4031,11 +4031,11 @@ sub execute_scheduled_command
 	{
 # 	    system "echo >>$output_path 2>&1 failed with $exit_status: $command\n";
 
-	    print "$0: *** Note: $command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	    print "$global_program_name: *** Note: $command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
 	}
 	else
 	{
-	    die "$0: *** Fatal: $command failed with exit status $exit_status\n";
+	    die "$global_program_name: *** Fatal: $command failed with exit status $exit_status\n";
 	}
     }
 
@@ -4441,7 +4441,7 @@ sub _init_do_eval_perl_file
 
     if (not -r "$filename")
     {
-	$status = "$0: *** Error: file '$filename' not found (because the file does not exist)\n";
+	$status = "$global_program_name: *** Error: file '$filename' not found (because the file does not exist)\n";
 
 	return undef;
     }
@@ -4461,7 +4461,7 @@ sub _init_do_eval_perl_file
 
     if ($@)
     {
-	$status = "$0: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
+	$status = "$global_program_name: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
     }
 
     # do error processing: file problems.
@@ -4469,7 +4469,7 @@ sub _init_do_eval_perl_file
     if (not defined $result
 	and $!)
     {
-	$status = "$0: *** Error: no configuration file '$filename' ($!)\n";
+	$status = "$global_program_name: *** Error: no configuration file '$filename' ($!)\n";
     }
 
     # return configuration and status
@@ -4488,7 +4488,7 @@ sub _init_do_eval_yaml_command_file
 
     if (not -r "$filename")
     {
-	$status = "$0: *** Error: file '$filename' not found (because the file does not exist)\n";
+	$status = "$global_program_name: *** Error: file '$filename' not found (because the file does not exist)\n";
 
 	return undef;
     }
@@ -4507,7 +4507,7 @@ sub _init_do_eval_yaml_command_file
 
     if ($@)
     {
-	$status = "$0: *** Error: no valid configuration file '$filename' found (syntax error: $@)\n";
+	$status = "$global_program_name: *** Error: no valid configuration file '$filename' found (syntax error: $@)\n";
     }
 
     # do error processing: file problems.
@@ -4515,7 +4515,7 @@ sub _init_do_eval_yaml_command_file
     if (not defined $result
 	and $!)
     {
-	$status = "$0: *** Error: no configuration file '$filename' found ($!)\n";
+	$status = "$global_program_name: *** Error: no configuration file '$filename' found ($!)\n";
     }
 
     # return configuration and status
@@ -4649,7 +4649,7 @@ sub _init_get_field_project_configuration
 	    }
 	    else
 	    {
-		$status = "$0: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+		$status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
 
 		return undef;
 	    }
@@ -4695,7 +4695,7 @@ sub _init_get_technical_configuration
 
     if (not defined $technical_project_configuration_directory)
     {
-	$status = "$0: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
+	$status = "$global_program_name: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
 
 	return undef;
     }
@@ -5218,7 +5218,7 @@ sub main
 
     if ($option_build_server)
     {
-	die "$0: *** option_build_server is still in development";
+	die "$global_program_name: *** option_build_server is still in development";
 
 	my $build_source = "";
 
@@ -5426,7 +5426,7 @@ sub main
 		    {
 			# ... are printed by us
 
-			print "$0 $help_string\n";
+			print "$global_program_name $help_string\n";
 		    }
 		}
 
@@ -5448,9 +5448,9 @@ sub main
 
 			if ($error)
 			{
-			    # die "$0: *** Error: $error";
+			    # die "$global_program_name: *** Error: $error";
 
-			    warn "$0: *** Warning: $requested_target $command generated an warning response ($error)";
+			    warn "$global_program_name: *** Warning: $requested_target $command generated an warning response ($error)";
 			}
 		    }
 
@@ -5477,13 +5477,13 @@ sub main
 
 		    else
 		    {
-			die "$0: *** Error: unknown command type $type when invoking command '$requested_target $command'";
+			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $command'";
 		    }
 		}
 	    }
 	    else
 	    {
-		die "$0: *** Error: target '$requested_target' does not provide command '$command'.";
+		die "$global_program_name: *** Error: target '$requested_target' does not provide command '$command'.";
 	    }
 	}
 
@@ -5498,7 +5498,7 @@ sub parse_command_line
 
     if (!$result)
     {
-        die "$0: *** error in option processing, try --help";
+        die "$global_program_name: *** error in option processing, try --help";
     }
 
     # my $asking_help = ($option_help
@@ -5524,21 +5524,21 @@ sub parse_command_line
     {
         print
             "
-$0: support for workflow design for embedded software engineers.
+$global_program_name: support for workflow design for embedded software engineers.
 
 SYNOPSIS
 
-$0 <options> <target> <command> -- < ... command specific options and arguments ... >
+$global_program_name <options> <target> <command> -- < ... command specific options and arguments ... >
 
 EXAMPLES -- first try these with the --dry-run to understand what they do:
 
-  \$ $0 --help-targets                                       # display the available targets that are found in the configuration file.
+  \$ $global_program_name --help-targets                                       # display the available targets that are found in the configuration file.
 
-  \$ $0 --help-commands                                      # display the available commands that are found in the configuration file.
+  \$ $global_program_name --help-commands                                      # display the available commands that are found in the configuration file.
 
-  \$ $0 ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
+  \$ $global_program_name ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
 
-  \$ $0 --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
+  \$ $global_program_name --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
 
 options:
     --bash-completion               compute bash completion for the given command line.
@@ -5598,7 +5598,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
 	if (not exists $build_servers->{$option_build_server})
 	{
-	    die "$0: *** Error: unknown build server $option_build_server, use --help-build-servers to learn about the known servers";
+	    die "$global_program_name: *** Error: unknown build server $option_build_server, use --help-build-servers to learn about the known servers";
 	}
 
 	# if (not defined $option_ssh_server)
@@ -5635,7 +5635,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     {
 	if (not exists $build_servers->{$option_forward_destination_server})
 	{
-	    $status = "$0: *** Error: unknown forwarding server $option_forward_destination_server, use --help-build-servers to learn about the known servers";
+	    $status = "$global_program_name: *** Error: unknown forwarding server $option_forward_destination_server, use --help-build-servers to learn about the known servers";
 	}
     }
 
@@ -5643,7 +5643,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     {
 	if (not exists $build_servers->{$option_forward_source_server})
 	{
-	    $status = "$0: *** Error: unknown forwarding server $option_forward_source_server, use --help-build-servers to learn about the known servers";
+	    $status = "$global_program_name: *** Error: unknown forwarding server $option_forward_source_server, use --help-build-servers to learn about the known servers";
 	}
     }
 
@@ -5771,7 +5771,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	 and not defined $option_interactions_module_all_roles)
 	and not defined $option_target)
     {
-	die "$0: *** Error: neither a target option nor target argument given, try --help";
+	die "$global_program_name: *** Error: neither a target option nor target argument given, try --help";
     }
 
     if ($FieldProject::status)
@@ -5870,7 +5870,7 @@ sub buildroot_parse_packages_directories
 
 	if ($option_verbose)
 	{
-	    print "$0: *** added for package $package_name OVERRIDE_SRCDIR $package_directory\n";
+	    print "$global_program_name: *** added for package $package_name OVERRIDE_SRCDIR $package_directory\n";
 	}
     }
 
@@ -5910,7 +5910,7 @@ sub buildroot_process_packages_directories
 
 	if (not defined $build_directory)
 	{
-	    die "$0: *** Fatal: package $package_name has no build_directory defined in the package list";
+	    die "$global_program_name: *** Fatal: package $package_name has no build_directory defined in the package list";
 	}
 
 	# Engine::execute_shell_command("mkdir --parents '$build_directory'");
