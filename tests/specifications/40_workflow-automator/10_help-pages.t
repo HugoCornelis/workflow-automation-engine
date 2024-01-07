@@ -8,26 +8,26 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => '../bin/workflow --help',
+				command => 'workflow --help',
 				command_tests => [
 						  {
 						   description => "Do we get the main help page ?",
 						   read => '
-../bin/workflow: support for workflow design for embedded software engineers.
+workflow: support for workflow design for embedded software engineers.
 
 SYNOPSIS
 
-../bin/workflow <options> <target> <command> -- < ... command specific options and arguments ... >
+workflow <options> <target> <command> -- < ... command specific options and arguments ... >
 
 EXAMPLES -- first try these with the --dry-run to understand what they do:
 
-  $ ../bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
+  $ workflow --help-targets                                       # display the available targets that are found in the configuration file.
 
-  $ ../bin/workflow --help-commands                                      # display the available commands that are found in the configuration file.
+  $ workflow --help-commands                                      # display the available commands that are found in the configuration file.
 
-  $ ../bin/workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
+  $ workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
 
-  $ ../bin/workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
+  $ workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
 
 options:
     --bash-completion               compute bash completion for the given command line.

@@ -179,21 +179,21 @@ make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-eng
 						  {
 						   description => "Can we get the help page of the workflow engine in the Docker container ?",
 						   read => '
-/usr/local/bin/workflow: support for workflow design for embedded software engineers.
+workflow: support for workflow design for embedded software engineers.
 
 SYNOPSIS
 
-/usr/local/bin/workflow <options> <target> <command> -- < ... command specific options and arguments ... >
+workflow <options> <target> <command> -- < ... command specific options and arguments ... >
 
 EXAMPLES -- first try these with the --dry-run to understand what they do:
 
-  $ /usr/local/bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
+  $ workflow --help-targets                                       # display the available targets that are found in the configuration file.
 
-  $ /usr/local/bin/workflow --help-commands                                      # display the available commands that are found in the configuration file.
+  $ workflow --help-commands                                      # display the available commands that are found in the configuration file.
 
-  $ /usr/local/bin/workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
+  $ workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
 
-  $ /usr/local/bin/workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
+  $ workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
 
 options:
     --bash-completion               compute bash completion for the given command line.
@@ -475,8 +475,8 @@ conf.workflow-tests-configuration
 				command => 'workflow-tests-workflow examples_sh sh_single_command --dry-run',
 				command_tests => [
 						  {
-						   description => "Have the project specific commands been correctly installed inside the container ?",
-						   read => '/home/neurospaces/bin/workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
+						   description => "Can we dry run one of the installed commands inside the container ?",
+						   read => 'workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -487,7 +487,7 @@ conf.workflow-tests-configuration
 				command => 'workflow-tests-workflow examples_sh sh_single_command',
 				command_tests => [
 						  {
-						   description => "Have the project specific commands been correctly installed inside the container ?",
+						   description => "Can we execute the one of the installed commands inside the container ?",
 						   read => '# /home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 #
 an example of the invocation of a single command
