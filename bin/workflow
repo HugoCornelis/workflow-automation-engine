@@ -3918,6 +3918,8 @@ sub execute_scheduled_command
     }
     elsif ($dry_run)
     {
+	#! this should never be called, if I am correct
+
 	execute_scheduled_command_option_dry_run($scheduled_command);
     }
     else
@@ -3993,6 +3995,8 @@ sub execute_scheduled_command
 
 	    print $global_exported_times_file "\n";
 	}
+
+	#! we could add the output to $scheduled_command->{output} or something similar
 
 	if ($export_output)
 	{
@@ -4073,12 +4077,16 @@ sub schedule_real_command
 	  };
 
     push @$global_scheduled_commands, $scheduled_command;
+
+    return '';
 }
 
 
 sub execute_all_scheduled_commands
 {
     my $interaction_roles = shift;
+
+    my $results = [];
 
     if ($option_dump_schedule)
     {
@@ -4104,7 +4112,11 @@ sub execute_all_scheduled_commands
 
 	    if ($option_dry_run =~ /^[0-9]+$/)
 	    {
-		execute_scheduled_command_option_dry_run($scheduled_command);
+		my $result = execute_scheduled_command_option_dry_run($scheduled_command);
+
+		$scheduled_command->{result} = $result;
+
+		push @$results, $result;
 	    }
 
 	    # ... or printing an interaction diagram
@@ -4114,24 +4126,38 @@ sub execute_all_scheduled_commands
 		   or $option_interactions_module
 		   or $option_interactions_module_all_roles)
 	    {
-		execute_option_interactions($interaction_roles, $scheduled_command, $option_interactions_module_all_roles || $option_interactions_all);
+		my $result = execute_option_interactions($interaction_roles, $scheduled_command, $option_interactions_module_all_roles || $option_interactions_all);
+
+		$scheduled_command->{result} = $result;
+
+		push @$results, $result;
 	    }
 
 	    # ... or exporting to an executable shell script ...
 
 	    elsif (defined $option_export_sh)
 	    {
-		execute_option_export_sh($interaction_roles, $scheduled_command);
+		my $result = execute_option_export_sh($interaction_roles, $scheduled_command);
+
+		$scheduled_command->{result} = $result;
+
+		push @$results, $result;
 	    }
 
 	    # or real-time executing the scheduled command
 
 	    else
 	    {
-		execute_scheduled_command($scheduled_command);
+		my $result = execute_scheduled_command($scheduled_command);
+
+		$scheduled_command->{result} = $result;
+
+		push @$results, $result;
 	    }
 	}
     }
+
+    return $results;
 }
 
 
@@ -4290,6 +4316,8 @@ sub execute_shell_command
 	   $export_sh,
 	   $export_sh_command,
 	  );
+
+    return '';
 }
 
 
@@ -4310,6 +4338,8 @@ sub execute_shell_command_array
     {
 	execute_shell_command($command, $options);
     }
+
+    return '';
 }
 
 
@@ -4333,6 +4363,8 @@ sub execute_shell_command_schedule
 	    execute_shell_command($command, $options);
 	}
     }
+
+    return '';
 }
 
 
@@ -4344,6 +4376,8 @@ sub execute_shell_command_schedule_array
     {
 	execute_shell_command_schedule($schedule);
     }
+
+    return '';
 }
 
 
