@@ -562,7 +562,7 @@ sub ${target_name}_single_command
     #   allow_fail: allow execution of this command to fail.
     #   dry_run: do not execute this command.
     #   remote: a remote that is defined in $project_name-configuration.
-    #   silent: do not provide feedback to the terminal about this command.
+    #   quiet: do not provide feedback to the terminal about this command.
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
     #
