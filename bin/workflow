@@ -4772,9 +4772,11 @@ sub bash_completion
 
     my $command_line_words = [ split ' ', $command_line, ];
 
-    #! kind of sloppy ...
+    #! this is sloppy: option_target is first set through a shift @ARGV and then fetched here.
 
     my $comp_cword = $option_target;
+
+    #t $comp_point is not used yet, I believe it is an index into the current command line
 
     my $comp_point = $ARGV[0];
 
@@ -4786,18 +4788,27 @@ sub bash_completion
 
     my $result;
 
+    # either generate completions for the configuration browser ...
+
     if ($command =~ /configuration/)
     {
 	$result = bash_completion_generate($command, $arguments, $global_technical_project_configuration);
 
+	# add the depth level options that the configuration browser understands
+
 	push @$result, '--', '-1', '-2', '-3';
     }
+
+    # ... or generate completions for the workflow engine with or without configuration
+
     elsif ($command =~ /workflow/)
     {
 	if (defined $command_line_word
 	    and $command_line_word =~ /^-/)
 	{
 	    $result = bash_completion_generate_options();
+
+	    #! why did I do this?
 
 	    unshift @$result, 'aa', 'bb';
 	}
@@ -4807,9 +4818,15 @@ sub bash_completion
 
 	    $result = bash_completion_generate($command, $arguments, $internal_commands);
 
+	    # make sure the user gets a hint that options are also possible
+
 	    push @$result, '--a', '--b';
 	}
     }
+
+    # make sure we have a reproducible result by sorting it
+
+    $result = [ sort @$result, ];
 
     print join " ", @$result;
 
