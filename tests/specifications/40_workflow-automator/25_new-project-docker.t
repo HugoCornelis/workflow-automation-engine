@@ -566,6 +566,42 @@ available_workflow automation projects (copy-paste the one you would like to get
 						 ],
 				description => 'showing that the container works: can we add new targets2 with a shell template file for their commands ?',
 			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion" 1',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate bash completion strings for the options, inside the container ?",
+						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => 'showing that the container works: generation of bash completion strings for the options',
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion " 0',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate bash completion strings for the targets, inside the container ?",
+						   read => 'a --b builtin examples examples_sh examples_yml',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => 'showing that the container works: generation of bash completion strings for the targets',
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion builtin " 2',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate bash completion strings for the commands, inside the container ?",
+						   read => 'a --b add_target install_scripts print_configuration_directory start_project',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => 'showing that the container works: generation of bash completion strings for the commands',
+			       },
 			      ],
        description => "testing of the workflow automation engine",
        documentation => {
