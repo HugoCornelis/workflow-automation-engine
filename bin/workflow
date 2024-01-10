@@ -5517,7 +5517,7 @@ sub main
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: target '$requested_target' does not provide command '$command'.";
+		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$command'.";
 	    }
 	}
 
