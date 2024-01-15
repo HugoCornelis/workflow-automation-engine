@@ -1732,7 +1732,7 @@ sub builtin_install_scripts
 
     my $option_install_bash_completion;
     my $option_install_commands;
-    my $option_install_engine;
+    my $option_install_engine = 'by default';
     my $option_install_force;
     my $option_install_git;
     my $option_install_report;
@@ -1796,6 +1796,8 @@ sub builtin_install_scripts
 	if ($option_verbose)
 	{
 	    print "$global_program_name: executing installation of the workflow engine with (force == $option_install_engine)\n";
+
+	    print "$global_program_name: creating $target\n";
 	}
 
 	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
