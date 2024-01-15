@@ -460,6 +460,7 @@ conf.workflow-tests-configuration
 						   read => '
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow-tests-workflow builtin add_target --help
+  - workflow-tests-workflow builtin archive_scripts --help
   - workflow-tests-workflow builtin install_scripts --help
   - workflow-tests-workflow builtin print_configuration_directory --help
   - workflow-tests-workflow builtin start_project --help
@@ -596,7 +597,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the commands, inside the container ?",
-						   read => 'a --b add_target install_scripts print_configuration_directory start_project',
+						   read => 'a --b add_target archive_scripts install_scripts print_configuration_directory start_project',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
