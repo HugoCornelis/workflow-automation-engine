@@ -1724,6 +1724,92 @@ options:
 }
 
 
+sub builtin_archive_scripts
+{
+    my $scripts_directory = $global_field_project_configuration->{true_technical_project_configuration_directory};
+
+    use Archive::Tar;
+
+    my $tar_filename = $ARGV[0];
+
+    if (not defined $tar_filename)
+    {
+	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename as its only argument on the command line";
+    }
+
+    my $compression = COMPRESS_GZIP;
+
+    if ($tar_filename =~ m(^.*tar\.gz$))
+    {
+	$compression = COMPRESS_GZIP;
+    }
+    elsif ($tar_filename =~ m(^.*tar\.bz2$))
+    {
+	$compression = COMPRESS_BZIP;
+    }
+    elsif ($tar_filename =~ m(^.*tgz$))
+    {
+	$compression = COMPRESS_GZIP;
+    }
+    elsif ($tar_filename =~ m(^.*tbz$))
+    {
+	$compression = COMPRESS_BZIP;
+    }
+    else
+    {
+	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename to end with .tar.gz, .tar.bz2, .tgz or .tbz";
+    }
+
+    use YAML;
+
+    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+
+    my $tar = Archive::Tar->new();
+
+    my $archive_directory = "$scripts_directory/..";
+
+    $scripts_directory =~ m(.*/(.*));
+
+    my $directory_inside_tar_name = $1;
+
+    {
+	use Cwd 'abs_path';
+
+	use File::chdir;
+
+	local $CWD = $archive_directory;
+
+	my $getcwd = Cwd::getcwd();
+
+	my $scripts
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       `find $directory_inside_tar_name -type f`,
+	      ];
+
+	$tar->add_files(@$scripts);
+
+	print Dumper
+	    (
+	     {
+	      CWD => $CWD,
+# 	      directory_inside_tar_name => $directory_inside_tar_name,
+# 	      getcwd => $getcwd,
+	      scripts => $scripts,
+	      tar_filename => $tar_filename,
+	     },
+	    );
+    }
+
+    $tar->write($tar_filename, $compression);
+
+    return '';
+}
+
+
 sub builtin_install_scripts
 {
     use Data::Dumper;
