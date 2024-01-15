@@ -2093,6 +2093,10 @@ sub builtin_print_configuration_directory
 {
     my $project_name = shift;
 
+    use YAML;
+
+    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+
     my $error = '';
 
     return $error;
