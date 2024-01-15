@@ -307,32 +307,32 @@ Then check if they work by inspecting the examples they provide (with various op
 				description => "showing that the container works: start of a new project",
 			       },
 			       {
-				command => 'cd workflow-test && find .',
+				command => 'cd workflow-test && find . | sort',
 				command_tests => [
 						  {
 						   description => "Have the project files been created inside the Docker container?",
 						   read => '.
+./conf.workflow-tests-configuration
+./conf.workflow-tests-workflow
 ./workflow-project-template.pl
 ./workflow-tests-bash-completion.sh
-./workflow-tests-configuration-data
-./workflow-tests-configuration-data/targets.yml
-./workflow-tests-configuration-data/command_filenames.yml
-./workflow-tests-configuration-data/target_servers.yml
-./workflow-tests-configuration-data/build_servers.yml
-./workflow-tests-configuration-data/node_configuration.yml
-./conf.workflow-tests-workflow
-./conf.workflow-tests-configuration
+./workflow-tests-commands
 ./workflow-tests-commands-data
 ./workflow-tests-commands-data/examples_sh
 ./workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
-./workflow-tests-commands-data/examples_sh/sh_single_command.sh
 ./workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+./workflow-tests-commands-data/examples_sh/sh_single_command.sh
 ./workflow-tests-commands-data/examples_yml
-./workflow-tests-commands-data/examples_yml/remote_execution.yml
 ./workflow-tests-commands-data/examples_yml/array_of_commands.yml
+./workflow-tests-commands-data/examples_yml/remote_execution.yml
 ./workflow-tests-commands-data/examples_yml/single_command.yml
 ./workflow-tests-configuration
-./workflow-tests-commands
+./workflow-tests-configuration-data
+./workflow-tests-configuration-data/build_servers.yml
+./workflow-tests-configuration-data/command_filenames.yml
+./workflow-tests-configuration-data/node_configuration.yml
+./workflow-tests-configuration-data/target_servers.yml
+./workflow-tests-configuration-data/targets.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
