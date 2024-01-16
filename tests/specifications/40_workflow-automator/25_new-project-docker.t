@@ -38,7 +38,7 @@ my $test
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./autogen.sh',
 				command_tests => [
 						  {
-						   description => "Can generate configure scripts in the Docker container ?",
+						   description => "Can we generate configure scripts in the Docker container ?",
 						   wait => 1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -403,7 +403,7 @@ global_field_project_configuration:
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required as a work around between the test engine and the workflow engine under test.",
-						   description => "Have the project files been correctly installed inside the container ?",
+						   description => "Can we install the project files inside the container ?",
 						   read => '# mkdir --parents /home/neurospaces/bin
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
@@ -520,7 +520,7 @@ conf.workflow-tests-configuration
 				command => 'workflow-tests-workflow examples_sh sh_single_command',
 				command_tests => [
 						  {
-						   description => "Can we execute the one of the installed commands inside the container ?",
+						   description => "Can we execute one of the installed commands inside the container ?",
 						   read => '# /home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 #
 an example of the invocation of a single command
@@ -628,7 +628,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => 'showing that the container works: generation of bash completion strings for the commands',
 			       },
 			      ],
-       description => "testing of the workflow automation engine",
+       description => "testing of the workflow automation engine inside a docker container",
        documentation => {
 			 explanation => "
 

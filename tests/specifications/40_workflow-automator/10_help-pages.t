@@ -134,7 +134,7 @@ arguments:
 				description => "default builtin targets",
 			       },
 			      ],
-       description => "testing of the workflow automation engine",
+       description => "help pages",
        documentation => {
 			 explanation => "
 
