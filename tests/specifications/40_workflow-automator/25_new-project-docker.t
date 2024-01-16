@@ -399,25 +399,18 @@ global_field_project_configuration:
 				description => "showing that the container works: correct creation of the field project file",
 			       },
 			       {
-				command => 'cd workflow-test && workflow builtin install_scripts -- --engine --commands',
+				command => 'cd workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands',
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required as a work around between the test engine and the workflow engine under test.",
 						   description => "Have the project files been correctly installed inside the container ?",
-						   read => '# ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
+						   read => '# mkdir --parents /home/neurospaces/bin
+#
+# ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-configuration /home/neurospaces/bin/./workflow-tests-configuration
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-commands /home/neurospaces/bin/./workflow-tests-commands
-#
-# bash -c "echo \'# workflow-tests-workflow
-
-alias workflow-tests-workflow=\"grc workflow-tests-workflow\"
-alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
-\' | cat >>/home/neurospaces/.bashrc"
-#
-# bash -c "echo \'. /home/neurospaces/workflow-test/workflow-tests-bash-completion.sh
-\' | cat >>/home/neurospaces/.bashrc"
 #
 # sudo     bash -c "echo \'
 # workflow-tests-workflow
@@ -442,7 +435,7 @@ conf.workflow-tests-configuration
 				description => "showing that the container works: correct installation of the new project files",
 			       },
 			       {
-				command => 'echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/neurospaces/bin" >~/.bashrc',
+				command => 'echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/neurospaces/bin" >>~/.bashrc',
 				command_tests => [
 						  {
 						   description => "Can we update .bashrc to make sure that the project specific workflow engine is found inside the container ?",
