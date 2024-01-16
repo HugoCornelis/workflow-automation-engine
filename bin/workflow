@@ -1732,6 +1732,13 @@ sub builtin_archive_scripts
 
     my $tar_filename = $ARGV[0];
 
+    # make sure the --interactions family of options works
+
+    if ($::option_dry_run)
+    {
+	return '';
+    }
+
     if (not defined $tar_filename)
     {
 	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename as its only argument on the command line";
@@ -5936,7 +5943,8 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	  };
 
     if ($option_target eq 'builtin'
-	and exists $builtin_commands->{$option_commands->[0]})
+	and (defined $option_commands->[0]
+	     and exists $builtin_commands->{$option_commands->[0]}))
     {
     }
     else
