@@ -1823,6 +1823,7 @@ sub builtin_install_scripts
 
 #     print Dumper(\@_);
 
+    my $option_install_aliasses = 'by default';
     my $option_install_bash_completion;
     my $option_install_commands;
     my $option_install_engine = 'by default';
@@ -1831,14 +1832,15 @@ sub builtin_install_scripts
     my $option_install_report;
 
     our $install_options
-      = {
-	 "bash-completion=s" => \$option_install_bash_completion,
-	 "commands!" => \$option_install_commands,
-	 "engine!" => \$option_install_engine,
-	 "force!" => \$option_install_force,
-	 "git!" => \$option_install_git,
-	 "report!" => \$option_install_report,
-	};
+	= {
+	   "aliasses!" => \$option_install_aliasses,
+	   "bash-completion=s" => \$option_install_bash_completion,
+	   "commands!" => \$option_install_commands,
+	   "engine!" => \$option_install_engine,
+	   "force!" => \$option_install_force,
+	   "git!" => \$option_install_git,
+	   "report!" => \$option_install_report,
+	  };
 
     use Getopt::Long qw(GetOptionsFromArray);;
 
@@ -2023,50 +2025,53 @@ sub builtin_install_scripts
 
     # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
 
-    my $alias_marker = "alias $project_name-workflow=\"grc $project_name-workflow\"";
+    if ($option_install_aliasses)
+    {
+	my $alias_marker = "alias $project_name-workflow=\"grc $project_name-workflow\"";
 
-    my $alias_additions
-	= "# $project_name-workflow
+	my $alias_additions
+	    = "# $project_name-workflow
 
 alias $project_name-workflow=\"grc $project_name-workflow\"
 alias $project_name-configuration=\"grc $project_name-configuration\"
 ";
 
-    my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $alias_marker);
+	my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $alias_marker);
 
-    if ($option_verbose)
-    {
+	if ($option_verbose)
+	{
+	    if (not $bashrc_matches)
+	    {
+		print "$global_program_name: all_install_scripts: .bashrc does not match\n";
+	    }
+	    else
+	    {
+		print "$global_program_name: all_install_scripts: .bashrc matches\n";
+	    }
+	}
+
 	if (not $bashrc_matches)
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc does not match\n";
-	}
-	else
-	{
-	    print "$global_program_name: all_install_scripts: .bashrc matches\n";
-	}
-    }
+	    {
+		_file_append_string("$ENV{HOME}/.bashrc", $alias_additions);
+	    }
 
-    if (not $bashrc_matches)
-    {
-	{
-	    _file_append_string("$ENV{HOME}/.bashrc", $alias_additions);
-	}
+	    my $command_filename_directory = $global_field_project_configuration->{field_project_configuration_directory};
 
-	my $command_filename_directory = $global_field_project_configuration->{field_project_configuration_directory};
+	    use Cwd;
 
-	use Cwd;
+	    my $abs_command_filename_directory = Cwd::abs_path($command_filename_directory);
 
-	my $abs_command_filename_directory = Cwd::abs_path($command_filename_directory);
+	    my $bash_completion_filename = "$abs_command_filename_directory/$project_name-bash-completion.sh";
 
-	my $bash_completion_filename = "$abs_command_filename_directory/$project_name-bash-completion.sh";
-
-	if (-e $bash_completion_filename)
-	{
-	    my $bash_completion_additions
-		= ". $bash_completion_filename
+	    if (-e $bash_completion_filename)
+	    {
+		my $bash_completion_additions
+		    = ". $bash_completion_filename
 ";
 
-	    _file_append_string("$ENV{HOME}/.bashrc", $bash_completion_additions);
+		_file_append_string("$ENV{HOME}/.bashrc", $bash_completion_additions);
+	    }
 	}
     }
 
