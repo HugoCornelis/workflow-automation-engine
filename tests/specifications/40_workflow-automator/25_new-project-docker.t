@@ -412,6 +412,9 @@ global_field_project_configuration:
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-commands /home/neurospaces/bin/./workflow-tests-commands
 #
+# bash -c "echo \'. /home/neurospaces/workflow-test/workflow-tests-bash-completion.sh
+\' | cat >>/home/neurospaces/.bashrc"
+#
 # sudo     bash -c "echo \'
 # workflow-tests-workflow
 (^|[/\w\.]+/)workflow-tests-workflow\s?
@@ -450,6 +453,34 @@ conf.workflow-tests-configuration
 				command_tests => [
 						  {
 						   description => "Have the project specific commands been correctly installed inside the container ?",
+						   read => '
+\'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
+  - workflow-tests-workflow builtin add_target --help
+  - workflow-tests-workflow builtin archive_scripts --help
+  - workflow-tests-workflow builtin install_scripts --help
+  - workflow-tests-workflow builtin print_configuration_directory --help
+  - workflow-tests-workflow builtin start_project --help
+  - workflow-tests-workflow examples array_of_commands --help
+  - workflow-tests-workflow examples array_of_commands_remote_execution --help
+  - workflow-tests-workflow examples sequencing_and_composition --help
+  - workflow-tests-workflow examples single_command --help
+  - workflow-tests-workflow examples_sh sh_array_of_commands --help
+  - workflow-tests-workflow examples_sh sh_remote_execution --help
+  - workflow-tests-workflow examples_sh sh_single_command --help
+  - workflow-tests-workflow examples_yml array_of_commands --help
+  - workflow-tests-workflow examples_yml remote_execution --help
+  - workflow-tests-workflow examples_yml single_command --help
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "showing that the container works: correct installation of the new project commands",
+			       },
+			       {
+				command => 'workflow-tests-workflow --help-commands',
+				command_tests => [
+						  {
+						   description => "Have the project specific commands been correctly installed inside the container, different working directory ?",
 						   read => '
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow-tests-workflow builtin add_target --help
