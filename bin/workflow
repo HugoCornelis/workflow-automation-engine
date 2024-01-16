@@ -1824,7 +1824,7 @@ sub builtin_install_scripts
 #     print Dumper(\@_);
 
     my $option_install_aliasses = 'by default';
-    my $option_install_bash_completion;
+    my $option_install_bash_completion = 'by default';
     my $option_install_commands;
     my $option_install_engine = 'by default';
     my $option_install_force;
@@ -2055,23 +2055,26 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
 	    {
 		_file_append_string("$ENV{HOME}/.bashrc", $alias_additions);
 	    }
+	}
+    }
 
-	    my $command_filename_directory = $global_field_project_configuration->{field_project_configuration_directory};
+    if ($option_install_bash_completion)
+    {
+	my $command_filename_directory = $global_field_project_configuration->{field_project_configuration_directory};
 
-	    use Cwd;
+	use Cwd;
 
-	    my $abs_command_filename_directory = Cwd::abs_path($command_filename_directory);
+	my $abs_command_filename_directory = Cwd::abs_path($command_filename_directory);
 
-	    my $bash_completion_filename = "$abs_command_filename_directory/$project_name-bash-completion.sh";
+	my $bash_completion_filename = "$abs_command_filename_directory/$project_name-bash-completion.sh";
 
-	    if (-e $bash_completion_filename)
-	    {
-		my $bash_completion_additions
-		    = ". $bash_completion_filename
+	if (-e $bash_completion_filename)
+	{
+	    my $bash_completion_additions
+		= ". $bash_completion_filename
 ";
 
-		_file_append_string("$ENV{HOME}/.bashrc", $bash_completion_additions);
-	    }
+	    _file_append_string("$ENV{HOME}/.bashrc", $bash_completion_additions);
 	}
     }
 
