@@ -118,9 +118,8 @@ targets:
 				command => '../bin/workflow builtin start_project --help',
 				command_tests => [
 						  {
-						   comment => 'note that the expect module does not easily allow the read string to be started with yaml\'s \'---\'',
 						   description => "Do we see the help page for starting a new project ?",
-						   read => 'builtin start_project: start a new project with a given name in the current directory.
+						   read => 'workflow builtin start_project: start a new project with a given name in the current directory.
 
 This will install a project descriptor, a configuration file and an
 empty command file.
