@@ -1707,6 +1707,7 @@ sub builtin_add_target_help
     my $command = shift;
 
     return "$command: add a new target and update the configuration to integrate it.
+
 synopsis:
 
 $command <target-name> <target-description> [-- <options>]
