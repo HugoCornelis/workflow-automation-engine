@@ -1818,6 +1818,24 @@ sub builtin_archive_configuration
 }
 
 
+sub builtin_archive_configuration_help
+{
+    my $command = shift;
+
+    return "$command: create a tarball with the configuration of the current workflow project.
+
+synopsis:
+
+$command <tarball-name>
+
+arguments:
+
+    ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+
+";
+}
+
+
 sub builtin_install_scripts
 {
     use Data::Dumper;
@@ -5946,6 +5964,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     my $builtin_commands
 	= {
 	   add_target => 1,
+	   archive_configuration => 1,
 	   install_scripts => 1,
 	   print_configuration_directory => 1,
 	   start_project => 1,

@@ -133,6 +133,26 @@ arguments:
 						 ],
 				description => "default builtin targets",
 			       },
+			       {
+				command => '../bin/workflow builtin archive_configuration --help',
+				command_tests => [
+						  {
+						   description => "Do we see the help page for archiving a workflow configuration ?",
+						   read => 'workflow builtin archive_configuration: create a tarball with the configuration of the current workflow project.
+
+synopsis:
+
+builtin archive_configuration <tarball-name>
+
+arguments:
+
+    ARGV[0]: name of the tarball.  Recognized filename extensions are \'tar.gz\', \'tar.bz2\', \'.tgz\' and \'.tbz\'.
+
+',
+						  },
+						 ],
+				description => "default builtin targets",
+			       },
 			      ],
        description => "help pages",
        documentation => {
