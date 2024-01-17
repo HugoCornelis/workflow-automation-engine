@@ -1725,7 +1725,7 @@ options:
 }
 
 
-sub builtin_archive_scripts
+sub builtin_archive_configuration
 {
     my $scripts_directory = $global_field_project_configuration->{true_technical_project_configuration_directory};
 
