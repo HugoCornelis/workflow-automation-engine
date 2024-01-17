@@ -627,6 +627,50 @@ available_workflow automation projects (copy-paste the one you would like to get
 						 ],
 				description => 'showing that the container works: generation of bash completion strings for the commands',
 			       },
+			       {
+				command => 'workflow-tests-workflow builtin archive_configuration /tmp/wtw.tar.gz',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate an archive of the created configuration, inside the container ?",
+						   read => 'global_field_project_configuration:
+  field_project_name: workflow-tests
+  from_executable: dynamically_generated from the executable script name
+  technical_project_configuration_directory: /home/neurospaces/bin
+  technical_project_configuration_filename: /home/neurospaces/bin/workflow-tests-configuration
+  true_technical_project_configuration_directory: /home/neurospaces/workflow-test
+  true_technical_project_configuration_filename: /home/neurospaces/workflow-test/workflow-tests-configuration
+  true_technical_project_data_commands_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
+  true_technical_project_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
+$VAR1 = {
+          \'CWD\' => \'/home/neurospaces\',
+          \'scripts\' => [
+                         \'workflow-test/workflow-project.pl\',
+                         \'workflow-test/workflow-tests-bash-completion.sh\',
+                         \'workflow-test/workflow-tests-configuration-data/targets.yml\',
+                         \'workflow-test/workflow-tests-configuration-data/command_filenames.yml\',
+                         \'workflow-test/workflow-tests-configuration-data/target_servers.yml\',
+                         \'workflow-test/workflow-tests-configuration-data/build_servers.yml\',
+                         \'workflow-test/workflow-tests-configuration-data/node_configuration.yml\',
+                         \'workflow-test/conf.workflow-tests-workflow\',
+                         \'workflow-test/conf.workflow-tests-configuration\',
+                         \'workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh\',
+                         \'workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\',
+                         \'workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh\',
+                         \'workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml\',
+                         \'workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml\',
+                         \'workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml\',
+                         \'workflow-test/workflow-tests-configuration\',
+                         \'workflow-test/workflow-tests-commands\'
+                       ],
+          \'tar_filename\' => \'/tmp/wtw.tar.gz\'
+        };
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => 'showing that the container works: creation of an archive of a configuration',
+			       },
 			      ],
        description => "testing of the workflow automation engine inside a docker container",
        documentation => {
