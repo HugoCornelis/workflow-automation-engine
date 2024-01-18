@@ -1585,24 +1585,6 @@ sub builtin_add_target
 	}
     }
 
-    use YAML;
-
-    if (not $error)
-    {
-	if (not $target_name)
-	{
-	    $error = "target name is not given on the command line";
-	}
-    }
-
-    if (not $error)
-    {
-	if (not $target_description)
-	{
-	    $error = "target description is not given on the command line";
-	}
-    }
-
     # read the targets configuration file
 
     my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
