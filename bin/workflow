@@ -190,6 +190,8 @@ sub _all_install_scripts_execute_shell_command_array
 
 sub _builtin_project_bash_completion_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $project_name_dash = $project_name;
@@ -526,6 +528,8 @@ else
 
 sub _builtin_project_commands_template_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $target_name = shift;
@@ -716,7 +720,11 @@ arguments:
 	$filename_suffix = '';
     }
 
-    my $file = IO::File->new("> $project_name-commands$filename_suffix");
+    my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
+
+    my $filename = "$true_technical_project_configuration_directory/$project_name-commands$filename_suffix";
+
+    my $file = IO::File->new("> $filename");
 
     if (defined $file)
     {
@@ -724,11 +732,11 @@ arguments:
 
 	$file->close();
 
-	chmod 0700, "$project_name-commands$filename_suffix";
+	chmod 0700, "$filename";
     }
     else
     {
-	$error = "cannot open $project_name-commands$filename_suffix";
+	$error = "cannot open $filename";
     }
 
     return $error;
@@ -737,6 +745,8 @@ arguments:
 
 sub _builtin_project_commands_sh_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $target_name = shift;
@@ -749,7 +759,11 @@ sub _builtin_project_commands_sh_create
 
     my $error = '';
 
-    my $filename = "$commands_data_directory/$target_name/$command_name.sh";
+    my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
+
+    my $true_technical_project_data_commands_directory = $field_project_configuration->{true_technical_project_data_commands_directory};
+
+    my $filename = "$true_technical_project_data_commands_directory/$target_name/$command_name.sh";
 
     _builtin_create_directories($filename);
 
@@ -776,6 +790,8 @@ sub _builtin_project_commands_sh_create
 
 sub _builtin_project_commands_yml_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $target_name = shift;
@@ -788,7 +804,11 @@ sub _builtin_project_commands_yml_create
 
     my $error = '';
 
-    my $filename = "$commands_data_directory/$target_name/$command_name.yml";
+    my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
+
+    my $true_technical_project_data_commands_directory = $field_project_configuration->{true_technical_project_data_commands_directory};
+
+    my $filename = "$true_technical_project_data_commands_directory/$target_name//$command_name.yml";
 
     _builtin_create_directories($filename);
 
@@ -813,6 +833,8 @@ sub _builtin_project_commands_yml_create
 
 sub _builtin_project_commands_sh_template_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $target_name = shift;
@@ -839,7 +861,7 @@ echo
 
     if (not $error)
     {
-	$error = _builtin_project_commands_sh_create($project_name, $target_name, "sh_remote_execution", $array_of_commands_remote_execution_sh_example);
+	$error = _builtin_project_commands_sh_create($field_project_configuration, $project_name, $target_name, "sh_remote_execution", $array_of_commands_remote_execution_sh_example);
     }
 
     my $array_of_commands_sh_example
@@ -852,7 +874,7 @@ echo this is the second command in the array
 
     if (not $error)
     {
-	$error = _builtin_project_commands_sh_create($project_name, $target_name, "sh_array_of_commands", $array_of_commands_sh_example);
+	$error = _builtin_project_commands_sh_create($field_project_configuration, $project_name, $target_name, "sh_array_of_commands", $array_of_commands_sh_example);
     }
 
     my $single_command_sh_example
@@ -864,7 +886,7 @@ echo an example of the invocation of a single command
 
     if (not $error)
     {
-	$error = _builtin_project_commands_sh_create($project_name, $target_name, "sh_single_command", $single_command_sh_example);
+	$error = _builtin_project_commands_sh_create($field_project_configuration, $project_name, $target_name, "sh_single_command", $single_command_sh_example);
     }
 
     return $error;
@@ -873,6 +895,8 @@ echo an example of the invocation of a single command
 
 sub _builtin_project_commands_yml_template_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $target_name = shift;
@@ -903,7 +927,7 @@ help: an example of the invocation of an array of commands that are executed on 
 
     if (not $error)
     {
-	$error = _builtin_project_commands_yml_create($project_name, $target_name, "remote_execution", $array_of_commands_remote_execution_yml_example);
+	$error = _builtin_project_commands_yml_create($field_project_configuration, $project_name, $target_name, "remote_execution", $array_of_commands_remote_execution_yml_example);
     }
 
     my $array_of_commands_yml_example
@@ -918,7 +942,7 @@ help: these commands echo a string to the terminal
 
     if (not $error)
     {
-	$error = _builtin_project_commands_yml_create($project_name, $target_name, "array_of_commands", $array_of_commands_yml_example);
+	$error = _builtin_project_commands_yml_create($field_project_configuration, $project_name, $target_name, "array_of_commands", $array_of_commands_yml_example);
     }
 
     my $single_command_yml_example
@@ -931,7 +955,7 @@ help: this command echos a string to the terminal
 
     if (not $error)
     {
-	$error = _builtin_project_commands_yml_create($project_name, $target_name, "single_command", $single_command_yml_example);
+	$error = _builtin_project_commands_yml_create($field_project_configuration, $project_name, $target_name, "single_command", $single_command_yml_example);
     }
 
     return $error;
@@ -970,6 +994,8 @@ sub _builtin_create_directory
 
 sub _builtin_project_configuration_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     # create a configuration file
@@ -1267,6 +1293,8 @@ target_servers:
 
 sub _builtin_project_gc_configuration_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $conf_gc_project_configuration
@@ -1362,6 +1390,8 @@ colours=white underline
 
 sub _builtin_project_gc_workflow_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $conf_gc_project_workflow
@@ -1467,6 +1497,8 @@ colours=cyan underline
 
 sub _builtin_project_template_create
 {
+    my $field_project_configuration = shift;
+
     my $project_name = shift;
 
     my $project_file
@@ -1652,7 +1684,7 @@ sub builtin_add_target
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create($field_project_name, $target_name, $target_name);
+	    $error = _builtin_project_commands_template_create($global_field_project_configuration, $field_project_name, $target_name, $target_name);
 
 	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
 	}
@@ -1662,7 +1694,7 @@ sub builtin_add_target
     {
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_sh_template_create($field_project_name, $target_name);
+	    $error = _builtin_project_commands_sh_template_create($global_field_project_configuration, $field_project_name, $target_name);
 
 	    print "$global_program_name: created the shell command file for target $target_name\n";
 	}
@@ -1672,7 +1704,7 @@ sub builtin_add_target
     {
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_yml_template_create($field_project_name, $target_name);
+	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
 
 	    print "$global_program_name: created the yml command file for target $target_name\n";
 	}
@@ -2241,44 +2273,56 @@ sub builtin_start_project
 
 	my $error;
 
+	my $field_project_configuration
+	    = {
+	       field_project_name => $project_name,
+	       from_executable => 'statically_generated by builtin_start_project',
+	       technical_project_configuration_directory => "$ENV{HOME}/bin",
+	       technical_project_configuration_filename => "$ENV{HOME}/bin/$project_name-configuration",
+	       true_technical_project_configuration_directory => '.',
+	       true_technical_project_configuration_filename => "./$project_name-configuration",
+	       true_technical_project_data_commands_directory => "./$project_name-commands-data",
+	       true_technical_project_data_configuration_directory => "./$project_name-configuration-data",
+	      };
+
 	if (not $error)
 	{
-	    $error = _builtin_project_template_create($project_name);
+	    $error = _builtin_project_template_create($field_project_configuration, $project_name);
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_configuration_create($project_name);
+	    $error = _builtin_project_configuration_create($field_project_configuration, $project_name);
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create($project_name, "examples");
+	    $error = _builtin_project_commands_template_create($field_project_configuration, $project_name, "examples");
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_sh_template_create($project_name, "examples_sh");
+	    $error = _builtin_project_commands_sh_template_create($field_project_configuration, $project_name, "examples_sh");
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_yml_template_create($project_name, "examples_yml");
+	    $error = _builtin_project_commands_yml_template_create($field_project_configuration, $project_name, "examples_yml");
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_gc_configuration_create($project_name);
+	    $error = _builtin_project_gc_configuration_create($field_project_configuration, $project_name);
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_gc_workflow_create($project_name);
+	    $error = _builtin_project_gc_workflow_create($field_project_configuration, $project_name);
 	}
 
 	if (not $error)
 	{
-	    $error = _builtin_project_bash_completion_create($project_name);
+	    $error = _builtin_project_bash_completion_create($field_project_configuration, $project_name);
 	}
 
 	if (not $error)
