@@ -78,11 +78,11 @@ ENV LC_ALL en_US.UTF-8
 
 # note that the values given here are defaults, the --build-arg arguments on the command line may become the actual values
 
+# create the test user inside the docker image
+
 ARG GROUP_ID=1000
 ARG USER_NAME=neurospaces
 ARG USER_ID=1000
-
-# create the user inside the docker image that creates this docker image
 
 RUN groupadd --gid ${GROUP_ID} ${USER_NAME} \
     && useradd -ou ${USER_ID} -g ${USER_NAME} -d /home/${USER_NAME} ${USER_NAME} \
@@ -90,6 +90,17 @@ RUN groupadd --gid ${GROUP_ID} ${USER_NAME} \
     && chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}
 
 RUN echo "${USER_NAME}     ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${USER_NAME}
+
+# create an additional test user inside the docker image
+
+ARG GROUP_ID_2=1001
+ARG USER_NAME_2=neurospaces2
+ARG USER_ID_2=1001
+
+RUN groupadd --gid ${GROUP_ID_2} ${USER_NAME_2} \
+    && useradd -ou ${USER_ID_2} -g ${USER_NAME_2} -d /home/${USER_NAME_2} ${USER_NAME_2} \
+    && mkdir /home/${USER_NAME_2} \
+    && chown -R ${USER_NAME_2}:${USER_NAME_2} /home/${USER_NAME_2}
 
 USER ${USER_NAME}
 WORKDIR /home/${USER_NAME}
