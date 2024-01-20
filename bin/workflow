@@ -1743,8 +1743,6 @@ sub builtin_archive_configuration
 {
     my $scripts_directory = $global_field_project_configuration->{true_technical_project_configuration_directory};
 
-    use Archive::Tar;
-
     my $tar_filename = $ARGV[0];
 
     # make sure the --interactions family of options works
@@ -1758,6 +1756,8 @@ sub builtin_archive_configuration
     {
 	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename as its only argument on the command line";
     }
+
+    use Archive::Tar;
 
     my $compression = COMPRESS_GZIP;
 
@@ -1782,19 +1782,13 @@ sub builtin_archive_configuration
 	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename to end with .tar.gz, .tar.bz2, .tgz or .tbz";
     }
 
-    use YAML;
-
-    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
-
-    my $tar = Archive::Tar->new();
-
-    my $archive_directory = "$scripts_directory/..";
-
-    $scripts_directory =~ m(.*/(.*));
-
-    my $directory_inside_tar_name = $1;
-
     {
+	my $archive_directory = "$scripts_directory/..";
+
+	$scripts_directory =~ m(.*/(.*));
+
+	my $directory_inside_tar_name = $1;
+
 	use Cwd 'abs_path';
 
 	use File::chdir;
@@ -1812,21 +1806,30 @@ sub builtin_archive_configuration
 	       `find $directory_inside_tar_name -type f`,
 	      ];
 
+	my $tar = Archive::Tar->new();
+
 	$tar->add_files(@$scripts);
 
-	print Dumper
-	    (
-	     {
-	      CWD => $CWD,
-# 	      directory_inside_tar_name => $directory_inside_tar_name,
-# 	      getcwd => $getcwd,
-	      scripts => $scripts,
-	      tar_filename => $tar_filename,
-	     },
-	    );
-    }
+	$tar->write($tar_filename, $compression);
 
-    $tar->write($tar_filename, $compression);
+	if ($::option_verbose)
+	{
+	    use YAML;
+
+	    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+
+	    print Dump
+		(
+		 {
+		  CWD => $CWD,
+		  # directory_inside_tar_name => $directory_inside_tar_name,
+		  # getcwd => $getcwd,
+		  scripts => $scripts,
+		  tar_filename => $tar_filename,
+		 },
+		);
+	}
+    }
 
     return '';
 }
@@ -2216,11 +2219,20 @@ sub builtin_install_scripts_help
 {
     my $command = shift;
 
-    return "$command : upgrade the workflow scripts for this project.
+    return "$command : install or upgrade the workflow scripts for this project.
 
-arguments:
+options:
 
-    force: force the upgrade
+    --aliasses         configure the grc aliases in .bashrc if they are not there yet.
+    --bash-completion  configure bash completion in .bashrc if they are not there yet.
+    --commands         install or upgrade the command configuration to ~/bin.
+    --engine           create a symbolic link to the workflow engine in ~/bin.
+    --force            don't use this.
+    --git              create a git repository for the workflow configuration.
+    --report           report on what is being done.
+
+Note that grc configuration files will also be installed and configured.
+
 ";
 }
 
