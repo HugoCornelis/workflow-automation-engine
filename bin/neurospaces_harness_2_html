@@ -335,7 +335,7 @@ sub main
 
 	    foreach my $command_definition (@$command_definitions)
 	    {
-		my $command_tests = $command_definition->{command_tests};
+		my $command_tests = $command_definition->{command_tests} || [];
 
 		$html .= $cgi->hr();
 
