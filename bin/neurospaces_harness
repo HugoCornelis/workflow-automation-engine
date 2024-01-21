@@ -867,7 +867,7 @@ sub spawn_new
 
     my $command_prefix = [];
 
-    my $harness = Heterarch::Test::ExecutionContext::harness_current();
+    my $harness = Heterarch::Test::ExecutionContext::Harness::current();
 
     if ($harness)
     {
@@ -2960,167 +2960,6 @@ sub is_selected
 }
 
 
-my $global_harnessing_identifiers = {};
-
-my $global_active_harness_identifiers = [];
-
-
-sub harness_current
-{
-    my $active_harness_identifier
-	= $global_active_harness_identifiers->[$#$global_active_harness_identifiers];
-
-    my $active_harness;
-
-    if (defined $active_harness_identifier)
-    {
-	$active_harness = $global_harnessing_identifiers->{$active_harness_identifier};
-    }
-
-    return $active_harness;
-}
-
-
-sub _harness_create_or_fetch
-{
-    my $harnessing_class = shift;
-
-    my $harnessing_identifier = shift;
-
-    my $result;
-
-    # if this was not executed yet
-
-    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
-    {
-	# prepare the docker image and container
-
-	my $build = $harnessing_class->{build};
-	my $identifier = $harnessing_class->{identifier};
-	my $name_container = $harnessing_class->{name_container};
-	my $name_image = $harnessing_class->{name_image};
-	my $type = $harnessing_class->{type};
-
-	my $docker_preparer
-	    = (sub
-	       {
-		   system "$build";
-
-		   if ($?)
-		   {
-		       return 'docker_preparer build command failed';
-		   }
-
-		   system "sudo docker container stop $name_container";
-		   system "sudo docker container rm $name_container";
-
-		   system "sudo docker run -d -t --name $name_container $name_image";
-
-		   # make the docker harness available by pushing it
-
-		   push @$global_active_harness_identifiers, $harnessing_identifier;
-
-		   # return no errors
-
-		   return '';
-	       });
-
-	my $docker_reparer
-	    = (sub
-	       {
-		   # remove the docker harness
-
-		   pop @$global_active_harness_identifiers;
-
-		   print "The Docker container is still running.\n
-You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
-
-		   system "sudo docker container ls";
-
-		   # return no errors
-
-		   return '';
-	       });
-
-	my $docker_preparation
-	    = {
-	       description => "create the Docker image and start it as a container for running the tests",
-	       preparer => $docker_preparer,
-	      };
-
-	my $docker_reparation
-	    = {
-	       description => "leave the Docker container for running manual tests",
-	       reparer => $docker_reparer,
-	      };
-
-	use Clone 'clone';
-
-	$global_harnessing_identifiers->{$harnessing_identifier}
-	    = {
-	       class => clone($harnessing_class),
-	       description => 'Instantiated',
-	       command_prefix_long => [
-				       'sudo',
-				       'docker',
-				       'exec',
-				       '-it',
-				       $name_container,
-				       'bash',
-				       '-ic',
-				      ],
-	       command_prefix_short => [
-					'sudo',
-					'docker',
-					'exec',
-					'-it',
-					$name_container,
-				       ],
-	       preparation => $docker_preparation,
-	       reparation => $docker_reparation,
-	      };
-
-	$result = $global_harnessing_identifiers->{$harnessing_identifier};
-    }
-    else
-    {
-	# the harnessing identifier exists means that the docker container is running
-
-	$result = $global_harnessing_identifiers->{$harnessing_identifier};
-    }
-
-    # return the result
-
-    return $result;
-}
-
-
-sub _harness_fetch
-{
-    my $harnessing_class = shift;
-
-    my $harnessing_identifier = shift;
-
-    my $result;
-
-    # if this was not executed yet
-
-    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
-    {
-    }
-    else
-    {
-	# the harnessing identifier exists means that the docker container is running
-
-	$result = $global_harnessing_identifiers->{$harnessing_identifier};
-    }
-
-    # return the result
-
-    return $result;
-}
-
-
 sub _preparation
 {
     my $self = shift;
@@ -3216,7 +3055,7 @@ sub _preparation
 
 	    my $harnessing_identifier = $harnessing_class->{identifier};
 
-	    my $harness = _harness_create_or_fetch($harnessing_class, $harnessing_identifier);
+	    my $harness = Heterarch::Test::ExecutionContext::Harness::create_or_fetch($harnessing_class, $harnessing_identifier);
 
 	    # add it to the list of preparation harnesses, make sure
 	    # it gets executed before the other ones
@@ -3393,7 +3232,7 @@ sub _reparation
 
 	    my $harnessing_identifier = $harnessing_class->{identifier};
 
-	    my $harness = _harness_fetch($harnessing_class, $harnessing_identifier);
+	    my $harness = Heterarch::Test::ExecutionContext::Harness::fetch($harnessing_class, $harnessing_identifier);
 
 	    push @$all_reparation_harnesses, $harness;
 	}
@@ -3607,6 +3446,171 @@ sub wait
 
 	select(undef, undef, undef, $wait);
     }
+}
+
+
+package Heterarch::Test::ExecutionContext::Harness;
+
+my $global_harnessing_identifiers = {};
+
+my $global_active_harness_identifiers = [];
+
+
+sub current
+{
+    my $active_harness_identifier
+	= $global_active_harness_identifiers->[$#$global_active_harness_identifiers];
+
+    my $active_harness;
+
+    if (defined $active_harness_identifier)
+    {
+	$active_harness = $global_harnessing_identifiers->{$active_harness_identifier};
+    }
+
+    return $active_harness;
+}
+
+
+sub create_or_fetch
+{
+    my $harnessing_class = shift;
+
+    my $harnessing_identifier = shift;
+
+    my $result;
+
+    # if this was not executed yet
+
+    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
+    {
+	# prepare the docker image and container
+
+	my $build = $harnessing_class->{build};
+	my $identifier = $harnessing_class->{identifier};
+	my $name_container = $harnessing_class->{name_container};
+	my $name_image = $harnessing_class->{name_image};
+	my $type = $harnessing_class->{type};
+
+	my $docker_preparer
+	    = (sub
+	       {
+		   system "$build";
+
+		   if ($?)
+		   {
+		       return 'docker_preparer build command failed';
+		   }
+
+		   system "sudo docker container stop $name_container";
+		   system "sudo docker container rm $name_container";
+
+		   system "sudo docker run -d -t --name $name_container $name_image";
+
+		   # make the docker harness available by pushing it
+
+		   push @$global_active_harness_identifiers, $harnessing_identifier;
+
+		   # return no errors
+
+		   return '';
+	       });
+
+	my $docker_reparer
+	    = (sub
+	       {
+		   # remove the docker harness
+
+		   pop @$global_active_harness_identifiers;
+
+		   print "The Docker container is still running.\n
+You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
+
+		   system "sudo docker container ls";
+
+		   # return no errors
+
+		   return '';
+	       });
+
+	my $docker_preparation
+	    = {
+	       description => "create the Docker image and start it as a container for running the tests",
+	       preparer => $docker_preparer,
+	      };
+
+	my $docker_reparation
+	    = {
+	       description => "leave the Docker container for running manual tests",
+	       reparer => $docker_reparer,
+	      };
+
+	use Clone 'clone';
+
+	my $harness
+	    = {
+	       class => clone($harnessing_class),
+	       description => 'Instantiated',
+	       command_prefix_long => [
+				       'sudo',
+				       'docker',
+				       'exec',
+				       '-it',
+				       $name_container,
+				       'bash',
+				       '-ic',
+				      ],
+	       command_prefix_short => [
+					'sudo',
+					'docker',
+					'exec',
+					'-it',
+					$name_container,
+				       ],
+	       preparation => $docker_preparation,
+	       reparation => $docker_reparation,
+	      };
+
+	$global_harnessing_identifiers->{$harnessing_identifier} = $harness;
+
+	$result = $global_harnessing_identifiers->{$harnessing_identifier};
+    }
+    else
+    {
+	# the harnessing identifier exists means that the docker container is running
+
+	$result = $global_harnessing_identifiers->{$harnessing_identifier};
+    }
+
+    # return the result
+
+    return $result;
+}
+
+
+sub fetch
+{
+    my $harnessing_class = shift;
+
+    my $harnessing_identifier = shift;
+
+    my $result;
+
+    # if this was not executed yet
+
+    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
+    {
+    }
+    else
+    {
+	# the harnessing identifier exists means that the docker container is running
+
+	$result = $global_harnessing_identifiers->{$harnessing_identifier};
+    }
+
+    # return the result
+
+    return $result;
 }
 
 
