@@ -19,6 +19,7 @@ my $test
 						   white_space1 => 'convert seen \\x0d \\x0a to \\x0a newlines',
 						  },
 						 ],
+				command_user => 'neurospaces',
 				description => "showing that the container works: working directory",
 			       },
 			       {
@@ -705,6 +706,75 @@ workflow-test/workflow-tests-commands
 						 ],
 				description => 'showing that the container works: creation of an archive of a configuration',
 			       },
+			       {
+				command => 'cd ~ && mkdir -vp ~/projects/workflow-configuration',
+				command_tests => [
+						  {
+						   description => "Can we create create the directories for installing an archived workflow configuration, inside the container ?",
+						   read => 'mkdir: created directory \'/home/neurospaces2/projects\'
+mkdir: created directory \'/home/neurospaces2/projects/workflow-configuration\'
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: preparation to install an archived workflow configuration',
+			       },
+			       {
+				command => 'cd ~/projects/workflow-configuration && tar xvfz /tmp/wtw.tar.gz',
+				command_tests => [
+						  {
+						   description => "Can we unpack an archived workflow configuration, inside the container ?",
+						   read => 'workflow-test/workflow-project.pl
+workflow-test/workflow-tests-bash-completion.sh
+workflow-test/workflow-tests-configuration-data/targets.yml
+workflow-test/workflow-tests-configuration-data/command_filenames.yml
+workflow-test/workflow-tests-configuration-data/target_servers.yml
+workflow-test/workflow-tests-configuration-data/build_servers.yml
+workflow-test/workflow-tests-configuration-data/node_configuration.yml
+workflow-test/conf.workflow-tests-workflow
+workflow-test/conf.workflow-tests-configuration
+workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
+workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
+workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
+workflow-test/workflow-tests-configuration
+workflow-test/workflow-tests-commands
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: unpacking an archived workflow configuration',
+			       },
+			       {
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands',
+				command_tests => [
+						  {
+						   description => "Can we install an unpacked workflow configuration, inside the container ?",
+						   read => '# mkdir --parents /home/neurospaces2/bin
+#
+# ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
+#
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/./workflow-tests-configuration
+#
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/./workflow-tests-commands
+#
+# bash -c "echo \'. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
+\' | cat >>/home/neurospaces2/.bashrc"
+#
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: unpacking an archived workflow configuration',
+			       },
 			      ],
        description => "testing of the workflow automation engine inside a docker container",
        documentation => {
@@ -720,6 +790,7 @@ project-specific workflows that use shell commands.
 		      class => {
 				build => "./tests/specifications/40_workflow-automator/docker-build.bash",
 				comment => 'Enter this container with "sudo docker exec -it workflow_automation_test_container bash"',
+				default_user => 'neurospaces',
 				identifier => 'docker_based_harness',
 				name_container => 'workflow_automation_test_container',
 				name_image => 'workflow_automation_image',
