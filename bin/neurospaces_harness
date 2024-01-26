@@ -871,7 +871,7 @@ sub spawn_new
 
     if ($harness)
     {
-	$command_prefix = $harness->{command_prefix_long};
+	$command_prefix = $harness->generate_command_prefix();
     }
 
     # retrieve the shell command and its arguments
@@ -3551,15 +3551,20 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 	    = {
 	       class => clone($harnessing_class),
 	       description => 'Instantiated',
-	       command_prefix_long => [
-				       'sudo',
-				       'docker',
-				       'exec',
-				       '-it',
-				       $name_container,
-				       'bash',
-				       '-ic',
-				      ],
+	       command_prefix_long => {
+				       const => [
+						 'sudo',
+						 'docker',
+						 'exec',
+						 '-it',
+						],
+				       container_name => $name_container,
+				       prefix_command => [
+							  'bash',
+							  '-ic',
+							 ],
+				       user => $harnessing_class->{default_user} || 'neurospaces',
+				      },
 	       command_prefix_short => [
 					'sudo',
 					'docker',
@@ -3570,6 +3575,8 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 	       preparation => $docker_preparation,
 	       reparation => $docker_reparation,
 	      };
+
+	bless $harness, 'Heterarch::Test::ExecutionContext::Harness';
 
 	$global_harnessing_identifiers->{$harnessing_identifier} = $harness;
 
@@ -3611,6 +3618,28 @@ sub fetch
     # return the result
 
     return $result;
+}
+
+
+sub generate_command_prefix
+{
+    my $self = shift;
+
+    my $context = shift;
+
+    my $command_prefix_long = $self->{command_prefix_long};
+
+    my $const = $command_prefix_long->{const};
+
+    my $container_name = $command_prefix_long->{container_name};
+
+    my $prefix_command = $command_prefix_long->{prefix_command};
+
+    my $user = $command_prefix_long->{user};
+
+    my $command_prefix = [ @$const, '--user', $user, $container_name, @$prefix_command, ];
+
+    return $command_prefix;
 }
 
 
