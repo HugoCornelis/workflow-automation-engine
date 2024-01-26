@@ -871,7 +871,7 @@ sub spawn_new
 
     if ($harness)
     {
-	$command_prefix = $harness->generate_command_prefix();
+	$command_prefix = $harness->generate_command_prefix($command_definition, $execution_context);
     }
 
     # retrieve the shell command and its arguments
@@ -3563,7 +3563,7 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 							  'bash',
 							  '-ic',
 							 ],
-				       user => $harnessing_class->{default_user} || 'neurospaces',
+				       user => $harnessing_class->{default_user},
 				      },
 	       command_prefix_short => [
 					'sudo',
@@ -3625,7 +3625,9 @@ sub generate_command_prefix
 {
     my $self = shift;
 
-    my $context = shift;
+    my $command_definition = shift;
+
+    my $execution_context = shift;
 
     my $command_prefix_long = $self->{command_prefix_long};
 
@@ -3635,7 +3637,9 @@ sub generate_command_prefix
 
     my $prefix_command = $command_prefix_long->{prefix_command};
 
-    my $user = $command_prefix_long->{user};
+    my $user = (exists $command_definition->{command_user}
+		? $command_definition->{command_user}
+		: $command_prefix_long->{user});
 
     my $command_prefix = [ @$const, '--user', $user, $container_name, @$prefix_command, ];
 
