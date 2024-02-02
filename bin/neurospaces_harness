@@ -328,7 +328,7 @@ sub main
 
     # end the execution_context
 
-    $execution_context->terminate();
+    $execution_context->ec_terminate();
 
     # close pending commands
 
@@ -3397,7 +3397,7 @@ sub ec_examine
 }
 
 
-sub terminate
+sub ec_terminate
 {
     my $self = shift;
 
