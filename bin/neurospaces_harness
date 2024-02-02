@@ -318,10 +318,6 @@ sub main
 	my $fd_module_output = $global_fd_output;
 
 	my $error = $module_definition->md_run($execution_context, $executor, $fd_module_output);
-
-	# increment module definition test count
-
-	$global_test_report->{global}->{test_counters}->{module_definition}++;
     }
 
     $global_test_report->{global}->{time_end} = `date`;
@@ -4554,6 +4550,10 @@ sub md_run
 		    );
 	}
     }
+
+    # increment module definition test count
+
+    $global_test_report->{global}->{test_counters}->{module_definition}++;
 
     # return result: execution completed
 
