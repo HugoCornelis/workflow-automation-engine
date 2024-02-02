@@ -676,30 +676,30 @@ tar_filename: /tmp/wtw.tar.gz
 				description => 'showing that the container works: creation of an archive of a configuration',
 			       },
 			       {
-				command => 'tar tfz /tmp/wtw.tar.gz',
+				command => 'tar tfz /tmp/wtw.tar.gz | sort',
 				command_tests => [
 						  {
 						   description => "Can we find the archive of the configuration in the tarball, inside the container ?",
-						   read => 'workflow-test/workflow-project.pl
-workflow-test/workflow-tests-bash-completion.sh
-workflow-test/workflow-tests-configuration-data/targets.yml
-workflow-test/workflow-tests-configuration-data/command_filenames.yml
-workflow-test/workflow-tests-configuration-data/target_servers.yml
-workflow-test/workflow-tests-configuration-data/build_servers.yml
-workflow-test/workflow-tests-configuration-data/node_configuration.yml
+						   read => 'workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
-workflow-test/conf.workflow-tests-configuration
-workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
-workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
-workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
-workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
-workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
-workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
-workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
-workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
-workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
-workflow-test/workflow-tests-configuration
+workflow-test/workflow-project.pl
+workflow-test/workflow-tests-bash-completion.sh
 workflow-test/workflow-tests-commands
+workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
+workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
+workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
+workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+workflow-test/workflow-tests-configuration
+workflow-test/workflow-tests-configuration-data/build_servers.yml
+workflow-test/workflow-tests-configuration-data/command_filenames.yml
+workflow-test/workflow-tests-configuration-data/node_configuration.yml
+workflow-test/workflow-tests-configuration-data/target_servers.yml
+workflow-test/workflow-tests-configuration-data/targets.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -725,26 +725,26 @@ mkdir: created directory \'/home/neurospaces2/projects/workflow-configuration\'
 				command_tests => [
 						  {
 						   description => "Can we unpack an archived workflow configuration, inside the container ?",
-						   read => 'workflow-test/workflow-project.pl
-workflow-test/workflow-tests-bash-completion.sh
-workflow-test/workflow-tests-configuration-data/targets.yml
-workflow-test/workflow-tests-configuration-data/command_filenames.yml
-workflow-test/workflow-tests-configuration-data/target_servers.yml
-workflow-test/workflow-tests-configuration-data/build_servers.yml
-workflow-test/workflow-tests-configuration-data/node_configuration.yml
+						   read => 'workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
-workflow-test/conf.workflow-tests-configuration
-workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
-workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
-workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
-workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
-workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
-workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
-workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
-workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
-workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
-workflow-test/workflow-tests-configuration
+workflow-test/workflow-project.pl
+workflow-test/workflow-tests-bash-completion.sh
 workflow-test/workflow-tests-commands
+workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
+workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
+workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
+workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+workflow-test/workflow-tests-configuration
+workflow-test/workflow-tests-configuration-data/build_servers.yml
+workflow-test/workflow-tests-configuration-data/command_filenames.yml
+workflow-test/workflow-tests-configuration-data/node_configuration.yml
+workflow-test/workflow-tests-configuration-data/target_servers.yml
+workflow-test/workflow-tests-configuration-data/targets.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },

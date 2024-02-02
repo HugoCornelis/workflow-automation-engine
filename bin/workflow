@@ -1808,7 +1808,7 @@ sub builtin_archive_configuration
 
 	my $tar = Archive::Tar->new();
 
-	$tar->add_files(@$scripts);
+	$tar->add_files(sort @$scripts);
 
 	$tar->write($tar_filename, $compression);
 
