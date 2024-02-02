@@ -1865,6 +1865,7 @@ sub builtin_install_scripts
     my $option_install_engine = 'by default';
     my $option_install_force;
     my $option_install_git;
+    my $option_install_path_in_bashrc;
     my $option_install_report;
 
     our $install_options
@@ -1875,6 +1876,7 @@ sub builtin_install_scripts
 	   "engine!" => \$option_install_engine,
 	   "force!" => \$option_install_force,
 	   "git!" => \$option_install_git,
+	   "path-in-bashrc!" => \$option_install_path_in_bashrc,
 	   "report!" => \$option_install_report,
 	  };
 
@@ -1915,6 +1917,43 @@ sub builtin_install_scripts
     }
 
     my $command_mkdir = "mkdir --parents $ENV{HOME}/bin";
+
+    # add the ~/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
+
+    if ($option_install_path_in_bashrc)
+    {
+	# export PATH="$HOME/bin:$PATH"
+
+	my $bin_path_marker = 'export PATH="$HOME/bin:$PATH"';
+
+	my $bin_path_additions
+	    = '# necessary for $project_name-workflow
+
+export PATH="$HOME/bin:$PATH"
+
+';
+
+	my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $bin_path_marker);
+
+	if ($option_verbose)
+	{
+	    if (not $bashrc_matches)
+	    {
+		print "$global_program_name: all_install_scripts: .bashrc already $bin_path_marker\n";
+	    }
+	    else
+	    {
+		print "$global_program_name: all_install_scripts: .bashrc does not have $bin_path_marker, installing it\n";
+	    }
+	}
+
+	if (not $bashrc_matches)
+	{
+	    {
+		_file_append_string("$ENV{HOME}/.bashrc", $bin_path_additions);
+	    }
+	}
+    }
 
     execute_shell_command($command_mkdir);
 
@@ -2078,11 +2117,11 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
 	{
 	    if (not $bashrc_matches)
 	    {
-		print "$global_program_name: all_install_scripts: .bashrc does not match\n";
+		print "$global_program_name: all_install_scripts: .bashrc has the correct alias definitions\n";
 	    }
 	    else
 	    {
-		print "$global_program_name: all_install_scripts: .bashrc matches\n";
+		print "$global_program_name: all_install_scripts: .bashrc does not have the correct alias definitions, installing them\n";
 	    }
 	}
 
@@ -2229,6 +2268,7 @@ options:
     --engine           create a symbolic link to the workflow engine in ~/bin.
     --force            don't use this.
     --git              create a git repository for the workflow configuration.
+    --path-in-bashrc   update .bashrc to include ~/bin in PATH.
     --report           report on what is being done.
 
 Note that grc configuration files will also be installed and configured.

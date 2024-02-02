@@ -753,7 +753,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				description => 'showing that the container works: unpacking an archived workflow configuration',
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands --path-in-bashrc',
 				command_tests => [
 						  {
 						   description => "Can we install an unpacked workflow configuration, inside the container ?",
