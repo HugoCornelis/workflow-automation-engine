@@ -2639,6 +2639,18 @@ sub _pop_preparation_result
 }
 
 
+sub _top_preparation_result
+{
+    my $self = shift;
+
+    my $path = $self->{preparation_result};
+
+    my $result = $path->[$#$path];
+
+    return $result;
+}
+
+
 sub ec_end
 {
     my $self = shift;
