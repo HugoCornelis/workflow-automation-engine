@@ -4585,6 +4585,19 @@ sub md_run
 
 package Heterarch::Test::Output;
 
+#
+# An Heterarch::Test::Output is an Heterarch::Test::Executor that
+# generates output rather than executing tests.  The
+# Heterarch::Test::Executor provides a link with the execution context
+# and implements ->ex_mo_prepare(), ->ex_cd_start() and ->ex_ct_run()
+# methods that call the appropriate module, command_definition and
+# command_test methods for implementing test execution.
+#
+# The Heterarch::Test::Output implements ->ex_mo_prepare(),
+# ex_cd_start() and ex_ct_run() methods to select content and prepare
+# a structure for generating output of different format (HTML, XML,
+# Yaml, Ascii).
+#
 
 our @ISA = ("Heterarch::Test::Executor");
 
