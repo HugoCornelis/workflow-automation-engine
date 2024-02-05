@@ -753,11 +753,17 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				description => 'showing that the container works: unpacking an archived workflow configuration',
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands --path-in-bashrc',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --engine --commands --path-in-bashrc',
 				command_tests => [
 						  {
 						   description => "Can we install an unpacked workflow configuration, inside the container ?",
-						   read => '# mkdir --parents /home/neurospaces2/bin
+						   read => '# bash -c "echo \'# necessary for $project_name-workflow
+
+export PATH=\"$HOME/bin:$PATH\"
+
+\' | cat >>/home/neurospaces2/.bashrc"
+#
+# mkdir --parents /home/neurospaces2/bin
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
 #
@@ -765,10 +771,17 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 #
 # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/./workflow-tests-commands
 #
+# bash -c "echo \'# workflow-tests-workflow
+
+alias workflow-tests-workflow=\"grc workflow-tests-workflow\"
+alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
+\' | cat >>/home/neurospaces2/.bashrc"
+#
 # bash -c "echo \'. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces2/.bashrc"
 #
 ',
+						   wait => 1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
