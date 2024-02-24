@@ -1799,6 +1799,7 @@ sub builtin_archive_configuration
 
 	my $scripts
 	    = [
+	       sort
 	       map
 	       {
 		   chomp; $_;
@@ -1808,7 +1809,7 @@ sub builtin_archive_configuration
 
 	my $tar = Archive::Tar->new();
 
-	$tar->add_files(sort @$scripts);
+	$tar->add_files(@$scripts);
 
 	$tar->write($tar_filename, $compression);
 
@@ -1855,7 +1856,7 @@ arguments:
 
 sub builtin_install_scripts
 {
-    use Data::Dumper;
+#     use Data::Dumper;
 
 #     print Dumper(\@_);
 

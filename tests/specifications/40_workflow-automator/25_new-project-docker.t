@@ -648,26 +648,26 @@ global_field_project_configuration:
 ---
 CWD: /home/neurospaces
 scripts:
+  - workflow-test/conf.workflow-tests-configuration
+  - workflow-test/conf.workflow-tests-workflow
   - workflow-test/workflow-project.pl
   - workflow-test/workflow-tests-bash-completion.sh
-  - workflow-test/workflow-tests-configuration-data/targets.yml
-  - workflow-test/workflow-tests-configuration-data/command_filenames.yml
-  - workflow-test/workflow-tests-configuration-data/target_servers.yml
-  - workflow-test/workflow-tests-configuration-data/build_servers.yml
-  - workflow-test/workflow-tests-configuration-data/node_configuration.yml
-  - workflow-test/conf.workflow-tests-workflow
-  - workflow-test/conf.workflow-tests-configuration
-  - workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
-  - workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
-  - workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
-  - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
-  - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
-  - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
-  - workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
-  - workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
-  - workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
-  - workflow-test/workflow-tests-configuration
   - workflow-test/workflow-tests-commands
+  - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+  - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+  - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+  - workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
+  - workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
+  - workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
+  - workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+  - workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+  - workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+  - workflow-test/workflow-tests-configuration
+  - workflow-test/workflow-tests-configuration-data/build_servers.yml
+  - workflow-test/workflow-tests-configuration-data/command_filenames.yml
+  - workflow-test/workflow-tests-configuration-data/node_configuration.yml
+  - workflow-test/workflow-tests-configuration-data/target_servers.yml
+  - workflow-test/workflow-tests-configuration-data/targets.yml
 tar_filename: /tmp/wtw.tar.gz
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
