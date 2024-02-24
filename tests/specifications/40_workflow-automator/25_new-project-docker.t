@@ -753,11 +753,30 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				description => 'showing that the container works: unpacking an archived workflow configuration',
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --engine --commands --path-in-bashrc',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --engine --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
+						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
 						   description => "Can we install an unpacked workflow configuration, inside the container ?",
 						   read => '# bash -c "echo \'# necessary for $project_name-workflow
+
+export PATH=\"$HOME/bin:$PATH\"
+
+\' | cat >>/home/neurospaces2/.bashrc"
+#
+# mkdir --parents /home/neurospaces2/bin
+#
+# ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
+#
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/./workflow-tests-configuration
+#
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/./workflow-tests-commands
+#
+# bash -c "echo \'. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
+\' | cat >>/home/neurospaces2/.bashrc"
+#
+',
+						   read_with_aliasses => '# bash -c "echo \'# necessary for $project_name-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
 
@@ -786,7 +805,68 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: unpacking an archived workflow configuration',
+				description => 'showing that the container works: installing a  workflow configuration',
+			       },
+			       {
+				command => 'workflow-tests-workflow builtin print_configuration_directory',
+				command_tests => [
+						  {
+						   description => "Is the installed workflow configuration found and correct, inside the container ?",
+						   read => '
+global_field_project_configuration:
+  field_project_name: workflow-tests
+  from_executable: dynamically_generated from the executable script name
+  technical_project_configuration_directory: /home/neurospaces2/bin
+  technical_project_configuration_filename: /home/neurospaces2/bin/workflow-tests-configuration
+  true_technical_project_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test
+  true_technical_project_configuration_filename: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration
+  true_technical_project_data_commands_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
+  true_technical_project_data_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration-data
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: testing an new installed workflow configuration',
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion" 1',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate bash completion strings for the options for the new installed configuration, inside the container ?",
+						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: generation of bash completion strings for the options for the new installed configuration',
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion " 0',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate bash completion strings for the targets for the new installed configuration, inside the container ?",
+						   read => 'a --b builtin examples examples_sh examples_yml',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: generation of bash completion strings for the targets for the new installed configuration',
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion builtin " 2',
+				command_tests => [
+						  {
+						   comment => "the expected output is missing the first two dashes that introduce the first option",
+						   description => "Can we generate bash completion strings for the commands for the new installed configuration, inside the container ?",
+						   read => 'a --b add_target archive_configuration install_scripts print_configuration_directory start_project',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				command_user => 'neurospaces2',
+				description => 'showing that the container works: generation of bash completion strings for the commands for the new installed configuration',
 			       },
 			      ],
        description => "testing of the workflow automation engine inside a docker container",
