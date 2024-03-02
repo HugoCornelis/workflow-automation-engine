@@ -530,7 +530,7 @@ sub report_exit
     }
     else
     {
-	print $global_fd_output "*** Info: See '$report_filename' for the detailed test report\n";
+	print $global_fd_output "*** Info: See '$report_filename' for the detailed report\n";
     }
 
     # if email enabled by the options
