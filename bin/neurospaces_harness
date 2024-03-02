@@ -3469,13 +3469,28 @@ sub wait
 
 package Heterarch::Test::ExecutionContext::Harness;
 
-my $global_harnessing_identifiers = {};
-
 my $global_active_harness_identifiers = [];
+
+my $global_harnessing_identifiers = {};
 
 
 sub current
 {
+    if (defined $option_debugging
+	and $option_debugging eq 'harnessing')
+    {
+	use YAML;
+
+	print Dump(
+		   {
+		    option_debugging => {
+					 global_active_harness_identifiers => $global_active_harness_identifiers,
+					 global_harnessing_identifiers => $global_harnessing_identifiers,
+					},
+		   },
+		  );
+    }
+
     my $active_harness_identifier
 	= $global_active_harness_identifiers->[$#$global_active_harness_identifiers];
 
@@ -3513,6 +3528,8 @@ sub create_or_fetch
 	my $docker_preparer
 	    = (sub
 	       {
+		   # build the container
+
 		   system "$build";
 
 		   if ($?)
@@ -3520,8 +3537,12 @@ sub create_or_fetch
 		       return 'docker_preparer build command failed';
 		   }
 
+		   # try to stop and remove a previous container of the same name
+
 		   system "sudo docker container stop $name_container";
 		   system "sudo docker container rm $name_container";
+
+		   # start the newly built container
 
 		   system "sudo docker run -d -t --name $name_container $name_image";
 
