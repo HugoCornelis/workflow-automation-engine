@@ -66,6 +66,8 @@ var
 	    harnessing => {
 			   class => {
 				     build => "./tests/specifications/70_harness/docker-build.bash",
+				     comment => 'Enter this container with "sudo docker exec -it docker_test_container bash"',
+				     default_user => 'neurospaces',
 				     identifier => 'docker_based_harness',
 				     name_container => 'docker_test_container',
 				     name_image => 'docker_neurospaces_harness_test_image',
@@ -83,7 +85,7 @@ Specific clauses in these specifications are used to prepare and
 restore the test environment prior to test execution.
 
 This test module implement tests that use a docker container to
-separate the test environment from the developer's environment..
+separate the test environment from the developer's environment.
 
 ",
 			      purpose => "Docker test environment.",

@@ -3091,6 +3091,8 @@ sub _preparation
 		       : "module '$module_definition->{name}'");
 
 		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparation $preparation_name was already executed ($preparation->{description})");
+
+		$preparation_result = $preparation_harness->{preparation_result};
 	    }
 	    elsif ($preparation_harness->{description} eq 'Instantiated')
 	    {
@@ -3111,6 +3113,8 @@ sub _preparation
 
 		$preparation_result = _prepare_engine($preparer, 'preparation');
 
+		$preparation_harness->{preparation_result} = $preparation_result;
+
 		# if the preparer returned an error string
 
 		my $preparation_error;
@@ -3120,6 +3124,8 @@ sub _preparation
 		    # obtain the error string
 
 		    $preparation_error = $$preparation_result;
+
+		    $preparation_harness->{preparation_error} = $preparation_error;
 		}
 
 		# process errors
