@@ -40,11 +40,13 @@ my $test
 				command_tests => [
 						  {
 						   description => "Can we generate configure scripts in the Docker container ?",
+						   tags => [ 'manual' ],
 						   wait => 1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: generation of configure scripts",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./configure',
@@ -84,11 +86,13 @@ checking that generated files are newer than configure... done
 : creating ./config.status
 config.status: creating Makefile
 ',
+						   tags => [ 'manual' ],
 						   timeout => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: configuration of the workflow automation engine",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && make',
@@ -99,11 +103,13 @@ config.status: creating Makefile
 make[1]: Nothing to be done for \'all-am\'.
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ',
+						   tags => [ 'manual' ],
 						   timeout => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: build of the workflow automation engine",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && sudo make install',
@@ -176,11 +182,13 @@ make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-eng
 # make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 # make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 # ',
+						   tags => [ 'manual' ],
 						   wait => 5,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: installation of the workflow automation engine",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow --help',
@@ -302,10 +310,12 @@ Then check if they work by inspecting the examples they provide (with various op
 
   workflow-tests-workflow examples array_of_commands --help
 ',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: start of a new project",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd workflow-test && find . | sort',
@@ -372,10 +382,12 @@ Then check if they work by inspecting the examples they provide (with various op
 						   description => "Can we rename the project configuration files to activate the project inside the container ?",
 						   read => 'renamed \'workflow-project-template.pl\' -> \'workflow-project.pl\'
 ',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: rename the field project file to its final name",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd workflow-test && workflow --help-field-project-name',
@@ -432,22 +444,26 @@ conf.workflow-tests-configuration
 # sudo     ln -sf /home/neurospaces/workflow-test/conf.workflow-tests-workflow /usr/share/grc/conf.workflow-tests-workflow
 #
 ',
+						   tags => [ 'manual' ],
 						   wait => 0.1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: correct installation of the new project files",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/neurospaces/bin" >>~/.bashrc',
 				command_tests => [
 						  {
 						   description => "Can we update .bashrc to make sure that the project specific workflow engine is found inside the container ?",
+						   tags => [ 'manual' ],
 						   wait => 0.1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: update .bashrc to make sure that the project specific workflow engine is found",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd workflow-test && workflow-tests-workflow --help-commands',
@@ -500,10 +516,12 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow examples_yml remote_execution --help
   - workflow-tests-workflow examples_yml single_command --help
 ',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => "showing that the container works: correct installation of the new project commands",
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow examples_sh sh_single_command --dry-run',
@@ -554,10 +572,12 @@ an example of the invocation of a single command
 						   wait => 1,
 						   read => 'workflow-tests-workflow: added target new_target to /home/neurospaces/workflow-test/workflow-tests-configuration-data/targets.yml
 workflow-tests-workflow: created the shell command file for target new_target',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => 'showing that the container works: can we add new targets with a shell template file for their commands ?',
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow builtin add_target -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
@@ -670,10 +690,12 @@ scripts:
   - workflow-test/workflow-tests-configuration-data/targets.yml
 tar_filename: /tmp/wtw.tar.gz
 ',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				description => 'showing that the container works: creation of an archive of a configuration',
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'tar tfz /tmp/wtw.tar.gz | sort',
@@ -746,11 +768,13 @@ workflow-test/workflow-tests-configuration-data/node_configuration.yml
 workflow-test/workflow-tests-configuration-data/target_servers.yml
 workflow-test/workflow-tests-configuration-data/targets.yml
 ',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				command_user => 'neurospaces2',
 				description => 'showing that the container works: unpacking an archived workflow configuration',
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --engine --commands --path-in-bashrc --no-aliasses',
@@ -800,12 +824,14 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 \' | cat >>/home/neurospaces2/.bashrc"
 #
 ',
+						   tags => [ 'manual' ],
 						   wait => 1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				command_user => 'neurospaces2',
 				description => 'showing that the container works: installing a  workflow configuration',
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow builtin print_configuration_directory',
@@ -823,11 +849,13 @@ global_field_project_configuration:
   true_technical_project_data_commands_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
   true_technical_project_data_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration-data
 ',
+						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				command_user => 'neurospaces2',
 				description => 'showing that the container works: testing an new installed workflow configuration',
+				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion" 1',
@@ -891,6 +919,7 @@ project-specific workflows that use shell commands.
 			       },
 		     },
        name => '40_workflow-automator/25_new-project-docker.t',
+       tags => [ 'manual' ],
       };
 
 
