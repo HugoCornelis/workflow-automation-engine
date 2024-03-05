@@ -15,15 +15,41 @@ our $global_technical_project_configuration;
 package Command;
 
 
-sub documentation_build
+my $workflow_project_directory = "$ENV{HOME}/projects/workflow-automation-engine/source/snapshots/master";
+
+
+sub _documentation_build
 {
+    my $tags = shift;
+
+    my $command_line_tags = $tags ? "--tags " . (join ' ', @$tags) : '';
+
     my $commands
 	= [
-	   "cd /home/hugo/projects/workflow-automation-engine/source/snapshots/master",
-	   "neurospaces_harness --output-pdf --output-figures --verbose --output-content-line-limit 3000",
+	   "cd $workflow_project_directory",
+	   "neurospaces_harness --output-pdf --output-figures --verbose --output-content-line-limit 3000 $command_line_tags",
 	  ];
 
     execute_shell_command_array($commands);
+}
+
+
+sub _documentation_show
+{
+    my $commands
+	= [
+	   "setsid okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf >/dev/null 2>&1 < /dev/null &"
+
+# 	   "nohup okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub documentation_build
+{
+    _documentation_build();
 }
 
 
@@ -40,18 +66,25 @@ Note: This command converts the regression test specifications first to latex, t
 }
 
 
+sub documentation_build_manual
+{
+    _documentation_build( [ 'manual' ] );
+}
+
+
+sub documentation_build_manual_show
+{
+    documentation_build_manual();
+
+    _documentation_show();
+}
+
+
 sub documentation_build_show
 {
     documentation_build();
 
-    my $commands
-	= [
-	   "setsid okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf >/dev/null 2>&1 < /dev/null &"
-
-# 	   "nohup okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf",
-	  ];
-
-    execute_shell_command_array($commands);
+    _documentation_show();
 }
 
 
