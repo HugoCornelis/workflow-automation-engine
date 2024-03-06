@@ -8,7 +8,7 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => 'workflow --help',
+				command => '../bin/workflow --help',
 				command_tests => [
 						  {
 						   description => "Do we get the main help page ?",
@@ -187,7 +187,7 @@ The workflow script enables the automation of customizable modular
 project-specific workflows that use system shell commands.
 
 ",
-			 purpose => "This module tests the workflow automation engine.",
+			 purpose => "This module tests the help pages of the workflow automation engine.",
 			},
        harnessing => {
 		      preparation => {

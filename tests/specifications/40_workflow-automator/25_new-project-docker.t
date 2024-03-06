@@ -909,7 +909,7 @@ project-specific workflows that use shell commands.
 			},
        harnessing => {
 		      class => {
-				build => "./tests/specifications/40_workflow-automator/docker-build.bash",
+				build => "./tests/specifications/dockerfiles/docker-build.bash",
 				comment => 'Enter this container with "sudo docker exec -it workflow_automation_test_container bash"',
 				default_user => 'neurospaces',
 				identifier => 'docker_based_harness',

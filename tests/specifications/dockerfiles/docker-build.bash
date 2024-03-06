@@ -8,16 +8,16 @@ GROUP_ID=`id -g`
 
 WORKING_DIRECTORY=`pwd`
 
-echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_directory $WORKING_DIRECTORY from directory $SCRIPTPATH"
+DOCKERFILE="./tests/specifications/dockerfiles/Dockerfile.workflow"
 
-echo "Docker file is "`ls ./tests/specifications/40_workflow-automator/Dockerfile*`
+echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_directory $WORKING_DIRECTORY from directory $SCRIPTPATH"
 
 #t should do error checking here, but actually in the tester harness
 
 sudo docker image prune -f
 sudo docker build \
     --tag workflow_automation_image \
-    --file ./tests/specifications/40_workflow-automator/Dockerfile.neurospaces-testing \
+    --file $DOCKERFILE \
     .
 
     # --build-arg USER_NAME=$USER_NAME \
