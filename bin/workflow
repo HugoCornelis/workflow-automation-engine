@@ -1542,13 +1542,13 @@ sub builtin_add_target
 {
     my $option_install_command_pl;
     my $option_install_command_sh;
-    my $option_install_command_yml;
+    # my $option_install_command_yml;
 
     our $install_options
       = {
 	 "install-commands-pl!" => \$option_install_command_pl,
 	 "install-commands-sh!" => \$option_install_command_sh,
-	 "install-commands-yml!" => \$option_install_command_yml,
+	 # "install-commands-yml!" => \$option_install_command_yml,
 	};
 
     use Getopt::Long qw(GetOptionsFromArray);;
@@ -1700,15 +1700,15 @@ sub builtin_add_target
 	}
     }
 
-    if ($option_install_command_yml)
-    {
-	if (not $error)
-	{
-	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
+    # if ($option_install_command_yml)
+    # {
+    # 	if (not $error)
+    # 	{
+    # 	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
 
-	    print "$global_program_name: created the yml command file for target $target_name\n";
-	}
-    }
+    # 	    print "$global_program_name: created the yml command file for target $target_name\n";
+    # 	}
+    # }
 
     # return errors
 
