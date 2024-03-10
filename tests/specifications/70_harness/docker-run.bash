@@ -8,9 +8,9 @@ mkdir -p $BUILD_CACHE_DIR
 
 echo "*** Removing the previous neurospaces container"
 
-sudo docker stop neurospaces_interactive
-sudo docker container rm neurospaces_interactive
-sudo docker container prune -f
+docker stop neurospaces_interactive
+docker container rm neurospaces_interactive
+docker container prune -f
 
 USER_NAME=`id -un`
 USER_ID=`id -u`
@@ -26,14 +26,14 @@ echo "*** GROUP_ID=$GROUP_ID"
 
 echo "*** WORKING_DIRECTORY=$WORKING_DIRECTORY"
 
-sudo docker run -d -t --name neurospaces_interactive \
+docker run -d -t --name neurospaces_interactive \
     -v $DOWNLOAD_DIR:/home/$USER_NAME/image/poky/build/downloads \
     -v $BUILD_CACHE_DIR:/home/$USER_NAME/image/poky/build \
     -v $WORKING_DIRECTORY:$WORKING_DIRECTORY \
     neurospaces_image
 
-sudo docker ps
+docker ps
 
 echo "*** Entering the neurospaces container"
 
-sudo docker exec -it --workdir $WORKING_DIRECTORY neurospaces_interactive bash
+docker exec -it --workdir $WORKING_DIRECTORY neurospaces_interactive bash

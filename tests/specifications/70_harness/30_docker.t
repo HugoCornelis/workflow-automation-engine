@@ -66,7 +66,7 @@ var
 	    harnessing => {
 			   class => {
 				     build => "./tests/specifications/70_harness/docker-build.bash",
-				     comment => 'Enter this container with "sudo docker exec -it docker_test_container bash"',
+				     comment => 'Enter this container with "docker exec -it docker_test_container bash"',
 				     default_user => 'neurospaces',
 				     identifier => 'docker_based_harness',
 				     name_container => 'docker_test_container',

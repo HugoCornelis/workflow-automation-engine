@@ -3619,6 +3619,8 @@ sub create_or_fetch
 
     my $result;
 
+    my $docker_command = "docker";
+
     # if this was not executed yet
 
     if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
@@ -3645,12 +3647,12 @@ sub create_or_fetch
 
 		   # try to stop and remove a previous container of the same name
 
-		   system "sudo docker container stop $name_container";
-		   system "sudo docker container rm $name_container";
+		   system "$docker_command container stop $name_container";
+		   system "$docker_command container rm $name_container";
 
 		   # start the newly built container
 
-		   system "sudo docker run -d -t --name $name_container $name_image";
+		   system "$docker_command run -d -t --name $name_container $name_image";
 
 		   # make the docker harness available by pushing it
 
@@ -3669,9 +3671,9 @@ sub create_or_fetch
 		   pop @$global_active_harness_identifiers;
 
 		   print "The Docker container is still running.\n
-You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
+You can enter it by executing '$docker_command exec -it $name_container bash'.\n\n";
 
-		   system "sudo docker container ls";
+		   system "$docker_command container ls";
 
 		   # return no errors
 
@@ -3692,14 +3694,15 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 
 	use Clone 'clone';
 
+	my $docker_command_array = [ 'docker', ];
+
 	my $harness
 	    = {
 	       class => clone($harnessing_class),
 	       description => 'Instantiated',
 	       command_prefix_long => {
 				       const => [
-						 'sudo',
-						 'docker',
+						 @$docker_command_array,
 						 'exec',
 						 '-it',
 						],
@@ -3711,8 +3714,7 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 				       user => $harnessing_class->{default_user},
 				      },
 	       command_prefix_short => [
-					'sudo',
-					'docker',
+					@$docker_command_array,
 					'exec',
 					'-it',
 					$name_container,
@@ -3733,6 +3735,8 @@ You can enter it by executing 'sudo docker exec -it $name_container bash'.\n\n";
 
 	$result = $global_harnessing_identifiers->{$harnessing_identifier};
     }
+
+    # $DB::single = 1;
 
     # return the result
 

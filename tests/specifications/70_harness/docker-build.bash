@@ -12,9 +12,9 @@ echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_d
 
 echo "Docker file is "`ls ./tests/specifications/70_harness/Dockerfile.neurospaces-testing*`
 
-sudo docker image prune -f
+docker image prune -f
 
-sudo docker build \
+docker build \
      --tag docker_neurospaces_harness_test_image \
      --file ./tests/specifications/70_harness/Dockerfile.neurospaces-testing \
      .
