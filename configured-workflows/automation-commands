@@ -18,7 +18,7 @@ package Command;
 our $target_servers = $::global_technical_project_configuration->{target_servers};
 
 
-my $container_enter_command = "sudo docker exec -it workflow_automation_test_container bash";
+my $container_enter_command = "docker exec -it workflow_automation_test_container bash";
 
 sub test_enter
 {

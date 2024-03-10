@@ -14,8 +14,8 @@ echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_d
 
 #t should do error checking here, but actually in the tester harness
 
-sudo docker image prune -f
-sudo docker build \
+docker image prune -f
+docker build \
     --tag workflow_automation_image \
     --file $DOCKERFILE \
     .

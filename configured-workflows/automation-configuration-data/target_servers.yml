@@ -8,7 +8,7 @@ target_servers:
   docker_build:
     description: interaction with the docker build container
     name: docker_build
-    remote_policy: 'sudo docker exec -it --workdir ~/projects/digital-engineering/source/build gitlab_interactive '
+    remote_policy: 'docker exec -it --workdir ~/projects/digital-engineering/source/build gitlab_interactive '
   laptop:
     description: the local computer of the developer
     localuser: yes

@@ -82,7 +82,7 @@ project-specific workflows that use system shell commands.
        harnessing => {
 		      class => {
 				build => "./tests/specifications/dockerfiles/docker-build-errors.bash",
-				comment => 'Enter this container with "sudo docker exec -it workflow_automation_test_container_errors bash"',
+				comment => 'Enter this container with "docker exec -it workflow_automation_test_container_errors bash"',
 				default_user => 'neurospaces',
 				identifier => 'docker_based_harness_errors',
 				name_container => 'workflow_automation_test_container_errors',
