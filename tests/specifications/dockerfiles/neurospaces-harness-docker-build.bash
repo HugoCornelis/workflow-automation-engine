@@ -15,8 +15,8 @@ echo "Docker file is "`ls ./tests/specifications/70_harness/Dockerfile.neurospac
 docker image prune -f
 
 docker build \
-     --tag docker_neurospaces_harness_test_image \
-     --file ./tests/specifications/70_harness/Dockerfile.neurospaces-testing \
+     --tag neurospaces_harness_test_image \
+     --file ./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing \
      .
 
      # --build-arg USER_NAME=$USER_NAME \

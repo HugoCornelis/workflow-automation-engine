@@ -65,12 +65,12 @@ var
 	    description => "docker harness test module",
 	    harnessing => {
 			   class => {
-				     build => "./tests/specifications/70_harness/docker-build.bash",
-				     comment => 'Enter this container with "docker exec -it docker_test_container bash"',
+				     build => "./tests/specifications/dockerfiles/neurospaces-harness-docker-build.bash",
+				     comment => 'Enter this container with "docker exec -it neurospaces_harness_test_container bash"',
 				     default_user => 'neurospaces',
 				     identifier => 'docker_based_harness',
-				     name_container => 'docker_test_container',
-				     name_image => 'docker_neurospaces_harness_test_image',
+				     name_container => 'neurospaces_harness_test_container',
+				     name_image => 'neurospaces_harness_test_image',
 				     type => '',
 				    },
 			  },
