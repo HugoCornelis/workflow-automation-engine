@@ -3636,6 +3636,10 @@ sub create_or_fetch
 	my $docker_preparer
 	    = (sub
 	       {
+		   #! for consistency with the reparer code, should always be undef
+
+		   my $previous_result = shift;
+
 		   # build the container
 
 		   system "$build";
@@ -3666,6 +3670,8 @@ sub create_or_fetch
 	my $docker_reparer
 	    = (sub
 	       {
+		   my $preparation_result = shift;
+
 		   # remove the docker harness
 
 		   pop @$global_active_harness_identifiers;
