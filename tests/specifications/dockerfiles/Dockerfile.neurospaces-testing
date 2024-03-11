@@ -51,8 +51,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     xz-utils \
     zstd
 
+#    libmodule-build-perl
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libyaml-perl \
+    libjson-perl \
+    libfile-find-rule-perl-perl \
     libipc-system-simple-perl \
     libfile-chdir-perl \
     grc

@@ -9,8 +9,6 @@ my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
 
-use Expect;
-
 use Getopt::Long;
 
 use Neurospaces::Tester;;
@@ -908,6 +906,8 @@ sub spawn_new
 	    }
 
 	    # create a new Expect object by spawning a new process with the new command
+
+	    require Expect;
 
 	    $global_exp = Expect->new();
 
