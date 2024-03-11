@@ -3179,7 +3179,14 @@ sub _preparation
 
 	foreach my $preparation_harness (@$all_preparation_harnessess)
 	{
-	    if ($preparation_harness->{description} eq 'Executed')
+	    #! this is currently disabled because of the problems with
+	    #! the @$global_active_harness_identifiers, see the comment
+	    #! below.
+
+	    $preparation_harness->{description} = 'Instantiated';
+
+	    if (($preparation_harness->{description} eq 'Executed')
+		and 0)
 	    {
 		my $preparation = $preparation_harness->{preparation};
 
@@ -3190,9 +3197,17 @@ sub _preparation
 		       ? "command '$command_definition->{command}'"
 		       : "module '$module_definition->{name}'");
 
-		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparation $preparation_name was already executed ($preparation->{description})");
-
 		$preparation_result = $preparation_harness->{preparation_result};
+
+		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparation $preparation_name was already executed with result '$preparation_result' ($preparation->{description})");
+		my $harnessing_class = $preparation_harness->{class};
+
+		my $harnessing_identifier = $harnessing_class->{identifier};
+
+		#! @$global_active_harness_identifiers is a package
+		#! variable that must not be accessed here.
+
+		# push @$global_active_harness_identifiers, $harnessing_identifier;
 	    }
 	    elsif ($preparation_harness->{description} eq 'Instantiated')
 	    {
@@ -3664,7 +3679,7 @@ sub create_or_fetch
 
 		   # return no errors
 
-		   return '';
+		   return 'docker_preparer: executed';
 	       });
 
 	my $docker_reparer
