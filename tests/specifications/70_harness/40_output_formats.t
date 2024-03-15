@@ -146,39 +146,20 @@ make[2]: Entering directory \'/home/neurospaces/projects/developer/source/snapsh
 				     description => "showing that the container works: working directory contents",
 				    },
 				    {
-				     command => 'cd projects/developer/source/snapshots/master && neurospaces_harness --show',
+				     command => 'cd projects/developer/source/snapshots/master && neurospaces_harness --regex docker --report-disabled --show',
 				     command_tests => [
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",
 							read => "
+---
 description:
   command: /usr/local/bin/neurospaces_harness
   name: Test report
   package:
     name: developer
     version: alpha
+disabled: ~
 selected:
-  10_global.t:
-    - description: help message
-      tests:
-        - Is a help message given ?
-    - description: no options
-      tests:
-        - Is an error message given when invoking the build script without options ?
-    - description: help message
-      tests:
-        - Can we set environment variables ?
-    - description: wrong options
-      tests:
-        - Is an error message given when invoking the build script with wrong options ?
-  30_developer.t: []
-  50_downloads.t: []
-  70_harness/10_help.t:
-    - description: help message
-      tests:
-        - Is a help message given ?
-  70_harness/20_preparation.t: []
-  70_harness/25_preparation_checker.t: []
   70_harness/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
@@ -189,64 +170,6 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests:
         - Can we list the root directory in the Docker container ?
-  70_harness/40_output_formats.t:
-    - description: 'showing that the container works: working directory'
-      tests:
-        - Are we in the correct working directory in the Docker container ?
-    - description: cpan installation of Mo
-      tests:
-        - Can we install the Mo cpan module ?
-    - description: cpan installation of Data::Utilities
-      tests:
-        - Can we install the Data::Utilities cpan module ?
-    - description: 'showing that the container works: working directory contents'
-      tests:
-        - Can we list the working directory in the Docker container ?
-    - description: inspecting the commands that are tested
-      tests:
-        - Can we inspect the commands that will be run during the tests ?
-  90_yaml/10_global.t:
-    - description: help message
-      tests:
-        - Is a help message given ?
-    - description: no options
-      tests:
-        - Is an error message given when invoking the build script without options ?
-    - description: help message
-      tests:
-        - Can we set environment variables ?
-    - description: wrong options
-      tests:
-        - Is an error message given when invoking the build script with wrong options ?
-  90_yaml/30_developer.t:
-    - description: 'operate on the developer package, without any compiling and related, verbose dry run mode'
-      tests:
-        - 'Can we operate on the developer package, without any compiling and related, verbose dry run mode ?'
-  90_yaml/50_downloads.t: []
-  90_yaml/70_harness/10_help.t:
-    - description: help message
-      tests:
-        - Is a help message given ?
-  90_yaml/70_harness/70_preparation.t: []
-  90_yaml/70_harness/75_preparation_checker.t: []
-  91_json/10_global.t:
-    - description: help message
-      tests:
-        - Is a help message given ?
-    - description: no options
-      tests:
-        - Is an error message given when invoking the build script without options ?
-    - description: help message
-      tests:
-        - Can we set environment variables ?
-    - description: wrong options
-      tests:
-        - Is an error message given when invoking the build script with wrong options ?
-  91_json/30_developer.t:
-    - description: 'operate on the developer package, without any compiling and related, verbose dry run mode'
-      tests:
-        - 'Can we operate on the developer package, without any compiling and related, verbose dry run mode ?'
-  91_json/50_downloads.t: []
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -256,6 +179,101 @@ No email sent.
 						       },
 						      ],
 				     description => "inspecting the commands that are tested",
+				    },
+				    {
+				     command => 'cd projects/developer/source/snapshots/master && neurospaces_harness --regex docker --show-command-tests --report-disabled',
+				     command_tests => [
+						       {
+							description => "Can we inspect the command tests that will be run ?",
+							read => "
+---
+description:
+  command: /usr/local/bin/neurospaces_harness
+  name: Test report
+  package:
+    name: developer
+    version: alpha
+disabled: ~
+selected:
+  70_harness/30_docker.t:
+    - command: 'pwd '
+    - command: 'ls '
+    - command: ls -1 /
+
+*** Info: See '>/tmp/report_developer.yml' for the detailed report
+No email sent.
+/usr/local/bin/neurospaces_harness: 0 error(s)
+",
+							white_space => 'convert seen 0a to 0d 0a newlines',
+						       },
+						      ],
+				     description => "inspecting the commands used for the tests",
+				    },
+				    {
+				     command => 'cd projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
+				     command_tests => [
+						       {
+							description => "Can we convert the test specifications to a YAML formatted summary ?",
+							read => "
+---
+description:
+  command: /usr/local/bin/neurospaces_harness
+  name: Test report
+  package:
+    name: developer
+    version: alpha
+selected:
+  70_harness/30_docker.t:
+    - description: 'showing that the container works: working directory'
+      tests:
+        - Are we in the correct working directory in the Docker container ?
+    - description: 'showing that the container works: working directory contents'
+      tests:
+        - Can we list the working directory in the Docker container ?
+    - description: 'showing that the container works: root directory contents'
+      tests:
+        - Can we list the root directory in the Docker container ?
+
+*** Info: See '>/tmp/report_developer.yml' for the detailed report
+No email sent.
+/usr/local/bin/neurospaces_harness: 0 error(s)
+",
+							white_space => 'convert seen 0a to 0d 0a newlines',
+						       },
+						      ],
+				     description => "converting the test specifications to a YAML formatted summary",
+				    },
+				    {
+				     command => 'cd projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::List',
+				     command_tests => [
+						       {
+							comment => "It is not entirely clear what exactly Heterarch::Test::Output::List should do and how it can be useful.",
+							description => "Can we list the constructs used in the test specifications ?",
+							read => "
+---
+description:
+  command: /usr/local/bin/neurospaces_harness
+  name: Test report
+  package:
+    name: developer
+    version: alpha
+selected:
+  70_harness/30_docker.t:
+    - description: 'showing that the container works: working directory'
+      tests: []
+    - description: 'showing that the container works: working directory contents'
+      tests: []
+    - description: 'showing that the container works: root directory contents'
+      tests: []
+
+*** Info: See '>/tmp/report_developer.yml' for the detailed report
+No email sent.
+/usr/local/bin/neurospaces_harness: 0 error(s)
+",
+							white_space => 'convert seen 0a to 0d 0a newlines',
+						       },
+						      ],
+				     description => "inspecting the constructs used in the test specifications",
 				    },
 				   ],
 	    comment => "docker harness tests",

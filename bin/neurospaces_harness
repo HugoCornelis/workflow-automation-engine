@@ -7342,6 +7342,8 @@ package Heterarch::Test::Output::Definitions;
 # This list has been developed in a separate emacs-org document.
 #
 
+#t unclear how this was supposed to be used.
+
 our @ISA = ("Heterarch::Test::Output::Summarizer");
 
 
