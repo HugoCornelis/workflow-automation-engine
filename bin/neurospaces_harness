@@ -2765,6 +2765,9 @@ sub ec_end
 
     my $reparation_error = $self->_reparation();
 
+    #t I have the impression this should be implemented through an
+    #t method call rather than an if clause, see also identical comments.
+
     if ($global_test_report->{output_format} eq 'executor')
     {
 	my $fd_output = $self->{fd_output};
@@ -3354,6 +3357,9 @@ sub _reparation
     }
 
     # if there is a reparation clause
+
+    #t I have the impression this should be implemented through an
+    #t method call rather than an if clause, see also identical comments.
 
     if ($global_test_report->{output_format} eq 'executor')
     {
