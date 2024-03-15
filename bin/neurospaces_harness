@@ -3753,15 +3753,11 @@ You can enter it by executing '$docker_command exec -it $name_container bash'.\n
 	bless $harness, 'Heterarch::Test::ExecutionContext::Harness';
 
 	$global_harnessing_identifiers->{$harnessing_identifier} = $harness;
-
-	$result = $global_harnessing_identifiers->{$harnessing_identifier};
     }
-    else
-    {
-	# the harnessing identifier exists means that the docker container is running
 
-	$result = $global_harnessing_identifiers->{$harnessing_identifier};
-    }
+    # the harnessing identifier already existed or has now been created
+
+    $result = $global_harnessing_identifiers->{$harnessing_identifier};
 
     # $DB::single = 1;
 
