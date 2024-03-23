@@ -183,11 +183,11 @@ sub initialize_globals
 				 cpu => (join '', `cat /proc/cpuinfo`),
 				},
 		      packages => {
-				   '/etc/lsb-release' => (join '', `cat /etc/lsb-release`),
-				   autoconf => (join '', `autoconf --version`),
-				   automake => (join '', `automake --version`),
-				   bison => (join '', `bison --version`),
-				   flex => (join '', `flex --version`),
+				   '/etc/lsb-release' => (join '', `cat 2>&1 /etc/lsb-release`),
+				   autoconf => (join '', `autoconf 2>&1 --version`),
+				   automake => (join '', `automake 2>&1 --version`),
+				   bison => (join '', `bison 2>&1 --version`),
+				   flex => (join '', `flex 2>&1 --version`),
 				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
 				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
 				   python => (join '', `python 2>&1 --version`),
@@ -420,6 +420,10 @@ sub parse_options
 
 	    $option_output = "Heterarch::Test::Executor";
 	}
+    }
+    else
+    {
+	$global_test_report->{output_format} = 'not_executor';
     }
 
     if (not scalar @$option_output_levels)
