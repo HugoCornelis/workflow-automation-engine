@@ -1,47 +1,57 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 RUN apt-get update
 RUN apt-get upgrade -y
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils
+
+RUN apt-get update -y
+RUN apt-get upgrade -y
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     locales
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     automake \
     binutils-dev \
-    build-essential \
     cpio \
     cscope \
     gawk \
-    gcc \
     git \
-    libsdl1.2-dev \
     libssl-dev \
     mesa-common-dev \
-    openjdk-11-jre-headless \
     screen \
     socat \
     sudo
 
+#    libsdl1.2-dev \
+#     gcc \
+#     build-essential \
+#     openjdk-11-jre-headless
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     chrpath \
-    cryptsetup-bin \
     debianutils \
     diffstat \
-    emacs \
-    file \
+    file
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    emacs-gtk
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     help2man \
     iputils-ping \
     libcurl4 \
     libegl1-mesa \
-    liblz4-tool \
-    pylint3 \
+    liblz4-tool
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3-git \
     python3-jinja2 \
     python3-pexpect \
     python3-pip \
     python3-subunit \
-    python3.9 \
+    python3 \
     sqlite3 \
     texinfo \
     unzip \
@@ -51,6 +61,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     xz-utils \
     zstd
 
+#    cryptsetup-bin \
+#    pylint3 \
 #    libmodule-build-perl
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
