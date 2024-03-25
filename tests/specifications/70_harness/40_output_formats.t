@@ -234,7 +234,8 @@ No email sent.
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to an HTML website ?",
-							read => '*** die: Can\'t locate object method "process" via package "Heterarch::Test::Output::Formatter::HTMLTable" at /usr/local/bin/neurospaces_harness line 4951.
+							disabled => "Heterarch::Test::Output::Formatter::HTMLTable is not fully implemented.",
+							read => '*** die: Can\'t locate object method "process" via package "Heterarch::Test::Output::Formatter::HTMLTable" at /usr/local/bin/neurospaces_harness line 5165.
 
 *** Info: See \'>/tmp/report_developer.yml\' for the detailed report
 No email sent.
