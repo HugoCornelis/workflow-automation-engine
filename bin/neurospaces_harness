@@ -4,7 +4,6 @@
 
 use strict;
 
-
 my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
@@ -3170,6 +3169,8 @@ sub _preparation
 
 	if (exists $harnessing->{class})
 	{
+	    # create the harness for this identifier
+
 	    my $harnessing_class = $harnessing->{class};
 
 	    my $harnessing_identifier = $harnessing_class->{identifier};
@@ -3186,13 +3187,41 @@ sub _preparation
 
 	foreach my $preparation_harness (@$all_preparation_harnessess)
 	{
+	    my $preparation_name
+		= ($command_definition
+		   ? "command '$command_definition->{command}'"
+		   : "module '$module_definition->{name}'");
+
+	    #! see also the comments below
+
 	    #! this is currently disabled because of the problems with
 	    #! the @$global_active_harness_identifiers, see the comment
 	    #! below.
 
 	    $preparation_harness->{description} = 'Instantiated';
 
-	    if (($preparation_harness->{description} eq 'Executed')
+	    if ((ref $preparation_harness =~ m'Heterarch::Test::ExecutionContext::Harness')
+		and 0)
+	    {
+		# execute the preparation clause
+
+		$preparation_result = $preparation_harness->hs_preparer($self, $fd_output, $preparation_name);
+
+		# my $harnessing_class = $preparation_harness->{class};
+
+		# my $harnessing_identifier = $harnessing_class->{identifier};
+
+		#! @$global_active_harness_identifiers is a package
+		#! variable that must not be accessed here.
+
+		# push @$global_active_harness_identifiers, $harnessing_identifier;
+	    }
+
+	    #! this is currently disabled because of the problems with
+	    #! the @$global_active_harness_identifiers, see the comment
+	    #! below.
+
+	    elsif (($preparation_harness->{description} eq 'Executed')
 		and 0)
 	    {
 		my $preparation = $preparation_harness->{preparation};
@@ -3207,6 +3236,7 @@ sub _preparation
 		$preparation_result = $preparation_harness->{preparation_result};
 
 		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparation $preparation_name was already executed with result '$preparation_result' ($preparation->{description})");
+
 		my $harnessing_class = $preparation_harness->{class};
 
 		my $harnessing_identifier = $harnessing_class->{identifier};
@@ -3236,48 +3266,48 @@ sub _preparation
 		$preparation_result = _prepare_engine($preparer, 'preparation');
 
 		$preparation_harness->{preparation_result} = $preparation_result;
+	    }
 
-		# if the preparer returned an error string
+	    # if the preparer returned an error string
 
-		my $preparation_error;
+	    my $preparation_error;
 
-		if (ref $preparation_result eq 'SCALAR')
-		{
-		    # obtain the error string
+	    if (ref $preparation_result eq 'SCALAR')
+	    {
+		# obtain the error string
 
-		    $preparation_error = $$preparation_result;
+		$preparation_error = $$preparation_result;
 
-		    $preparation_harness->{preparation_error} = $preparation_error;
-		}
+		$preparation_harness->{preparation_error} = $preparation_error;
+	    }
 
-		# process errors
+	    # process errors
 
-		if ($preparation_error)
-		{
-		    my $module_name = $module_definition->{name};
+	    if ($preparation_error)
+	    {
+		my $module_name = $module_definition->{name};
 
-		    my $subdescription
-			= ($command_definition
-			   ? $command_definition->{description}
-			   : $module_definition->{description});
+		my $subdescription
+		    = ($command_definition
+		       ? $command_definition->{description}
+		       : $module_definition->{description});
 
-		    Heterarch::Test::Reporting::report_error_add
-			    (
-			     $fd_output,
-			     {
-			      description => $preparation_name,
-			      error => $preparation_error,
-			      module_name => $module_name,
-			      subdescription => $subdescription,
-			     },
-			    );
+		Heterarch::Test::Reporting::report_error_add
+			(
+			 $fd_output,
+			 {
+			  description => $preparation_name,
+			  error => $preparation_error,
+			  module_name => $module_name,
+			  subdescription => $subdescription,
+			 },
+			);
 
 		    $preparation_harness->{description} = 'In error ($preparation_error)';
-		}
-		else
-		{
-		    $preparation_harness->{description} = 'Executed';
-		}
+	    }
+	    else
+	    {
+		$preparation_harness->{description} = 'Executed';
 	    }
 	}
     }
@@ -3313,6 +3343,8 @@ sub new
 sub _reparation
 {
     my $self = shift;
+
+    my $fd_output = $self->{fd_output};
 
     my $current = $self->_get_current();
 
@@ -3382,27 +3414,51 @@ sub _reparation
 
 	foreach my $reparation_harness (@$all_reparation_harnesses)
 	{
-	    my $reparation = $reparation_harness->{reparation};
+	    if ((ref $reparation_harness =~ m'Heterarch::Test::ExecutionContext::Harness')
+		and 0)
+	    {
+		# execute the preparation clause
 
-	    # give diagnostics
+		my $reparation_name
+		    = ($command_definition
+		       ? "command '$command_definition->{command}'"
+		       : "module '$module_definition->{name}'");
 
-	    my $fd_output = $self->{fd_output};
+		$reparation_error = $reparation_harness->hs_reparer($self, $fd_output, $reparation_name, $preparation_result);
 
-	    my $reparation_description = $reparation->{description};
+		# my $harnessing_class = $reparation_harness->{class};
 
-	    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+		# my $harnessing_identifier = $harnessing_class->{identifier};
 
-	    # execute the reparation clause
+		#! @$global_active_harness_identifiers is a package
+		#! variable that must not be accessed here.
 
-	    my $reparer = $reparation->{reparer};
+		# pop @$global_active_harness_identifiers, $harnessing_identifier;
+	    }
+	    else
+	    {
+		my $reparation = $reparation_harness->{reparation};
 
-	    $reparation_error = _prepare_engine($reparer, 'reparation', $preparation_result);
+		# give diagnostics
+
+		my $reparation_description = $reparation->{description};
+
+		Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+
+		# execute the reparation clause
+
+		my $reparer = $reparation->{reparer};
+
+		$reparation_error = _prepare_engine($reparer, 'reparation', $preparation_result);
+	    }
 
 	    # process errors
 
 	    if ($reparation_error)
 	    {
 		my $module_name = $module_definition->{name};
+
+		my $reparation_description = $reparation->{description};
 
 		my $subdescription
 		    = ($command_definition
@@ -3636,6 +3692,14 @@ sub current
 }
 
 
+# return a harness object.
+#
+# The object is identified by the harnessing_identifier which is
+# externally generated and here given as an argument.
+#
+# It is fetched from a cache or created if it does not exist yet.
+#
+
 sub create_or_fetch
 {
     my $harnessing_class = shift;
@@ -3688,6 +3752,10 @@ sub create_or_fetch
 		   push @$global_active_harness_identifiers, $harnessing_identifier;
 
 		   # return no errors
+
+		   #! the sub should return a user role object that
+		   #! has the interface to generate the necessary prefix
+		   #! for the command that is executed for the test.
 
 		   return 'docker_preparer: executed';
 	       });
@@ -3754,7 +3822,7 @@ You can enter it by executing '$docker_command exec -it $name_container bash'.\n
 	       reparation => $docker_reparation,
 	      };
 
-	bless $harness, 'Heterarch::Test::ExecutionContext::Harness';
+	bless $harness, 'Heterarch::Test::ExecutionContext::Harness::Docker';
 
 	$global_harnessing_identifiers->{$harnessing_identifier} = $harness;
     }
@@ -3820,6 +3888,152 @@ sub generate_command_prefix
     my $command_prefix = [ @$const, '--user', $user, $container_name, @$prefix_command, ];
 
     return $command_prefix;
+}
+
+
+package Heterarch::Test::ExecutionContext::Harness::Docker;
+
+our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
+
+
+sub docker_preparer
+{
+    my $self = shift;
+
+    #! for consistency with the reparer code, should always be undef
+
+    my $previous_result = shift;
+
+    # build the container
+
+    my $harness_class = $self->{class};
+
+    my $build = $harness_class->{build};
+
+    system "$build";
+
+    if ($?)
+    {
+	return 'docker_preparer build command failed';
+    }
+
+    # try to stop and remove a previous container of the same name
+
+    my $docker_command = "docker";
+
+    my $name_container = $harness_class->{name_container};
+
+    system "$docker_command container stop $name_container";
+    system "$docker_command container rm $name_container";
+
+    # start the newly built container
+
+    my $name_image = $harness_class->{name_image};
+
+    system "$docker_command run -d -t --name $name_container $name_image";
+
+    # make the docker harness available by pushing it
+
+    #! I believe the $global_active_harness_identifiers global should
+    #! be moved to the execution_context class
+
+    my $harnessing_identifier = $harness_class->{identifier};
+
+    push @$global_active_harness_identifiers, $harnessing_identifier;
+
+    # return no errors
+
+    #! the sub should return a user role object that
+    #! has the interface to generate the necessary prefix
+    #! for the command that is executed for the test.
+
+    return 'docker_preparer: executed';
+}
+
+
+sub docker_reparer
+{
+    my $self = shift;
+
+    my $preparation_result = shift;
+
+    # remove the docker harness
+
+    #! I believe the $global_active_harness_identifiers global should
+    #! be moved to the execution_context class
+
+    my $harnessing_identifier = pop @$global_active_harness_identifiers;
+
+    my $harness_class = $self->{class};
+
+    my $docker_command = "docker";
+
+    my $name_container = $harness_class->{name_container};
+
+    print "The Docker container is still running.\n
+You can enter it by executing '$docker_command exec -it $name_container bash'.\n\n";
+
+    system "$docker_command container ls";
+
+    # return no errors
+
+    return '';
+}
+
+
+sub hs_preparer
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $preparation_name = shift;
+
+    my $preparation = $self->{preparation};
+
+    # give diagnostics
+
+    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
+
+    # execute the preparation clause
+
+    my $preparation_result = $self->docker_preparer();
+
+    $self->{preparation_result} = $preparation_result;
+
+    return $preparation_result;
+}
+
+
+sub hs_reparer
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $preparation_name = shift;
+
+    my $preparation_result = shift;
+
+    my $preparation = $self->{preparation};
+
+    my $reparation_description = $preparation->{description};
+
+    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+
+    # execute the reparation clause
+
+    my $reparation_error = $self->docker_reparer($preparation_result);
+
+    # my $reparer = $reparation->{reparer};
+
+    # $reparation_error = _prepare_engine($reparer, 'reparation', $preparation_result);
+
+    return $reparation_error;
 }
 
 
