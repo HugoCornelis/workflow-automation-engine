@@ -726,7 +726,7 @@ sub process_clauses
 }
 
 
-sub parse_command_line
+sub cd_parse_command_line
 {
     my $command_definition = shift;
 
@@ -864,16 +864,24 @@ sub spawn_new
 
     my $command_prefix = [];
 
+    my ($command, $arguments);
+
     my $harness = $execution_context->harness_current();
 
     if ($harness)
     {
-	$command_prefix = $harness->generate_command_prefix($command_definition, $execution_context);
+	# retrieve the shell command and its arguments
+
+	# $DB::single = 1;
+
+	($command, $arguments) = $harness->hs_parse_command_line($command_definition, $execution_context);
     }
+    else
+    {
+	# retrieve the shell command and its arguments
 
-    # retrieve the shell command and its arguments
-
-    my ($command, $arguments) = $command_definition->parse_command_line($command_prefix);
+	($command, $arguments) = $command_definition->cd_parse_command_line($command_prefix, $execution_context);
+    }
 
     # compare the running command with this command
 
@@ -3851,7 +3859,7 @@ sub docker_reparer
 }
 
 
-sub generate_command_prefix
+sub _generate_command_prefix
 {
     my $self = shift;
 
@@ -3902,6 +3910,26 @@ sub generate_command_prefix
     my $command_prefix = [ @$prefix_docker, @$prefix_user, $container_name, @$prefix_command, ];
 
     return $command_prefix;
+}
+
+
+sub hs_parse_command_line
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $execution_context = shift;
+
+    my $command_prefix = $self->_generate_command_prefix($command_definition, $execution_context);
+
+    # retrieve the shell command and its arguments
+
+    my ($command, $arguments) = $command_definition->cd_parse_command_line($command_prefix);
+
+    # return result
+
+    return ($command, $arguments);
 }
 
 
@@ -5231,7 +5259,7 @@ sub ex_cd_start
 
 	# retrieve the shell command and its arguments
 
-	my ($command, $arguments) = $command_definition->parse_command_line();
+	my ($command, $arguments) = $command_definition->cd_parse_command_line();
 
 	# if the command can be executed
 
@@ -5972,7 +6000,7 @@ sub _output_latex_command_definition_command_arguments
 
     # retrieve the shell command and its arguments
 
-    my ($command, $arguments) = $command_definition->parse_command_line();
+    my ($command, $arguments) = $command_definition->cd_parse_command_line();
 
     my $command_string = join ' ', $command, @$arguments;
 
@@ -7481,7 +7509,7 @@ sub ex_cd_start
 
 	# retrieve the shell command and its arguments
 
-	my ($command, $arguments) = $command_definition->parse_command_line();
+	my ($command, $arguments) = $command_definition->cd_parse_command_line();
 
 	my $command_string = $command . ' ' . join ' ', @ { $arguments || [] };
 
