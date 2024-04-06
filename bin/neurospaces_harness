@@ -2537,8 +2537,10 @@ package Heterarch::Test::ExecutionContext;
 # the error that occurred.
 #
 
-sub _prepare_engine
+sub prepare_engine
 {
+    my $self = shift;
+
     my $executor_element = shift;
 
     my $description = shift;
@@ -3157,6 +3159,9 @@ sub ec_is_selected
 }
 
 
+our $harnessing_count = 0;
+
+
 sub _preparation
 {
     my $self = shift;
@@ -3234,12 +3239,9 @@ sub _preparation
 
     my $preparation_result;
 
-    my $all_preparation_harnessess = [];
+    my $all_preparation_harnesses = [];
 
-    if (defined $preparation)
-    {
-	push @$all_preparation_harnessess, { state => 'Instantiated', preparation => $preparation, };
-    }
+    $self->_path_add_harness_list_to_current($all_preparation_harnesses);
 
     # if we are really running tests
 
@@ -3248,63 +3250,67 @@ sub _preparation
 
     if ($global_test_report->{output_format} eq 'executor')
     {
+	my $harnessing_class;
+	my $harnessing_identifier;
+
 	# if there is a docker container preparation
 
 	if (exists $harnessing->{class})
 	{
 	    # create the harness for this identifier
 
-	    my $harnessing_class = $harnessing->{class};
+	    $harnessing_class = $harnessing->{class};
 
-	    my $harnessing_identifier = $harnessing_class->{identifier};
-
-	    my $harness = Heterarch::Test::ExecutionContext::Harness::create_or_fetch($harnessing_class, $harnessing_identifier);
-
-	    # add it to the list of preparation harnesses, make sure
-	    # it gets executed before the other ones
-
-	    unshift @$all_preparation_harnessess, $harness;
+	    $harnessing_identifier = $harnessing_class->{identifier};
 	}
+
+	# old style preparation does not have a valid harnessing clause, so create one
+
+	elsif (defined $preparation)
+	{
+	    $harnessing_count++;
+
+	    my $reparation = clone($harnessing->{reparation});
+
+	    $harnessing_class
+		= {
+		   preparation => $preparation,
+		   reparation => $reparation,
+		   type => "Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer",
+		  };
+
+	    $harnessing_identifier = "with_preparer_$harnessing_count";
+	}
+	else
+	{
+	    $harnessing_count++;
+
+	    $harnessing_class
+		= {
+		   type => "Heterarch::Test::ExecutionContext::Harness::Builtin::Empty",
+		  };
+
+	    $harnessing_identifier = "empty_harness_$harnessing_count";
+	}
+
+	my $harness = Heterarch::Test::ExecutionContext::Harness::create_or_fetch($harnessing_class, $harnessing_identifier);
+
+	# add it to the list of preparation harnesses
+
+	push @$all_preparation_harnesses, $harness;
 
 	# while there are preparation clauses
 
-	foreach my $preparation_harness (@$all_preparation_harnessess)
+	foreach my $preparation_harness (@$all_preparation_harnesses)
 	{
 	    my $preparation_name
 		= ($command_definition
 		   ? "command '$command_definition->{command}'"
 		   : "module '$module_definition->{name}'");
 
-	    my $reference = ref $preparation_harness;
+	    # execute the preparation clause
 
-	    if ($reference =~ m'Heterarch::Test::ExecutionContext::Harness')
-	    {
-		# execute the preparation clause
-
-		$preparation_result = $preparation_harness->hs_preparer($self, $fd_output, $preparation_name);
-	    }
-	    elsif ($preparation_harness->{state} eq 'Instantiated'
-		   or 1)
-	    {
-		my $preparation = $preparation_harness->{preparation};
-
-		# give diagnostics
-
-		my $preparation_name
-		    = ($command_definition
-		       ? "command '$command_definition->{command}'"
-		       : "module '$module_definition->{name}'");
-
-		Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
-
-		# execute the preparation clause
-
-		my $preparer = $preparation->{preparer};
-
-		$preparation_result = _prepare_engine($preparer, 'preparation');
-
-		$preparation_harness->{preparation_result} = $preparation_result;
-	    }
+	    $preparation_result = $preparation_harness->hs_preparer($self, $fd_output, $preparation_name);
 
 	    # if the preparer returned an error string
 
@@ -3392,6 +3398,8 @@ sub _reparation
 
     my $command_test = $current->[2];
 
+    my $all_reparation_harnesses = $current->[3];
+
     my $preparation_result = $self->_pop_preparation_result();
 
     # command_tests with a harnessing clause are unsupported
@@ -3423,64 +3431,23 @@ sub _reparation
 
     my $reparation_error;
 
-    my $all_reparation_harnesses = [];
-
-    if (defined $reparation)
-    {
-	push @$all_reparation_harnesses, { state => 'Instantiated', reparation => $reparation, };
-    }
-
-    # if there is a reparation clause
-
     #t I have the impression this should be implemented through an
     #t method call rather than an if clause, see also identical comments.
 
     if ($global_test_report->{output_format} eq 'executor')
     {
-	# if there is a docker container reparation
-
-	if (exists $harnessing->{class})
-	{
-	    my $harnessing_class = $harnessing->{class};
-
-	    my $harnessing_identifier = $harnessing_class->{identifier};
-
-	    my $harness = Heterarch::Test::ExecutionContext::Harness::fetch_reparer($harnessing_class, $harnessing_identifier);
-
-	    push @$all_reparation_harnesses, $harness;
-	}
-
 	foreach my $reparation_harness (@$all_reparation_harnesses)
 	{
 	    my $reference = ref $reparation_harness;
 
-	    if ($reference =~ m'Heterarch::Test::ExecutionContext::Harness')
-	    {
-		# execute the preparation clause
+	    # execute the preparation clause
 
-		my $reparation_name
-		    = ($command_definition
-		       ? "command '$command_definition->{command}'"
-		       : "module '$module_definition->{name}'");
+	    my $reparation_name
+		= ($command_definition
+		   ? "command '$command_definition->{command}'"
+		   : "module '$module_definition->{name}'");
 
-		$reparation_error = $reparation_harness->hs_reparer($self, $fd_output, $reparation_name, $preparation_result);
-	    }
-	    else
-	    {
-		# give diagnostics
-
-		my $reparation = $reparation_harness->{reparation};
-
-		my $reparation_description = $reparation->{description};
-
-		Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
-
-		# execute the reparation clause
-
-		my $reparer = $reparation->{reparer};
-
-		$reparation_error = _prepare_engine($reparer, 'reparation', $preparation_result);
-	    }
+	    $reparation_error = $reparation_harness->hs_reparer($self, $fd_output, $reparation_name, $preparation_result);
 
 	    # process errors
 
@@ -3713,6 +3680,8 @@ sub create_or_fetch
 
 	my $known_harnessing_types
 	    = {
+	       'Heterarch::Test::ExecutionContext::Harness::Builtin::Empty' => 'builtin',
+	       'Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer' => 'builtin',
 	       'Heterarch::Test::ExecutionContext::Harness::Docker' => 'builtin',
 	      };
 
@@ -3744,29 +3713,170 @@ sub create_or_fetch
 }
 
 
-sub fetch_reparer
+package Heterarch::Test::ExecutionContext::Harness::Builtin::Empty;
+
+our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
+
+
+sub hs_preparer
 {
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $preparation_name = shift;
+
+    # return no errors
+
+    my $preparation_result = '';
+
+    $self->{preparation_result} = $preparation_result;
+
+    return $preparation_result;
+}
+
+
+sub hs_reparer
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $preparation_name = shift;
+
+    my $preparation_result = shift;
+
+    # return no errors
+
+    return '';
+}
+
+
+sub new
+{
+    my $class = shift;
+
     my $harnessing_class = shift;
 
     my $harnessing_identifier = shift;
 
-    my $result;
+    use Clone 'clone';
 
-    # if this was not executed yet
+    my $harness
+	= {
+	   class => clone($harnessing_class),
+	   preparation => {
+			   description => "create an empty harness",
+			  },
+	   reparation => {
+			  description => "leave the empty harness",
+			 },
+	   state => 'Instantiated',
+	  };
 
-    if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
-    {
-    }
-    else
-    {
-	# the harnessing identifier exists means that the docker container is running
+    bless $harness;
 
-	$result = $global_harnessing_identifiers->{$harnessing_identifier};
-    }
+    return $harness;
+}
 
-    # return the result
 
-    return $result;
+package Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer;
+
+our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
+
+
+sub hs_preparer
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $preparation_name = shift;
+
+    my $preparation = $self->{preparation};
+
+    # give diagnostics
+
+    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
+
+    # execute the preparation clause
+
+    my $preparer = $preparation->{preparer};
+
+    my $preparation_result = $execution_context->prepare_engine($preparer, 'preparation');
+
+    $self->{preparation_result} = $preparation_result;
+
+    return $preparation_result;
+}
+
+
+sub hs_reparer
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    my $preparation_name = shift;
+
+    my $preparation = $self->{preparation};
+
+    # give diagnostics
+
+    my $reparation = $self->{reparation};
+
+    my $reparation_description = $reparation->{description};
+
+    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+
+    # execute the reparation clause
+
+    my $reparer = $reparation->{reparer};
+
+    my $reparation_error = $execution_context->prepare_engine($reparer, 'reparation', $self->{preparation_result});
+
+    return $reparation_error;
+}
+
+
+sub new
+{
+    my $class = shift;
+
+    my $harnessing_class = shift;
+
+    my $harnessing_identifier = shift;
+
+    use Clone 'clone';
+
+    my $harness
+	= {
+	   # provide defaults
+
+	   preparation => {
+			   description => "create a harness with preparer code",
+			  },
+	   reparation => {
+			  description => "leave the harness with reparer code",
+			 },
+	   state => 'Instantiated',
+
+	   # overwrite the defaults with what was given
+
+	   %{ clone($harnessing_class) },
+	  };
+
+    bless $harness;
+
+    return $harness;
 }
 
 
@@ -4048,7 +4158,7 @@ sub new
 	   state => 'Instantiated',
 	  };
 
-    bless $harness, 'Heterarch::Test::ExecutionContext::Harness::Docker';
+    bless $harness;
 
     return $harness;
 }
