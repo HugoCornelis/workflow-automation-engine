@@ -1070,7 +1070,7 @@ sub cd_start
     {
 	# my $command_definition = $execution_context->get_command_definition();
 
-	# my $current = $self->_get_current();
+	# my $current = $self->_path_get_current();
 
 	# my $module_definition = $current->[0];
 
@@ -1135,7 +1135,7 @@ sub cd_start
     {
 	# my $command_definition = $execution_context->get_command_definition();
 
-	# my $current = $self->_get_current();
+	# my $current = $self->_path_get_current();
 
 	# my $module_definition = $current->[0];
 
@@ -2635,18 +2635,6 @@ sub _prepare_engine
 }
 
 
-sub _get_current
-{
-    my $self = shift;
-
-    my $path = $self->{path};
-
-    my $current = $path->[$#$path];
-
-    return $current;
-}
-
-
 #t to be replaced with instance variables
 
 our $command_definition_counter_per_module = 0;
@@ -2698,7 +2686,43 @@ sub _maintain_counters
 }
 
 
-sub _push_current
+sub _path_add_harness_list_to_current
+{
+    my $self = shift;
+
+    my $harness_list = shift;
+
+    my $current = $self->_path_get_current();
+
+    $current->[3] = $harness_list;
+}
+
+
+sub _path_get_current
+{
+    my $self = shift;
+
+    my $path = $self->{path};
+
+    my $current = $path->[$#$path];
+
+    return $current;
+}
+
+
+sub _path_pop_current
+{
+    my $self = shift;
+
+    my $path = $self->{path};
+
+    my $result = pop @$path;
+
+    return $result;
+}
+
+
+sub _path_push_current
 {
     my $self = shift;
 
@@ -2710,18 +2734,6 @@ sub _push_current
 
     $self->_maintain_counters($current);
 
-}
-
-
-sub _pop_current
-{
-    my $self = shift;
-
-    my $path = $self->{path};
-
-    my $result = pop @$path;
-
-    return $result;
 }
 
 
@@ -2819,7 +2831,7 @@ Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) 
 	}
     }
 
-    $self->_pop_current();
+    $self->_path_pop_current();
 }
 
 
@@ -2827,7 +2839,7 @@ sub get_command_definition
 {
     my $self = shift;
 
-    my $current = $self->_get_current();
+    my $current = $self->_path_get_current();
 
     my $command_definition = $current->[1];
 
@@ -2849,7 +2861,7 @@ sub get_command_test
 {
     my $self = shift;
 
-    my $current = $self->_get_current();
+    my $current = $self->_path_get_current();
 
     my $command_test = $current->[2];
 
@@ -2939,7 +2951,7 @@ sub get_module_definition
 {
     my $self = shift;
 
-    my $current = $self->_get_current();
+    my $current = $self->_path_get_current();
 
     my $module_definition = $current->[0];
 
@@ -3149,7 +3161,7 @@ sub _preparation
 {
     my $self = shift;
 
-    my $current = $self->_get_current();
+    my $current = $self->_path_get_current();
 
     my $module_definition = $current->[0];
 
@@ -3372,7 +3384,7 @@ sub _reparation
 
     my $fd_output = $self->{fd_output};
 
-    my $current = $self->_get_current();
+    my $current = $self->_path_get_current();
 
     my $module_definition = $current->[0];
 
@@ -3553,10 +3565,6 @@ sub ec_examine
 	return "has the error flag";;
     }
 
-    # update the path of execution
-
-    $self->_push_current( [ $module_definition, $command_definition, $command_test, ] );
-
     # give diagnostics
 
     #t I have the impression this should be implemented through an
@@ -3611,6 +3619,10 @@ sub ec_examine
 	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment");
 	}
     }
+
+    # update the path of execution
+
+    $self->_path_push_current( [ $module_definition, $command_definition, $command_test, ] );
 
     # prepare the test environment
 
