@@ -3775,7 +3775,7 @@ package Heterarch::Test::ExecutionContext::Harness::Docker;
 our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
 
 
-sub docker_preparer
+sub _docker_preparer
 {
     my $self = shift;
 
@@ -3795,7 +3795,7 @@ sub docker_preparer
 
 	if ($?)
 	{
-	    return \ 'docker_preparer build command failed';
+	    return \ '_docker_preparer build command failed';
 	}
     }
     elsif (exists $harness_class->{dockerfile}
@@ -3809,21 +3809,21 @@ sub docker_preparer
 
 	if ($?)
 	{
-	    return \ 'docker_preparer image prune failed';
+	    return \ '_docker_preparer image prune failed';
 	}
 
 	system "docker build --tag $name_image --file $dockerfile .";
 
 	if ($?)
 	{
-	    return \ 'docker_preparer build and tag failed';
+	    return \ '_docker_preparer build and tag failed';
 	}
     }
     else
     {
 	if ($?)
 	{
-	    return \ 'docker_preparer did not find a build method and failed';
+	    return \ '_docker_preparer did not find a build method and failed';
 	}
 
     }
@@ -3849,11 +3849,11 @@ sub docker_preparer
     #! has the interface to generate the necessary prefix
     #! for the command that is executed for the test.
 
-    return 'docker_preparer: executed';
+    return '_docker_preparer: executed';
 }
 
 
-sub docker_reparer
+sub _docker_reparer
 {
     my $self = shift;
 
@@ -3965,7 +3965,7 @@ sub hs_preparer
 
     # $DB::single = 1;
 
-    my $preparation_result = $self->docker_preparer();
+    my $preparation_result = $self->_docker_preparer();
 
     # make the docker harness available by pushing it
 
@@ -4003,7 +4003,7 @@ sub hs_reparer
 
     # $DB::single = 1;
 
-    my $reparation_error = $self->docker_reparer($preparation_result);
+    my $reparation_error = $self->_docker_reparer($preparation_result);
 
     my $docker_command = "docker";
 
