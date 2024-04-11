@@ -1057,11 +1057,11 @@ sub cd_start
 
 	# my $current = $self->_path_get_current();
 
-	# my $module_definition = $current->[0];
+	# my $module_definition = $current->{current_module_definition};
 
-	# my $command_definition = $current->[1];
+	# my $command_definition = $current->{current_command_definition};
 
-	# my $command_test = $current->[2];
+	# my $command_test = $current->{current_command_test};
 
 	my $execution_context = $executor->{execution_context};
 
@@ -1122,11 +1122,11 @@ sub cd_start
 
 	# my $current = $self->_path_get_current();
 
-	# my $module_definition = $current->[0];
+	# my $module_definition = $current->{current_module_definition};
 
-	# my $command_definition = $current->[1];
+	# my $command_definition = $current->{current_command_definition};
 
-	# my $command_test = $current->[2];
+	# my $command_test = $current->{current_command_test};
 
 	my $execution_context = $executor->{execution_context};
 
@@ -2640,11 +2640,11 @@ sub _maintain_counters
 
     my $current = shift;
 
-    my $command_definition = $current->[1];
+    my $module_definition = $current->{current_module_definition};
 
-    my $command_test = $current->[2];
+    my $command_definition = $current->{current_command_definition};
 
-    my $module_definition = $current->[0];
+    my $command_test = $current->{current_command_test};
 
     if (defined $command_test)
     {
@@ -2681,7 +2681,7 @@ sub _path_add_harness_list_to_current
 
     my $current = $self->_path_get_current();
 
-    $current->[3] = $harness_list;
+    $current->{current_harness_list} = $harness_list;
 }
 
 
@@ -2889,7 +2889,7 @@ sub get_command_definition
 
     my $current = $self->_path_get_current();
 
-    my $command_definition = $current->[1];
+    my $command_definition = $current->{current_command_definition};
 
     return $command_definition;
 }
@@ -2911,7 +2911,7 @@ sub get_command_test
 
     my $current = $self->_path_get_current();
 
-    my $command_test = $current->[2];
+    my $command_test = $current->{current_command_test};
 
     return $command_test;
 }
@@ -3001,7 +3001,7 @@ sub get_module_definition
 
     my $current = $self->_path_get_current();
 
-    my $module_definition = $current->[0];
+    my $module_definition = $current->{current_module_definition};
 
     return $module_definition;
 }
@@ -3214,11 +3214,11 @@ sub _preparation
 
     my $current = $self->_path_get_current();
 
-    my $module_definition = $current->[0];
+    my $module_definition = $current->{current_module_definition};
 
-    my $command_definition = $current->[1];
+    my $command_definition = $current->{current_command_definition};
 
-    my $command_test = $current->[2];
+    my $command_test = $current->{current_command_test};
 
     # command_tests with a harnessing clause are unsupported, they
     # cannot be 'prepared'.
@@ -3438,13 +3438,13 @@ sub _reparation
 
     my $current = $self->_path_get_current();
 
-    my $module_definition = $current->[0];
+    my $module_definition = $current->{current_module_definition};
 
-    my $command_definition = $current->[1];
+    my $command_definition = $current->{current_command_definition};
 
-    my $command_test = $current->[2];
+    my $command_test = $current->{current_command_test};
 
-    my $all_reparation_harnesses = $current->[3];
+    my $all_reparation_harnesses = $current->{current_harness_list};
 
     my $preparation_result = $self->_pop_preparation_result();
 
@@ -3635,7 +3635,14 @@ sub ec_examine
 
     # update the path of execution
 
-    $self->_path_push_current( [ $module_definition, $command_definition, $command_test, ] );
+    $self->_path_push_current
+	(
+	 {
+	  current_module_definition => $module_definition,
+	  current_command_definition => $command_definition,
+	  current_command_test => $command_test,
+	 },
+	);
 
     # prepare the test environment
 
