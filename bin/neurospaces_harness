@@ -726,7 +726,13 @@ sub process_clauses
 }
 
 
-sub cd_parse_command_line
+#
+# Given a command_definition and an optional command_prefix, construct
+# an array with the command as a string and the arguments as the rest
+# of the array.
+#
+
+sub cd_construct_command_line
 {
     my $command_definition = shift;
 
@@ -862,36 +868,15 @@ sub spawn_new
 
     # apply the execution prefix from the harnessing clauses
 
-    my $command_prefix = [];
+    my $command_line = $execution_context->ec_construct_command_line($command_definition);
 
-    my ($command, $arguments);
+    my $arguments = $command_line->{arguments};
 
-    my $harness = $execution_context->harness_current();
-
-    if ($harness)
-    {
-	# retrieve the shell command and its arguments
-
-	# $DB::single = 1;
-
-	($command, $arguments) = $harness->hs_parse_command_line($command_definition, $execution_context);
-    }
-    else
-    {
-	# retrieve the shell command and its arguments
-
-	($command, $arguments) = $command_definition->cd_parse_command_line($command_prefix, $execution_context);
-    }
+    my $command = $command_line->{command};
 
     # compare the running command with this command
 
-    my $new_command_definition
-	= {
-	    arguments => $arguments,
-	    command => $command,
-	  };
-
-    my $differences = data_comparator($new_command_definition, $global_running_command_definition);
+    my $differences = data_comparator($command_line, $global_running_command_definition);
 
     # remember to spawn a new command
 
@@ -942,7 +927,7 @@ sub spawn_new
 
 	    # set the running_command_definition
 
-	    $global_running_command_definition = $new_command_definition;
+	    $global_running_command_definition = $command_line;
 
 	    print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
 
@@ -2776,6 +2761,67 @@ sub _top_preparation_result
 }
 
 
+sub ec_construct_command_line
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $harness = $self->harness_current();
+
+    if (defined $option_debugging
+	and $option_debugging eq 'harnessing')
+    {
+	use YAML;
+
+	my $current = $self->_path_get_current();
+
+	my $harness_list = $current->{current_harness_list};
+
+	print Dump(
+		   {
+		    option_debugging => {
+					 harness_current => $harness,
+					 harness_list => $harness_list,
+					},
+		   },
+		  );
+    }
+
+    my ($command, $arguments);
+
+#     foreach my $harness_identifier (@$global_active_harness_identifiers)
+    {
+# 	my $harness = $global_harnessing_identifiers->{$harness_identifier};
+
+	if ($harness)
+	{
+	    # retrieve the shell command and its arguments
+
+	    # $DB::single = 1;
+
+	    ($command, $arguments) = $harness->hs_construct_command_line($command_definition, $self);
+	}
+	else
+	{
+	    # retrieve the shell command and its arguments
+
+	    my $command_prefix = [];
+
+	    ($command, $arguments) = $command_definition->cd_construct_command_line($command_prefix, $self);
+	}
+    }
+
+    my $command_line
+	= {
+	   arguments => $arguments,
+	   command => $command,
+	  };
+
+    return $command_line;
+}
+
+
 sub ec_end
 {
     my $self = shift;
@@ -3713,6 +3759,26 @@ sub create_or_fetch
 }
 
 
+# sub hs_construct_command_line
+# {
+#     my $self = shift;
+
+#     my $command_definition = shift;
+
+#     my $execution_context = shift;
+
+# #     my $command_prefix = $self->_generate_command_prefix($command_definition, $execution_context);
+
+#     # retrieve the shell command and its arguments
+
+#     my ($command, $arguments) = $command_definition->cd_construct_command_line();
+
+#     # return result
+
+#     return ($command, $arguments);
+# }
+
+
 package Heterarch::Test::ExecutionContext::Harness::Builtin::Empty;
 
 our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
@@ -3734,6 +3800,14 @@ sub hs_preparer
 
     $self->{preparation_result} = $preparation_result;
 
+    # # make the empty harness available by pushing it
+
+    # my $harness_class = $self->{class};
+
+    # my $harnessing_identifier = $harness_class->{identifier};
+
+    # $execution_context->harness_identifier_push($harnessing_identifier);
+
     return $preparation_result;
 }
 
@@ -3749,6 +3823,15 @@ sub hs_reparer
     my $preparation_name = shift;
 
     my $preparation_result = shift;
+
+    # my $harnessing_identifier = $execution_context->harness_identifier_pop();
+
+    # my $harness_class = $self->{class};
+
+    # if ($harnessing_identifier ne $harness_class->{identifier})
+    # {
+    # 	die "$0: *** Error: package Heterarch::Test::ExecutionContext::Harness::Builtin::Empty pops a harnessing_identifier ($harnessing_identifier) that is different from what it previously pushed ($harness_class->{identifier}).";
+    # }
 
     # return no errors
 
@@ -3769,6 +3852,7 @@ sub new
     my $harness
 	= {
 	   class => clone($harnessing_class),
+	   identifier => $harnessing_identifier,
 	   preparation => {
 			   description => "create an empty harness",
 			  },
@@ -3813,6 +3897,14 @@ sub hs_preparer
 
     $self->{preparation_result} = $preparation_result;
 
+    # make the docker harness available by pushing it
+
+    my $harness_class = $self->{class};
+
+    my $harnessing_identifier = $harness_class->{identifier};
+
+    $execution_context->harness_identifier_push($harnessing_identifier);
+
     return $preparation_result;
 }
 
@@ -3843,6 +3935,15 @@ sub hs_reparer
 
     my $reparation_error = $execution_context->prepare_engine($reparer, 'reparation', $self->{preparation_result});
 
+    my $harnessing_identifier = $execution_context->harness_identifier_pop();
+
+    my $harness_class = $self->{class};
+
+    if ($harnessing_identifier ne $harness_class->{identifier})
+    {
+	die "$0: *** Error: package Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer pops a harnessing_identifier ($harnessing_identifier) that is different from what it previously pushed ($harness_class->{identifier}).";
+    }
+
     return $reparation_error;
 }
 
@@ -3861,6 +3962,7 @@ sub new
 	= {
 	   # provide defaults
 
+	   identifier => $harnessing_identifier,
 	   preparation => {
 			   description => "create a harness with preparer code",
 			  },
@@ -4035,7 +4137,7 @@ sub _generate_command_prefix
 }
 
 
-sub hs_parse_command_line
+sub hs_construct_command_line
 {
     my $self = shift;
 
@@ -4047,7 +4149,7 @@ sub hs_parse_command_line
 
     # retrieve the shell command and its arguments
 
-    my ($command, $arguments) = $command_definition->cd_parse_command_line($command_prefix);
+    my ($command, $arguments) = $command_definition->cd_construct_command_line($command_prefix);
 
     # return result
 
@@ -5381,7 +5483,7 @@ sub ex_cd_start
 
 	# retrieve the shell command and its arguments
 
-	my ($command, $arguments) = $command_definition->cd_parse_command_line();
+	my ($command, $arguments) = $command_definition->cd_construct_command_line();
 
 	# if the command can be executed
 
@@ -6122,7 +6224,7 @@ sub _output_latex_command_definition_command_arguments
 
     # retrieve the shell command and its arguments
 
-    my ($command, $arguments) = $command_definition->cd_parse_command_line();
+    my ($command, $arguments) = $command_definition->cd_construct_command_line();
 
     my $command_string = join ' ', $command, @$arguments;
 
@@ -7631,7 +7733,7 @@ sub ex_cd_start
 
 	# retrieve the shell command and its arguments
 
-	my ($command, $arguments) = $command_definition->cd_parse_command_line();
+	my ($command, $arguments) = $command_definition->cd_construct_command_line();
 
 	my $command_string = $command . ' ' . join ' ', @ { $arguments || [] };
 
