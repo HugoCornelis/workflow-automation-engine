@@ -758,7 +758,13 @@ sub cd_construct_command_line
 
 	my $command = shift @$command_and_arguments;
 
-	return ($command, $command_and_arguments);
+	my $command_line_object
+	    = {
+	       arguments => $command_and_arguments,
+	       command => $command,
+	      };
+
+	return $command_line_object;
     }
 
     # if we don't have a command prefix
@@ -785,7 +791,13 @@ sub cd_construct_command_line
 
 	my $command = shift @$command_arguments;
 
-	return ($command, $command_arguments);
+	my $command_line_object
+	    = {
+	       arguments => $command_arguments,
+	       command => $command,
+	      };
+
+	return $command_line_object;
     }
 }
 
@@ -870,81 +882,87 @@ sub spawn_new
 
     my $command_line = $execution_context->ec_construct_command_line($command_definition);
 
-    my $arguments = $command_line->{arguments};
+    my $test_startup = "yes, do the startup testing";
 
-    my $command = $command_line->{command};
-
-    # compare the running command with this command
-
-    my $differences = data_comparator($command_line, $global_running_command_definition);
-
-    # remember to spawn a new command
-
-    my $spawn_new = not $command_definition->{recycle};
-
-    # if the command can be executed
-
-    my $test_startup;
-
-    if (defined $command)
+    if (exists $command_line->{command})
     {
-	if ($spawn_new)
+	# compare the running command with this command
+
+	my $differences = data_comparator($command_line, $global_running_command_definition);
+
+	# remember to spawn a new command
+
+	my $spawn_new = not $command_definition->{recycle};
+
+	# if the command can be executed
+
+	my $arguments = $command_line->{arguments};
+
+	my $command = $command_line->{command};
+
+	if (defined $command)
 	{
-	    if ($global_exp)
+	    if ($spawn_new)
 	    {
-		# terminate the previous command
+		if ($global_exp)
+		{
+		    # terminate the previous command
 
-		#t could be that the hard_close() call is needed because
-		#t neurospaces uses readline, not sure needs investigation,
-		#t perhaps.
+		    #t could be that the hard_close() call is needed because
+		    #t neurospaces uses readline, not sure needs investigation,
+		    #t perhaps.
 
-		$global_exp->hard_close();
+		    $global_exp->hard_close();
+		}
+
+		# create a new Expect object by spawning a new process with the new command
+
+		require Expect;
+
+		$global_exp = Expect->new();
+
+		#! see the expect manual for this one
+
+		$global_exp->raw_pty(1);
+
+		# 		    $exp->slave->stty(qw(raw -echo));
+
+		$global_exp->spawn
+		    (
+		     (
+		      $option_trace
+		      ? ("strace", "-f")
+		      : ()
+		     ),
+		     $command,
+		     @$arguments
+		    )
+		    or die "$0: cannot spawn $command: $!\n";
+
+		# set the running_command_definition
+
+		$global_running_command_definition = $command_line;
+
+		print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+
+		# remember to do startup testing
+
+		$test_startup = 1;
+
+		# there were no side effects yet
+
+		$global_previous_command_side_effects = 0;
 	    }
+	    else
+	    {
+		print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
 
-	    # create a new Expect object by spawning a new process with the new command
-
-	    require Expect;
-
-	    $global_exp = Expect->new();
-
-	    #! see the expect manual for this one
-
-	    $global_exp->raw_pty(1);
-
-	    # 		    $exp->slave->stty(qw(raw -echo));
-
-	    $global_exp->spawn
-		(
-		 (
-		  $option_trace
-		  ? ("strace", "-f")
-		  : ()
-		 ),
-		 $command,
-		 @$arguments
-		)
-		or die "$0: cannot spawn $command: $!\n";
-
-	    # set the running_command_definition
-
-	    $global_running_command_definition = $command_line;
-
-	    print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-	    # remember to do startup testing
-
-	    $test_startup = 1;
-
-	    # there were no side effects yet
-
-	    $global_previous_command_side_effects = 0;
+		$test_startup = 0;
+	    }
 	}
-	else
-	{
-	    print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-
-	    $test_startup = 0;
-	}
+    }
+    elsif (exists $command_line->{internal})
+    {
     }
 
     # return the expect object and whether a new command has been started
@@ -2788,7 +2806,7 @@ sub ec_construct_command_line
 		  );
     }
 
-    my ($command, $arguments);
+    my $command_line;
 
 #     foreach my $harness_identifier (@$global_active_harness_identifiers)
     {
@@ -2800,7 +2818,7 @@ sub ec_construct_command_line
 
 	    # $DB::single = 1;
 
-	    ($command, $arguments) = $harness->hs_construct_command_line($command_definition, $self);
+	    $command_line = $harness->hs_construct_command_line($command_definition, $self);
 	}
 	else
 	{
@@ -2808,15 +2826,9 @@ sub ec_construct_command_line
 
 	    my $command_prefix = [];
 
-	    ($command, $arguments) = $command_definition->cd_construct_command_line($command_prefix, $self);
+	    $command_line = $command_definition->cd_construct_command_line($command_prefix, $self);
 	}
     }
-
-    my $command_line
-	= {
-	   arguments => $arguments,
-	   command => $command,
-	  };
 
     return $command_line;
 }
@@ -3994,6 +4006,11 @@ package Heterarch::Test::ExecutionContext::Harness::Docker;
 our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
 
 
+our $docker_snapshot_count = 1;
+
+our $docker_command = "docker";
+
+
 sub _docker_preparer
 {
     my $self = shift;
@@ -4049,14 +4066,12 @@ sub _docker_preparer
 
     # try to stop and remove a previous container of the same name
 
-    my $docker_command = "docker";
-
     my $name_container = $harness_class->{name_container};
 
     system "$docker_command container stop $name_container";
     system "$docker_command container rm $name_container";
 
-    # start the newly built container
+    # start the built container
 
     my $name_image = $harness_class->{name_image};
 
@@ -4079,8 +4094,6 @@ sub _docker_reparer
     my $preparation_result = shift;
 
     my $harness_class = $self->{class};
-
-    my $docker_command = "docker";
 
     my $name_container = $harness_class->{name_container};
 
@@ -4144,6 +4157,29 @@ sub _generate_command_prefix
 }
 
 
+sub _docker_snapshot
+{
+    my $self = shift;
+
+    my $command_line = shift;
+
+    my $name_container = $self->{class}->{name_container};
+
+    my $name_image = $self->{class}->{name_image};
+
+    # see https://docs.docker.com/reference/cli/docker/container/commit/ for how to expose a port during the commit
+    # docker commit --change='CMD ["apachectl", "-DFOREGROUND"]' -c "EXPOSE 80" c3f279d17e0a  svendowideit/testimage:version4
+
+    my $command = "$command_line->{command} commit $name_container $name_image-$docker_snapshot_count";
+
+    $docker_snapshot_count++;
+
+    my $snapshot_id = `$command`;
+
+    return $snapshot_id;
+}
+
+
 sub hs_construct_command_line
 {
     my $self = shift;
@@ -4156,11 +4192,17 @@ sub hs_construct_command_line
 
     # retrieve the shell command and its arguments
 
-    my ($command, $arguments) = $command_definition->cd_construct_command_line($command_prefix);
+    my $command_line = $command_definition->cd_construct_command_line($command_prefix);
+
+    if (exists $command_line->{command}
+	and $command_line->{command} eq 'docker-snapshot')
+    {
+	my $snapshot_id = $self->_docker_snapshot($command_line);
+    }
 
     # return result
 
-    return ($command, $arguments);
+    return $command_line;
 }
 
 
@@ -4223,8 +4265,6 @@ sub hs_reparer
     # $DB::single = 1;
 
     my $reparation_error = $self->_docker_reparer($preparation_result);
-
-    my $docker_command = "docker";
 
     my $container_name = $self->{class}->{name_container};
 
@@ -5490,11 +5530,11 @@ sub ex_cd_start
 
 	# retrieve the shell command and its arguments
 
-	my ($command, $arguments) = $command_definition->cd_construct_command_line();
+	my $command_line = $command_definition->cd_construct_command_line();
 
 	# if the command can be executed
 
-	if (defined $command)
+	if (exists $command_line->{command})
 	{
 	    if ($spawn_new)
 	    {
@@ -6231,7 +6271,11 @@ sub _output_latex_command_definition_command_arguments
 
     # retrieve the shell command and its arguments
 
-    my ($command, $arguments) = $command_definition->cd_construct_command_line();
+    my $command_line = $command_definition->cd_construct_command_line();
+
+    my $arguments = $command_line->{arguments};
+
+    my $command = $command_line->{command};
 
     my $command_string = join ' ', $command, @$arguments;
 
@@ -7740,7 +7784,11 @@ sub ex_cd_start
 
 	# retrieve the shell command and its arguments
 
-	my ($command, $arguments) = $command_definition->cd_construct_command_line();
+	my $command_line = $command_definition->cd_construct_command_line();
+
+	my $arguments = $command_line->{arguments};
+
+	my $command = $command_line->{command};
 
 	my $command_string = $command . ' ' . join ' ', @ { $arguments || [] };
 
