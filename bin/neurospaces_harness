@@ -4170,7 +4170,7 @@ sub _docker_snapshot
     # see https://docs.docker.com/reference/cli/docker/container/commit/ for how to expose a port during the commit
     # docker commit --change='CMD ["apachectl", "-DFOREGROUND"]' -c "EXPOSE 80" c3f279d17e0a  svendowideit/testimage:version4
 
-    my $command = "$command_line->{command} commit $name_container $name_image-$docker_snapshot_count";
+    my $command = "$docker_command commit $name_container $name_image-$docker_snapshot_count";
 
     $docker_snapshot_count++;
 
@@ -4188,16 +4188,26 @@ sub hs_construct_command_line
 
     my $execution_context = shift;
 
-    my $command_prefix = $self->_generate_command_prefix($command_definition, $execution_context);
+    my $command_line;
 
-    # retrieve the shell command and its arguments
-
-    my $command_line = $command_definition->cd_construct_command_line($command_prefix);
-
-    if (exists $command_line->{command}
-	and $command_line->{command} eq 'docker-snapshot')
+    if ($command_definition->{command} eq 'docker-snapshot')
     {
+	$DB::single = 1;
+
 	my $snapshot_id = $self->_docker_snapshot($command_line);
+
+	$command_line
+	    = {
+	       internal => "_docker_snapshot, result is ($snapshot_id)",
+	      };
+    }
+    else
+    {
+	my $command_prefix = $self->_generate_command_prefix($command_definition, $execution_context);
+
+	# retrieve the shell command and its arguments
+
+	$command_line = $command_definition->cd_construct_command_line($command_prefix);
     }
 
     # return result

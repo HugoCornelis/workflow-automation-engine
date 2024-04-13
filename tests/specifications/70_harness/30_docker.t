@@ -60,6 +60,16 @@ var
 						      ],
 				     description => "showing that the container works: root directory contents",
 				    },
+				    {
+				     command => 'docker-snapshot',
+				     command_tests => [
+						       {
+							description => "Can we take a snapshot of the current Docker container and convert it to an image ?",
+							read => '',
+						       },
+						      ],
+				     description => "convert the container to an image",
+				    },
 				   ],
 	    comment => "docker harness tests",
 	    description => "docker harness test module",

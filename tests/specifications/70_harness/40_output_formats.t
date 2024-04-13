@@ -82,6 +82,9 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests:
         - Can we list the root directory in the Docker container ?
+    - description: convert the container to an image
+      tests:
+        - Can we take a snapshot of the current Docker container and convert it to an image ?
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -96,7 +99,7 @@ No email sent.
 				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --show-command-tests --report-disabled',
 				     command_tests => [
 						       {
-							description => "Can we inspect the command tests that will be run ?",
+							description => "Can we inspect the command tests that will be run using the regular options ?",
 							read => "
 ---
 description:
@@ -111,6 +114,7 @@ selected:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
+    - command: 'docker-snapshot '
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -119,13 +123,13 @@ No email sent.
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
 						      ],
-				     description => "inspecting the commands used for the tests",
+				     description => "inspecting the commands used for the tests using the regular options",
 				    },
 				    {
 				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
 				     command_tests => [
 						       {
-							description => "Can we inspect the command tests that will be run ?",
+							description => "Can we inspect the command tests that will be run using the YAML output formatter ?",
 							read => "
 ---
 description:
@@ -139,6 +143,7 @@ selected:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
+    - command: 'docker-snapshot '
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -147,7 +152,7 @@ No email sent.
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
 						      ],
-				     description => "inspecting the commands used for the tests",
+				     description => "inspecting the commands used for the tests using the YAML output formatter",
 				    },
 				    {
 				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
@@ -173,6 +178,9 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests:
         - Can we list the root directory in the Docker container ?
+    - description: convert the container to an image
+      tests:
+        - Can we take a snapshot of the current Docker container and convert it to an image ?
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -204,6 +212,8 @@ selected:
     - description: 'showing that the container works: working directory contents'
       tests: []
     - description: 'showing that the container works: root directory contents'
+      tests: []
+    - description: convert the container to an image
       tests: []
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
