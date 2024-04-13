@@ -4068,7 +4068,7 @@ sub _docker_preparer
 
     my $name_container = $harness_class->{name_container};
 
-    system "$docker_command container stop $name_container";
+    system "$docker_command container stop -t 3 $name_container";
     system "$docker_command container rm $name_container";
 
     # start the built container
