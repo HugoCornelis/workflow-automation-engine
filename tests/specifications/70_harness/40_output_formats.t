@@ -58,6 +58,16 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "showing that the container works: installing the Developer package in the Docker container",
 				    },
 				    {
+				     command => 'docker-snapshot --snapshot-image-name testing-developer-package',
+				     command_tests => [
+						       {
+							description => "Can we take a snapshot of the current Docker container and convert it to an image ?",
+							read => '',
+						       },
+						      ],
+				     description => "convert the container to an image",
+				    },
+				    {
 				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --report-disabled --show',
 				     command_tests => [
 						       {
@@ -82,9 +92,6 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests:
         - Can we list the root directory in the Docker container ?
-    - description: convert the container to an image
-      tests:
-        - Can we take a snapshot of the current Docker container and convert it to an image ?
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -114,7 +121,6 @@ selected:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
-    - command: 'docker-snapshot '
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -143,7 +149,6 @@ selected:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
-    - command: 'docker-snapshot '
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -178,9 +183,6 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests:
         - Can we list the root directory in the Docker container ?
-    - description: convert the container to an image
-      tests:
-        - Can we take a snapshot of the current Docker container and convert it to an image ?
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -212,8 +214,6 @@ selected:
     - description: 'showing that the container works: working directory contents'
       tests: []
     - description: 'showing that the container works: root directory contents'
-      tests: []
-    - description: convert the container to an image
       tests: []
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report

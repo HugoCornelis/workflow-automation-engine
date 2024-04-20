@@ -2812,14 +2812,21 @@ sub ec_construct_command_line
     {
 # 	my $harness = $global_harnessing_identifiers->{$harness_identifier};
 
+	# if there is an active harness
+
 	if ($harness)
 	{
-	    # retrieve the shell command and its arguments
+	    # tell it to construct a command line
+
+	    #! this command line can either have a command and arguments or have the flag 'internal'.
 
 	    # $DB::single = 1;
 
 	    $command_line = $harness->hs_construct_command_line($command_definition, $self);
 	}
+
+	# without an active harness
+
 	else
 	{
 	    # retrieve the shell command and its arguments
@@ -4163,18 +4170,41 @@ sub _docker_snapshot
 
     my $command_line = shift;
 
-    my $name_container = $self->{class}->{name_container};
+    my $option_snapshot_container_name;
+    my $option_snapshot_image_name;
 
-    my $name_image = $self->{class}->{name_image};
+    our $snapshot_options
+      = {
+	 "snapshot-container-name=s" => \$option_snapshot_container_name,
+	 "snapshot-image-name=s" => \$option_snapshot_image_name,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($command_line->{arguments}, %$snapshot_options);
+
+    if (!$result)
+    {
+        die "$0: *** Error in option processing (docker-snapshot) (--snapshot-container-name, --snapshot-image-name)";
+    }
+
+    my $name_container = (defined $option_snapshot_container_name) ? $option_snapshot_container_name : $self->{class}->{name_container};
+
+    my $name_image = (defined $option_snapshot_image_name) ? $option_snapshot_image_name : "$self->{class}->{name_image}-$docker_snapshot_count";
 
     # see https://docs.docker.com/reference/cli/docker/container/commit/ for how to expose a port during the commit
     # docker commit --change='CMD ["apachectl", "-DFOREGROUND"]' -c "EXPOSE 80" c3f279d17e0a  svendowideit/testimage:version4
 
-    my $command = "$docker_command commit $name_container $name_image-$docker_snapshot_count";
+    my $command = "$docker_command commit $name_container $name_image";
 
     $docker_snapshot_count++;
 
     my $snapshot_id = `$command`;
+
+    if ($?)
+    {
+        die "$0: *** Error: docker-snapshot failed (image-name $name_image, container-name $name_container).";
+    }
 
     return $snapshot_id;
 }
@@ -4190,19 +4220,32 @@ sub hs_construct_command_line
 
     my $command_line;
 
-    if ($command_definition->{command} eq 'docker-snapshot')
+    # if this is a command specific to this harness
+
+    if ($command_definition->{command} =~ m'^docker-snapshot')
     {
-	$DB::single = 1;
+	# construct the regular command line
+
+	$command_line = $command_definition->cd_construct_command_line();
+
+	# process the command line
 
 	my $snapshot_id = $self->_docker_snapshot($command_line);
+
+	# tell the exeuction context that the command was internally processed
 
 	$command_line
 	    = {
 	       internal => "_docker_snapshot, result is ($snapshot_id)",
 	      };
     }
+
+    # for regular commands
+
     else
     {
+	# generate the prefix for this harness
+
 	my $command_prefix = $self->_generate_command_prefix($command_definition, $execution_context);
 
 	# retrieve the shell command and its arguments
