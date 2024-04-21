@@ -68,7 +68,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "convert the container to an image",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --report-disabled --show',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --report-disabled --show',
 				     command_tests => [
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",
@@ -103,7 +103,7 @@ No email sent.
 				     description => "inspecting the commands that are tested",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --show-command-tests --report-disabled',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --show-command-tests --report-disabled',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the regular options ?",
@@ -132,7 +132,7 @@ No email sent.
 				     description => "inspecting the commands used for the tests using the regular options",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the YAML output formatter ?",
@@ -160,7 +160,7 @@ No email sent.
 				     description => "inspecting the commands used for the tests using the YAML output formatter",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a YAML formatted summary ?",
@@ -194,7 +194,7 @@ No email sent.
 				     description => "converting the test specifications to a YAML formatted summary",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::List',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::List',
 				     command_tests => [
 						       {
 							comment => "It is not entirely clear what exactly Heterarch::Test::Output::List should do and how it can be useful.",
@@ -226,7 +226,7 @@ No email sent.
 				     description => "inspecting the constructs used in the test specifications",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::Latex',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::Latex',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a latex file ?",
@@ -240,7 +240,7 @@ No email sent.
 				     description => "conversion of the test specifications to latex",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::HTMLTable',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::HTMLTable',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to an HTML website ?",
@@ -257,7 +257,7 @@ No email sent.
 				     description => "conversion of the test specifications to an HTML website",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex docker --output Heterarch::Test::Output::Formatter::PDF',
+				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::PDF',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to pdf ?",
@@ -273,7 +273,7 @@ No email sent.
 				    },
 				   ],
 	    comment => "docker harness tests",
-	    description => "docker harness test module",
+	    description => "output formats test module",
 	    harnessing => {
 			   class => {
 				     comment => 'Enter this container with "docker exec -it neurospaces_harness_test_container bash"',
