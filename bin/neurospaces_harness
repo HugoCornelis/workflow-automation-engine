@@ -3744,7 +3744,23 @@ sub create_or_fetch
 
     # $DB::single = 1;
 
-    # if this was not executed yet
+    if (defined $option_debugging
+	and $option_debugging eq 'harnessing')
+    {
+	use YAML;
+
+	print Dump(
+		   {
+		    create_or_fetch => {
+					global_active_harness_identifiers => $global_active_harness_identifiers,
+					global_harnessing_identifiers => $global_harnessing_identifiers,
+					harnessing_identifier => $harnessing_identifier,
+				       },
+		   },
+		  );
+    }
+
+    # if this harnessing_identifier was not yet created
 
     if (not exists $global_harnessing_identifiers->{$harnessing_identifier})
     {
@@ -3923,7 +3939,7 @@ sub hs_preparer
 
     $self->{preparation_result} = $preparation_result;
 
-    # make the docker harness available by pushing it
+    # make the harness available by pushing it
 
     my $harness_class = $self->{class};
 
@@ -3960,6 +3976,8 @@ sub hs_reparer
     my $reparer = $reparation->{reparer};
 
     my $reparation_error = $execution_context->prepare_engine($reparer, 'reparation', $self->{preparation_result});
+
+    # remove the harness identifier from the active harnesses
 
     my $harnessing_identifier = $execution_context->harness_identifier_pop();
 
@@ -4273,7 +4291,7 @@ sub hs_preparer
 
     # give diagnostics
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
+    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing the Docker Container $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -4311,7 +4329,7 @@ sub hs_reparer
 
     my $reparation_description = $preparation->{description};
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing the Docker Container ($reparation_description)");
 
     # execute the reparation clause
 
@@ -4322,6 +4340,8 @@ sub hs_reparer
     my $container_name = $self->{class}->{name_container};
 
     Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command exec -it $container_name bash'.)");
+
+    # remove the docker harness identifier from the active harnesses
 
     my $harnessing_identifier = $execution_context->harness_identifier_pop();
 
