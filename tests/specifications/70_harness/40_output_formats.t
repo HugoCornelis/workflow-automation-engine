@@ -298,7 +298,7 @@ This test module tests the different output formatters that allow to
 convert test specifications to documentation.
 
 ",
-			      purpose => "Docker test environment.",
+			      purpose => "Tests for the different output formats.",
 			     },
 	    name => '70_harness/40_output_formats.t',
 	   };
