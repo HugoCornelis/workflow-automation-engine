@@ -3804,6 +3804,7 @@ sub create_or_fetch
 	       'Heterarch::Test::ExecutionContext::Harness::Builtin::Empty' => 'builtin',
 	       'Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer' => 'builtin',
 	       'Heterarch::Test::ExecutionContext::Harness::Docker' => 'builtin',
+	       'Heterarch::Test::ExecutionContext::Harness::Docker::Image' => 'builtin',
 	      };
 
 	if (exists $known_harnessing_types->{$harnessing_type}
@@ -4406,6 +4407,86 @@ sub new
 	   class => clone($harnessing_class),
 	   preparation => {
 			   description => "create the Docker image and start it as a container for running the tests",
+			  },
+	   reparation => {
+			  description => "leave the Docker container for running manual tests",
+			 },
+	   state => 'Instantiated',
+	  };
+
+    bless $harness;
+
+    return $harness;
+}
+
+
+package Heterarch::Test::ExecutionContext::Harness::Docker::Image;
+
+our @ISA = ("Heterarch::Test::ExecutionContext::Harness::Docker");
+
+
+sub _docker_preparer
+{
+    my $self = shift;
+
+    #! for consistency with the reparer code, should always be undef
+
+    my $previous_result = shift;
+
+    # build the container
+
+    my $harness_class = $self->{class};
+
+    if (exists $harness_class->{build})
+    {
+	return \ 'The Heterarch::Test::ExecutionContext::Harness::Docker::Image::_docker_preparer\'s build clause must not be used because the image must already have been built.';
+    }
+    elsif (exists $harness_class->{dockerfile}
+	   and exists $harness_class->{name_image})
+    {
+	return \ 'The Heterarch::Test::ExecutionContext::Harness::Docker::Image::_docker_preparer\'s dockerfile clause must not be used because the image must already have been built.';
+    }
+
+    # try to stop and remove a previous container of the same name
+
+    my $name_container = $harness_class->{name_container};
+
+    system "$docker_command container stop -t 3 $name_container";
+    system "$docker_command container rm $name_container";
+
+    # start the built container
+
+    my $name_image = $harness_class->{name_image};
+
+    system "$docker_command run -d -t --name $name_container $name_image";
+
+    # return no errors
+
+    #! the sub should return a user role object that
+    #! has the interface to generate the necessary prefix
+    #! for the command that is executed for the test.
+
+    return '_docker_preparer: executed';
+}
+
+
+sub new
+{
+    my $class = shift;
+
+    my $harnessing_class = shift;
+
+    my $harnessing_identifier = shift;
+
+    # prepare the docker image and container
+
+    use Clone 'clone';
+
+    my $harness
+	= {
+	   class => clone($harnessing_class),
+	   preparation => {
+			   description => "start the Docker container for running the tests (the image must already exist)",
 			  },
 	   reparation => {
 			  description => "leave the Docker container for running manual tests",
