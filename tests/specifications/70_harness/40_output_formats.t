@@ -272,7 +272,6 @@ No email sent.
 				     description => "conversion of the test specifications to pdf",
 				    },
 				   ],
-	    comment => "docker harness tests",
 	    description => "output formats test module",
 	    harnessing => {
 			   class => {
