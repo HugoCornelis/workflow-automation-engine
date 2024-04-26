@@ -28,6 +28,9 @@ options:
                                  this experimental feature might increase test performance,
                                  by recycling test definitions.
     --help                       print usage information.
+    --input-command-tests        merge the given file or directory as command tests to be executed (can be given several times).
+    --input-commands             merge the given file or directory as commands to be tested (can be given several times).
+    --input-modules              merge the given file or directory as modules to be tested (can given several times).
     --numerical-compare          attempt to compare numbers numerically when string differences are found (default enabled).
     --output                     the class that should generate the output (default is 'Heterarch::Test::Executor').
     --output-content-line-limit  maximum number of lines when generating content output (latex, html, pdf).

@@ -23,6 +23,9 @@ my $option_dump_yaml;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
 my $option_flattenout;
 my $option_help;
+my $option_input_command_tests = [];
+my $option_input_commands= [];
+my $option_input_modules = [];
 my $option_numerical_compare;
 my $option_output;
 my $option_output_content_line_limit = 10;
@@ -54,7 +57,7 @@ my $global_all_output_levels
       ];
 
 my $global_error_count = 0;
-my $global_fd_output;
+our $global_fd_output;
 my $global_previous_command_side_effects;
 my $global_test_report;
 
@@ -236,13 +239,34 @@ sub main
 
     # find all the test module files
 
-    my $test_module_references = Heterarch::Test::Library::construct();
+    my $test_module_references = Heterarch::Test::Library::construct($global_config->{tests_directory});
 
     # read the test module files
 
     my $test_module_library_contents = Heterarch::Test::Library::expand($global_fd_output, $test_module_references);
 
-    my $test_modules = $test_module_library_contents->{test_modules};
+    my $module_definitions = $test_module_library_contents->{test_modules};
+
+    # merge the modules that were seperated out
+
+    if ($option_input_modules)
+    {
+	Heterarch::Test::Library::merge_modules($module_definitions, $option_input_modules);
+    }
+
+    # merge the commands that were seperated out
+
+    if ($option_input_commands)
+    {
+	Heterarch::Test::Library::merge_commands($module_definitions, $option_input_commands);
+    }
+
+    # merge the command tests that were seperated out
+
+    if ($option_input_command_tests)
+    {
+	Heterarch::Test::Library::merge_command_tests($module_definitions, $option_input_command_tests);
+    }
 
     # compute the model library checksum
 
@@ -282,7 +306,7 @@ sub main
 
 	# randomize the test module library
 
-	( $test_modules, $random_seed ) = Heterarch::Test::Library::randomize_order($test_modules, $random_seed);
+	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $random_seed);
 
 	$global_test_report->{random_seed} = $random_seed;
     }
@@ -308,7 +332,7 @@ sub main
 
     # loop over all module definitions
 
-    foreach my $module_definition (@$test_modules)
+    foreach my $module_definition (@$module_definitions)
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
@@ -356,6 +380,9 @@ sub parse_options
 	     "email" => \$option_email,
 	     "flattenout" => \$option_flattenout,
 	     "help!" => \$option_help,
+	     "input-command-tests=s" => $option_input_command_tests,
+	     "input-commands=s" => $option_input_commands,
+	     "input-modules=s" => $option_input_modules,
 	     "numerical-compare!" => \$option_numerical_compare,
 	     "output=s" => \$option_output,
 	     "output-content-line-limit=s" => \$option_output_content_line_limit,
@@ -442,6 +469,9 @@ sub parse_options
 	   email => $option_email,
 	   flattenout => $option_flattenout,
 	   help => $option_help,
+	   input_commands => $option_input_commands,
+	   input_modules => $option_input_modules,
+	   input_command_tests => $option_input_command_tests,
 	   numerical_compare => $option_numerical_compare,
 	   output => $option_output,
 	   output_figures => $option_output_figures,
@@ -478,6 +508,9 @@ options:
                                  this experimental feature might increase test performance,
                                  by recycling test definitions.
     --help                       print usage information.
+    --input-command-tests        merge the given file or directory as command tests to be executed (can be given several times).
+    --input-commands             merge the given file or directory as commands to be tested (can be given several times).
+    --input-modules              merge the given file or directory as modules to be tested (can given several times).
     --numerical-compare          attempt to compare numbers numerically when string differences are found (default enabled).
     --output                     the class that should generate the output (default is '$option_output').
     --output-content-line-limit  maximum number of lines when generating content output (latex, html, pdf).
@@ -4535,19 +4568,21 @@ package Heterarch::Test::Library;
 
 sub construct
 {
+    my $tests_directory = shift;
+
     # find the test specifications
 
-    my $test_modules
+    my $module_definitions
 	= [
 	   map
 	   {
 	       chomp; $_;
 	   }
 	   sort
-	   `find $global_config->{tests_directory} -name "*.t"`,
+	   `find $tests_directory -name "*.t"`,
 	  ];
 
-    return $test_modules;
+    return $module_definitions;
 }
 
 
@@ -4589,7 +4624,7 @@ sub expand
 	    next;
 	}
 
-	my $module_definition = readfile($fd_output, $test_module);
+	my $module_definition = read_module($fd_output, $test_module);
 
 	if ($module_definition)
 	{
@@ -4797,6 +4832,61 @@ sub is_yaml
 }
 
 
+sub merge_commands
+{
+}
+
+
+sub merge_command_tests
+{
+}
+
+
+sub merge_modules
+{
+    my $module_definitions = shift;
+
+    my $input_module_directories = shift;
+
+    my $result = $module_definitions;
+
+    use Data::Merger 'merger';
+
+    # loop over all the input_module_directories
+
+    foreach my $input_module_directory (@$input_module_directories)
+    {
+	use Data::Dumper;
+
+	# find the test specifications
+
+	my $test_modules = construct($input_module_directory);
+
+	my $test_module_contents = expand($global_fd_output, $test_modules);
+
+	$result = merger($module_definitions, $test_module_contents);
+
+	if (defined $option_debugging
+	    and $option_debugging eq 'library')
+	{
+	    print Dumper(
+			 {
+			  module_definitions => $module_definitions,
+			  result => $result,
+			  test_module_contents => $test_module_contents,
+			  test_modules => $test_modules,
+			 },
+			);
+	}
+
+    }
+
+    # return the result
+
+    return $result;
+}
+
+
 sub randomize_order
 {
     my $test_modules = shift;
@@ -4822,7 +4912,7 @@ sub randomize_order
 }
 
 
-sub readfile
+sub read_module
 {
     my $fd_output = shift;
 
