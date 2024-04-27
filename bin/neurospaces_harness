@@ -43,7 +43,7 @@ my $option_tags = [];
 my $option_timeout_multiplier = 1;
 my $option_timings;
 my $option_trace;
-my $option_verbose;
+our $option_verbose;
 
 
 our $global_config;
@@ -289,24 +289,11 @@ sub main
 
     if (defined $option_random_order)
     {
-	if ($option_verbose)
-	{
-	    print $global_fd_output "$0: Randomizing test specifications, random seed is $option_random_order\n";
-	}
-
-	# by default the randomizer will choose a random_seed
+	# randomize the test module library
 
 	my $random_seed;
 
-	if ($option_random_order =~ /^[0-9]*$/
-	    and $option_random_order ne 1)
-	{
-	    $random_seed = $option_random_order
-	}
-
-	# randomize the test module library
-
-	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $random_seed);
+	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order);
 
 	$global_test_report->{random_seed} = $random_seed;
     }
@@ -4972,7 +4959,20 @@ sub randomize_order
 {
     my $test_modules = shift;
 
-    my $random_seed = shift;
+    if ($::option_verbose)
+    {
+	print $global_fd_output "$0: Randomizing test specifications, random seed is $option_random_order\n";
+    }
+
+    # by default the randomizer will choose a random_seed
+
+    my $random_seed;
+
+    if ($option_random_order =~ /^[0-9]*$/
+	and $option_random_order ne 1)
+    {
+	$random_seed = $option_random_order
+    }
 
     # by default the randomizer will choose a random_seed
 
