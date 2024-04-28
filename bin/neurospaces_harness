@@ -239,34 +239,19 @@ sub main
 
     # find all the test module files
 
-    my $test_module_references = Heterarch::Test::Library::construct($global_config->{tests_directory});
+    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $global_fd_output, );
 
-    # read the test module files
+    $test_library->construct();
 
-    my $test_module_library_contents = Heterarch::Test::Library::expand($global_fd_output, $test_module_references);
+    $test_library->expand();
 
-    my $module_definitions = $test_module_library_contents->{test_modules};
+    $test_library->merge_modules($option_input_modules);
 
-    # merge the modules that were seperated out
+    $test_library->merge_commands($option_input_commands);
 
-    if ($option_input_modules)
-    {
-	Heterarch::Test::Library::merge_modules($module_definitions, $option_input_modules);
-    }
+    $test_library->merge_command_tests($option_input_command_tests);
 
-    # merge the commands that were seperated out
-
-    if ($option_input_commands)
-    {
-	Heterarch::Test::Library::merge_commands($module_definitions, $option_input_commands);
-    }
-
-    # merge the command tests that were seperated out
-
-    if ($option_input_command_tests)
-    {
-	Heterarch::Test::Library::merge_command_tests($module_definitions, $option_input_command_tests);
-    }
+    my $module_definitions = $test_library->{test_modules};
 
     # compute the model library checksum
 
@@ -332,7 +317,7 @@ sub main
 
     # do final processing of the executor
 
-    $executor->ex_terminate($global_fd_output, $test_module_library_contents);
+    $executor->ex_terminate($global_fd_output, $test_library);
 
     # end the execution_context
 
@@ -348,7 +333,7 @@ sub main
 
     # final report
 
-    report_exit(0, $test_module_library_contents);
+    report_exit(0, $test_library);
 }
 
 
@@ -4634,9 +4619,16 @@ sub ex_terminate
 package Heterarch::Test::Library;
 
 
+#
+# given the directory with the test specifications, construct a list
+# of filenames containing the test specifications.
+#
+
 sub construct
 {
-    my $tests_directory = shift;
+    my $self = shift;
+
+    my $tests_directory = $self->{tests_directory};
 
     # find the test specifications
 
@@ -4650,15 +4642,24 @@ sub construct
 	   `find $tests_directory -name "*.t"`,
 	  ];
 
+    $self->{module_definition_filenames} = $module_definitions;
+
     return $module_definitions;
 }
 
 
+#
+# given a list of filenames of test specifications, read the test
+# specifications as a list of executable test definitions.
+#
+
 sub expand
 {
-    my $fd_output = shift;;
+    my $self = shift;
 
-    my $library = shift;
+    my $fd_output = $self->{fd_output};
+
+    my $library = $self->{module_definition_filenames};
 
     my $test_modules = [];
 
@@ -4712,6 +4713,10 @@ sub expand
 	   html_introduction => $html_introduction,
 	   test_modules => $test_modules,
 	  };
+
+    $self->{html_introduction} = $html_introduction;
+
+    $self->{test_modules} = $test_modules;
 
     # return result
 
@@ -4920,11 +4925,11 @@ sub merge_command_tests
 
 sub merge_modules
 {
-    my $module_definitions = shift;
+    my $self = shift;
 
-    my $input_module_directories = shift;
+    my $input_module_directories = shift || [];
 
-    my $result = $module_definitions;
+    my $original_test_modules = $self->{test_modules};
 
     use Data::Merger 'merger';
 
@@ -4934,23 +4939,23 @@ sub merge_modules
     {
 	use Data::Dumper;
 
-	# find the test specifications
+	my $test_library = Heterarch::Test::Library->new($input_module_directory, $self->{fd_output}, );
 
-	my $test_modules = construct($input_module_directory);
+	$test_library->construct();
 
-	my $test_module_contents = expand($global_fd_output, $test_modules);
+	$test_library->expand();
 
-	$result = merger($module_definitions, $test_module_contents);
+	my $new_test_modules = $self->{test_modules};
+
+	merger($original_test_modules, $new_test_modules);
 
 	if (defined $option_debugging
 	    and $option_debugging eq 'library')
 	{
 	    print Dumper(
 			 {
-			  module_definitions => $module_definitions,
-			  result => $result,
-			  test_module_contents => $test_module_contents,
-			  test_modules => $test_modules,
+			  new_test_modules => $new_test_modules,
+			  original_test_modules => $original_test_modules,
 			 },
 			);
 	}
@@ -4959,7 +4964,27 @@ sub merge_modules
 
     # return the result
 
-    return $result;
+    return $original_test_modules;
+}
+
+
+sub new
+{
+    my $package = shift;
+
+    my $tests_directory = shift;
+
+    my $fd_output = shift;
+
+    my $self
+	= {
+	   fd_output => $fd_output,
+	   tests_directory => $tests_directory,
+	  };
+
+    bless $self, $package;
+
+    return $self;
 }
 
 
@@ -7763,9 +7788,9 @@ sub _output_pdf_process
 
 sub process
 {
-    my $self = shift;
-
     # my $result = Heterarch::Test::Output::Formatter::PDF->SUPER::process(@_);
+
+    my $self = shift;
 
     my $output_filename = shift;
 
