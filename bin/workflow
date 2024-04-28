@@ -2728,7 +2728,7 @@ sub _init_command_filenames_configured
 	   {
 	       # select filenames with the correct project name prefix
 
-	       /$field_project_name-commands[-a-z0-9]*$/;
+	       /$field_project_name-commands[-_a-z0-9]*$/;
 	   }
 	   grep
 	   {
