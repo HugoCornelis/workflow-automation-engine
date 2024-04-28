@@ -245,6 +245,13 @@ sub main
 
     $test_library->expand();
 
+    $test_library->read_html
+	(
+	 {
+	  introduction_filename => $global_config->{introduction_filename},
+	 },
+	);
+
     $test_library->merge_modules($option_input_modules);
 
     $test_library->merge_commands($option_input_commands);
@@ -4663,27 +4670,6 @@ sub expand
 
     my $test_modules = [];
 
-    # read the introduction
-
-    my $html_introduction;
-
-    my $html_introduction_filename = $global_config->{introduction_filename};
-
-    if (-e $html_introduction_filename)
-    {
-	local $/; # enable 'slurp' mode
-
-	my $file = IO::File->new("<$html_introduction_filename");
-
-	$html_introduction = <$file>;
-
-	$file->close();
-    }
-    else
-    {
-	$html_introduction = '';
-    }
-
     # parse all modules
 
     foreach my $test_module (@$library)
@@ -4706,21 +4692,7 @@ sub expand
 	$test_modules = flatten_out($test_modules);
     }
 
-    # set result
-
-    my $result
-	= {
-	   html_introduction => $html_introduction,
-	   test_modules => $test_modules,
-	  };
-
-    $self->{html_introduction} = $html_introduction;
-
     $self->{test_modules} = $test_modules;
-
-    # return result
-
-    return $result;
 }
 
 
@@ -5023,6 +4995,37 @@ sub randomize_order
     require List::Util;
 
     return ( [ List::Util::shuffle(@$test_modules), ], $random_seed );
+}
+
+
+sub read_html
+{
+    my $self = shift;
+
+    my $options = shift;
+
+    my $html_introduction_filename = $options->{introduction_filename};
+
+    # read the introduction
+
+    my $html_introduction;
+
+    if (-e $html_introduction_filename)
+    {
+	local $/; # enable 'slurp' mode
+
+	my $file = IO::File->new("<$html_introduction_filename");
+
+	$html_introduction = <$file>;
+
+	$file->close();
+    }
+    else
+    {
+	$html_introduction = '';
+    }
+
+    $self->{html_introduction} = $html_introduction;
 }
 
 
