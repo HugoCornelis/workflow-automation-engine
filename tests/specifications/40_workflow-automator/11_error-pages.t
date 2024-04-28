@@ -81,13 +81,13 @@ project-specific workflows that use system shell commands.
 			},
        harnessing => {
 		      class => {
-				build => "./tests/specifications/dockerfiles/docker-build-errors.bash",
 				comment => 'Enter this container with "docker exec -it workflow_automation_test_container_errors bash"',
 				default_user => 'neurospaces',
+				dockerfile => './tests/specifications/dockerfiles/Dockerfile.workflow-errors',
 				identifier => 'docker_based_harness_errors',
 				name_container => 'workflow_automation_test_container_errors',
 				name_image => 'workflow_automation_image_errors',
-				type => '',
+				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },
        name => '40_workflow-automator/11_error-pages.t',
