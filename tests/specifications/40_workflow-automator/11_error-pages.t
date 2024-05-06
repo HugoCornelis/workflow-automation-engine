@@ -13,11 +13,11 @@ my $test
 						  {
 						   description => "Do we get a sensible error message when an non-existent target is invoked ?",
 						   read => 'Unknown option: non-existent-option
-workflow: *** error in option processing, try --help at /usr/local/bin/workflow line 5757.
- at /usr/local/bin/workflow line 5757.
-	main::parse_command_line() called at /usr/local/bin/workflow line 5406
-	main::main() called at /usr/local/bin/workflow line 6187
-workflow: *** error in option processing, try --help at /usr/local/bin/workflow line 5757.
+workflow: *** error in option processing, try --help at /usr/local/bin/workflow line 5774.
+ at /usr/local/bin/workflow line 5774.
+	main::parse_command_line() called at /usr/local/bin/workflow line 5423
+	main::main() called at /usr/local/bin/workflow line 6246
+workflow: *** error in option processing, try --help at /usr/local/bin/workflow line 5774.
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -29,10 +29,10 @@ workflow: *** error in option processing, try --help at /usr/local/bin/workflow 
 				command_tests => [
 						  {
 						   description => "Do we get a sensible error message when an non-existent target is invoked ?",
-						   read => 'workflow: *** Error: Either target \'start_project\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5742.
- at /usr/local/bin/workflow line 5742.
-	main::main() called at /usr/local/bin/workflow line 6187
-workflow: *** Error: Either target \'start_project\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5742.
+						   read => 'workflow: *** Error: Either target \'start_project\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5759.
+ at /usr/local/bin/workflow line 5759.
+	main::main() called at /usr/local/bin/workflow line 6246
+workflow: *** Error: Either target \'start_project\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5759.
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -44,10 +44,10 @@ workflow: *** Error: Either target \'start_project\' does not exist or it does n
 				command_tests => [
 						  {
 						   description => "Do we get a sensible error message when an non-existent command is invoked ?",
-						   read => 'workflow: *** Error: Either target \'builtin\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5742.
- at /usr/local/bin/workflow line 5742.
-	main::main() called at /usr/local/bin/workflow line 6187
-workflow: *** Error: Either target \'builtin\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5742.
+						   read => 'workflow: *** Error: Either target \'builtin\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5759.
+ at /usr/local/bin/workflow line 5759.
+	main::main() called at /usr/local/bin/workflow line 6246
+workflow: *** Error: Either target \'builtin\' does not exist or it does not provide command \'mosart-beethoven\'. at /usr/local/bin/workflow line 5759.
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },

@@ -5764,11 +5764,15 @@ sub parse_command_line
     # 		       or $option_help_projects
     # 		       or $option_help_targets);
 
+    # try to make sure there is a target early on
+
     if (not defined $option_target
 	and scalar @ARGV)
     {
 	$option_target = shift @ARGV;
     }
+
+    # try to make sure there is a command on this target early on
 
     if (not defined $option_commands->[0]
 	and scalar @ARGV)
@@ -5946,6 +5950,40 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	print Dump( { "available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)" => $commands, }, );
 
 	exit 0;
+    }
+
+    if ($option_help_module)
+    {
+	if (not defined $option_target)
+	{
+	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
+	}
+
+	my $known_command_packages_builtin
+	    = {
+	       'Command::Net::IPerf' => {
+					 description => 'workflows for measuring the performance of a network connection',
+					 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine',
+					},
+	      };
+
+	my $known_command_packages
+	    = {
+	       'Command' => {
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } keys %$known_command_packages_builtin ) . ')',
+			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
+			    },
+	       %$known_command_packages_builtin,
+	      };
+
+	if (exists $known_command_packages->{$option_target})
+	{
+	    use YAML;
+
+	    print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+
+	    exit 0;
+	}
     }
 
     if ($option_help_options)
