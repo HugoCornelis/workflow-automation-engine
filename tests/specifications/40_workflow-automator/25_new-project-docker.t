@@ -11,7 +11,7 @@ my $test
 				command => 'pwd',
 				command_tests => [
 						  {
-						   description => "Are we in the correct working directory in the Docker container ?",
+						   description => "Are we in the correct working directory in the Docker container?",
 						   read => '/home/neurospaces
 ',
 						   wait => 1,
@@ -20,39 +20,39 @@ my $test
 						  },
 						 ],
 				command_user => 'neurospaces',
-				description => "showing that the container works: working directory",
+				description => "working directory",
 			       },
 			       {
 				command => 'ls -1',
 				command_tests => [
 						  {
-						   description => "Can we list the current directory in the Docker container ?",
+						   description => "Can we list the current directory in the Docker container?",
 						   read => 'projects
 ',
 						   wait => 1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: current directory contents",
+				description => "current directory contents",
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./autogen.sh',
 				command_tests => [
 						  {
-						   description => "Can we generate configure scripts in the Docker container ?",
+						   description => "Can we generate configure scripts?",
 						   tags => [ 'manual' ],
 						   wait => 1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: generation of configure scripts",
+				description => "generating configure scripts",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./configure',
 				command_tests => [
 						  {
-						   description => "Can we configure the workflow automation engine in the Docker container ?",
+						   description => "Can we configure the workflow automation engine source code?",
 						   read => 'checking for a BSD-compatible install... /usr/bin/install -c
 checking whether build environment is sane... yes
 checking for a race-free mkdir -p... /usr/bin/mkdir -p
@@ -91,14 +91,14 @@ config.status: creating Makefile
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: configuration of the workflow automation engine",
+				description => "configuring the source code",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && make',
 				command_tests => [
 						  {
-						   description => "Can we build the workflow automation engine in the Docker container ?",
+						   description => "Can we build the workflow automation engine?",
 						   read => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[1]: Nothing to be done for \'all-am\'.
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
@@ -108,14 +108,14 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: build of the workflow automation engine",
+				description => "building the workflow automation engine",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && sudo make install',
 				command_tests => [
 						  {
-						   description => "Can we install the workflow automation engine in the Docker container ?",
+						   description => "Can we install the workflow automation engine?",
 						   read => "make[1]: Entering directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
 make[2]: Entering directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
  /usr/bin/mkdir -p '/usr/local/bin'
@@ -187,14 +187,14 @@ make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-eng
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: installation of the workflow automation engine",
+				description => "installating the workflow automation engine",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow --help',
 				command_tests => [
 						  {
-						   description => "Can we get the help page of the workflow engine in the Docker container ?",
+						   description => "Can we get the help page?",
 						   read => '
 workflow: support for workflow design for embedded software engineers.
 
@@ -263,13 +263,13 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: help page of the workflow engine",
+				description => "help page of the workflow engine",
 			       },
 			       {
 				command => 'mkdir workflow-test && cd workflow-test && workflow builtin start_project workflow-tests',
 				command_tests => [
 						  {
-						   description => "Can we start a new project in the Docker container ?",
+						   description => "Can we start a new project?",
 						   read => 'Using \'workflow-tests\' as name for your project.
 Created a template configuration file for project \'workflow-tests\'
 Created a template workflow-project in \'workflow-project-template.pl\' with contents:
@@ -314,14 +314,14 @@ Then check if they work by inspecting the examples they provide (with various op
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: start of a new project",
+				description => "starting a new project",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd workflow-test && find . | sort',
 				command_tests => [
 						  {
-						   description => "Have the project files been created inside the Docker container?",
+						   description => "Have the project files been created?",
 						   read => '.
 ./conf.workflow-tests-configuration
 ./conf.workflow-tests-workflow
@@ -348,7 +348,7 @@ Then check if they work by inspecting the examples they provide (with various op
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: correct creation of the field project file",
+				description => "creation of the field project file",
 			       },
 			       {
 				command_notused => 'test -x workflow-tests-commands-data/examples_sh/sh_single_command.sh',
@@ -379,21 +379,21 @@ Then check if they work by inspecting the examples they provide (with various op
 				command => 'cd workflow-test && mv --verbose workflow-project-template.pl workflow-project.pl',
 				command_tests => [
 						  {
-						   description => "Can we rename the project configuration files to activate the project inside the container ?",
+						   description => "Can we rename the project configuration files to activate the project?",
 						   read => 'renamed \'workflow-project-template.pl\' -> \'workflow-project.pl\'
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: rename the field project file to its final name",
+				description => "rename the field project file to its final name",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd workflow-test && workflow --help-field-project-name',
 				command_tests => [
 						  {
-						   description => "Has the project been correctly initialized inside the container?",
+						   description => "Has the project been correctly initialized?",
 						   read => '
 global_field_project_configuration:
   field_project_configuration_filename: workflow-project.pl
@@ -409,14 +409,14 @@ global_field_project_configuration:
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: correct creation of the field project file",
+				description => "correct creation of the field project file",
 			       },
 			       {
 				command => 'cd workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands',
 				command_tests => [
 						  {
-						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required as a work around between the test engine and the workflow engine under test.",
-						   description => "Can we install the project files inside the container ?",
+						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
+						   description => "Can we install the project files?",
 						   read => '# mkdir --parents /home/neurospaces/bin
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
@@ -449,27 +449,27 @@ conf.workflow-tests-configuration
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: correct installation of the new project files",
+				description => "correct installation of the new project files",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'echo "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/neurospaces/bin" >>~/.bashrc',
 				command_tests => [
 						  {
-						   description => "Can we update .bashrc to make sure that the project specific workflow engine is found inside the container ?",
+						   description => "Can we update .bashrc to make sure that the project specific version of the workflow engine is found?",
 						   tags => [ 'manual' ],
 						   wait => 0.1,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: update .bashrc to make sure that the project specific workflow engine is found",
+				description => "update .bashrc to make sure that the project specific version of the workflow engine is found",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'cd workflow-test && workflow-tests-workflow --help-commands',
 				command_tests => [
 						  {
-						   description => "Have the project specific commands been correctly installed inside the container ?",
+						   description => "Have the project workflows been correctly installed?",
 						   read => '
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow-tests-workflow builtin add_target --help
@@ -491,13 +491,13 @@ conf.workflow-tests-configuration
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: correct installation of the new project commands",
+				description => "correct installation of the workflows of the new project",
 			       },
 			       {
 				command => 'workflow-tests-workflow --help-commands',
 				command_tests => [
 						  {
-						   description => "Have the project specific commands been correctly installed inside the container, different working directory ?",
+						   description => "Have the project workflows been correctly installed, different working directory?",
 						   read => '
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow-tests-workflow builtin add_target --help
@@ -520,26 +520,26 @@ conf.workflow-tests-configuration
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "showing that the container works: correct installation of the new project commands",
+				description => "correct installation of the workflows of the new project",
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow examples_sh sh_single_command --dry-run',
 				command_tests => [
 						  {
-						   description => "Can we dry run one of the installed commands inside the container ?",
+						   description => "Can we dry run one of the installed workflows to inspect which commands it would run?",
 						   read => 'workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: are the shell command templates installed and executed, --dry-run ?',
+				description => 'installation and execution of the workflows, --dry-run',
 			       },
 			       {
 				command => 'workflow-tests-workflow examples_sh sh_single_command',
 				command_tests => [
 						  {
-						   description => "Can we execute one of the installed commands inside the container ?",
+						   description => "Can we execute one of the installed workflows?",
 						   read => '# /home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 #
 an example of the invocation of a single command
@@ -547,14 +547,14 @@ an example of the invocation of a single command
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: are the shell command templates installed and executed ?',
+				description => 'installation and execution of the workflows, no dry run',
 			       },
 			       {
 				command => "cd .. && workflow-tests-workflow examples_sh sh_single_command",
 				command_tests => [
 						  {
 						   comment => "This test is the same as the previous one except for the cd command.",
-						   description => "Have the project specific commands been correctly installed and are they executed when invoked from a different directory, inside the container ?",
+						   description => "Have the project workflows been correctly installed and are they executed when invoked from a different directory?",
 						   read => '# /home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 #
 an example of the invocation of a single command
@@ -562,13 +562,13 @@ an example of the invocation of a single command
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: are the shell command templates installed and executed from a different directory?',
+				description => 'execution of the workflow templates from a different directory',
 			       },
 			       {
 				command => 'workflow-tests-workflow builtin add_target -- new_target "Add commands to this new target that do new things" --install-commands-sh',
 				command_tests => [
 						  {
-						   description => "Can we add a new target and a template for new shell commands for this target inside the container ?",
+						   description => "Can we add a new target and workflow template?",
 						   wait => 1,
 						   read => 'workflow-tests-workflow: added target new_target to /home/neurospaces/workflow-test/workflow-tests-configuration-data/targets.yml
 workflow-tests-workflow: created the shell command file for target new_target',
@@ -576,15 +576,15 @@ workflow-tests-workflow: created the shell command file for target new_target',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: can we add new targets with a shell template file for their commands ?',
+				description => 'adding new targets and workflow templates',
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow builtin add_target -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
 				command_tests => [
 						  {
-						   description => "Can we add a new target and a template for new shell commands for this target2, inside the container ?",
-						   disabled => "we cannot read an output file inside the container yet, but this tests wants to check for it",
+						   description => "Can we add more targets and workflow templates?",
+						   disabled => "we cannot read an output file inside the test container yet, but this tests wants to check for it",
 						   wait => 1,
 						   read => {
 							    application_output_file => './workflow-tests-configuration-data/targets.yml',
@@ -596,13 +596,13 @@ workflow-tests-workflow: created the shell command file for target new_target2',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: can we add new targets2 with a shell template file for their commands ?',
+				description => 'adding more targets and workflow templates',
 			       },
 			       {
 				command => 'workflow --help-projects',
 				command_tests => [
 						  {
-						   description => "Can we list the known workflow projects using the regular workflow executable, inside the container ?",
+						   description => "Can we list the known workflow projects using the regular workflow executable?",
 						   read => '
 available_workflow automation projects (copy-paste the one you would like to get help for):
   - workflow-tests-workflow --help-commands
@@ -610,50 +610,50 @@ available_workflow automation projects (copy-paste the one you would like to get
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: can we add new targets2 with a shell template file for their commands ?',
+				description => 'listing the known workflow projects using the workflow executable',
 			       },
 			       {
 				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion" 1',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate bash completion strings for the options, inside the container ?",
+						   description => "Can we generate bash completion strings for the options?",
 						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: generation of bash completion strings for the options',
+				description => 'generation of bash completion strings for the options',
 			       },
 			       {
 				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion " 0',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate bash completion strings for the targets, inside the container ?",
+						   description => "Can we generate bash completion strings for the targets?",
 						   read => 'a --b builtin examples examples_sh examples_yml',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: generation of bash completion strings for the targets',
+				description => 'generation of bash completion strings for the targets',
 			       },
 			       {
 				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion builtin " 2',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate bash completion strings for the commands, inside the container ?",
+						   description => "Can we generate bash completion strings for the commands?",
 						   read => 'a --b add_target archive_configuration install_scripts print_configuration_directory start_project',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: generation of bash completion strings for the commands',
+				description => 'generation of bash completion strings for the commands',
 			       },
 			       {
 				command => 'workflow-tests-workflow --verbose builtin archive_configuration /tmp/wtw.tar.gz',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate an archive of the created configuration, inside the container ?",
+						   description => "Can we generate an archive of the created configuration?",
 						   read => 'Invoking (Command::builtin_archive_configuration)
 ---
 global_field_project_configuration:
@@ -694,14 +694,14 @@ tar_filename: /tmp/wtw.tar.gz
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: creation of an archive of a configuration',
+				description => 'creation of an archive of a configuration',
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'tar tfz /tmp/wtw.tar.gz | sort',
 				command_tests => [
 						  {
-						   description => "Can we find the archive of the configuration in the tarball, inside the container ?",
+						   description => "Can we inspect the archive of the configuration in the tarball?",
 						   read => 'workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
@@ -726,13 +726,13 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => 'showing that the container works: creation of an archive of a configuration',
+				description => 'inspection of the generated archive',
 			       },
 			       {
 				command => 'cd ~ && mkdir -vp ~/projects/workflow-configuration',
 				command_tests => [
 						  {
-						   description => "Can we create create the directories for installing an archived workflow configuration, inside the container ?",
+						   description => "Can we create the directories for installing an archived workflow configuration?",
 						   read => 'mkdir: created directory \'/home/neurospaces2/projects\'
 mkdir: created directory \'/home/neurospaces2/projects/workflow-configuration\'
 ',
@@ -740,13 +740,13 @@ mkdir: created directory \'/home/neurospaces2/projects/workflow-configuration\'
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: preparation to install an archived workflow configuration',
+				description => 'preparation to install an archived workflow configuration',
 			       },
 			       {
 				command => 'cd ~/projects/workflow-configuration && tar xvfz /tmp/wtw.tar.gz',
 				command_tests => [
 						  {
-						   description => "Can we unpack an archived workflow configuration, inside the container ?",
+						   description => "Can we unpack an archived workflow configuration?",
 						   read => 'workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
@@ -773,7 +773,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: unpacking an archived workflow configuration',
+				description => 'unpacking an archived workflow configuration',
 				tags => [ 'manual' ],
 			       },
 			       {
@@ -781,7 +781,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				command_tests => [
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
-						   description => "Can we install an unpacked workflow configuration, inside the container ?",
+						   description => "Can we install an unpacked workflow configuration?",
 						   read => '# bash -c "echo \'# necessary for $project_name-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
@@ -830,14 +830,14 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: installing a  workflow configuration',
+				description => 'installing a  workflow configuration',
 				tags => [ 'manual' ],
 			       },
 			       {
 				command => 'workflow-tests-workflow builtin print_configuration_directory',
 				command_tests => [
 						  {
-						   description => "Is the installed workflow configuration found and correct, inside the container ?",
+						   description => "Is the installed workflow configuration found and correct?",
 						   read => '
 global_field_project_configuration:
   field_project_name: workflow-tests
@@ -854,7 +854,7 @@ global_field_project_configuration:
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: testing an new installed workflow configuration',
+				description => 'testing an new installed workflow configuration',
 				tags => [ 'manual' ],
 			       },
 			       {
@@ -862,47 +862,47 @@ global_field_project_configuration:
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate bash completion strings for the options for the new installed configuration, inside the container ?",
+						   description => "Can we generate bash completion strings for the options for the new installed configuration?",
 						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: generation of bash completion strings for the options for the new installed configuration',
+				description => 'generation of bash completion strings for the options for the new installed configuration',
 			       },
 			       {
 				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion " 0',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate bash completion strings for the targets for the new installed configuration, inside the container ?",
+						   description => "Can we generate bash completion strings for the targets for the new installed configuration?",
 						   read => 'a --b builtin examples examples_sh examples_yml',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: generation of bash completion strings for the targets for the new installed configuration',
+				description => 'generation of bash completion strings for the targets for the new installed configuration',
 			       },
 			       {
 				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow --bash-completion builtin " 2',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
-						   description => "Can we generate bash completion strings for the commands for the new installed configuration, inside the container ?",
+						   description => "Can we generate bash completion strings for the commands for the new installed configuration?",
 						   read => 'a --b add_target archive_configuration install_scripts print_configuration_directory start_project',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
 				command_user => 'neurospaces2',
-				description => 'showing that the container works: generation of bash completion strings for the commands for the new installed configuration',
+				description => 'generation of bash completion strings for the commands for the new installed configuration',
 			       },
 			      ],
-       description => "testing of the workflow automation engine inside a docker container",
+       description => "testing the workflow automation engine",
        documentation => {
 			 explanation => "
 
 The workflow script enables the automation of customizable modular
-project-specific workflows that use shell commands.
+project-specific workflows consisting of shell commands.
 
 ",
 			 purpose => "This module tests the workflow automation engine.",

@@ -336,7 +336,7 @@ workflow-tests-workflow: created the shell command file for target new_target2',
 			 explanation => "
 
 The workflow script enables the automation of customizable modular
-project-specific workflows that use shell commands.
+project-specific workflows consisting of shell commands.
 
 ",
 			 purpose => "This module tests the workflow automation engine.",
