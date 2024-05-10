@@ -2912,6 +2912,23 @@ sub _init_filenames_2_symlink_commands
 }
 
 
+package Command::Linux;
+
+
+sub _config_compare_items
+{
+    my $commands
+	= [
+	   'grep ^CONFIG_ .config | sort > old.config',
+	   'yes \'\' | make oldconfig',
+	   'grep ^CONFIG_ .config | sort > new.config',
+	   'diff -Nur old.config new.config',
+	  ];
+
+    Command::execute_shell_command_array($commands);
+}
+
+
 package Command::Net::IPerf;
 
 
@@ -5961,6 +5978,10 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
 	my $known_command_packages_builtin
 	    = {
+	       'Command::Linux' => {
+				    description => 'workflows for working with the Linux kernel source code',
+				    documentation => 'The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.',
+				   },
 	       'Command::Net::IPerf' => {
 					 description => 'workflows for measuring the performance of a network connection',
 					 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine',
