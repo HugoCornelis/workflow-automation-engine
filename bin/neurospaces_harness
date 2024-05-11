@@ -807,8 +807,6 @@ sub cd_run
 
     my $fd_output = shift;
 
-    # my $error = $module_definition->md_run($execution_context, $executor, $fd_module_output);
-
     # do selection and prepare the test environment
 
     my $module_definition = $execution_context->get_module_definition();
@@ -840,68 +838,7 @@ sub cd_run
 
 	$command_test->rebless();
 
-	# emit comment if any
-
-	my $not_started = $execution_context->ec_examine($module_definition, $command_definition, $command_test);
-
-	if ($not_started)
-	{
-	    next;
-	}
-
-	# run the test executor which will run the command_test
-
-	my $execution_result = $executor->ex_ct_run($command_test);
-
-	# process errors
-
-	my $error = $execution_result->{error};
-
-	if ($error)
-	{
-	    my $description = $command_test->{description};
-
-	    my $command_definition_description = $command_definition->{description};
-
-	    my $message;
-
-	    my $before_match = $execution_result->{before_match};
-
-	    #! wondering what option_verbose has to do with the reporting of errors
-
-	    if ($option_verbose)
-	    {
-		$message = $before_match;
-	    }
-
-	    my $module_name = $module_definition->check_name();
-
-	    Heterarch::Test::Reporting::report_error_add
-		    (
-		     $fd_output,
-		     {
-		      description => $description,
-		      error => $error,
-		      expected => $execution_result->{expected},
-		      message => $message,
-		      module_name => $module_name,
-		      seen => $before_match,
-		      subdescription => $command_definition_description,
-		     },
-		    );
-	}
-
-	# end the execution of this test
-
-	$execution_context->ec_end($module_definition, $command_definition, $command_test);
-
-	# register if this command had side effects
-
-	$global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
-
-	# increment command test count
-
-	$global_test_report->{global}->{test_counters}->{command_test}++;
+	$command_test->ct_run_complete($execution_context, $executor, $fd_output);
     }
 
     # repair the command test environment
@@ -1450,6 +1387,89 @@ sub before_testing
 }
 
 
+sub ct_run_complete
+{
+    my $command_test = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # do selection and prepare the test environment
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    # emit comment if any
+
+    my $not_started = $execution_context->ec_examine($module_definition, $command_definition, $command_test);
+
+    if ($not_started)
+    {
+	return "command_test start failed ($not_started)";
+    }
+
+    # run the test executor which will run the command_test
+
+    my $execution_result = $executor->ex_ct_run($command_test);
+
+    # process errors
+
+    my $error = $execution_result->{error};
+
+    if ($error)
+    {
+	my $description = $command_test->{description};
+
+	my $command_definition_description = $command_definition->{description};
+
+	my $message;
+
+	my $before_match = $execution_result->{before_match};
+
+	#! wondering what option_verbose has to do with the reporting of errors
+
+	if ($option_verbose)
+	{
+	    $message = $before_match;
+	}
+
+	my $module_name = $module_definition->check_name();
+
+	Heterarch::Test::Reporting::report_error_add
+		(
+		 $fd_output,
+		 {
+		  description => $description,
+		  error => $error,
+		  expected => $execution_result->{expected},
+		  message => $message,
+		  module_name => $module_name,
+		  seen => $before_match,
+		  subdescription => $command_definition_description,
+		 },
+		);
+    }
+
+    # end the execution of this test
+
+    $execution_context->ec_end($module_definition, $command_definition, $command_test);
+
+    # register if this command had side effects
+
+    $global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
+
+    # increment command test count
+
+    $global_test_report->{global}->{test_counters}->{command_test}++;
+
+    return '';
+}
+
+
 sub rebless
 {
     my $command_test = shift;
@@ -1704,7 +1724,7 @@ sub rebless
 # The default implementation executes perl code in the command definition.
 #
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -1770,7 +1790,7 @@ our @ISA = ("Heterarch::Test::CommandTest");
 # expect the contents of the read clause for output.
 #
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2005,7 +2025,7 @@ sub _process_write
 
 # I believe this is only a template for derived classes.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2048,7 +2068,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 #   the shell command should find the produced output and process it.
 # compare this output with the expected output.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2130,7 +2150,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # literally compare the application output with the expected output.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2217,7 +2237,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # compare the application output with the expected output as a regex.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2285,7 +2305,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # compare the application output with the expected output which is a list of alternatives.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2353,7 +2373,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output from a file.
 # compare the application output with the expected output which is a file.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -2445,7 +2465,7 @@ our @ISA = ("Heterarch::Test::CommandTest::Interactive");
 # read the application output using the expect object.
 # compare this output with the application output.
 
-sub ct_run
+sub ct_run_command
 {
     my $self = shift;
 
@@ -4673,7 +4693,7 @@ sub ex_ct_run
 
     my $fd_output = $self->{fd_output};
 
-    return $command_test->ct_run($execution_context, $self, $fd_output);
+    return $command_test->ct_run_command($execution_context, $self, $fd_output);
 }
 
 
