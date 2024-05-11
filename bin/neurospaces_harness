@@ -721,23 +721,6 @@ package Heterarch::Test::CommandDefinition;
 our @ISA = ("Heterarch::Test::Element");
 
 
-sub process_clauses
-{
-    my $command_definition = shift;
-
-    my $execution_context = shift;
-
-    my $fd_output = shift;
-
-    if (exists $command_definition->{wait})
-    {
-	my $wait = $command_definition->{wait};
-
-	$execution_context->wait($fd_output, $wait);
-    }
-}
-
-
 #
 # Given a command_definition and an optional command_prefix, construct
 # an array with the command as a string and the arguments as the rest
@@ -810,6 +793,148 @@ sub cd_construct_command_line
 	      };
 
 	return $command_line_object;
+    }
+}
+
+
+sub cd_run
+{
+    my $command_definition = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    my $fd_output = shift;
+
+    # my $error = $module_definition->md_run($execution_context, $executor, $fd_module_output);
+
+    # do selection and prepare the test environment
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $not_started = $execution_context->ec_examine($module_definition, $command_definition);
+
+    if ($not_started)
+    {
+	return "command_definition start failed ($not_started)";
+    }
+
+    # call the perl code, spaw_new
+
+    # 1. an object given its class.
+    # 2. a piece of perl code that is run.
+    # 3. an interactive system shell command.
+
+    $executor->ex_cd_start();
+
+    # loop over all tests for this command
+
+    my $command_tests = $command_definition->{command_tests};
+
+    foreach my $command_test (@$command_tests)
+    {
+	bless $command_test, "Heterarch::Test::CommandTest";
+
+	# lookup the class for this command test
+
+	$command_test->rebless();
+
+	# emit comment if any
+
+	my $not_started = $execution_context->ec_examine($module_definition, $command_definition, $command_test);
+
+	if ($not_started)
+	{
+	    next;
+	}
+
+	# run the test executor which will run the command_test
+
+	my $execution_result = $executor->ex_ct_run($command_test);
+
+	# process errors
+
+	my $error = $execution_result->{error};
+
+	if ($error)
+	{
+	    my $description = $command_test->{description};
+
+	    my $command_definition_description = $command_definition->{description};
+
+	    my $message;
+
+	    my $before_match = $execution_result->{before_match};
+
+	    #! wondering what option_verbose has to do with the reporting of errors
+
+	    if ($option_verbose)
+	    {
+		$message = $before_match;
+	    }
+
+	    my $module_name = $module_definition->check_name();
+
+	    Heterarch::Test::Reporting::report_error_add
+		    (
+		     $fd_output,
+		     {
+		      description => $description,
+		      error => $error,
+		      expected => $execution_result->{expected},
+		      message => $message,
+		      module_name => $module_name,
+		      seen => $before_match,
+		      subdescription => $command_definition_description,
+		     },
+		    );
+	}
+
+	# end the execution of this test
+
+	$execution_context->ec_end($module_definition, $command_definition, $command_test);
+
+	# register if this command had side effects
+
+	$global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
+
+	# increment command test count
+
+	$global_test_report->{global}->{test_counters}->{command_test}++;
+    }
+
+    # repair the command test environment
+
+    $execution_context->ec_end($module_definition, $command_definition);
+
+    # register if this command had side effects
+
+    #! e.g. using a preparer/reparer combination
+
+    $global_previous_command_side_effects ||= $command_definition->{side_effects} || 0;
+
+    # increment command definition test count
+
+    $global_test_report->{global}->{test_counters}->{command_definition}++;
+
+    return '';
+}
+
+
+sub process_clauses
+{
+    my $command_definition = shift;
+
+    my $execution_context = shift;
+
+    my $fd_output = shift;
+
+    if (exists $command_definition->{wait})
+    {
+	my $wait = $command_definition->{wait};
+
+	$execution_context->wait($fd_output, $wait);
     }
 }
 
@@ -5267,7 +5392,7 @@ sub md_run
 
     if ($not_started)
     {
-	return "module start failed ($not_started)";
+	return "module_definition start failed ($not_started)";
     }
 
     # create the infrastructure for keeping module test results
@@ -5288,110 +5413,7 @@ sub md_run
 
 	$command_definition->rebless();
 
-	# do selection and prepare the test environment
-
-	my $not_started = $execution_context->ec_examine($self, $command_definition);
-
-	if ($not_started)
-	{
-	    next;
-	}
-
-	# call the perl code, spaw_new
-
-	# 1. an object given its class.
-	# 2. a piece of perl code that is run.
-	# 3. an interactive system shell command.
-
-	$executor->ex_cd_start();
-
-	# loop over all tests for this command
-
-	my $command_tests = $command_definition->{command_tests};
-
-	foreach my $command_test (@$command_tests)
-	{
-	    bless $command_test, "Heterarch::Test::CommandTest";
-
-	    # lookup the class for this command test
-
-	    $command_test->rebless();
-
-	    # emit comment if any
-
-	    my $not_started = $execution_context->ec_examine($self, $command_definition, $command_test);
-
-	    if ($not_started)
-	    {
-		next;
-	    }
-
-	    # run the text executor which will run the command_test
-
-	    my $execution_result = $executor->ex_ct_run($command_test);
-
-	    # process errors
-
-	    my $error = $execution_result->{error};
-
-	    if ($error)
-	    {
-		my $description = $command_test->{description};
-
-		my $command_definition_description = $command_definition->{description};
-
-		my $message;
-
-		my $before_match = $execution_result->{before_match};
-
-		#! wondering what option_verbose has to do with the reporting of errors
-
-		if ($option_verbose)
-		{
-		    $message = $before_match;
-		}
-
-		Heterarch::Test::Reporting::report_error_add
-			(
-			 $fd_output,
-			 {
-			  description => $description,
-			  error => $error,
-			  expected => $execution_result->{expected},
-			  message => $message,
-			  module_name => $module_name,
-			  seen => $before_match,
-			  subdescription => $command_definition_description,
-			 },
-			);
-	    }
-
-	    # end the execution of this test
-
-	    $execution_context->ec_end($self, $command_definition, $command_test);
-
-	    # register if this command had side effects
-
-	    $global_previous_command_side_effects ||= $command_test->{side_effects} || 0;
-
-	    # increment command test count
-
-	    $global_test_report->{global}->{test_counters}->{command_test}++;
-	}
-
-	# repair the command test environment
-
-	$execution_context->ec_end($self, $command_definition);
-
-	# register if this command had side effects
-
-	#! e.g. using a preparer/reparer combination
-
-	$global_previous_command_side_effects ||= $command_definition->{side_effects} || 0;
-
-	# increment command definition test count
-
-	$global_test_report->{global}->{test_counters}->{command_definition}++;
+	my $error = $command_definition->cd_run($execution_context, $executor, $fd_output);
     }
 
     # repair the test environment
