@@ -5066,7 +5066,7 @@ sub merge_modules
 
 	$test_library->expand();
 
-	my $new_test_modules = $self->{test_modules};
+	my $new_test_modules = $test_library->{test_modules};
 
 	merger($original_test_modules, $new_test_modules);
 
