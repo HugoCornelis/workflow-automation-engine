@@ -5159,7 +5159,8 @@ sub read_html
 
     my $html_introduction;
 
-    if (-e $html_introduction_filename)
+    if (defined $html_introduction_filename
+	and -e $html_introduction_filename)
     {
 	local $/; # enable 'slurp' mode
 
