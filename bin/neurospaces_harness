@@ -261,13 +261,20 @@ sub main
 
     my $module_definitions = $test_library->{test_modules};
 
-    # compute the model library checksum
+    # if there are modeling libraries
 
-    my $library_sha_before;
-
-    if (defined ($global_config->{model_library}))
+    if (defined ($global_config->{external_modeling_libraries}))
     {
-	$library_sha_before = ModelLibrary::sha();
+	# compute the shas of the modeling libraries
+
+	my $external_modeling_libraries = $global_config->{external_modeling_libraries};
+
+	foreach my $external_modeling_library (@$external_modeling_libraries)
+	{
+	    my $library_sha_before = ModelLibrary::sha($external_modeling_library);
+
+	    $execution_context->{external_modeling_libraries}->{$external_modeling_library}->{library_sha_before} = $library_sha_before;
+	}
     }
 
     # the previous command had no side effects on the loaded model (since there is no model yet)
@@ -696,11 +703,13 @@ package ModelLibrary;
 
 sub sha
 {
+    my $modeling_library_path = shift;
+
     # find all models
 
     use File::Find::Rule;
 
-    my $files = [ File::Find::Rule->file()->in( $ENV{NEUROSPACES_NMC_MODELS} ), ];
+    my $files = [ File::Find::Rule->file()->in( $modeling_library_path ), ];
 
     my $shas
 	= [
@@ -5451,29 +5460,39 @@ sub md_run
 
     $global_previous_command_side_effects ||= $self->{side_effects} || 0;
 
-    # if library checksum mismatch
+    # if there are modeling libraries
 
-    if (defined ($global_config->{model_library}))
+    if (defined ($global_config->{external_modeling_libraries}))
     {
-	my $library_sha_before = $execution_context->{library_sha_before};
+	# compute the shas of the modeling libraries
 
-	my $library_sha_after = ModelLibrary::sha();
+	my $external_modeling_libraries = $global_config->{external_modeling_libraries};
 
-	if ($library_sha_after ne $library_sha_before)
+	foreach my $external_modeling_library (@$external_modeling_libraries)
 	{
-	    my $error = 'model library checksum mismatch (model library has changed)';
+	    my $library_sha_before = $execution_context->{external_modeling_libraries}->{$external_modeling_library}->{library_sha_before};
 
-	    my $description = $self->{description};
+	    my $library_sha_after = ModelLibrary::sha($external_modeling_library);
 
-	    Heterarch::Test::Reporting::report_error_add
-		    (
-		     $fd_output,
-		     {
-		      description => $description,
-		      error => $error,
-		      module_name => $module_name,
-		     },
-		    );
+	    # if the shas are different
+	    if ($library_sha_after ne $library_sha_before)
+	    {
+		# generate an error
+
+		my $error = "$external_modeling_library model library checksum mismatch (model library $external_modeling_library has changed from $library_sha_before to $library_sha_after)";
+
+		my $description = $self->{description};
+
+		Heterarch::Test::Reporting::report_error_add
+			(
+			 $fd_output,
+			 {
+			  description => $description,
+			  error => $error,
+			  module_name => $module_name,
+			 },
+			);
+	    }
 	}
     }
 
