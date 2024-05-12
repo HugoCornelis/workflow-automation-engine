@@ -19,6 +19,7 @@ bin/neurospaces_harness: test definition executor
 
 options:
     --check-test-names           check the pathnames of the specification files against the names of the tests.
+    --config-filename            the name of the file with the configuration (default is: ./tests.config).
     --debugging                  enable specific debugging options.
     --dump-json                  dump test specifications to json files in /tmp/.
     --dump-perl                  dump test specifications to perl files in /tmp/.
