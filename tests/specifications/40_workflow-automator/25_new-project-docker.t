@@ -11,7 +11,7 @@ my $test
 				command => 'pwd',
 				command_tests => [
 						  {
-						   description => "Are we in the correct working directory in the Docker container?",
+						   description => "Are we in the correct working directory?",
 						   read => '/home/neurospaces
 ',
 						   wait => 1,
@@ -26,7 +26,7 @@ my $test
 				command => 'ls -1',
 				command_tests => [
 						  {
-						   description => "Can we list the current directory in the Docker container?",
+						   description => "Can we list the current directory?",
 						   read => 'projects
 ',
 						   wait => 1,
