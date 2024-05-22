@@ -37,13 +37,13 @@ selected:
   70_harness/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
-        - Are we in the correct working directory in the Docker container?
+        - Are we in the correct working directory in the Docker container ?
     - description: 'showing that the container works: working directory contents'
       tests:
-        - Can we list the working directory in the Docker container?
+        - Can we list the working directory in the Docker container ?
     - description: 'showing that the container works: root directory contents'
       tests:
-        - Can we list the root directory in the Docker container?
+        - Can we list the root directory in the Docker container ?
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
@@ -128,13 +128,13 @@ selected:
   70_harness/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
-        - Are we in the correct working directory in the Docker container?
+        - Are we in the correct working directory in the Docker container ?
     - description: 'showing that the container works: working directory contents'
       tests:
-        - Can we list the working directory in the Docker container?
+        - Can we list the working directory in the Docker container ?
     - description: 'showing that the container works: root directory contents'
       tests:
-        - Can we list the root directory in the Docker container?
+        - Can we list the root directory in the Docker container ?
 
 *** Info: See '>/tmp/report_developer.yml' for the detailed report
 No email sent.
