@@ -238,6 +238,10 @@ sub main
 
     open($global_fd_output, ">&STDOUT");
 
+    # the previous command had no side effects on the loaded model (since there is no model yet)
+
+    $global_previous_command_side_effects = 0;
+
     # find all the test module files
 
     my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $global_fd_output, );
@@ -259,7 +263,28 @@ sub main
 
     $test_library->merge_command_tests($option_input_command_tests);
 
+    # randomize test module order if requested
+
     my $module_definitions = $test_library->{test_modules};
+
+    if (defined $option_random_order)
+    {
+	# randomize the test module library
+
+	my $random_seed;
+
+	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order);
+
+	$global_test_report->{random_seed} = $random_seed;
+    }
+    else
+    {
+	$global_test_report->{random_seed} = 'not randomized';
+    }
+
+    # create an execution context for running the tests
+
+    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, {}, );
 
     # if there are modeling libraries
 
@@ -277,30 +302,11 @@ sub main
 	}
     }
 
-    # the previous command had no side effects on the loaded model (since there is no model yet)
+    # create a test executor for running the tests following the requested type of output
 
-    $global_previous_command_side_effects = 0;
+    my $executor = $option_output->new($execution_context);
 
-    # set status: running
-
-    $global_test_report->{global}->{status} = 'Running';
-
-    # randomize test module order if requested
-
-    if (defined $option_random_order)
-    {
-	# randomize the test module library
-
-	my $random_seed;
-
-	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order);
-
-	$global_test_report->{random_seed} = $random_seed;
-    }
-    else
-    {
-	$global_test_report->{random_seed} = 'not randomized';
-    }
+    # set status
 
     $global_test_report->{global}->{test_counters}
 	= {
@@ -309,13 +315,7 @@ sub main
 	   command_test => 0,
 	  };
 
-    # create an execution context for running the tests
-
-    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, { library_sha_before => $library_sha_before, }, );
-
-    # create a test executor for running the tests following the requested type of output
-
-    my $executor = $option_output->new($execution_context);
+    $global_test_report->{global}->{status} = 'Running';
 
     # loop over all module definitions
 
