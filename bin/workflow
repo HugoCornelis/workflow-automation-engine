@@ -2615,7 +2615,7 @@ sub _file_contains_regex
 
 # initialize the command module
 
-sub _init
+sub _c_init
 {
     my $commands_seen;
 
@@ -4666,7 +4666,7 @@ our $status;
 
 # initiallize field project related global configuration
 
-sub _init
+sub _f_init
 {
     # default result: empty
 
@@ -5418,14 +5418,14 @@ sub main
 
     # initiallize field project related global configuration
 
-    ($global_field_project_configuration, $global_technical_project_configuration) = FieldProject::_init();
+    ($global_field_project_configuration, $global_technical_project_configuration) = FieldProject::_f_init();
 
     if ($global_field_project_configuration
 	and $global_technical_project_configuration)
     {
 	# initialize the command module
 
-	Command::_init();
+	Command::_c_init();
 
 	# parse the local.mk packages to update the dynamically generated help pages
 
