@@ -2144,7 +2144,7 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
 
     if ($option_install_bash_completion)
     {
-	my $command_filename_directory = $global_field_project_configuration->{field_project_configuration_directory};
+	my $command_filename_directory = $global_field_project_configuration->{technical_project_configuration_directory};
 
 	use Cwd;
 
