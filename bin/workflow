@@ -2880,7 +2880,7 @@ sub _init_filenames_2_symlink_commands
 
 	       my $source = Cwd::abs_path($command_filename);
 
-	       my $target = "$ENV{HOME}/bin/$command_filename";
+	       my $target = ($command_filename =~ m(^/) ) ? $command_filename : "$ENV{HOME}/bin/$command_filename";
 
 	       if (defined $option_verbose
 		   and $option_verbose > 2)
