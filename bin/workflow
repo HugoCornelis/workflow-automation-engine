@@ -1977,7 +1977,7 @@ export PATH="$HOME/bin:$PATH"
     {
 	if ($option_verbose)
 	{
-	    print "$global_program_name: NOT executing installation of the workflow engine with (force == $option_install_engine)\n";
+	    print "$global_program_name: NOT executing installation of the workflow engine because it already seems to exist.\n";
 	}
     }
 
@@ -1994,7 +1994,11 @@ export PATH="$HOME/bin:$PATH"
 	   @{ _init_command_filenames_found('full-paths-configuration') },
 	  };
 
-    # print Dumper( { configuration_filenames_found_2 => $configuration_filenames_found_2, }, );
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	print Dumper( { configuration_filenames_found_2 => $configuration_filenames_found_2, }, );
+    }
 
     my $configurations_found = _init_filenames_2_symlink_commands( [ keys %$configuration_filenames_found_2, ], );
 
@@ -2048,13 +2052,17 @@ export PATH="$HOME/bin:$PATH"
 	   keys %$command_filenames_found_2,
 	  };
 
-    # print Dumper(
-    # 		 {
-    # 		  command_filenames_found_2 => $command_filenames_found_2,
-    # 		  command_filenames_configured_2 => $command_filenames_configured_2,
-    # 		  command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
-    # 		 },
-    # 		);
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	print Dumper(
+		     {
+		      command_filenames_found_2 => $command_filenames_found_2,
+		      command_filenames_configured_2 => $command_filenames_configured_2,
+		      command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
+		     },
+		    );
+    }
 
     my $commands_found = _init_filenames_2_symlink_commands( [ keys %$command_filenames_configured_2, ], );
 
@@ -2855,7 +2863,7 @@ sub _init_filenames_2_symlink_commands
     use Data::Dumper;
 
     if (defined $option_verbose
-	and $option_verbose > 2)
+	and $option_verbose > 3)
     {
 	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
     }
@@ -2901,12 +2909,18 @@ sub _init_filenames_2_symlink_commands
 	   {
 	       my $command_filename = $_;
 
-	       my $target = "$ENV{HOME}/bin/$command_filename";
+	       my $target = ($command_filename =~ m(^/) ) ? $command_filename : "$ENV{HOME}/bin/$command_filename";
 
 	       not -e $target;
 	   }
 	   @$filenames,
 	  ];
+
+    if (defined $option_verbose
+	and $option_verbose > 3)
+    {
+	print Dumper( { _init_filenames_2_symlink_commands_commands => $commands, }, );
+    }
 
     return $commands;
 }
@@ -5421,6 +5435,20 @@ sub main
     # parse command line
 
     parse_command_line();
+
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      global_field_project_configuration => $global_field_project_configuration,
+#		      global_overriden_packages => $global_overriden_packages,
+		      global_technical_project_configuration => $global_technical_project_configuration,
+		     },
+		    );
+    }
 
     # perform bash completion logic, this will exit the script
 
