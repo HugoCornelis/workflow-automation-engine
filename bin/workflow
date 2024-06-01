@@ -4691,7 +4691,7 @@ sub _f_init
     {
 	# add the builtin targets, they are always available and possibly override the configured targets of the same name
 
-	$result_technical->{targets}->{builtin}->{description} = "the builtin target allows to start a new project and upgrade existing projects";
+	$result_technical->{targets}->{builtin}->{description} = "the builtin target allows starting a new project and upgrading existing projects";
 
     }
 
@@ -4800,11 +4800,15 @@ sub _init_get_field_project_configuration
 
     my $result;
 
-    # try to determine the field_project_name from the executable name
+    # if we have an installed executed filename with an prefixed directory
 
     if ($0 =~ m((.*)/(.*)-workflow))
     {
+	# try to determine the field_project_name from the installed executable name
+
 	my $field_project_name = $2;
+
+	# try to determine the configuration directory from the installed executable name
 
 	my $technical_project_configuration_directory = $1;
 
@@ -4836,6 +4840,9 @@ sub _init_get_field_project_configuration
 	       true_technical_project_data_configuration_directory => $true_technical_project_data_configuration_directory,
 	      };
     }
+
+    # else we don't have an installed executable filename or prefix directory
+
     else
     {
 	# try to determine the field project name for a field_project_configuration file

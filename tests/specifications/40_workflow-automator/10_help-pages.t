@@ -108,7 +108,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 						   read => '
 targets:
   builtin:
-    description: the builtin target allows to start a new project and upgrade existing projects
+    description: the builtin target allows starting a new project and upgrading existing projects
 ',
 						  },
 						 ],
