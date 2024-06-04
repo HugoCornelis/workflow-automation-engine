@@ -2882,13 +2882,13 @@ sub _init_filenames_2_symlink_commands
 
 	       my $target = ($command_filename =~ m(^/) ) ? $command_filename : "$ENV{HOME}/bin/$command_filename";
 
+	       my $result = "ln -sf $source $target";
+
 	       if (defined $option_verbose
 		   and $option_verbose > 2)
 	       {
-		   print "$command_filename: ln -sf $source $target";
+		   print "$command_filename: $result\n";
 	       }
-
-	       my $result = "ln -sf $source $target";
 
 	       $result;
 	   }
