@@ -35,6 +35,15 @@ my $option_output_html;
 my $option_output_latex;
 my $option_output_levels = [];
 my $option_output_pdf;
+
+# the following option is not yet available from the command line interface
+
+my $option_output_table_of_contents = 'yes';
+
+# the following option is not yet available from the command line interface
+
+my $option_output_title_page = '';
+
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
@@ -6421,7 +6430,7 @@ sub _output_latex_preamble
 
     print $output_file $preamble1;
 
-    my $use_title_page = "";
+    my $use_title_page = $option_output_title_page;
 
     if ($use_title_page)
     {
@@ -6431,7 +6440,10 @@ sub _output_latex_preamble
     my $preamble2
 	= '
 \begin{document}
+';
 
+    $preamble2
+	.= '
 \begin{center}
    \includegraphics[scale=0.5]{' . $main_figures_directory . '/ns-main-logo-dark2.jpg}
 %   \caption{{\bf A Dummy Figure:} Example of \LaTeX\,\,\,code to incorporate a figure into documentation.}
@@ -6490,6 +6502,23 @@ sub _output_latex_preamble
     _output_latex_preamble_abstract($title_paragraphs);
 
     _output_latex_preamble_summary($title_paragraphs);
+
+    my $use_table_of_contents = $option_output_table_of_contents;
+
+    my $preamble3 = "";
+
+    if ($use_table_of_contents)
+    {
+	$preamble3 .= '
+
+\tableofcontents
+
+\newpage
+
+';
+    }
+
+    print $output_file $preamble3;
 }
 
 
