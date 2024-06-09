@@ -2122,7 +2122,7 @@ sub _install_script_symbolic_link_to_commands_in_commands_directory
     # 	   `ls 2>/dev/null "$project_name"-commands-*[^~]`,
     # 	  ];
 
-    # all the command files, including those not in mentioned in the configuration
+    # all the command files, including those not mentioned in the configuration
 
     my $command_filenames_found_2
 	= {
@@ -2719,19 +2719,6 @@ sub _c_init
 
     my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-    # all the command files, including those not in mentioned in the configuration
-
-    # my $command_filenames_found = _init_command_filenames_found('true-paths');
-
-    #! options haven't been processed yet
-
-    # if ($option_verbose
-    # 	and $option_verbose > 1)
-
-    # use Data::Dumper;
-
-    # print STDERR Dumper( { command_filenames_found => $command_filenames_found, }, );
-
     # only those command files mentioned in the configuration
 
     my $command_filenames_configured = _init_command_filenames_configured('true-paths');
@@ -2752,7 +2739,6 @@ sub _c_init
 	       not $commands_seen->{$_}++;
 	   }
 	   @$command_filenames_configured,
-	   #        @$command_filenames_found,
 	  ];
 
     foreach my $command_filename (@$command_filenames_to_use)
@@ -2923,10 +2909,14 @@ sub _init_command_filenames_configured
 }
 
 
+# find all the command files, including those not mentioned in the
+# configuration
+#
+# full_paths is either the empty string '' or 'full-paths' or
+# 'full-paths-configuration'.
+
 sub _init_command_filenames_found
 {
-    # full_paths is either the empty string '' or 'full-paths' or 'full-paths-configuration' or 'true-paths'.
-
     my $full_paths = shift;
 
     my $field_project_name = $global_field_project_configuration->{field_project_name};
@@ -2940,21 +2930,6 @@ sub _init_command_filenames_found
     my $result
 	= [
 	   sort
-	   map
-	   {
-	       # map the command filename to its true path if this was requested
-
-	       my $command_filename = $_;
-
-	       if ($full_paths eq 'true-paths')
-	       {
-		   use Cwd;
-
-		   $command_filename = Cwd::abs_path($command_filename);
-	       }
-
-	       $command_filename;
-	   }
 	   grep
 	   {
 	       ($full_paths =~ "configuration"
