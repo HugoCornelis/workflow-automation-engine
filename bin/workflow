@@ -2912,8 +2912,8 @@ sub _init_command_filenames_configured
 # find all the command files, including those not mentioned in the
 # configuration
 #
-# full_paths is either the empty string '' or 'full-paths' or
-# 'full-paths-configuration'.
+# full_paths is either 'full-paths' or 'full-paths-configuration'.
+#
 
 sub _init_command_filenames_found
 {
@@ -2930,27 +2930,18 @@ sub _init_command_filenames_found
     my $result
 	= [
 	   sort
-	   grep
-	   {
-	       ($full_paths =~ "configuration"
-		? m/$field_project_name-configuration[-a-z0-9]*$/
-		: m/$field_project_name-commands[-a-z0-9]*$/);
-	   }
-	   map
-	   {
-	       if (not $full_paths)
-	       {
-		   s($command_filename_directory/)();
-	       }
-
-	       $_;
-	   }
+	   # grep
+	   # {
+	   #     ($full_paths =~ "configuration"
+	   # 	? m/$field_project_name-configuration[-a-z0-9]*$/
+	   # 	: m/$field_project_name-commands[-a-z0-9]*$/);
+	   # }
 	   map
 	   {
 	       chomp; $_;
 	   }
 	   ($full_paths =~ "configuration"
-	    ? `ls 2>/dev/null $command_filename_directory/$field_project_name-configuration*`
+	    ? `ls 2>/dev/null $command_filename_directory/$field_project_name-configuration`
 	    : `ls 2>/dev/null $command_filename_directory/$field_project_name-commands*`),
 	  ];
 
