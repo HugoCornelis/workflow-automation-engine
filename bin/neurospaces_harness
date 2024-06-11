@@ -6735,6 +6735,35 @@ sub _output_latex_command_definition_description
 }
 
 
+sub _output_latex_command_definition_disabled
+{
+    my $command_definition = shift;
+
+    my $ss = shift;
+
+    my $cd_1 = $ss->{cd_1};
+
+    my $ct_1 = $ss->{ct_1};
+
+    #! this seems to be wrong, cannot have the disabled
+    #! clause of each command test in a isolated bullet,
+    #! maybe this also needs a $ct_1?
+
+#     print "TESTING\n";
+
+    if ($cd_1
+	and $command_definition->{disabled})
+#     if ($command_definition->{disabled})
+    {
+# 	print "TESTING MORE\n";
+
+	print $output_file '\item [$\bullet$]';
+
+	_output_latex_prompt($output_file, "textbf", $command_definition->{disabled}, "note that this command definition was disabled: \n", "\n\n");
+    }
+}
+
+
 sub _output_latex_command_definition_harnessing
 {
     my $command_definition = shift;
@@ -6832,9 +6861,13 @@ sub _output_latex_command_test_disabled
     #! clause of each command test in a isolated bullet,
     #! maybe this also needs a $ct_1?
 
+    # print "TESTING\n";
+
     if ($cd_1
 	and $command_test->{disabled})
     {
+	# print "TESTING MORE\n";
+
 	print $output_file '\item [$\bullet$]';
 
 	_output_latex_prompt($output_file, "textbf", $command_test->{disabled}, "note that this test was disabled: \n", "\n\n");
@@ -6976,6 +7009,10 @@ sub _output_latex_process
 	    {
 		print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
 	    }
+
+	    # output the disabled clause
+
+	    _output_latex_command_definition_disabled($command_definition, $ss);
 
 	    # output the command_definition description
 
