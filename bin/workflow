@@ -2124,14 +2124,14 @@ sub _install_script_symbolic_link_to_commands_in_commands_directory
 
     # all the command files, including those not mentioned in the configuration
 
-    my $command_filenames_found_2
-	= {
-	   map
-	   {
-	       $_ => 1,
-	   }
-	   @{ _init_command_filenames_found('full-paths') },
-	  };
+    # my $command_filenames_found_2
+    # 	= {
+    # 	   map
+    # 	   {
+    # 	       $_ => 1,
+    # 	   }
+    # 	   @{ _init_command_filenames_found('full-paths') },
+    # 	  };
 
     # only those command files mentioned in the configuration
 
@@ -2144,27 +2144,27 @@ sub _install_script_symbolic_link_to_commands_in_commands_directory
 	   @{ _init_command_filenames_configured('full-paths') },
 	  };
 
-    my $command_filenames_found_but_not_configured
-	= {
-	   map
-	   {
-	       $_ => 1,
-	   }
-	   grep
-	   {
-	       not $command_filenames_configured_2->{$_};
-	   }
-	   keys %$command_filenames_found_2,
-	  };
+    # my $command_filenames_found_but_not_configured
+    # 	= {
+    # 	   map
+    # 	   {
+    # 	       $_ => 1,
+    # 	   }
+    # 	   grep
+    # 	   {
+    # 	       not $command_filenames_configured_2->{$_};
+    # 	   }
+    # 	   keys %$command_filenames_found_2,
+    # 	  };
 
     if (defined $option_verbose
 	and $option_verbose > 2)
     {
 	print Dumper(
 		     {
-		      command_filenames_found_2 => $command_filenames_found_2,
+		      # command_filenames_found_2 => $command_filenames_found_2,
 		      command_filenames_configured_2 => $command_filenames_configured_2,
-		      command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
+		      # command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
 		     },
 		    );
     }
@@ -2182,9 +2182,9 @@ sub _install_script_symbolic_link_to_commands_in_commands_directory
 	use Data::Dumper;
 
 	print Dumper( {
-		       command_filenames_found_2 => $command_filenames_found_2,
+		       # command_filenames_found_2 => $command_filenames_found_2,
 		       command_filenames_configured_2 => $command_filenames_configured_2,
-		       command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
+		       # command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
 		       commands_found => $commands_found,
 		      }, );
     }
@@ -2963,6 +2963,12 @@ sub _init_command_filenames_found
     return $result;
 }
 
+
+# given a list of filenames, create system shell commands that create
+# symbolic links in the ~/bin directory to each of these filenames.
+#
+# each given filename must match with *-(commands|configuration) and
+# is checked for existence.
 
 sub _init_filenames_2_symlink_commands
 {
