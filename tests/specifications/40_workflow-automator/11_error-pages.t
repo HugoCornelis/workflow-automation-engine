@@ -11,13 +11,13 @@ my $test
 				command => 'workflow --non-existent-option',
 				command_tests => [
 						  {
-						   description => "Do we get a sensible error message when an non-existent target is invoked ?",
+						   description => "Do we get a sensible error message when an non-existent option name is used ?",
 						   read => 'Unknown option: non-existent-option
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "the error message when invoking a non-existent target",
+				description => "the error message when using a non-existent option name",
 			       },
 			       {
 				command => 'workflow start_project mosart-beethoven',
@@ -45,13 +45,13 @@ my $test
 				command => 'workflow builtin install_scripts -- --non-existent-option',
 				command_tests => [
 						  {
-						   description => "Do we get a sensible error message when an non-existent command is invoked ?",
+						   description => "Do we get a sensible error message when an non-existent option name is used for an existing command ?",
 						   read => 'Unknown option: non-existent-option
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "the error message when invoking a non-existent target",
+				description => "the error message when using a non-existent option name for an existing command",
 			       },
 			      ],
        description => "error pages",
