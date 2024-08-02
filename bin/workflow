@@ -206,6 +206,9 @@ sub _builtin_project_bash_completion_create
 
     $project_name_underscore =~ s(-)(_)g;
 
+    #! see https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html
+    #! see https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion-Builtins.html
+
     my $bash_completion_code
 	= "#/usr/bin/env bash
 _${project_name_underscore}_configuration_completions()
@@ -215,8 +218,10 @@ _${project_name_underscore}_configuration_completions()
     COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
 }
 
-complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
-complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
+# complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
+# complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
+complete -D -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration -o bashdefault -o default
+complete -D -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration -o bashdefault -o default
 
 
 _${project_name_underscore}_workflow_completions()
@@ -226,8 +231,10 @@ _${project_name_underscore}_workflow_completions()
     COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
 }
 
-complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
-complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
+# complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
+# complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
+complete -D -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow -o bashdefault -o default
+complete -D -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow -o bashdefault -o default
 
 ";
 
@@ -5127,7 +5134,7 @@ sub bash_completion
 {
     my $command_line = $option_bash_completion || "";
 
-    my $command_line_words = [ split ' ', $command_line, ];
+    my $arguments = [ split ' ', $command_line, ];
 
     #! this is sloppy: option_target is first set through a shift @ARGV and then fetched here.
 
@@ -5135,11 +5142,14 @@ sub bash_completion
 
     #t $comp_point is not used yet, I believe it is an index into the current command line
 
+    #t The index of the current cursor position relative to the
+    #t beginning of the current command.  If the current cursor position
+    #t is at the end of the current command, the value of this variable
+    #t is equal to ${#COMP_LINE}
+
     my $comp_point = $ARGV[0];
 
-    my $command_line_word = $command_line_words->[$comp_cword];
-
-    my $arguments = [ split ' ', $command_line, ];
+    my $command_line_word = $arguments->[$comp_cword];
 
     my $command = shift @$arguments;
 
@@ -5149,7 +5159,7 @@ sub bash_completion
 
     if ($command =~ /configuration/)
     {
-	$result = bash_completion_generate($command, $arguments, $global_technical_project_configuration);
+	$result = bash_completion_generate($command, $arguments, $global_technical_project_configuration, $comp_cword);
 
 	# add the depth level options that the configuration browser understands
 
@@ -5171,13 +5181,101 @@ sub bash_completion
 	}
 	else
 	{
-	    my $internal_commands = generate_command_hash_with_structure();
+	    # COMP_CWORD	An index into ${COMP_WORDS} of the word containing the current cursor position.
 
-	    $result = bash_completion_generate($command, $arguments, $internal_commands);
+	    # remove the options from the argument list
 
-	    # make sure the user gets a hint that options are also possible
+	    #t how to avoid that GetOptionsFromArray() prints warnings?
 
-	    push @$result, '--a', '--b';
+#	    my $option_results = GetOptionsFromArray($arguments, %$global_options);
+
+	    my $targets_commands = 2;
+
+	    my $targets_commands_subcommands = 3;
+
+	    my $position_2_type
+		= {
+		   0 => 'target',
+		   1 => 'command',
+		   2 => 'subcommand',
+		  };
+
+	    my $position = 0;
+
+	    my $target_command = [];
+
+	    if ($comp_cword > 0)
+	    {
+		for my $index (0 .. $comp_cword - 1)
+		{
+		    if ($arguments->[$index] =~ /^--/)
+		    {
+		    }
+		    else
+		    {
+			$target_command->[$position] = $arguments->[$index];
+
+			$position++;
+		    }
+		}
+	    }
+
+# 	    my $internal_completion = ($comp_cword < 3) or 1;
+	    my $internal_completion = ($position < 3);
+
+	    print STDERR Dumper( { command => $command, arguments => $arguments, comp_cword => $comp_cword, result => $result, position => $position, internal_completion => $internal_completion, }, );
+
+	    if ($internal_completion)
+	    {
+		my $internal_commands = generate_command_hash_with_structure();
+
+		$result = bash_completion_generate($command, $arguments, $internal_commands, $comp_cword);
+
+		#t this still needs correction for the index $comp_cword
+
+		# make sure the user gets a hint that options are also possible
+
+		push @$result, '--a', '--b';
+	    }
+	    else
+	    {
+		my $completion_sub = join '_', (@$target_command, 'completion');
+
+		my $command_hash = generate_command_hash_typed('with help subs');
+
+		#t have the command generate the data structure that lists the completions
+
+		my $external_commands
+		    = {
+		       abcd => {
+				abc => '1abc',
+				def => '2def',
+			       },
+		       wxyz => {
+				uvw => '3uvw',
+				xyz => '4xyz',
+			       },
+		      };
+
+		if (exists $command_hash->{"$target_command->[0] $command completion"})
+		{
+		    no strict "refs";
+
+		    my $command_name = $completion_sub;
+
+		    $command_name =~ s(^Command::)();
+		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
+		    $command_name =~ s(_help$)();
+
+		    $external_commands = &$completion_sub($command_name, $arguments);
+		}
+
+		$result = bash_completion_generate($command, $arguments, $external_commands, $comp_cword);
+
+		# make sure the user gets a hint that options are also possible
+
+		push @$result, '--a', '--b';
+	    }
 	}
     }
 
@@ -5199,13 +5297,17 @@ sub bash_completion_generate
 
     my $configuration_or_commands = shift;
 
+    my $comp_cword = shift;
+
     # search the given arguments in the configuration by following its path in the hash
 
-    while (@$arguments)
+    while (@$arguments and $comp_cword > 0)
     {
 	if (ref $configuration_or_commands eq 'HASH')
 	{
 	    my $argument = shift @$arguments;
+
+	    $comp_cword--;
 
 	    if (exists $configuration_or_commands->{$argument})
 	    {
@@ -5234,7 +5336,7 @@ sub bash_completion_generate
     }
     else
     {
-	return [];
+	return [ $configuration_or_commands, ];
     }
 }
 
@@ -5293,9 +5395,9 @@ sub bash_completion_generate_options
 
 sub generate_command_hash_with_structure
 {
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
-    my $commands = generate_command_list($with_help_subs);
+    my $commands = generate_command_list($with_feature_subs);
 
     # set default result
 
@@ -5326,11 +5428,11 @@ sub generate_command_hash_with_structure
 
 sub generate_command_hash_typed
 {
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
     my $result = {};
 
-    my $commands_subs = generate_command_hash_subs($with_help_subs);
+    my $commands_subs = generate_command_hash_subs($with_feature_subs);
 
     $result
 	= {
@@ -5338,7 +5440,7 @@ sub generate_command_hash_typed
 	   %$commands_subs,
 	  };
 
-    my $commands_shell = generate_command_hash_shell($with_help_subs);
+    my $commands_shell = generate_command_hash_shell($with_feature_subs);
 
     $result
 	= {
@@ -5346,7 +5448,7 @@ sub generate_command_hash_typed
 	   %$commands_shell,
 	  };
 
-    my $commands_yaml = generate_command_hash_yaml($with_help_subs);
+    my $commands_yaml = generate_command_hash_yaml($with_feature_subs);
 
     $result
 	= {
@@ -5360,9 +5462,9 @@ sub generate_command_hash_typed
 
 sub generate_command_list
 {
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
-    my $command_hash = generate_command_hash_typed($with_help_subs);
+    my $command_hash = generate_command_hash_typed($with_feature_subs);
 
     my $result = [ keys %$command_hash, ];
 
@@ -5374,7 +5476,7 @@ sub generate_command_hash_data_directory
 {
     my $type = shift;
 
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
     my $result = {};
 
@@ -5411,9 +5513,9 @@ sub generate_command_hash_data_directory
 
 sub generate_command_hash_shell
 {
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
-    my $result = generate_command_hash_data_directory('sh', $with_help_subs);
+    my $result = generate_command_hash_data_directory('sh', $with_feature_subs);
 
     return $result;
 }
@@ -5421,9 +5523,9 @@ sub generate_command_hash_shell
 
 sub generate_command_hash_yaml
 {
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
-    my $result = generate_command_hash_data_directory('yml', $with_help_subs);
+    my $result = generate_command_hash_data_directory('yml', $with_feature_subs);
 
     return $result;
 }
@@ -5431,7 +5533,7 @@ sub generate_command_hash_yaml
 
 sub generate_command_hash_subs
 {
-    my $with_help_subs = shift;
+    my $with_feature_subs = shift;
 
     # generate a list of the available command subroutines
 
@@ -5510,7 +5612,28 @@ sub generate_command_hash_subs
 
 		    grep
 		    {
-			$with_help_subs or $_ !~ /_help$/;
+			my $sub_name = $_;
+
+			my $is_help = ($sub_name =~ m(_help$));
+
+			my $is_completion = ($sub_name =~ m(_completion$));
+
+			my $is_none = !$is_help && !$is_completion;
+
+			my $allow_none = 'always';
+
+			my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
+
+			my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
+
+			my $result;
+
+			$result
+			    = ($is_none && $allow_none
+			       || $is_help && $allow_help
+			       || $is_completion && $allow_completion);
+
+			$result;
 		    }
 
 		    # all internal commands
