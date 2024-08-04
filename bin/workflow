@@ -1727,6 +1727,45 @@ sub builtin_add_target
 }
 
 
+sub builtin_add_target_completion
+{
+    my $completed_command_string = shift;
+
+    my $arguments_array = shift;
+
+    my $debug_completion = 0;
+
+    if ($debug_completion > 2)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => \@_,
+			     arguments_array => $arguments_array,
+			     completed_command_string => $completed_command_string,
+			    },
+			   );
+    }
+
+    my $completions_hash
+	= {
+	   "1.<target_name>" => {
+				 "<target_description>" => 'abc',
+				 "_target_description_" => 'abc',
+				},
+	   "2.<target_description>" => 'abc',
+	  };
+
+    if (scalar @$arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+}
+
+
 sub builtin_add_target_help
 {
     my $command = shift;
@@ -5185,14 +5224,6 @@ sub bash_completion
 
 	    # remove the options from the argument list
 
-	    #t how to avoid that GetOptionsFromArray() prints warnings?
-
-#	    my $option_results = GetOptionsFromArray($arguments, %$global_options);
-
-	    my $targets_commands = 2;
-
-	    my $targets_commands_subcommands = 3;
-
 	    my $position_2_type
 		= {
 		   0 => 'target',
@@ -5204,26 +5235,81 @@ sub bash_completion
 
 	    my $target_command = [];
 
+	    my $position_flag = 0;
+
+	    my $position_flags = [];
+
+	    my $debug_completion = 0;
+
 	    if ($comp_cword > 0)
 	    {
-		for my $index (0 .. $comp_cword - 1)
+		#! we shifted one from $arguments so $comp_cword - 1 is the last entry
+
+		foreach my $index (0 .. $comp_cword - 1)
 		{
-		    if ($arguments->[$index] =~ /^--/)
+		    #! arguments->[$index] can be undef here when the
+		    #! cursor is at the first position of the next
+		    #! word to be completed, resulting in all
+		    #! completions still possible.
+
+		    if ($debug_completion > 2)
 		    {
+			print STDERR Dumper(
+					    {
+					     barguments => $arguments,
+					     bcomp_cword => $comp_cword,
+					     bindex => $index,
+					     bnot_exists_arguments_index => (not exists $arguments->[$index]),
+					     brange => [ ( 0 .. $comp_cword - 1) ],
+					    },
+					   );
+		    }
+
+		    if (exists $arguments->[$index])
+		    {
+			push @$position_flags, 'exists';
+
+			if ($arguments->[$index] =~ /^--/)
+			{
+			}
+			else
+			{
+			    $target_command->[$position] = $arguments->[$index];
+
+			    $position++;
+			}
 		    }
 		    else
 		    {
-			$target_command->[$position] = $arguments->[$index];
-
-			$position++;
+			push @$position_flags, '';
 		    }
+		}
+
+		if ($debug_completion > 2)
+		{
+		    print STDERR Dumper(
+					{
+					 arguments => $arguments,
+					 comp_cword => $comp_cword,
+					 not_exists_arguments_index => (not exists $arguments->[$comp_cword - 1]),
+					 range => [ ( 0 .. $comp_cword - 1) ],
+					},
+				       );
+		}
+
+		# if the command line is at the start a new word to be
+		# completed, flag this
+
+		if (not exists $arguments->[$comp_cword - 1])
+		{
+		    $position_flag = 1;
+
+		    $position++;
 		}
 	    }
 
 # 	    my $internal_completion = ($comp_cword < 3) or 1;
 	    my $internal_completion = ($position < 3);
-
-	    print STDERR Dumper( { command => $command, arguments => $arguments, comp_cword => $comp_cword, result => $result, position => $position, internal_completion => $internal_completion, }, );
 
 	    if ($internal_completion)
 	    {
@@ -5231,33 +5317,52 @@ sub bash_completion
 
 		$result = bash_completion_generate($command, $arguments, $internal_commands, $comp_cword);
 
-		#t this still needs correction for the index $comp_cword
-
 		# make sure the user gets a hint that options are also possible
 
 		push @$result, '--a', '--b';
+
+		if ($debug_completion)
+		{
+		    print STDERR Dumper(
+					{
+					 command_arguments => {
+							       arguments => $arguments,
+							       command => $command,
+							       command_line => $command_line,
+							       command_line_word => $command_line_word,
+							       target_command => $target_command,
+							      },
+					 position => {
+						      comp_cword => $comp_cword,
+						      position => $position,
+						      position_flag => $position_flag,
+						      position_flags => $position_flags,
+						     },
+					 status => {
+						    internal_completion => $internal_completion,
+						    result => $result,
+						   },
+					},
+				       );
+		}
 	    }
 	    else
 	    {
-		my $completion_sub = join '_', (@$target_command, 'completion');
+		# my $completion_sub = "Command::" . join '_', (@$target_command, 'completion');
 
-		my $command_hash = generate_command_hash_typed('with help subs');
+		my $completion_sub = "Command::$target_command->[0]_$target_command->[1]_completion";
 
-		#t have the command generate the data structure that lists the completions
+		my $command_hash = generate_command_hash_typed('with completion subs');
+
+		# have the command generate the data structure that lists the completions
 
 		my $external_commands
 		    = {
-		       abcd => {
-				abc => '1abc',
-				def => '2def',
-			       },
-		       wxyz => {
-				uvw => '3uvw',
-				xyz => '4xyz',
-			       },
+		       "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
+		       "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
 		      };
 
-		if (exists $command_hash->{"$target_command->[0] $command completion"})
+		if (exists $command_hash->{"$target_command->[0] $target_command->[1]_completion"})
 		{
 		    no strict "refs";
 
@@ -5265,16 +5370,45 @@ sub bash_completion
 
 		    $command_name =~ s(^Command::)();
 		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $command_name =~ s(_help$)();
+		    $command_name =~ s(_completion$)();
 
 		    $external_commands = &$completion_sub($command_name, $arguments);
 		}
 
 		$result = bash_completion_generate($command, $arguments, $external_commands, $comp_cword);
 
-		# make sure the user gets a hint that options are also possible
+		if ($debug_completion)
+		{
+		    print STDERR Dumper(
+					{
+					 command_arguments => {
+							       arguments => $arguments,
+							       command => $command,
+							       command_line => $command_line,
+							       command_line_word => $command_line_word,
+							       target_command => $target_command,
+							      },
+					 position => {
+						      comp_cword => $comp_cword,
+						      position => $position,
+						      position_flag => $position_flag,
+						     },
+					 status => {
+						    internal_completion => $internal_completion,
+						    result => $result,
+						   },
+					},
+				       );
 
-		push @$result, '--a', '--b';
+		    print STDERR Dumper(
+					{
+					 command_hash => $command_hash,
+					 external_commands => $external_commands,
+					 result => $result,
+					},
+				       );
+		}
+
 	    }
 	}
     }
@@ -5293,7 +5427,9 @@ sub bash_completion_generate
 {
     my $command = shift;
 
-    my $arguments = shift;
+    use Clone qw(clone);
+
+    my $arguments = clone(shift);
 
     my $configuration_or_commands = shift;
 
