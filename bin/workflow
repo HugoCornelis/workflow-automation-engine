@@ -1727,7 +1727,7 @@ sub builtin_add_target
 }
 
 
-sub builtin_add_target_completion
+sub builtin_add_target_completions
 {
     my $completed_command_string = shift;
 
@@ -1883,6 +1883,28 @@ sub builtin_archive_configuration
     }
 
     return '';
+}
+
+
+sub builtin_archive_configuration_completions
+{
+    my $completed_command_string = shift;
+
+    my $arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   ".tar.gz" => 'abc',
+	  };
+
+    if (scalar @$arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
 }
 
 
@@ -2407,6 +2429,36 @@ sub builtin_install_scripts
 }
 
 
+sub builtin_install_scripts_completions
+{
+    my $completed_command_string = shift;
+
+    my $arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   '0.Available_options:' => 'help message',
+	   '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
+	   '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
+	   '--commands' => "install or upgrade the command configuration to ~/bin.",
+	   '--engine' => "create a symbolic link to the workflow engine in ~/bin.",
+	   '--force' => "don't use this.",
+	   '--git' => "create a git repository for the workflow configuration.",
+	   '--path-in-bashrc' => "update .bashrc to include ~/bin in PATH.",
+	   '--report' => "report on what is being done.",
+	  };
+
+    if (scalar @$arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+}
+
+
 sub builtin_install_scripts_help
 {
     my $command = shift;
@@ -2571,6 +2623,29 @@ sub builtin_start_project
     }
 
     return $result;
+}
+
+
+sub builtin_start_project_completions
+{
+    my $completed_command_string = shift;
+
+    my $arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   '0.Necessary_argument:' => 'help message',
+	   '<project_name>' => 'name of the new project',
+	  };
+
+    if (scalar @$arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
 }
 
 
@@ -5350,7 +5425,7 @@ sub bash_completion
 	    {
 		# my $completion_sub = "Command::" . join '_', (@$target_command, 'completion');
 
-		my $completion_sub = "Command::$target_command->[0]_$target_command->[1]_completion";
+		my $completion_sub = "Command::$target_command->[0]_$target_command->[1]_completions";
 
 		my $command_hash = generate_command_hash_typed('with completion subs');
 
@@ -5362,7 +5437,7 @@ sub bash_completion
 		       "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
 		      };
 
-		if (exists $command_hash->{"$target_command->[0] $target_command->[1]_completion"})
+		if (exists $command_hash->{"$target_command->[0] $target_command->[1]_completions"})
 		{
 		    no strict "refs";
 
@@ -5370,7 +5445,7 @@ sub bash_completion
 
 		    $command_name =~ s(^Command::)();
 		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $command_name =~ s(_completion$)();
+		    $command_name =~ s(_completions$)();
 
 		    $external_commands = &$completion_sub($command_name, $arguments);
 		}
@@ -5752,7 +5827,7 @@ sub generate_command_hash_subs
 
 			my $is_help = ($sub_name =~ m(_help$));
 
-			my $is_completion = ($sub_name =~ m(_completion$));
+			my $is_completion = ($sub_name =~ m(_completions$));
 
 			my $is_none = !$is_help && !$is_completion;
 
