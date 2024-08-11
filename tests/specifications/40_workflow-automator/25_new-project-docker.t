@@ -649,6 +649,19 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => 'generation of bash completion strings for the commands',
 			       },
 			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command" 3',
+				command_tests => [
+						  {
+						   description => "Are the custom bash completions of the examples in the template project found by bash?",
+						   read => '1.<your_completion_without_spaces_here> 2.<another_completion_here>',
+						   tags => [ 'manual' ],
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "correct installation of custom bash completions in the new project",
+				tags => [ 'manual' ],
+			       },
+			       {
 				command => 'workflow-tests-workflow --verbose builtin archive_configuration /tmp/wtw.tar.gz',
 				command_tests => [
 						  {
