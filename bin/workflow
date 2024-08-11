@@ -587,6 +587,37 @@ sub ${target_name}_single_command
 }
 
 
+sub ${target_name}_single_command_completions
+{
+    my \$complete_command_string = shift;
+
+    my \$complete_arguments_array = shift;
+
+    my \$completions_hash
+	= {
+	   \"1.<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
+	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar \@\$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return \$completions_hash;
+    }
+
+    return \$completions_hash;
+}
+
+
 sub ${target_name}_single_command_help
 {
     my \$command = shift;
@@ -611,6 +642,37 @@ sub ${target_name}_array_of_commands
 	  ];
 
     execute_shell_command_array(\$local_commands);
+}
+
+
+sub ${target_name}_array_of_commands_completions
+{
+    my \$complete_command_string = shift;
+
+    my \$complete_arguments_array = shift;
+
+    my \$completions_hash
+	= {
+	   \"1.<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
+	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar \@\$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return \$completions_hash;
+    }
+
+    return \$completions_hash;
 }
 
 
@@ -669,6 +731,37 @@ sub ${target_name}_array_of_commands_remote_execution
 }
 
 
+sub ${target_name}_array_of_commands_remote_execution_completions
+{
+    my \$complete_command_string = shift;
+
+    my \$complete_arguments_array = shift;
+
+    my \$completions_hash
+	= {
+	   \"1.<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
+	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar \@\$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return \$completions_hash;
+    }
+
+    return \$completions_hash;
+}
+
+
 sub ${target_name}_array_of_commands_remote_execution_help
 {
     my \$command = shift;
@@ -695,6 +788,37 @@ sub ${target_name}_sequencing_and_composition
 
     ${target_name}_single_command();
     ${target_name}_array_of_commands();
+}
+
+
+sub ${target_name}_sequencing_and_composition_completions
+{
+    my \$complete_command_string = shift;
+
+    my \$complete_arguments_array = shift;
+
+    my \$completions_hash
+	= {
+	   \"1.<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
+	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar \@\$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return \$completions_hash;
+    }
+
+    return \$completions_hash;
 }
 
 
@@ -1729,9 +1853,9 @@ sub builtin_add_target
 
 sub builtin_add_target_completions
 {
-    my $completed_command_string = shift;
+    my $complete_command_string = shift;
 
-    my $arguments_array = shift;
+    my $complete_arguments_array = shift;
 
     my $debug_completion = 0;
 
@@ -1740,8 +1864,8 @@ sub builtin_add_target_completions
 	print STDERR Dumper(
 			    {
 			     arguments => \@_,
-			     arguments_array => $arguments_array,
-			     completed_command_string => $completed_command_string,
+			     complete_arguments_array => $complete_arguments_array,
+			     complete_command_string => $complete_command_string,
 			    },
 			   );
     }
@@ -1755,7 +1879,7 @@ sub builtin_add_target_completions
 	   "2.<target_description>" => 'abc',
 	  };
 
-    if (scalar @$arguments_array > 2)
+    if (scalar @$complete_arguments_array > 2)
     {
 	return {};
     }
@@ -1888,16 +2012,16 @@ sub builtin_archive_configuration
 
 sub builtin_archive_configuration_completions
 {
-    my $completed_command_string = shift;
+    my $complete_command_string = shift;
 
-    my $arguments_array = shift;
+    my $complete_arguments_array = shift;
 
     my $completions_hash
 	= {
 	   ".tar.gz" => 'abc',
 	  };
 
-    if (scalar @$arguments_array > 2)
+    if (scalar @$complete_arguments_array > 2)
     {
 	return {};
     }
@@ -2431,9 +2555,9 @@ sub builtin_install_scripts
 
 sub builtin_install_scripts_completions
 {
-    my $completed_command_string = shift;
+    my $complete_command_string = shift;
 
-    my $arguments_array = shift;
+    my $complete_arguments_array = shift;
 
     my $completions_hash
 	= {
@@ -2448,7 +2572,7 @@ sub builtin_install_scripts_completions
 	   '--report' => "report on what is being done.",
 	  };
 
-    if (scalar @$arguments_array > 2)
+    if (scalar @$complete_arguments_array > 2)
     {
 	return {};
     }
@@ -2628,9 +2752,9 @@ sub builtin_start_project
 
 sub builtin_start_project_completions
 {
-    my $completed_command_string = shift;
+    my $complete_command_string = shift;
 
-    my $arguments_array = shift;
+    my $complete_arguments_array = shift;
 
     my $completions_hash
 	= {
@@ -2638,7 +2762,7 @@ sub builtin_start_project_completions
 	   '<project_name>' => 'name of the new project',
 	  };
 
-    if (scalar @$arguments_array > 2)
+    if (scalar @$complete_arguments_array > 2)
     {
 	return {};
     }
