@@ -220,8 +220,8 @@ _${project_name_underscore}_configuration_completions()
 
 # complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
 # complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
-complete -D -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration -o bashdefault -o default
-complete -D -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration -o bashdefault -o default
+complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration -o bashdefault -o default
+complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration -o bashdefault -o default
 
 
 _${project_name_underscore}_workflow_completions()
@@ -233,8 +233,8 @@ _${project_name_underscore}_workflow_completions()
 
 # complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
 # complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
-complete -D -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow -o bashdefault -o default
-complete -D -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow -o bashdefault -o default
+complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow -o bashdefault -o default
+complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow -o bashdefault -o default
 
 ";
 
