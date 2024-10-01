@@ -595,8 +595,10 @@ sub ${target_name}_single_command_completions
 
     my \$completions_hash
 	= {
-	   \"1.<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
-	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+	   \"1._<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
+	   \"2._<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+	   \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\" => \"further_explanation\",
+	   \"4._Look_at_the_completion_function_of_${target_name}_single_command_completions_to_understand_how_it_works\" => \"further_explanation\",
 	  };
 
     # the follow logic uses bash completion as a help message when there are no arguments to complete
@@ -604,10 +606,28 @@ sub ${target_name}_single_command_completions
 
     if (scalar \@\$complete_arguments_array > 2)
     {
-	# insert all your completions here when there are arguments to complete,
+	# insert your completions here as a hash when there are arguments to complete,
+	# the workflow engine will select the correct level in your hash of completins.
 	# bash will select those that apply to the current argument to be completed.
 
-	return {};
+	return {
+		aa => {
+		       12 => {
+			      cc => 1,
+			     },
+		       34 => {
+			      dd => 1,
+			     },
+		      },
+		bb => {
+		       56 => {
+			      ee => 1,
+			     },
+		       78 => {
+			      ff => 1,
+			     },
+		      },
+	       };
     }
     else
     {

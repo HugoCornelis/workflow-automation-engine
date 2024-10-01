@@ -653,8 +653,8 @@ available_workflow automation projects (copy-paste the one you would like to get
 				command_tests => [
 						  {
 						   comment => "if there is no argument to complete, we expect to see the help completions",
-						   description => "Are the custom bash completions of the examples in the template project found by bash?",
-						   read => '1.<your_completion_without_spaces_here> 2.<another_completion_here>',
+						   description => "Is the information page for the custom bash completions of the examples in the template project found by bash?",
+						   read => '1._<your_completion_without_spaces_here> 2._<another_completion_here> 3._Don\'t_use_spaces_in_your_completions,_because_they_confuse_bash 4._Look_at_the_completion_function_of_examples_single_command_completions_to_understand_how_it_works',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -662,13 +662,38 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => "correct installation of custom bash completions in the new project",
 			       },
 			       {
-				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command abc" 4',
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command a" 4',
 				command_tests => [
 						  {
 						   comment => "if there is an argument to complete, we don't expect to see the help completions",
-						   description => "Are the custom bash completions of the examples in the template project found by bash?",
-						   read => '',
-						   tags => [ 'manual' ],
+						   description => "Is the first level of the custom bash completions of the examples in the template project found by bash?",
+						   read => 'aa bb',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "correct installation of custom bash completions in the new project",
+				tags => [ 'manual' ],
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command aa " 4',
+				command_tests => [
+						  {
+						   comment => "if there is an argument to complete, we don't expect to see the help completions",
+						   description => "Is the second level of the custom bash completions of the examples in the template project found by bash?",
+						   read => '12 34',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "correct installation of custom bash completions in the new project",
+				tags => [ 'manual' ],
+			       },
+			       {
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command aa 12" 5',
+				command_tests => [
+						  {
+						   comment => "if there is an argument to complete, we don't expect to see the help completions",
+						   description => "Is the third level of the custom bash completions of the examples in the template project found by bash?",
+						   read => 'cc',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
