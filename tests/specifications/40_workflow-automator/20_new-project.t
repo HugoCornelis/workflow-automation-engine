@@ -77,10 +77,6 @@ Then check if they work by inspecting the examples they provide (with various op
 ./workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 ./workflow-tests-commands-data/examples_sh/sh_single_command.sh
 ./workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
-./workflow-tests-commands-data/examples_yml
-./workflow-tests-commands-data/examples_yml/remote_execution.yml
-./workflow-tests-commands-data/examples_yml/array_of_commands.yml
-./workflow-tests-commands-data/examples_yml/single_command.yml
 ./workflow-tests-configuration
 ./docker
 ./docker/docker-build.bash
@@ -216,9 +212,6 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow examples_sh sh_array_of_commands --help
   - workflow-tests-workflow examples_sh sh_remote_execution --help
   - workflow-tests-workflow examples_sh sh_single_command --help
-  - workflow-tests-workflow examples_yml array_of_commands --help
-  - workflow-tests-workflow examples_yml remote_execution --help
-  - workflow-tests-workflow examples_yml single_command --help
 ',
 						  },
 						 ],

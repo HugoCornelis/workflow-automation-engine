@@ -333,10 +333,6 @@ Then check if they work by inspecting the examples they provide (with various op
 ./workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 ./workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 ./workflow-tests-commands-data/examples_sh/sh_single_command.sh
-./workflow-tests-commands-data/examples_yml
-./workflow-tests-commands-data/examples_yml/array_of_commands.yml
-./workflow-tests-commands-data/examples_yml/remote_execution.yml
-./workflow-tests-commands-data/examples_yml/single_command.yml
 ./workflow-tests-configuration
 ./workflow-tests-configuration-data
 ./workflow-tests-configuration-data/build_servers.yml
@@ -484,9 +480,6 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow examples_sh sh_array_of_commands --help
   - workflow-tests-workflow examples_sh sh_remote_execution --help
   - workflow-tests-workflow examples_sh sh_single_command --help
-  - workflow-tests-workflow examples_yml array_of_commands --help
-  - workflow-tests-workflow examples_yml remote_execution --help
-  - workflow-tests-workflow examples_yml single_command --help
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -512,9 +505,6 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow examples_sh sh_array_of_commands --help
   - workflow-tests-workflow examples_sh sh_remote_execution --help
   - workflow-tests-workflow examples_sh sh_single_command --help
-  - workflow-tests-workflow examples_yml array_of_commands --help
-  - workflow-tests-workflow examples_yml remote_execution --help
-  - workflow-tests-workflow examples_yml single_command --help
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -630,7 +620,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the targets?",
-						   read => 'a --b builtin examples examples_sh examples_yml',
+						   read => 'a --b builtin examples examples_sh',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -728,9 +718,6 @@ scripts:
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
-  - workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
-  - workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
-  - workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
   - workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
   - workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
@@ -762,9 +749,6 @@ workflow-test/workflow-tests-commands
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
-workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
-workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
-workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
 workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
@@ -807,9 +791,6 @@ workflow-test/workflow-tests-commands
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
-workflow-test/workflow-tests-commands-data/examples_yml/array_of_commands.yml
-workflow-test/workflow-tests-commands-data/examples_yml/remote_execution.yml
-workflow-test/workflow-tests-commands-data/examples_yml/single_command.yml
 workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
@@ -928,7 +909,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the targets for the new installed configuration?",
-						   read => 'a --b builtin examples examples_sh examples_yml',
+						   read => 'a --b builtin examples examples_sh',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],

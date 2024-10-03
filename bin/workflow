@@ -2708,7 +2708,7 @@ sub builtin_start_project
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_yml_template_create($field_project_configuration, $project_name, "examples_yml");
+	    # $error = _builtin_project_commands_yml_template_create($field_project_configuration, $project_name, "examples_yml");
 	}
 
 	if (not $error)
