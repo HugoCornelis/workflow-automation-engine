@@ -10,7 +10,7 @@ use Data::Transformator;
 
 use Getopt::Long;
 
-use Neurospaces::Tester;;
+use Neurospaces::Tester;
 
 use YAML;
 
