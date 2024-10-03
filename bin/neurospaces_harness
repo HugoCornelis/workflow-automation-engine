@@ -4841,6 +4841,9 @@ sub expand
 
     foreach my $test_module (@$library)
     {
+	#! note that this matches against against the full pathname.
+	#! as a consequence 'specific' matches all the test specifications in the specifications/ directory.
+
 	if ($test_module !~ /$option_regex_selector/i)
 	{
 	    next;
