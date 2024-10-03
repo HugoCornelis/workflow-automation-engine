@@ -187,7 +187,7 @@ make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-eng
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "installating the workflow automation engine",
+				description => "installing the workflow automation engine",
 				tags => [ 'manual' ],
 			       },
 			       {
