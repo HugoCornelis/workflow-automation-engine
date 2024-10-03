@@ -8,7 +8,7 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => '../bin/workflow --help',
+				command => 'bin/workflow --help',
 				command_tests => [
 						  {
 						   description => "Do we get the main help page ?",
@@ -82,7 +82,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				description => "the main help page",
 			       },
 			       {
-				command => '../bin/workflow --help-commands',
+				command => 'bin/workflow --help-commands',
 				command_tests => [
 						  {
 						   comment => 'note that the expect module does not easily allow the read string to be started with yaml\'s \'---\'',
@@ -100,7 +100,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				description => "default builtin commands",
 			       },
 			       {
-				command => '../bin/workflow --help-targets',
+				command => 'bin/workflow --help-targets',
 				command_tests => [
 						  {
 						   comment => 'note that the expect module does not easily allow the read string to be started with yaml\'s \'---\'',
@@ -115,7 +115,7 @@ targets:
 				description => "default builtin targets",
 			       },
 			       {
-				command => '../bin/workflow builtin start_project --help',
+				command => 'bin/workflow builtin start_project --help',
 				command_tests => [
 						  {
 						   description => "Do we see the help page for starting a new project ?",
@@ -133,7 +133,7 @@ arguments:
 				description => "default builtin targets",
 			       },
 			       {
-				command => '../bin/workflow builtin add_target --help',
+				command => 'bin/workflow builtin add_target --help',
 				command_tests => [
 						  {
 						   description => "Do we see the help page for adding a new target to a project ?",
@@ -159,7 +159,7 @@ options:
 				description => "default builtin targets",
 			       },
 			       {
-				command => '../bin/workflow builtin archive_configuration --help',
+				command => 'bin/workflow builtin archive_configuration --help',
 				command_tests => [
 						  {
 						   description => "Do we see the help page for archiving a workflow configuration ?",
@@ -189,35 +189,6 @@ project-specific workflows that use system shell commands.
 ",
 			 purpose => "This module tests the help pages of the workflow automation engine.",
 			},
-       harnessing => {
-		      preparation => {
-				      description => "create and enter the directory for running the tests",
-				      preparer =>
-				      sub
-				      {
-					  system "rm -fr tmp";
-					  system "mkdir tmp";
-					  chdir "tmp";
-
-					  # return no errors
-
-					  return '';
-				      },
-				     },
-		      reparation => {
-				     description => "leave and remove the directory for running the tests",
-				     reparer =>
-				     sub
-				     {
-					 chdir "..";
-					 # system "rm -fr tmp";
-
-					 # return no errors
-
-					 return '';
-				     },
-				    },
-		     },
        name => '40_workflow-automator/10_help-pages.t',
       };
 
