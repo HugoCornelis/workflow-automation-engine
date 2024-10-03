@@ -580,6 +580,7 @@ sub ${target_name}_single_command
     #   quiet: do not provide feedback to the terminal about this command.
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
     #
     # execute_shell_command(\$command, { remote => '<name of a remote that is defined in $project_name-configuration>, } );
     #
@@ -4502,6 +4503,16 @@ sub execute_option_export_sh
 }
 
 
+# see https://stackoverflow.com/questions/571368/how-can-i-use-bash-syntax-in-perls-system
+
+sub _system_bash
+{
+    my @args = ( "bash", "-c", shift );
+
+    return system(@args);
+}
+
+
 sub execute_scheduled_command
 {
     my $scheduled_command = shift;
@@ -4588,7 +4599,18 @@ sub execute_scheduled_command
 	    {
 		display_commented_command($command, $options);
 
-		$exit_status = system "$command";
+		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
+
+		if ($use_bash)
+		{
+		    # _system_bash('diff <(ls -l) <(ls -al)');
+
+		    _system_bash($command);
+		}
+		else
+		{
+		    $exit_status = system "$command";
+		}
 	    }
 	    else
 	    {
