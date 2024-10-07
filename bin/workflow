@@ -2608,7 +2608,7 @@ sub builtin_install_scripts_help
 {
     my $command = shift;
 
-    return "$command : install or upgrade the workflow scripts for this project.
+    return "$command : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
 
