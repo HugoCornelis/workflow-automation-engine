@@ -3293,7 +3293,7 @@ sub _init_filenames_2_symlink_commands
 
 	       not -e $target;
 	   }
-	   @$filenames,
+	   sort @$filenames,
 	  ];
 
     if (defined $option_verbose
