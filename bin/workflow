@@ -537,7 +537,7 @@ else
 }
 
 
-sub _builtin_project_commands_template_create
+sub _builtin_project_commands_template_create_perl
 {
     my $field_project_configuration = shift;
 
@@ -852,6 +852,144 @@ sub ${target_name}_sequencing_and_composition_help
 arguments:
 
     none.
+\";
+}
+
+
+# return success
+
+1;
+
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    if ($filename_suffix)
+    {
+	$filename_suffix = "-$filename_suffix";
+    }
+    else
+    {
+	$filename_suffix = '';
+    }
+
+    my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
+
+    my $filename = "$true_technical_project_configuration_directory/$project_name-commands$filename_suffix";
+
+    my $file = IO::File->new("> $filename");
+
+    if (defined $file)
+    {
+	print $file $commands_template_code;
+
+	$file->close();
+
+	chmod 0700, "$filename";
+    }
+    else
+    {
+	$error = "cannot open $filename";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_template_create_python
+{
+    my $field_project_configuration = shift;
+
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $filename_suffix = shift;
+
+    my $commands_template_code
+	= "#!/usr/bin/perl -w
+
+package Command;
+
+use strict;
+
+use warnings;
+
+# set your PYTHONPATH to include the appropriate directories if this is needed
+#
+# export PYTHONPATH=\$HOME/projects/my-python-modules-directory
+
+BEGIN
+{
+	if (not exists \$ENV{PYTHONPATH})
+	{
+		\$ENV{PYTHONPATH} = \"/home/hugoc/projects/add-your-python-directory-here\";
+	}
+}
+
+use Inline Python => <<'PYTHON';
+
+# sys.path.append('/path/to/search')
+
+import os
+import sys
+
+# sys.stdout = os.fdopen(sys.stdout.fileno(), 'a')
+
+def add(x,y):
+   return x + y
+
+def subtract(x,y):
+   return x - y
+
+def python_stdout(argv):
+    with os.fdopen(1, 'a') as file:
+        file.write(\"Hello from Python\")
+
+def python_python_command(argv):
+    print(f\"python_python_command\")
+
+def python_python_command_help(command, perl_argv):
+    return f\"python_python_command {command} help page\"
+
+PYTHON
+
+
+sub python_single_command
+{
+	# print \"9 + 16 = \", add(9, 16), \"\\n\";
+	# print \"9 - 16 = \", subtract(9, 16), \"\\n\";
+
+	my \$added = add(9, 16);
+
+	my \$subtracted = subtract(9, 16);
+
+    my \$command = \"echo added is \$added and subtracted is \$subtracted\";
+
+    execute_shell_command(\$command);
+}
+
+
+sub python_single_command_help
+{
+    my \$command = shift;
+
+    return \"\$command: this module shows how to inline python code in perl.
+
+It is both possible to use python function definitions as workflow
+targets and commands and to call the python code from perl.
+
+These examples define a target with name 'python_examples' and with these commands:
+
+'single_command' is implemented in perl and uses two python functions 'add' and 'subtract'..
+
+'python_stdout': is implemented in python and writes a string to stdout.
+
+'python_command': is implemented in python and writes a string to stdout and has a help function (use -- --help as usual to invoke it).
+
 \";
 }
 
@@ -1368,8 +1506,10 @@ targets:
     description: used for processing of target files that are produced by other targets
   docker:
     description: interaction with the docker build container
-  examples:
-    description: these are examples that explain how to use the APIs
+  perl_examples:
+    description: these are perl examples that explain how to use the APIs
+  python_examples:
+    description: these are python examples that explain how to use the APIs
   source_code:
     description: operations on the source code that is used for testing
   wiki_gitlab:
@@ -1694,15 +1834,62 @@ return \$configuration;
 }
 
 
+sub _builtin_add_command_filename
+{
+    my $type = shift;
+
+    my $target_name = shift;
+
+    my $new_command_filename = shift;
+
+    my $error;
+
+    my $configuration_data_directory = $global_field_project_configuration->{true_technical_project_data_configuration_directory};
+
+    # read the commands configuration file
+
+    my $command_filenames;
+
+    my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+
+    if (not $error)
+    {
+	$command_filenames = YAML::LoadFile($command_filenames_configuration_filename);
+    }
+
+    # add the commands filename corresponding to the new target name
+
+    if (not $error)
+    {
+	my $command_filenames_array = $command_filenames->{command_filenames};
+
+	push @$command_filenames_array, $new_command_filename;
+    }
+
+    # write the commands configuration file
+
+    if (not $error)
+    {
+	YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
+
+	print "$global_program_name: registered the $type command file name $new_command_filename for target $target_name\n";
+    }
+
+    return $error;
+}
+
+
 sub builtin_add_target
 {
     my $option_install_command_pl;
+    my $option_install_command_python;
     my $option_install_command_sh;
     # my $option_install_command_yml;
 
     our $install_options
       = {
 	 "install-commands-pl!" => \$option_install_command_pl,
+	 "install-commands-python!" => \$option_install_command_python,
 	 "install-commands-sh!" => \$option_install_command_sh,
 	 # "install-commands-yml!" => \$option_install_command_yml,
 	};
@@ -1714,6 +1901,12 @@ sub builtin_add_target
     if (!$result)
     {
         die "$global_program_name: *** error in option processing, try --help";
+    }
+
+    if ($option_install_command_pl
+	and $option_install_command_python)
+    {
+        die "$global_program_name: *** error: you cannot install both perl and python command files for the same target, please choose at most one of these.";
     }
 
     if ($option_verbose)
@@ -1805,44 +1998,33 @@ sub builtin_add_target
 
     if ($option_install_command_pl)
     {
-	# read the commands configuration file
-
-	my $command_filenames;
-
-	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
-
-	if (not $error)
-	{
-	    $command_filenames = YAML::LoadFile($command_filenames_configuration_filename);
-	}
-
-	# add the commands filename corresponding to the new target name
-
 	my $new_command_filename = "$field_project_name-commands-$target_name";
 
-	if (not $error)
-	{
-	    my $command_filenames_array = $command_filenames->{command_filenames};
-
-	    push @$command_filenames_array, $new_command_filename;
-	}
-
-	# write the commands configuration file
-
-	if (not $error)
-	{
-	    YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
-
-	    print "$global_program_name: registered the perl command file name $new_command_filename for target $target_name\n";
-	}
+	$error = _builtin_add_command_filename('perl', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create($global_field_project_configuration, $field_project_name, $target_name, $target_name);
+	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $target_name);
 
 	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_python)
+    {
+	my $new_command_filename = "$field_project_name-commands-$target_name";
+
+	$error = _builtin_add_command_filename('python', $target_name, $new_command_filename);
+
+	# add a template commands file with the given name
+
+	if (not $error)
+	{
+	    # $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $target_name);
+
+	    # print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
 	}
     }
 
@@ -2699,7 +2881,12 @@ sub builtin_start_project
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create($field_project_configuration, $project_name, "examples");
+	    $error = _builtin_project_commands_template_create_perl($field_project_configuration, $project_name, "perl_examples");
+	}
+
+	if (not $error)
+	{
+	    # $error = _builtin_project_commands_template_create_python($field_project_configuration, $project_name, "python_examples");
 	}
 
 	if (not $error)

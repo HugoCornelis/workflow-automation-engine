@@ -473,13 +473,13 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin install_scripts --help
   - workflow-tests-workflow builtin print_configuration_directory --help
   - workflow-tests-workflow builtin start_project --help
-  - workflow-tests-workflow examples array_of_commands --help
-  - workflow-tests-workflow examples array_of_commands_remote_execution --help
-  - workflow-tests-workflow examples sequencing_and_composition --help
-  - workflow-tests-workflow examples single_command --help
   - workflow-tests-workflow examples_sh sh_array_of_commands --help
   - workflow-tests-workflow examples_sh sh_remote_execution --help
   - workflow-tests-workflow examples_sh sh_single_command --help
+  - workflow-tests-workflow perl_examples array_of_commands --help
+  - workflow-tests-workflow perl_examples array_of_commands_remote_execution --help
+  - workflow-tests-workflow perl_examples sequencing_and_composition --help
+  - workflow-tests-workflow perl_examples single_command --help
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -498,19 +498,19 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin install_scripts --help
   - workflow-tests-workflow builtin print_configuration_directory --help
   - workflow-tests-workflow builtin start_project --help
-  - workflow-tests-workflow examples array_of_commands --help
-  - workflow-tests-workflow examples array_of_commands_remote_execution --help
-  - workflow-tests-workflow examples sequencing_and_composition --help
-  - workflow-tests-workflow examples single_command --help
   - workflow-tests-workflow examples_sh sh_array_of_commands --help
   - workflow-tests-workflow examples_sh sh_remote_execution --help
   - workflow-tests-workflow examples_sh sh_single_command --help
+  - workflow-tests-workflow perl_examples array_of_commands --help
+  - workflow-tests-workflow perl_examples array_of_commands_remote_execution --help
+  - workflow-tests-workflow perl_examples sequencing_and_composition --help
+  - workflow-tests-workflow perl_examples single_command --help
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "correct installation of the workflows of the new project",
+				description => "correct installation of the workflows of the new project, different working directory",
 				tags => [ 'manual' ],
 			       },
 			       {
@@ -620,7 +620,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the targets?",
-						   read => 'a --b builtin examples examples_sh',
+						   read => 'a --b builtin examples_sh new_target perl_examples',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -639,12 +639,12 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => 'generation of bash completion strings for the commands',
 			       },
 			       {
-				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command" 3',
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command" 3',
 				command_tests => [
 						  {
 						   comment => "if there is no argument to complete, we expect to see the help completions",
 						   description => "Is the information page for the custom bash completions of the examples in the template project found by bash?",
-						   read => '1._<your_completion_without_spaces_here> 2._<another_completion_here> 3._Don\'t_use_spaces_in_your_completions,_because_they_confuse_bash 4._Look_at_the_completion_function_of_examples_single_command_completions_to_understand_how_it_works',
+						   read => '1._<your_completion_without_spaces_here> 2._<another_completion_here> 3._Don\'t_use_spaces_in_your_completions,_because_they_confuse_bash 4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -652,7 +652,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => "correct installation of custom bash completions in the new project",
 			       },
 			       {
-				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command a" 4',
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command a" 4',
 				command_tests => [
 						  {
 						   comment => "if there is an argument to complete, we don't expect to see the help completions",
@@ -665,7 +665,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command aa " 4',
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa " 4',
 				command_tests => [
 						  {
 						   comment => "if there is an argument to complete, we don't expect to see the help completions",
@@ -678,7 +678,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow examples single_command aa 12" 5',
+				command => 'workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa 12" 5',
 				command_tests => [
 						  {
 						   comment => "if there is an argument to complete, we don't expect to see the help completions",
@@ -909,7 +909,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the targets for the new installed configuration?",
-						   read => 'a --b builtin examples examples_sh',
+						   read => 'a --b builtin examples_sh new_target perl_examples',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
