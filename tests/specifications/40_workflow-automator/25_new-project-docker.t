@@ -271,6 +271,8 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 						  {
 						   description => "Can we start a new project?",
 						   read => 'Using \'workflow-tests\' as name for your project.
+workflow: registered the perl command file name workflow-tests-commands-perl_examples for target perl_examples
+workflow: registered the python command file name workflow-tests-commands-python_examples for target python_examples
 Created a template configuration file for project \'workflow-tests\'
 Created a template workflow-project in \'workflow-project-template.pl\' with contents:
 ---
@@ -327,12 +329,13 @@ Then check if they work by inspecting the examples they provide (with various op
 ./conf.workflow-tests-workflow
 ./workflow-project-template.pl
 ./workflow-tests-bash-completion.sh
-./workflow-tests-commands
 ./workflow-tests-commands-data
 ./workflow-tests-commands-data/examples_sh
 ./workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 ./workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 ./workflow-tests-commands-data/examples_sh/sh_single_command.sh
+./workflow-tests-commands-perl_examples
+./workflow-tests-commands-python_examples
 ./workflow-tests-configuration
 ./workflow-tests-configuration-data
 ./workflow-tests-configuration-data/build_servers.yml
@@ -419,7 +422,9 @@ global_field_project_configuration:
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-configuration /home/neurospaces/bin/./workflow-tests-configuration
 #
-# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands /home/neurospaces/bin/./workflow-tests-commands
+# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces/bin/./workflow-tests-commands-perl_examples
+#
+# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-python_examples /home/neurospaces/bin/./workflow-tests-commands-python_examples
 #
 # bash -c "echo \'. /home/neurospaces/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
@@ -714,13 +719,14 @@ scripts:
   - workflow-test/conf.workflow-tests-workflow
   - workflow-test/workflow-project.pl
   - workflow-test/workflow-tests-bash-completion.sh
-  - workflow-test/workflow-tests-commands
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
   - workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
   - workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+  - workflow-test/workflow-tests-commands-perl_examples
+  - workflow-test/workflow-tests-commands-python_examples
   - workflow-test/workflow-tests-configuration
   - workflow-test/workflow-tests-configuration-data/build_servers.yml
   - workflow-test/workflow-tests-configuration-data/command_filenames.yml
@@ -745,13 +751,14 @@ tar_filename: /tmp/wtw.tar.gz
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
-workflow-test/workflow-tests-commands
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+workflow-test/workflow-tests-commands-perl_examples
+workflow-test/workflow-tests-commands-python_examples
 workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/build_servers.yml
 workflow-test/workflow-tests-configuration-data/command_filenames.yml
@@ -787,13 +794,14 @@ mkdir: created directory \'/home/neurospaces2/projects/workflow-configuration\'
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
-workflow-test/workflow-tests-commands
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+workflow-test/workflow-tests-commands-perl_examples
+workflow-test/workflow-tests-commands-python_examples
 workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/build_servers.yml
 workflow-test/workflow-tests-configuration-data/command_filenames.yml
@@ -827,7 +835,9 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/./workflow-tests-configuration
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/./workflow-tests-commands
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces2/bin/./workflow-tests-commands-perl_examples
+#
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples /home/neurospaces2/bin/./workflow-tests-commands-python_examples
 #
 # bash -c "echo \'. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces2/.bashrc"

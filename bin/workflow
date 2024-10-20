@@ -545,7 +545,7 @@ sub _builtin_project_commands_template_create_perl
 
     my $target_name = shift;
 
-    my $filename_suffix = shift;
+    my $filename = shift;
 
     my $commands_template_code
 	= "#!/usr/bin/perl -w
@@ -867,20 +867,11 @@ arguments:
 
     use IO::File;
 
-    if ($filename_suffix)
-    {
-	$filename_suffix = "-$filename_suffix";
-    }
-    else
-    {
-	$filename_suffix = '';
-    }
-
     my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
 
-    my $filename = "$true_technical_project_configuration_directory/$project_name-commands$filename_suffix";
+    my $pathnamer = "$true_technical_project_configuration_directory/$filename";
 
-    my $file = IO::File->new("> $filename");
+    my $file = IO::File->new("> $pathnamer");
 
     if (defined $file)
     {
@@ -888,11 +879,11 @@ arguments:
 
 	$file->close();
 
-	chmod 0700, "$filename";
+	chmod 0700, "$pathnamer";
     }
     else
     {
-	$error = "cannot open $filename";
+	$error = "cannot open $pathnamer";
     }
 
     return $error;
@@ -907,7 +898,7 @@ sub _builtin_project_commands_template_create_python
 
     my $target_name = shift;
 
-    my $filename_suffix = shift;
+    my $filename = shift;
 
     my $commands_template_code
 	= "#!/usr/bin/perl -w
@@ -1005,20 +996,11 @@ These examples define a target with name 'python_examples' and with these comman
 
     use IO::File;
 
-    if ($filename_suffix)
-    {
-	$filename_suffix = "-$filename_suffix";
-    }
-    else
-    {
-	$filename_suffix = '';
-    }
-
     my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
 
-    my $filename = "$true_technical_project_configuration_directory/$project_name-commands$filename_suffix";
+    my $pathnamer = "$true_technical_project_configuration_directory/$filename";
 
-    my $file = IO::File->new("> $filename");
+    my $file = IO::File->new("> $pathnamer");
 
     if (defined $file)
     {
@@ -1026,11 +1008,11 @@ These examples define a target with name 'python_examples' and with these comman
 
 	$file->close();
 
-	chmod 0700, "$filename";
+	chmod 0700, "$pathnamer";
     }
     else
     {
-	$error = "cannot open $filename";
+	$error = "cannot open $pathnamer";
     }
 
     return $error;
@@ -1432,10 +1414,15 @@ sub _builtin_project_configuration_command_filenames_create
 
     my $configuration_data_directory = shift;
 
+#     my $configuration_file_part
+# 	= "---
+# command_filenames:
+#   - $project_name-commands
+# ";
+
     my $configuration_file_part
 	= "---
-command_filenames:
-  - $project_name-commands
+command_filenames: []
 ";
 
     my $error = '';
@@ -1834,8 +1821,16 @@ return \$configuration;
 }
 
 
+#
+# add the given command filename to the list in the configuration.
+#
+# The type and target_name arguments are only there for diagnostics.
+#
+
 sub _builtin_add_command_filename
 {
+    my $field_project_configuration = shift;
+
     my $type = shift;
 
     my $target_name = shift;
@@ -1844,7 +1839,7 @@ sub _builtin_add_command_filename
 
     my $error;
 
-    my $configuration_data_directory = $global_field_project_configuration->{true_technical_project_data_configuration_directory};
+    my $configuration_data_directory = $field_project_configuration->{true_technical_project_data_configuration_directory};
 
     # read the commands configuration file
 
@@ -1903,11 +1898,11 @@ sub builtin_add_target
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    if ($option_install_command_pl
-	and $option_install_command_python)
-    {
-        die "$global_program_name: *** error: you cannot install both perl and python command files for the same target, please choose at most one of these.";
-    }
+    # if ($option_install_command_pl
+    # 	and $option_install_command_python)
+    # {
+    #     die "$global_program_name: *** error: you cannot install both perl and python command files for the same target, please choose at most one of these.";
+    # }
 
     if ($option_verbose)
     {
@@ -2000,13 +1995,13 @@ sub builtin_add_target
     {
 	my $new_command_filename = "$field_project_name-commands-$target_name";
 
-	$error = _builtin_add_command_filename('perl', $target_name, $new_command_filename);
+	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $target_name);
+	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
 	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
 	}
@@ -2016,13 +2011,13 @@ sub builtin_add_target
     {
 	my $new_command_filename = "$field_project_name-commands-$target_name";
 
-	$error = _builtin_add_command_filename('python', $target_name, $new_command_filename);
+	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
 	if (not $error)
 	{
-	    # $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $target_name);
+	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
 	    # print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
 	}
@@ -2180,6 +2175,19 @@ sub builtin_archive_configuration
 	       map
 	       {
 		   chomp; $_;
+	       }
+	       grep
+	       {
+		   my $filename = $_;
+
+		   my $exclude = '';
+
+		   if ($filename =~ m(_Inline))
+		   {
+		       $exclude = 'is_inline_directory';
+		   }
+
+		   not $exclude;
 	       }
 	       `find $directory_inside_tar_name -type f`,
 	      ];
@@ -2881,12 +2889,32 @@ sub builtin_start_project
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create_perl($field_project_configuration, $project_name, "perl_examples");
+	    my $target_name = "perl_examples";
+
+	    my $command_filename = "$project_name-commands-$target_name";
+
+	    $error = _builtin_add_command_filename($field_project_configuration, 'perl', $target_name, $command_filename);
+
+	    if (not $error)
+	    {
+		# add a template commands file with the given name
+
+		$error = _builtin_project_commands_template_create_perl($field_project_configuration, $project_name, $target_name, $command_filename);
+	    }
 	}
 
 	if (not $error)
 	{
-	    # $error = _builtin_project_commands_template_create_python($field_project_configuration, $project_name, "python_examples");
+	    my $target_name = "python_examples";
+
+	    my $command_filename = "$project_name-commands-$target_name";
+
+	    $error = _builtin_add_command_filename($field_project_configuration, 'python', $target_name, $command_filename);
+
+	    if (not $error)
+	    {
+		$error = _builtin_project_commands_template_create_python($field_project_configuration, $project_name, $target_name, $command_filename);
+	    }
 	}
 
 	if (not $error)
