@@ -327,6 +327,7 @@ Then check if they work by inspecting the examples they provide (with various op
 						   read => '.
 ./conf.workflow-tests-configuration
 ./conf.workflow-tests-workflow
+./README.md
 ./workflow-project-template.pl
 ./workflow-tests-bash-completion.sh
 ./workflow-tests-commands-data
@@ -715,6 +716,7 @@ global_field_project_configuration:
 ---
 CWD: /home/neurospaces
 scripts:
+  - workflow-test/README.md
   - workflow-test/conf.workflow-tests-configuration
   - workflow-test/conf.workflow-tests-workflow
   - workflow-test/workflow-project.pl
@@ -749,6 +751,7 @@ tar_filename: /tmp/wtw.tar.gz
 						   description => "Can we inspect the archive of the configuration in the tarball?",
 						   read => 'workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
+workflow-test/README.md
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
@@ -790,7 +793,8 @@ mkdir: created directory \'/home/neurospaces2/projects/workflow-configuration\'
 				command_tests => [
 						  {
 						   description => "Can we unpack an archived workflow configuration?",
-						   read => 'workflow-test/conf.workflow-tests-configuration
+						   read => 'workflow-test/README.md
+workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
