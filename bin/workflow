@@ -2787,6 +2787,7 @@ sub builtin_install_scripts
     my $option_install_engine = 'by default';
     my $option_install_force;
     my $option_install_git;
+    my $option_install_grc_configuration = 'by default';
     my $option_install_path_in_bashrc;
     my $option_install_report;
 
@@ -2798,6 +2799,7 @@ sub builtin_install_scripts
 	   "engine!" => \$option_install_engine,
 	   "force!" => \$option_install_force,
 	   "git!" => \$option_install_git,
+	   "grc-configuration!" => \$option_install_grc_configuration,
 	   "path-in-bashrc!" => \$option_install_path_in_bashrc,
 	   "report!" => \$option_install_report,
 	  };
@@ -2865,9 +2867,12 @@ sub builtin_install_scripts
 	_install_script_bash_completion($project_name);
     }
 
-    _install_script_grc_conf_additions($project_name);
+    if ($option_install_grc_configuration)
+    {
+	_install_script_grc_conf_additions($project_name);
 
-    _install_script_grc_symbolic_links($project_name, $field_configuration);
+	_install_script_grc_symbolic_links($project_name, $field_configuration);
+    }
 
     if ($option_install_git)
     {
@@ -2891,6 +2896,7 @@ sub builtin_install_scripts_completions
 	   '--engine' => "create a symbolic link to the workflow engine in ~/bin.",
 	   '--force' => "don't use this.",
 	   '--git' => "create a git repository for the workflow configuration.",
+	   '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
 	   '--path-in-bashrc' => "update .bashrc to include ~/bin in PATH.",
 	   '--report' => "report on what is being done.",
 	  };
@@ -2914,14 +2920,15 @@ sub builtin_install_scripts_help
 
 options:
 
-    --aliasses         configure the grc aliases in .bashrc if they are not there yet.
-    --bash-completion  configure bash completion in .bashrc if they are not there yet.
-    --commands         install or upgrade the command configuration to ~/bin.
-    --engine           create a symbolic link to the workflow engine in ~/bin.
-    --force            don't use this.
-    --git              create a git repository for the workflow configuration.
-    --path-in-bashrc   update .bashrc to include ~/bin in PATH.
-    --report           report on what is being done.
+    --aliasses           configure the grc aliases in .bashrc if they are not there yet.
+    --bash-completion    configure bash completion in .bashrc if they are not there yet.
+    --commands           install or upgrade the command configuration to ~/bin.
+    --engine             create a symbolic link to the workflow engine in ~/bin.
+    --force              don't use this.
+    --git                create a git repository for the workflow configuration.
+    --grc-configuration  install symbolic links for grc configuration to color code the workflow output (requires sudo access).
+    --path-in-bashrc     update .bashrc to include ~/bin in PATH.
+    --report             report on what is being done.
 
 Note that grc configuration files will also be installed and configured.
 
