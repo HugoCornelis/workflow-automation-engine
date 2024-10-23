@@ -2373,6 +2373,76 @@ arguments:
 }
 
 
+sub builtin_gitlab_clone_install
+{
+    my $project_name = $ARGV[0];
+
+    my $url = $ARGV[1];
+
+    my $branch_name = $ARGV[2] || "main";
+
+    # create a new repository
+
+    my $commands
+	= [
+	   "git clone git\@gitlab.com:$url/$project_name.git",
+	   "cd $project_name",
+	   "git switch --create $branch_name",
+	   "touch README.md",
+	   "git add README.md",
+	   "git commit -m \"Add README.\"",
+	   "git push --set-upstream origin $branch_name",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_gitlab_push
+{
+    my $project_name = $ARGV[0];
+
+    my $url = $ARGV[1];
+
+    my $branch_name = $ARGV[2] || "main";
+
+    # after creation of a new project, upload it to gitlab with gitlab-workflow push <url>
+
+    my $commands
+	= [
+	   "git remote rename origin old-origin",
+	   "git remote add origin git\@gitlab.com:$url/$project_name.git",
+	   "git push --set-upstream origin --all",
+	   "git push --set-upstream origin --tags",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_gitlab_create_unused
+{
+    my $project_name = $ARGV[0];
+
+    my $url = $ARGV[1];
+
+    my $branch_name = $ARGV[2] || "main";
+
+    # push an existing folder
+
+    my $commands
+	= [
+	   "git init --initial-branch=$branch_name",
+	   "git remote add origin git\@gitlab.com:$url/$project_name.git",
+	   "git add .",
+	   "git commit -m \"Initial commit.\"",
+	   "git push --set-upstream origin $branch_name",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
 sub _install_script_bashrc_aliasses
 {
     my $project_name = shift;

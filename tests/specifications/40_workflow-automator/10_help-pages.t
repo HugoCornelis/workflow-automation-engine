@@ -91,6 +91,9 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow builtin add_target --help
   - workflow builtin archive_configuration --help
+  - workflow builtin gitlab_clone_install --help
+  - workflow builtin gitlab_create_unused --help
+  - workflow builtin gitlab_push --help
   - workflow builtin install_scripts --help
   - workflow builtin print_configuration_directory --help
   - workflow builtin start_project --help
