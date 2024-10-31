@@ -53,8 +53,9 @@ options:
     --help                          display usage information and stop execution.
     --help-build-servers            display the known build servers.
     --help-commands                 display the available commands, add a target name for restricted output.
-    --help-module                   display all the available help information about the commands of the module.
     --help-field-project-name       print the field project name and exit.
+    --help-module                   display all the available help information about the commands of the module.
+    --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
     --help-packages                 display known package and overriden package information and stop execution.
     --help-projects                 display known project information and stop execution.

@@ -55,6 +55,7 @@ our $option_help_build_servers;
 our $option_help_commands;
 our $option_help_field_project_name;
 our $option_help_module;
+our $option_help_module_all;
 our $option_help_options;
 our $option_help_packages;
 our $option_help_projects;
@@ -98,6 +99,7 @@ our $global_options
        "help-commands!" => \$option_help_commands,
        "help-field-project-name!" => \$option_help_field_project_name,
        "help-module!" => \$option_help_module,
+       "help-module-all!" => \$option_help_module_all,
        "help-options!" => \$option_help_options,
        "help-packages!" => \$option_help_packages,
        "help-projects!" => \$option_help_projects,
@@ -3779,6 +3781,18 @@ sub _config_compare_items
 }
 
 
+sub _config_compare_items_help
+{
+    my $command = shift;
+
+    return "$command: Determine which CONFIG options have been renamed or deprecated in a newer kernel
+
+After running this command, check what was dropped between old and new, and use the Git log of the kernel to find out what happened.
+
+";
+}
+
+
 package Command::Net::IPerf;
 
 
@@ -6201,6 +6215,7 @@ sub bash_completion_generate_options
 			--help-commands
 			--help-field-project-name
 			--help-module
+			--help-module-all
 			--help-options
 			--help-packages
 			--help-projects
@@ -6946,8 +6961,9 @@ options:
     --help                          display usage information and stop execution.
     --help-build-servers            display the known build servers.
     --help-commands                 display the available commands, add a target name for restricted output.
-    --help-module                   display all the available help information about the commands of the module.
     --help-field-project-name       print the field project name and exit.
+    --help-module                   display all the available help information about the commands of the module.
+    --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
     --help-packages                 display known package and overriden package information and stop execution.
     --help-projects                 display known project information and stop execution.
@@ -7074,11 +7090,11 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	exit 0;
     }
 
-    if ($option_help_module)
+    if ($option_help_module
+        or $option_help_module_all)
     {
-	# print Dump( { option_help_module1 => $option_help_module , }, );
-
-	if (not defined $option_target)
+	if (not defined $option_target
+	    and $option_help_module)
 	{
 	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
 	}
@@ -7108,17 +7124,32 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	       %$known_command_packages_builtin,
 	      };
 
-	if (exists $known_command_packages->{$option_target})
+	if ($option_help_module)
+	{
+	    if (exists $known_command_packages->{$option_target})
+	    {
+		use YAML;
+
+		print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+
+		exit 0;
+	    }
+	    else
+	    {
+		die "$global_program_name: *** Error: module '$option_target' does not provide --help-module, does this module exist?'";
+	    }
+	}
+	elsif ($option_help_module_all)
 	{
 	    use YAML;
 
-	    print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+	    print Dump( { help_module_all => $known_command_packages, }, );
 
 	    exit 0;
 	}
 	else
 	{
-	    die "$global_program_name: *** Error: module '$option_target' does not provide --help-module, does this module exist?'";
+	    die "$global_program_name: *** Internal Error.";
 	}
     }
 
