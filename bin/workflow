@@ -2454,6 +2454,10 @@ sub _install_script_git_repository
 }
 
 
+#
+# Add configuration to /etc/grc.conf
+#
+
 sub _install_script_grc_conf_additions
 {
     my $project_name = shift;
@@ -2523,12 +2527,39 @@ sub _install_script_grc_symbolic_links
 
 	my $target_file_configuration = "$target_directory/$grc_configuration";
 
+	if ($option_verbose)
+	{
+	    use Data::Dumper;
+
+	    print STDERR Dumper(
+				{
+				 _install_script_grc_symbolic_links => {
+									source_directory => $source_directory,
+									abs_source_directory => $abs_source_directory,
+									target_directory => $target_directory,
+								       },
+				},
+			       );
+	}
+
 	if (-e $source_file_configuration
 	    and not -e $target_file_configuration)
 	{
+	    if ($option_verbose)
+	    {
+		print STDERR "Installing _install_script_grc_symbolic_links, configuration\n";
+	    }
+
 	    my $command = "ln -sf $source_file_configuration $target_file_configuration";
 
 	    execute_shell_command($command, { sudo => 1, }, );
+	}
+	else
+	{
+	    if ($option_verbose)
+	    {
+		print STDERR "NOT Installing _install_script_grc_symbolic_links, configuration, either the source file ($source_file_configuration) does not exist or the target file ($target_file_configuration) already exists.\n";
+	    }
 	}
 
 	my $source_file_workflow = "$abs_source_directory/$grc_workflow";
@@ -2538,10 +2569,23 @@ sub _install_script_grc_symbolic_links
 	if (-e $source_file_workflow
 	    and not -e $target_file_workflow)
 	{
+	    if ($option_verbose)
+	    {
+		print STDERR "Installing _install_script_grc_symbolic_links, workflow\n";
+	    }
+
 	    my $command = "ln -sf $source_file_workflow $target_file_workflow";
 
 	    execute_shell_command($command, { sudo => 1, }, );
 	}
+	else
+	{
+	    if ($option_verbose)
+	    {
+		print STDERR "NOT Installing _install_script_grc_symbolic_links, workflow, either the source file ($source_file_workflow) does not exist or the target file ($target_file_workflow) already exists.\n";
+	    }
+	}
+
     }
 }
 
