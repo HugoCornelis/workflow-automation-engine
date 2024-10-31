@@ -2373,76 +2373,6 @@ arguments:
 }
 
 
-sub builtin_gitlab_clone_install
-{
-    my $project_name = $ARGV[0];
-
-    my $url = $ARGV[1];
-
-    my $branch_name = $ARGV[2] || "main";
-
-    # create a new repository
-
-    my $commands
-	= [
-	   "git clone git\@gitlab.com:$url/$project_name.git",
-	   "cd $project_name",
-	   "git switch --create $branch_name",
-	   "touch README.md",
-	   "git add README.md",
-	   "git commit -m \"Add README.\"",
-	   "git push --set-upstream origin $branch_name",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
-sub builtin_gitlab_push
-{
-    my $project_name = $ARGV[0];
-
-    my $url = $ARGV[1];
-
-    my $branch_name = $ARGV[2] || "main";
-
-    # after creation of a new project, upload it to gitlab with gitlab-workflow push <url>
-
-    my $commands
-	= [
-	   "git remote rename origin old-origin",
-	   "git remote add origin git\@gitlab.com:$url/$project_name.git",
-	   "git push --set-upstream origin --all",
-	   "git push --set-upstream origin --tags",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
-sub builtin_gitlab_create_unused
-{
-    my $project_name = $ARGV[0];
-
-    my $url = $ARGV[1];
-
-    my $branch_name = $ARGV[2] || "main";
-
-    # push an existing folder
-
-    my $commands
-	= [
-	   "git init --initial-branch=$branch_name",
-	   "git remote add origin git\@gitlab.com:$url/$project_name.git",
-	   "git add .",
-	   "git commit -m \"Initial commit.\"",
-	   "git push --set-upstream origin $branch_name",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
 sub _install_script_bashrc_aliasses
 {
     my $project_name = shift;
@@ -3712,6 +3642,79 @@ sub _init_filenames_2_symlink_commands
     }
 
     return $commands;
+}
+
+
+package Command::GitLab;
+
+
+sub builtin_gitlab_clone_install
+{
+    my $project_name = $ARGV[0];
+
+    my $url = $ARGV[1];
+
+    my $branch_name = $ARGV[2] || "main";
+
+    # create a new repository
+
+    my $commands
+	= [
+	   "git clone git\@gitlab.com:$url/$project_name.git",
+	   "cd $project_name",
+	   "git switch --create $branch_name",
+	   "touch README.md",
+	   "git add README.md",
+	   "git commit -m \"Add README.\"",
+	   "git push --set-upstream origin $branch_name",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_gitlab_push
+{
+    my $project_name = $ARGV[0];
+
+    my $url = $ARGV[1];
+
+    my $branch_name = $ARGV[2] || "main";
+
+    # after creation of a new project, upload it to gitlab with gitlab-workflow push <url>
+
+    my $commands
+	= [
+	   "git remote rename origin old-origin",
+	   "git remote add origin git\@gitlab.com:$url/$project_name.git",
+	   "git push --set-upstream origin --all",
+	   "git push --set-upstream origin --tags",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_gitlab_create_unused
+{
+    my $project_name = $ARGV[0];
+
+    my $url = $ARGV[1];
+
+    my $branch_name = $ARGV[2] || "main";
+
+    # push an existing folder
+
+    my $commands
+	= [
+	   "git init --initial-branch=$branch_name",
+	   "git remote add origin git\@gitlab.com:$url/$project_name.git",
+	   "git add .",
+	   "git commit -m \"Initial commit.\"",
+	   "git push --set-upstream origin $branch_name",
+	  ];
+
+    execute_shell_command_array($commands);
 }
 
 
@@ -7029,6 +7032,8 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
     if ($option_help_module)
     {
+	# print Dump( { option_help_module1 => $option_help_module , }, );
+
 	if (not defined $option_target)
 	{
 	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
@@ -7036,6 +7041,10 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
 	my $known_command_packages_builtin
 	    = {
+	       'Command::GitLab' => {
+				     description => 'workflows for working with GitLab',
+				     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',
+				    },
 	       'Command::Linux' => {
 				    description => 'workflows for working with the Linux kernel source code',
 				    documentation => 'The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.',
@@ -7062,6 +7071,10 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	    print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
 
 	    exit 0;
+	}
+	else
+	{
+	    die "$global_program_name: *** Error: module '$option_target' does not provide --help-module, does this module exist?'";
 	}
     }
 
