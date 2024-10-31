@@ -476,9 +476,6 @@ conf.workflow-tests-configuration
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow-tests-workflow builtin add_target --help
   - workflow-tests-workflow builtin archive_configuration --help
-  - workflow-tests-workflow builtin gitlab_clone_install --help
-  - workflow-tests-workflow builtin gitlab_create_unused --help
-  - workflow-tests-workflow builtin gitlab_push --help
   - workflow-tests-workflow builtin install_scripts --help
   - workflow-tests-workflow builtin print_configuration_directory --help
   - workflow-tests-workflow builtin start_project --help
@@ -504,9 +501,6 @@ conf.workflow-tests-configuration
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow-tests-workflow builtin add_target --help
   - workflow-tests-workflow builtin archive_configuration --help
-  - workflow-tests-workflow builtin gitlab_clone_install --help
-  - workflow-tests-workflow builtin gitlab_create_unused --help
-  - workflow-tests-workflow builtin gitlab_push --help
   - workflow-tests-workflow builtin install_scripts --help
   - workflow-tests-workflow builtin print_configuration_directory --help
   - workflow-tests-workflow builtin start_project --help
@@ -620,7 +614,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options?",
-						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
+						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -644,7 +638,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the commands?",
-						   read => 'a --b add_target archive_configuration gitlab_clone_install gitlab_create_unused gitlab_push install_scripts print_configuration_directory start_project',
+						   read => 'a --b add_target archive_configuration install_scripts print_configuration_directory start_project',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -916,7 +910,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options for the new installed configuration?",
-						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
+						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -942,7 +936,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the commands for the new installed configuration?",
-						   read => 'a --b add_target archive_configuration gitlab_clone_install gitlab_create_unused gitlab_push install_scripts print_configuration_directory start_project',
+						   read => 'a --b add_target archive_configuration install_scripts print_configuration_directory start_project',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
