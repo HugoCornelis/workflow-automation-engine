@@ -7118,7 +7118,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	my $known_command_packages
 	    = {
 	       'Command' => {
-			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } keys %$known_command_packages_builtin ) . ')',
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$known_command_packages_builtin ) . ')',
 			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
 			    },
 	       %$known_command_packages_builtin,

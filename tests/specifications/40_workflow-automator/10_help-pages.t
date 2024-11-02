@@ -11,7 +11,7 @@ my $test
 				command => 'bin/workflow --help',
 				command_tests => [
 						  {
-						   description => "Do we get the main help page ?",
+						   description => "Do we get the main help page?",
 						   read => '
 workflow: support for workflow design for embedded software engineers.
 
@@ -87,7 +87,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				command_tests => [
 						  {
 						   comment => 'note that the expect module does not easily allow the read string to be started with yaml\'s \'---\'',
-						   description => "Do we get the builtin commands help page ?",
+						   description => "Can we display the builtin commands help page?",
 						   read => '
 \'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
   - workflow builtin add_target --help
@@ -105,7 +105,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				command_tests => [
 						  {
 						   comment => 'note that the expect module does not easily allow the read string to be started with yaml\'s \'---\'',
-						   description => "Do we get the builtin targets help page ?",
+						   description => "Can we display the builtin targets help page?",
 						   read => '
 targets:
   builtin:
@@ -116,10 +116,35 @@ targets:
 				description => "default builtin targets",
 			       },
 			       {
+				command => 'bin/workflow --help-module-all',
+				command_tests => [
+						  {
+						   comment => 'note that the expect module does not easily allow the read string to be started with yaml\'s \'---\'',
+						   description => "Can we display the builtin convenience modules with the summary descriptions?",
+						   read => '
+help_module_all:
+  Command:
+    description: "a library of workflows (try these ones: \'workflow Command::GitLab --help-module\' or \'workflow Command::Linux --help-module\' or \'workflow Command::Net::IPerf --help-module\')"
+    documentation: each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects
+  Command::GitLab:
+    description: workflows for working with GitLab
+    documentation: These workflows implement convenience interactions to push and pull source code from GitLab.
+  Command::Linux:
+    description: workflows for working with the Linux kernel source code
+    documentation: The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.
+  Command::Net::IPerf:
+    description: workflows for measuring the performance of a network connection
+    documentation: "The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine"
+',
+						  },
+						 ],
+				description => "default builtin targets",
+			       },
+			       {
 				command => 'bin/workflow builtin start_project --help',
 				command_tests => [
 						  {
-						   description => "Do we see the help page for starting a new project ?",
+						   description => "Do we see the help page for starting a new project?",
 						   read => 'workflow builtin start_project: start a new project with a given name in the current directory.
 
 This will install a project descriptor, a configuration file and an
@@ -137,7 +162,7 @@ arguments:
 				command => 'bin/workflow builtin add_target --help',
 				command_tests => [
 						  {
-						   description => "Do we see the help page for adding a new target to a project ?",
+						   description => "Do we see the help page for adding a new target to a project?",
 						   read => 'workflow builtin add_target: add a new target and update the configuration to integrate it.
 
 synopsis:
@@ -163,7 +188,7 @@ options:
 				command => 'bin/workflow builtin archive_configuration --help',
 				command_tests => [
 						  {
-						   description => "Do we see the help page for archiving a workflow configuration ?",
+						   description => "Do we see the help page for archiving a workflow configuration?",
 						   read => 'workflow builtin archive_configuration: create a tarball with the configuration of the current workflow project.
 
 synopsis:
