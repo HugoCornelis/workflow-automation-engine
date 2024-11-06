@@ -5487,6 +5487,7 @@ sub md_run
 	    my $library_sha_after = ModelLibrary::sha($external_modeling_library);
 
 	    # if the shas are different
+
 	    if ($library_sha_after ne $library_sha_before)
 	    {
 		# generate an error
