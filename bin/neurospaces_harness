@@ -366,29 +366,23 @@ sub main
 	$global_test_report->{random_seed} = 'not randomized';
     }
 
-    # create an execution context for running the tests
+    # if there are model libraries
 
-    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, {}, );
+    my $model_library_shas = {};
 
-    # if there are modeling libraries
-
-    if (defined ($global_config->{external_modeling_libraries}))
+    if (defined ($global_config->{external_model_libraries}))
     {
 	# compute the shas of the modeling libraries
 
-	my $external_modeling_libraries = $global_config->{external_modeling_libraries};
+	my $external_model_libraries = $global_config->{external_model_libraries};
 
-	foreach my $external_modeling_library (@$external_modeling_libraries)
+	foreach my $external_modeling_library (@$external_model_libraries)
 	{
-	    my $library_sha_before = ModelLibrary::sha($external_modeling_library);
+	    my $sha = ModelLibrary::sha($external_modeling_library);
 
-	    $execution_context->{external_modeling_libraries}->{$external_modeling_library}->{library_sha_before} = $library_sha_before;
+	    $model_library_shas->{$external_modeling_library}->{sha} = $sha;
 	}
     }
-
-    # create a test executor for running the tests following the requested type of output
-
-    my $executor = $option_output->new($execution_context);
 
     # set expected totals for the test counters
 
@@ -451,6 +445,14 @@ sub main
 	  };
 
     $global_test_report->{global}->{status} = 'Running';
+
+    # create an execution context for running the tests
+
+    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, $model_library_shas, {}, );
+
+    # create a test executor for running the tests following the requested type of output
+
+    my $executor = $option_output->new($execution_context);
 
     # loop over all module definitions
 
@@ -3748,6 +3750,8 @@ sub new
 
     my $fd_output = shift;
 
+    my $model_library_shas = shift;
+
     my $options = shift || {};
 
     my $self
@@ -3759,6 +3763,8 @@ sub new
 	  };
 
     bless $self, $package;
+
+    $self->{external_model_libraries} = $model_library_shas;
 
     return $self;
 }
@@ -5612,15 +5618,15 @@ sub md_run
 
     # if there are modeling libraries
 
-    if (defined ($global_config->{external_modeling_libraries}))
+    if (defined ($global_config->{external_model_libraries}))
     {
 	# compute the shas of the modeling libraries
 
-	my $external_modeling_libraries = $global_config->{external_modeling_libraries};
+	my $external_model_libraries = $global_config->{external_model_libraries};
 
-	foreach my $external_modeling_library (@$external_modeling_libraries)
+	foreach my $external_modeling_library (@$external_model_libraries)
 	{
-	    my $library_sha_before = $execution_context->{external_modeling_libraries}->{$external_modeling_library}->{library_sha_before};
+	    my $library_sha_before = $execution_context->{external_model_libraries}->{$external_modeling_library}->{sha};
 
 	    my $library_sha_after = ModelLibrary::sha($external_modeling_library);
 
