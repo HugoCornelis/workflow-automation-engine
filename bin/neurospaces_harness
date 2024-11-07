@@ -475,6 +475,10 @@ sub main
 
     Heterarch::Test::CommandDefinition::Interactive::close_pending();
 
+    # end the console reporting
+
+    $reporter->end();
+
     # close the test report
 
     $global_test_report->{global}->{status} = 'Finished';
@@ -8486,6 +8490,18 @@ our $console_types
        linear => 'linearly flowing text',
        status => 'single line status bars',
       };
+
+
+sub end
+{
+    my $self = shift;
+
+# end
+#
+#             args.console_window.message("progress_bar", iteration = expected_requests)
+#             args.console_window.message("totals", data = f"Done")
+#             args.console_window.message("end", data = f"Created file {output_filename}.")
+}
 
 
 sub new
