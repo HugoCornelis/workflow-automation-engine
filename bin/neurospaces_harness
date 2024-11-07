@@ -17,6 +17,7 @@ use YAML;
 
 my $option_check_test_names;
 my $option_config_filename = './tests.config';
+my $option_console_type = 'linear';
 our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
@@ -370,6 +371,7 @@ sub parse_options
 	    (
 	     "check-test-names!" => \$option_check_test_names,
 	     "config-filename=s" => \$option_config_filename,
+	     "console-type=s" => \$option_console_type,
 	     "debugging=s" => \$option_debugging,
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
@@ -403,6 +405,11 @@ sub parse_options
     if (!$result)
     {
 	die "$0: Error in option processing";
+    }
+
+    if (not exists $Heterarch::Test::Reporting::console_types->{$option_console_type})
+    {
+	die "$0: *** Error --console-type should specify one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ".";
     }
 
     if (not defined $option_output)
@@ -460,6 +467,7 @@ sub parse_options
 	= {
 	   check_test_names => $option_check_test_names,
 	   config_filename => $option_config_filename,
+	   console_type => \$option_console_type,
 	   debugging => $option_debugging,
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
@@ -498,6 +506,7 @@ $0: test definition executor
 options:
     --check-test-names           check the pathnames of the specification files against the names of the tests.
     --config-filename            the name of the file with the configuration (default is: $option_config_filename).
+    --console-type               the type of the console output (one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ").
     --debugging                  enable specific debugging options.
     --dump-json                  dump test specifications to json files in /tmp/.
     --dump-perl                  dump test specifications to perl files in /tmp/.
@@ -8345,6 +8354,490 @@ sub new
 
 
 package Heterarch::Test::Reporting;
+
+
+our $console_types
+    = {
+       linear => 'linearly flowing text',
+       status => 'single line status bars',
+      };
+
+
+sub report_error_add
+{
+    if ($option_console_type eq 'linear')
+    {
+	return Heterarch::Test::Reporting::Linear::report_error_add(@_);
+    }
+    else
+    {
+	return Heterarch::Test::Reporting::Status::report_error_add(@_);
+    }
+}
+
+
+sub report_message
+{
+    if ($option_console_type eq 'linear')
+    {
+	return Heterarch::Test::Reporting::Linear::report_message(@_);
+    }
+    else
+    {
+	return Heterarch::Test::Reporting::Status::report_message(@_);
+    }
+}
+
+
+sub report_message_end
+{
+    if ($option_console_type eq 'linear')
+    {
+	return Heterarch::Test::Reporting::Linear::report_message_end(@_);
+    }
+    else
+    {
+	return Heterarch::Test::Reporting::Status::report_message_end(@_);
+    }
+}
+
+
+sub report_message_info
+{
+    if ($option_console_type eq 'linear')
+    {
+	return Heterarch::Test::Reporting::Linear::report_message_info(@_);
+    }
+    else
+    {
+	return Heterarch::Test::Reporting::Status::report_message_info(@_);
+    }
+}
+
+
+sub report_message_start
+{
+    if ($option_console_type eq 'linear')
+    {
+	return Heterarch::Test::Reporting::Linear::report_message_start(@_);
+    }
+    else
+    {
+	return Heterarch::Test::Reporting::Status::report_message_start(@_);
+    }
+}
+
+
+# A console window implementation to display diagnostic messages.
+
+package Heterarch::Test::Reporting::ConsoleWindow;
+
+my $cursor_up = "\033[A";
+my $cursor_down = "\033[B";
+my $cursor_forced_down = "\n";
+my $erase_line = "\33[2K";
+
+sub new
+{
+    my $package = shift;
+
+    my $options = shift || {};
+
+    my $self
+	= {
+	   configuration => $options,
+	  };
+
+    bless $self, $package;
+
+    return $self;
+}
+
+
+sub message
+{
+    my $self = shift;
+
+    my $line = shift;
+
+    my $arguments = shift;
+
+    my $enabled = $self->{configuration}->{$line}->{enabled} || 'by default';
+
+    if ($enabled)
+    {
+	my $line_number = $self->{configuration}->{$line}->{line_number};
+
+	print $cursor_forced_down x $line_number . "\r$self->{configuration}->{$line}->{prompt}";
+
+	my $formatter_options = $self->{configuration}->{$line};
+
+	my $formatter = $self->{configuration}->{$line}->{formatter};
+
+        &$formatter($formatter_options, $arguments);
+
+	if ($line ne "end")
+	{
+	    print $cursor_up x $line_number;
+
+	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
+
+	    select()->flush();
+	}
+    }
+}
+
+
+# print iterations progress.
+#
+# modified from https://stackoverflow.com/questions/3173320/text-progress-bar-in-terminal-with-block-characters
+#
+
+#     """
+#     Call in a loop to create terminal progress bar
+#     @params:
+#         iteration   - Required  : current iteration (Int)
+#         total       - Required  : total iterations (Int)
+#         prefix      - Optional  : prefix string (Str)
+#         suffix      - Optional  : suffix string (Str)
+#         decimals    - Optional  : positive number of decimals in percent complete (Int)
+#         length      - Optional  : character length of bar (Int)
+#         fill        - Optional  : bar fill character (Str)
+#     """
+
+sub status
+{
+    my $line_options = shift;
+
+    my $iteration = shift || -1;
+
+    my $total = shift || -1;
+
+    my $prefix = shift || '';
+
+    my $suffix = shift || '';
+
+    my $options = $line_options->{formatter_options};
+
+    if ($total eq -1)
+    {
+        $total = $options->{total};
+    }
+
+    if ($prefix eq '')
+    {
+        $prefix = $options->{prefix} || '';
+    }
+
+    if ($suffix eq '')
+    {
+        $suffix = $options->{suffix} || '';
+    }
+
+    my $length = $line_options->{length};
+
+    my $without_bar = "$prefix||  $suffix";
+
+    my $without_bar_length = length($without_bar);
+
+    my $percent = '';
+
+    my $needs_percentage = exists $options->{percentage} ? $options->{percentage} : 'by default';
+
+    if ($needs_percentage)
+    {
+        my $percent = sprintf("%.$options->{decimals}f", 100 * ($iteration / $total));
+
+        $percent = "$percent% ";
+
+	$without_bar_length += 5
+    }
+
+    my $bar_length = $line_options->{length} - $without_bar_length;
+
+    my $filledLength = int($bar_length * $iteration / $total);
+
+    my $bar = $options->{fill} * $filledLength + $options->{empty} * ($bar_length - $filledLength);
+
+    my $message = "$prefix|$bar| $percent$suffix";
+
+    print $message;
+}
+
+
+sub note
+{
+    my $options = shift;
+
+    my $data = shift || '';
+
+    my $length = $options->{length};
+
+    if (length $data > $length)
+    {
+	print substr($data, 0, $length);
+    }
+    else
+    {
+	print $data;
+    }
+}
+
+
+package Heterarch::Test::Reporting::Status;
+
+
+my $console_window_configuration
+    = {
+       "progress_bar" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::status,
+			  "formatter_options" => {
+						  "decimals" => 0,
+						  "empty" => '-',
+						  "fill" => '█',
+						  "prefix" => '',
+						  "suffix" => 'Complete',
+						  "total" => -1,
+						 },
+			  "length" => 120,
+			  "line_number" => 0,
+			  "prompt" => "  Progress: ",
+			 },
+       "message_module" => {
+			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			    "length" => 120,
+			    "line_number" => 1,
+			    "prompt" => "    Module: ",
+			   },
+       "message_command" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 4,
+			     "prompt" => "   Command: ",
+			    },
+       "message_test" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			  "length" => 120,
+			  "line_number" => 4,
+			  "prompt" => "      Test: ",
+			 },
+       "message_harnessing" => {
+				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+				"length" => 120,
+				"line_number" => 4,
+				"prompt" => "   Harness: ",
+			       },
+       "end" => {
+		 "enabled" => "yes",
+		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+		 "length" => 120,
+		 "line_number" => 5,
+		 "prompt" => "  Finished: ",
+		},
+      };
+
+
+sub report_error_add
+{
+    my $fd_output = shift;
+
+    my $arguments = shift;
+
+    my $description = $arguments->{description};
+    my $error = $arguments->{error};
+    my $expected = $arguments->{expected};
+    my $message = $arguments->{message};
+    my $module_name = $arguments->{module_name};
+    my $seen = $arguments->{seen};
+    my $subdescription = $arguments->{subdescription};
+
+    my $package_name = $global_test_report->{description}->{package}->{name};
+
+    if (defined $option_debugging
+	and $option_debugging eq 'errors')
+    {
+	use Carp;
+
+	warn "$0: DEBUG errors";
+
+	print Carp::cluck(@_);
+    }
+
+    $global_error_count++;
+
+    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+
+    # fill in the error report
+
+    $global_test_report->{global}->{error_count} = $global_error_count;
+
+    if ($subdescription)
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
+    }
+    else
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
+    }
+
+    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
+
+    if (defined $message)
+    {
+	#! subdescription can be undefined here, in which case
+	#! $message is undefined too.  Both can be defined when
+	#! running in verbose mode seems, allows to track regex
+	#! problems ... I think.
+
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
+    }
+
+    if (defined $expected
+	and defined $seen)
+    {
+	my $processed_expected = [ split "\n", $expected, ];
+
+	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+
+	print $fd_output $processed_expected;
+
+	my $processed_seen = [ split "\n", $seen, ];
+
+	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
+
+	print $fd_output $processed_seen;
+
+	use IO::File;
+
+	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
+
+	my $expected_file = IO::File->new(">$expected_filename");
+
+	if ($expected_file)
+	{
+	    print $expected_file $expected;
+
+	    $expected_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
+	}
+
+	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
+
+	my $seen_file = IO::File->new(">$seen_filename");
+
+	if ($seen_filename)
+	{
+	    print $seen_file $seen;
+
+	    $seen_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
+	}
+
+	my $diff = `diff "$expected_filename" "$seen_filename"`;
+
+	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
+
+	my $diff_file = IO::File->new(">$diff_filename");
+
+	if ($diff_file)
+	{
+	    print $diff_file $diff;
+
+	    $diff_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
+	}
+
+	my $processed_diff = [ split "\n", $diff, ];
+
+	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+
+	print $fd_output $processed_diff;
+    }
+
+}
+
+
+sub report_message
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    print $fd_output "$message\n";
+}
+
+
+sub report_message_end
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    return _report_message_with_rulers($fd_output, 1, 2, $message);
+}
+
+
+sub report_message_info
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    return _report_message_with_rulers($fd_output, 1, 1, $message);
+}
+
+
+sub report_message_start
+{
+    my $fd_output = shift;
+
+    my $message = shift;
+
+    return _report_message_with_rulers($fd_output, 2, 1, $message);
+}
+
+
+sub _report_message_with_rulers
+{
+    my $fd_output = shift;
+
+    my $top_ruler = shift;
+
+    my $bottom_ruler = shift;
+
+    my $message = shift;
+
+    my $lines = [ split '\n', $message, ];
+
+    my $longest = 0;
+
+    map
+    {
+	($longest < length) && ($longest = length)
+    }
+	@$lines;
+
+    my $line = '-' x $longest;
+
+    print $fd_output "\n";
+    print $fd_output "$line\n" for 0 .. $top_ruler;
+    print $fd_output "\n";
+    print $fd_output "$message\n\n";
+    print $fd_output "$line\n" for 0 .. $bottom_ruler;
+    print $fd_output "\n";
+}
+
+
+package Heterarch::Test::Reporting::Linear;
 
 
 sub report_error_add
