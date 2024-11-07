@@ -5358,7 +5358,7 @@ sub read_module
 
 	if ($@)
 	{
-	    report_error_add
+	    Heterarch::Test::Reporting::report_error_add
 	    (
 	     $fd_output,
 	     {
