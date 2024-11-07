@@ -59,6 +59,73 @@ our $option_verbose;
 
 our $global_config;
 
+my $global_console_window_configuration
+    = {
+       "progress_bar" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::status,
+			  "formatter_options" => {
+						  "decimals" => 0,
+						  "empty" => '-',
+						  "fill" => '█',
+						  "prefix" => '',
+						  "suffix" => 'Complete',
+						  "total" => -1,
+						 },
+			  "length" => 120,
+			  "line_number" => 0,
+			  "prompt" => "   Progress: ",
+			 },
+       "message_info" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			  "length" => 120,
+			  "line_number" => 1,
+			  "prompt" => "Information: ",
+			 },
+       "message_warning" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 2,
+			     "prompt" => "    Warning: ",
+			    },
+       "message_module" => {
+			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			    "length" => 120,
+			    "line_number" => 3,
+			    "prompt" => "     Module: ",
+			   },
+       "message_command" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 4,
+			     "prompt" => "    Command: ",
+			    },
+       "message_test" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			  "length" => 120,
+			  "line_number" => 5,
+			  "prompt" => "       Test: ",
+			 },
+       "message_harnessing" => {
+				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+				"length" => 120,
+				"line_number" => 6,
+				"prompt" => "    Harness: ",
+			       },
+       "message_error" => {
+			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			   "length" => 120,
+			   "line_number" => 7,
+			   "prompt" => " Test Error: ",
+			  },
+       "end" => {
+		 "enabled" => "yes",
+		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+		 "length" => 120,
+		 "line_number" => 10,
+		 "prompt" => "   Finished: ",
+		},
+      };
+
 my $global_all_output_levels
     = [
        "meta",
@@ -8585,56 +8652,6 @@ sub note
 
 
 package Heterarch::Test::Reporting::Status;
-
-
-my $console_window_configuration
-    = {
-       "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::status,
-			  "formatter_options" => {
-						  "decimals" => 0,
-						  "empty" => '-',
-						  "fill" => '█',
-						  "prefix" => '',
-						  "suffix" => 'Complete',
-						  "total" => -1,
-						 },
-			  "length" => 120,
-			  "line_number" => 0,
-			  "prompt" => "  Progress: ",
-			 },
-       "message_module" => {
-			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			    "length" => 120,
-			    "line_number" => 1,
-			    "prompt" => "    Module: ",
-			   },
-       "message_command" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => 120,
-			     "line_number" => 4,
-			     "prompt" => "   Command: ",
-			    },
-       "message_test" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => 120,
-			  "line_number" => 4,
-			  "prompt" => "      Test: ",
-			 },
-       "message_harnessing" => {
-				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-				"length" => 120,
-				"line_number" => 4,
-				"prompt" => "   Harness: ",
-			       },
-       "end" => {
-		 "enabled" => "yes",
-		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => 120,
-		 "line_number" => 5,
-		 "prompt" => "  Finished: ",
-		},
-      };
 
 
 sub report_error_add
