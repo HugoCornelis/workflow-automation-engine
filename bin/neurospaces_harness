@@ -126,6 +126,73 @@ my $global_console_window_configuration
 		},
       };
 
+my $global_console_window_library_configuration
+    = {
+       "progress_bar" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::status,
+			  "formatter_options" => {
+						  "decimals" => 0,
+						  "empty" => '-',
+						  "fill" => '█',
+						  "prefix" => '',
+						  "suffix" => 'Complete',
+						  "total" => -1,
+						 },
+			  "length" => 120,
+			  "line_number" => 0,
+			  "prompt" => "   Progress: ",
+			 },
+       "message_info" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			  "length" => 120,
+			  "line_number" => 1,
+			  "prompt" => "Information: ",
+			 },
+       "message_warning" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 2,
+			     "prompt" => "    Warning: ",
+			    },
+       "message_module" => {
+			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			    "length" => 120,
+			    "line_number" => 3,
+			    "prompt" => "     Module: ",
+			   },
+       "message_command" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 4,
+			     "prompt" => "    Command: ",
+			    },
+       "message_test" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			  "length" => 120,
+			  "line_number" => 5,
+			  "prompt" => "       Test: ",
+			 },
+       "message_harnessing" => {
+				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+				"length" => 120,
+				"line_number" => 6,
+				"prompt" => "    Harness: ",
+			       },
+       "message_error" => {
+			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			   "length" => 120,
+			   "line_number" => 7,
+			   "prompt" => " Test Error: ",
+			  },
+       "end" => {
+		 "enabled" => "yes",
+		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+		 "length" => 120,
+		 "line_number" => 10,
+		 "prompt" => "   Finished: ",
+		},
+      };
+
 my $global_all_output_levels
     = [
        "meta",
@@ -328,7 +395,15 @@ sub main
 
     # find all the test module files
 
-    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $global_fd_output, );
+    my $reporter_library
+	= Heterarch::Test::Reporting->new(
+					  {
+					   configuration => $global_console_window_library_configuration,
+					   fd_output => $global_fd_output,
+					  },
+					 );
+
+    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter_library, );
 
     $test_library->construct();
 
@@ -357,7 +432,7 @@ sub main
 
 	my $random_seed;
 
-	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order);
+	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order, $reporter_library);
 
 	$global_test_report->{random_seed} = $random_seed;
     }
@@ -448,7 +523,7 @@ sub main
 
     # create an execution context for running the tests
 
-    my $execution_context = Heterarch::Test::ExecutionContext->new($global_fd_output, $model_library_shas, {}, );
+    my $execution_context = Heterarch::Test::ExecutionContext->new($model_library_shas, $reporter, );
 
     # create a test executor for running the tests following the requested type of output
 
@@ -460,14 +535,14 @@ sub main
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
-	my $error = $module_definition->md_run($execution_context, $executor, $reporter);
+	my $error = $module_definition->md_run($execution_context, $executor);
     }
 
     $global_test_report->{global}->{time_end} = `date`;
 
     # do final processing of the executor
 
-    $executor->ex_terminate($global_fd_output, $test_library);
+    $executor->ex_terminate($test_library);
 
     # end the execution_context
 
@@ -965,8 +1040,6 @@ sub cd_run
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     # do selection and prepare the test environment
 
     my $module_definition = $execution_context->get_module_definition();
@@ -998,7 +1071,7 @@ sub cd_run
 
 	$command_test->rebless();
 
-	$command_test->ct_run_complete($execution_context, $executor, $fd_output);
+	$command_test->ct_run_complete($execution_context, $executor);
     }
 
     # repair the command test environment
@@ -1025,13 +1098,11 @@ sub process_clauses
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     if (exists $command_definition->{wait})
     {
 	my $wait = $command_definition->{wait};
 
-	$execution_context->wait($fd_output, $wait);
+	$execution_context->wait($wait);
     }
 }
 
@@ -1110,8 +1181,6 @@ sub spawn_new
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     # apply the execution prefix from the harnessing clauses
 
     my $command_line = $execution_context->ec_construct_command_line($command_definition);
@@ -1136,6 +1205,8 @@ sub spawn_new
 
 	if (defined $command)
 	{
+	    my $reporter = $execution_context->{reporter};
+
 	    if ($spawn_new)
 	    {
 		if ($global_exp)
@@ -1177,7 +1248,7 @@ sub spawn_new
 
 		$global_running_command_definition = $command_line;
 
-		print $fd_output "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+		$reporter->report_message("*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
 
 		# remember to do startup testing
 
@@ -1189,7 +1260,7 @@ sub spawn_new
 	    }
 	    else
 	    {
-		print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
+		$reporter->report_message("*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
 
 		$test_startup = 0;
 	    }
@@ -1217,15 +1288,13 @@ sub cd_start
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     # start the command and connect with its I/O channels
 
     #! this is similar to having a class clause with value 'Expect' and calling Expect->new()
 
     my $execution_context = $executor->{execution_context};
 
-    my ($exp, $test_startup) = $self->spawn_new($execution_context, $fd_output);
+    my ($exp, $test_startup) = $self->spawn_new($execution_context);
 
     $executor->{expect_object} = $exp;
 
@@ -1252,8 +1321,6 @@ sub cd_start
     my $self = shift;
 
     my $executor = shift;
-
-    my $fd_output = shift;
 
     # instantiate the object
 
@@ -1289,8 +1356,6 @@ sub cd_start
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     # code is already instantiated, nothing to do here
 
     my $sub = $self->{command};
@@ -1323,7 +1388,6 @@ sub cd_start
 
 	Heterarch::Test::Reporting::report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => "command_definition $self->{description}",
 		  error => $error,
@@ -1351,8 +1415,6 @@ sub cd_start
     my $self = shift;
 
     my $executor = shift;
-
-    my $fd_output = shift;
 
     # code is already instantiated, nothing to do here
 
@@ -1386,9 +1448,10 @@ sub cd_start
 
 	my $module_name = $module_definition->{name};
 
-	Heterarch::Test::Reporting::report_error_add
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => "Heterarch::Test::CommandDefinition::IsFileExecutable $self->{description}",
 		  error => $error,
@@ -1513,8 +1576,6 @@ sub _before_run
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     # record time
 
     use Time::HiRes qw(gettimeofday tv_interval);
@@ -1539,11 +1600,9 @@ sub before_testing
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     # record time
 
-    $self->_before_run($execution_context, $fd_output);
+    $self->_before_run($execution_context);
 }
 
 
@@ -1554,8 +1613,6 @@ sub ct_run_complete
     my $execution_context = shift;
 
     my $executor = shift;
-
-    my $fd_output = shift;
 
     # do selection and prepare the test environment
 
@@ -1597,11 +1654,12 @@ sub ct_run_complete
 	    $message = $before_match;
 	}
 
-	my $module_name = $module_definition->check_name();
+	my $reporter = $execution_context->{reporter};
 
-	Heterarch::Test::Reporting::report_error_add
+	my $module_name = $module_definition->check_name($reporter);
+
+	$reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => $description,
 		  error => $error,
@@ -1892,8 +1950,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -1958,8 +2014,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -1972,7 +2026,7 @@ sub ct_run_command
 
     # record time
 
-    $self->before_testing($execution_context, $fd_output);
+    $self->before_testing($execution_context);
 
     # if the command_definition instantiated an object
 
@@ -2056,23 +2110,21 @@ sub before_testing
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     # record time
 
-    $self->_before_run($execution_context, $fd_output);
+    $self->_before_run($execution_context);
 
     # do write processing
 
-    $self->_process_write($executor, $fd_output);
+    $self->_process_write($execution_context, $executor);
 
     # do wait processing
 
-    $self->_process_wait($execution_context, $fd_output);
+    $self->_process_wait($execution_context);
 
     # do post processing
 
-    $self->_prepare_run($execution_context, $fd_output);
+    $self->_prepare_run($execution_context);
 }
 
 
@@ -2109,8 +2161,6 @@ sub _prepare_run
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     # check the shell command that will be executed with a timeout
 
     my $shell = $self->{shell};
@@ -2127,7 +2177,9 @@ sub _prepare_run
 
 	my $timeout = $self->get_timeout();
 
-	print $fd_output "*** Shell: timeout $timeout $shell\n";
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_message("*** Shell: timeout $timeout $shell\n");
 
 	system "timeout $timeout $shell";
 
@@ -2148,13 +2200,11 @@ sub _process_wait
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     if (exists $self->{wait})
     {
 	my $wait = $self->{wait};
 
-	$execution_context->wait($fd_output, $wait);
+	$execution_context->wait($wait);
     }
 }
 
@@ -2163,9 +2213,9 @@ sub _process_write
 {
     my $self = shift;
 
-    my $executor = shift;
+    my $execution_context = shift;
 
-    my $fd_output = shift;
+    my $executor = shift;
 
     my $write = $self->{write};
 
@@ -2176,7 +2226,9 @@ sub _process_write
     }
     elsif (defined $write)
     {
-	print $fd_output "*** Write: $write\n";
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_message("*** Write: $write\n");
 
 	$executor->{expect_object}->send("$write\n");
     }
@@ -2193,8 +2245,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2203,7 +2253,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # try correcting
 
@@ -2236,8 +2286,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2246,7 +2294,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # if there is an external application to test the final output
 
@@ -2318,8 +2366,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2328,7 +2374,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # set the expected output
 
@@ -2338,21 +2384,23 @@ sub ct_run_command
 
     if (exists $self->{white_space})
     {
+	my $reporter = $execution_context->{reporter};
+
 	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 	{
-	    print $fd_output "*** Converting seen \\x0a to \\x0d \\x0a newlines\n";
+	    $reporter->report_message("*** Converting seen \\x0a to \\x0d \\x0a newlines\n");
 
 	    $read =~ s(\x0a)(\x0d\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    print $fd_output "*** Converting seen \\x0d \\x0a to \\x0a newlines\n";
+	    $reporter->report_message("*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    print $fd_output "*** Converting seen \\x0d \\x0a to \\x0a newlines\n";
+	    $reporter->report_message("*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
@@ -2405,8 +2453,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2415,7 +2461,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # set the expected output
 
@@ -2473,8 +2519,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2483,7 +2527,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # compose the alternatives regex
 
@@ -2541,8 +2585,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2551,7 +2593,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # read the application output file
 
@@ -2563,7 +2605,9 @@ sub ct_run_command
 
     chomp $pwd;
 
-    print $fd_output "*** Application output file: $application_output_file (in $pwd)\n";
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message("*** Application output file: $application_output_file (in $pwd)\n");
 
     # and compare it with the expected output file
 
@@ -2577,7 +2621,7 @@ sub ct_run_command
 
     if ($expected_output_file)
     {
-	print $fd_output "*** Expected output file: $expected_output_file\n";
+	$reporter->report_message("*** Expected output file: $expected_output_file\n");
 
 	$expected_output = `cat "$expected_output_file"`;
     }
@@ -2633,8 +2677,6 @@ sub ct_run_command
 
     my $executor = shift;
 
-    my $fd_output = shift;
-
     my $command_definition = $execution_context->get_command_definition();
 
     my $module_definition = $execution_context->get_module_definition();
@@ -2643,7 +2685,7 @@ sub ct_run_command
 
     # record time, do write, wait processing, pre-processing
 
-    $self->before_testing($execution_context, $executor, $fd_output);
+    $self->before_testing($execution_context, $executor);
 
     # run the given shell command and capture its output
 
@@ -2727,24 +2769,24 @@ sub is_selected
 {
     my $self = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
 
     # implement a logical and of the different selection criteria
 
-    my $result = $self->is_selected_by_output_level_options($fd_output);
+    my $result = $self->is_selected_by_output_level_options($reporter);
 
     if ($result)
     {
-	$result = $self->is_selected_by_tag($fd_output);
+	$result = $self->is_selected_by_tag($reporter);
     }
 
     return $result;
 
     # my $self = shift;
 
-    # my $fd_output = shift;
+    # my $reporter = shift;
 
-    # return $self->is_selected_by_output_level_options($fd_output);
+    # return $self->is_selected_by_output_level_options($reporter);
 }
 
 
@@ -2752,7 +2794,7 @@ sub is_selected_by_output_level_options
 {
     my $self = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
 
     # map the selected output levels to a hash to facilitate easy detection what has been enabled
 
@@ -2798,7 +2840,7 @@ sub is_selected_by_tag
 {
     my $element_definition = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
 
     my $element_name = $element_definition->{name};
 
@@ -2835,7 +2877,7 @@ sub is_selected_by_tag
     {
 	if ($global_test_report->{output_format} eq 'executor')
 	{
-	    Heterarch::Test::Reporting::report_message_info($fd_output, "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+	    $reporter->report_message_info("Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
@@ -3177,8 +3219,6 @@ sub ec_end
 
     if ($global_test_report->{output_format} eq 'executor')
     {
-	my $fd_output = $self->{fd_output};
-
 	my $module_name = $module_definition->{name};
 
 	my $description;
@@ -3204,13 +3244,15 @@ sub ec_end
 	    $name = " ($module_definition->{name})";
 	}
 
+	my $reporter = $self->{reporter};
+
 	if (defined $command_test)
 	{
 	    # no output here, the test output is emitted in ->ec_examine()
 	}
 	else
 	{
-	    Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
+	    $reporter->report_message_end("End for tests of $description
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
     }
@@ -3426,8 +3468,6 @@ sub has_error_flag
 
     my $command_test = shift;
 
-    my $fd_output = $self->{fd_output};
-
     my $module_name = $module_definition->{name};
 
     my $active_element
@@ -3443,9 +3483,10 @@ sub has_error_flag
 
     if ($error)
     {
-	Heterarch::Test::Reporting::report_error_add
+	my $reporter = $self->{reporter};
+
+	$reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => $description,
 		  error => "this test was tagged with the error flag",
@@ -3473,8 +3514,6 @@ sub is_disabled
 
     my $command_test = shift;
 
-    my $fd_output = $self->{fd_output};
-
     my $module_name = $module_definition->{name};
 
     my $active_element
@@ -3501,7 +3540,9 @@ sub is_disabled
 
 	if ($global_test_report->{output_format} eq 'executor')
 	{
-	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
+	    my $reporter = $self->{reporter};
+
+	    $reporter->report_message_info("Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
@@ -3524,7 +3565,7 @@ sub ec_is_selected
 
     my $command_test = shift;
 
-    my $fd_output = $self->{fd_output};
+    my $reporter = $self->{reporter};
 
     my $module_name = $module_definition->{name};
 
@@ -3535,7 +3576,7 @@ sub ec_is_selected
 	      ? $command_definition
 	      : $module_definition));
 
-    my $result = $active_element->is_selected($fd_output);
+    my $result = $active_element->is_selected($reporter);
 
     return $result;
 }
@@ -3563,8 +3604,6 @@ sub _preparation
     {
 	return undef;
     }
-
-    my $fd_output = $self->{fd_output};
 
     my $module_name = $module_definition->{name};
 
@@ -3692,7 +3731,7 @@ sub _preparation
 
 	    # execute the preparation clause
 
-	    $preparation_result = $preparation_harness->hs_preparer($self, $fd_output, $preparation_name);
+	    $preparation_result = $preparation_harness->hs_preparer($self, $preparation_name);
 
 	    # if the preparer returned an error string
 
@@ -3718,9 +3757,10 @@ sub _preparation
 		       ? $command_definition->{description}
 		       : $module_definition->{description});
 
-		Heterarch::Test::Reporting::report_error_add
+		my $reporter = $self->{reporter};
+
+		$reporter->report_error_add
 			(
-			 $fd_output,
 			 {
 			  description => $preparation_name,
 			  error => $preparation_error,
@@ -3748,18 +3788,18 @@ sub new
 {
     my $package = shift;
 
-    my $fd_output = shift;
-
     my $model_library_shas = shift;
+
+    my $reporter = shift;
 
     my $options = shift || {};
 
     my $self
 	= {
 	   %$options,
-	   fd_output => $fd_output,
 	   path => [],
 	   preparation_result => [],
+	   reporter => $reporter,
 	  };
 
     bless $self, $package;
@@ -3773,8 +3813,6 @@ sub new
 sub _reparation
 {
     my $self = shift;
-
-    my $fd_output = $self->{fd_output};
 
     my $current = $self->_path_get_current();
 
@@ -3833,7 +3871,7 @@ sub _reparation
 		   ? "command '$command_definition->{command}'"
 		   : "module '$module_definition->{name}'");
 
-	    $reparation_error = $reparation_harness->hs_reparer($self, $fd_output, $reparation_name, $preparation_result);
+	    $reparation_error = $reparation_harness->hs_reparer($self, $reparation_name, $preparation_result);
 
 	    # process errors
 
@@ -3848,9 +3886,10 @@ sub _reparation
 		       ? $command_definition->{description}
 		       : $module_definition->{description});
 
-		Heterarch::Test::Reporting::report_error_add
+		my $reporter = $self->{reporter};
+
+		$reporter->report_error_add
 			(
-			 $fd_output,
 			 {
 			  description => $reparation_description,
 			  error => $reparation_error,
@@ -3925,8 +3964,6 @@ sub ec_examine
 
     if ($global_test_report->{output_format} eq 'executor')
     {
-	my $fd_output = $self->{fd_output};
-
 	my $comment;
 
 	my $description;
@@ -3958,18 +3995,20 @@ sub ec_examine
 	    $name = " ($module_definition->{name})";
 	}
 
+	my $reporter = $self->{reporter};
+
 	if (defined $command_test)
 	{
-	    Heterarch::Test::Reporting::report_message($fd_output, "$description");
+	    $reporter->report_message($description);
 	}
 	else
 	{
-	    Heterarch::Test::Reporting::report_message_start($fd_output, "Running tests of $description$name");
+	    $reporter->report_message_start("Running tests of $description$name");
 	}
 
 	if ($comment)
 	{
-	    Heterarch::Test::Reporting::report_message($fd_output, "*** Comment: $comment");
+	    $reporter->report_message("*** Comment: $comment");
 	}
     }
 
@@ -4000,8 +4039,6 @@ sub ec_terminate
 {
     my $self = shift;
 
-    my $fd_output = $self->{fd_output};
-
     my $path = $self->{path};
 
     if (scalar @$path)
@@ -4012,9 +4049,10 @@ sub ec_terminate
 
 	my $module_name = $module_definition->{name};
 
-	Heterarch::Test::Reporting::report_error_add
+	my $reporter = $self->{reporter};
+
+	$reporter->report_error_add
 	    (
-	     $fd_output,
 	     {
 	      description => "execution context invalid",
 	      error => "left over elements in the execution context after it was terminated",
@@ -4029,15 +4067,15 @@ sub wait
 {
     my $self = shift;
 
-    my $fd_output = shift;
-
     my $wait = shift;
 
     # wait
 
     if ($wait)
     {
-	print $fd_output "*** Wait: $wait seconds\n";
+	my $reporter = $self->{reporter};
+
+	$reporter->report_message("*** Wait: $wait seconds\n");
 
 	select(undef, undef, undef, $wait);
     }
@@ -4154,8 +4192,6 @@ sub hs_preparer
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     my $preparation_name = shift;
 
     # return no errors
@@ -4181,8 +4217,6 @@ sub hs_reparer
     my $self = shift;
 
     my $execution_context = shift;
-
-    my $fd_output = shift;
 
     my $preparation_name = shift;
 
@@ -4243,15 +4277,15 @@ sub hs_preparer
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     my $preparation_name = shift;
 
     my $preparation = $self->{preparation};
 
     # give diagnostics
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing $preparation_name ($preparation->{description})");
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message("*** Preparing $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -4279,8 +4313,6 @@ sub hs_reparer
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     my $preparation_name = shift;
 
     my $preparation = $self->{preparation};
@@ -4291,7 +4323,9 @@ sub hs_reparer
 
     my $reparation_description = $reparation->{description};
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing ($reparation_description)");
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message("*** Reparing ($reparation_description)");
 
     # execute the reparation clause
 
@@ -4605,15 +4639,15 @@ sub hs_preparer
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     my $preparation_name = shift;
 
     my $preparation = $self->{preparation};
 
     # give diagnostics
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Preparing the Docker Container $preparation_name ($preparation->{description})");
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message("*** Preparing the Docker Container $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -4641,8 +4675,6 @@ sub hs_reparer
 
     my $execution_context = shift;
 
-    my $fd_output = shift;
-
     my $preparation_name = shift;
 
     my $preparation_result = shift;
@@ -4651,7 +4683,9 @@ sub hs_reparer
 
     my $reparation_description = $preparation->{description};
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing the Docker Container ($reparation_description)");
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message("*** Reparing the Docker Container ($reparation_description)");
 
     # execute the reparation clause
 
@@ -4661,7 +4695,7 @@ sub hs_reparer
 
     my $container_name = $self->{class}->{name_container};
 
-    Heterarch::Test::Reporting::report_message($fd_output, "*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command exec -it $container_name bash'.)");
+    $reporter->report_message("*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command exec -it $container_name bash'.)");
 
     # remove the docker harness identifier from the active harnesses
 
@@ -4805,15 +4839,13 @@ sub new
 
     my $execution_context = shift;
 
-    my $fd_output = $execution_context->{fd_output};
-
     my $options = shift || {};
 
     my $self
 	= {
 	   %$options,
 	   execution_context => $execution_context,
-	   fd_output => $fd_output,
+	   # fd_output => $fd_output,
 	  };
 
     bless $self, $package;
@@ -4855,9 +4887,7 @@ sub ex_ct_run
 
     my $execution_context = $self->{execution_context};
 
-    my $fd_output = $self->{fd_output};
-
-    return $command_test->ct_run_command($execution_context, $self, $fd_output);
+    return $command_test->ct_run_command($execution_context, $self);
 }
 
 
@@ -4881,9 +4911,7 @@ sub ex_cd_start
 
     my $command_definition = $execution_context->get_command_definition();
 
-    my $fd_output = $self->{fd_output};
-
-    $command_definition->cd_start($self, $fd_output);
+    $command_definition->cd_start($self);
 
     # process the command_definition specific clauses
 
@@ -4891,15 +4919,13 @@ sub ex_cd_start
     #! object-oriented based implementation that would require
     #! to call SUPER class methods inside ->cd_start().
 
-    $command_definition->process_clauses($execution_context, $fd_output);
+    $command_definition->process_clauses($execution_context);
 }
 
 
 sub ex_terminate
 {
     my $self = shift;
-
-    my $fd_output = shift;
 
     my $test_module_library_contents = shift;
 
@@ -4924,7 +4950,11 @@ sub ex_terminate
 
     my $report_text = "\n" . Dump($report_yaml);
 
-    print $global_fd_output "$report_text\n";
+    my $execution_context = $self->{execution_context};
+
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message("$report_text\n");
 
     #! this could be an error message
 
@@ -4973,7 +5003,7 @@ sub expand
 {
     my $self = shift;
 
-    my $fd_output = $self->{fd_output};
+    my $reporter = $self->{reporter};
 
     my $library = $self->{module_definition_filenames};
 
@@ -4991,7 +5021,7 @@ sub expand
 	    next;
 	}
 
-	my $module_definition = read_module($fd_output, $test_module);
+	my $module_definition = read_module($reporter, $test_module);
 
 	if ($module_definition)
 	{
@@ -5223,7 +5253,7 @@ sub merge_modules
     {
 	use Data::Dumper;
 
-	my $test_library = Heterarch::Test::Library->new($input_module_directory, $self->{fd_output}, );
+	my $test_library = Heterarch::Test::Library->new($input_module_directory, $self->{reporter}, );
 
 	$test_library->construct();
 
@@ -5258,11 +5288,11 @@ sub new
 
     my $tests_directory = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
 
     my $self
 	= {
-	   fd_output => $fd_output,
+	   reporter => $reporter,
 	   tests_directory => $tests_directory,
 	  };
 
@@ -5276,9 +5306,13 @@ sub randomize_order
 {
     my $test_modules = shift;
 
+    my $option_random_order = shift;
+
+    my $reporter = shift;
+
     if ($::option_verbose)
     {
-	print $global_fd_output "$0: Randomizing test specifications, random seed is $option_random_order\n";
+	$reporter->report_message("$0: Randomizing test specifications, random seed is $option_random_order\n");
     }
 
     # by default the randomizer will choose a random_seed
@@ -5344,7 +5378,7 @@ sub read_html
 
 sub read_module
 {
-    my $fd_output = shift;
+    my $reporter = shift;
 
     my $pathname = shift;
 
@@ -5358,15 +5392,14 @@ sub read_module
 
 	if ($@)
 	{
-	    Heterarch::Test::Reporting::report_error_add
-	    (
-	     $fd_output,
-	     {
-	      description => $@,
-	      error => $@,
-	      module_name => $pathname,
-	     },
-	    );
+	    $reporter->report_error_add
+		(
+		 {
+		  description => $@,
+		  error => $@,
+		  module_name => $pathname,
+		 },
+		);
 	}
     }
     elsif (is_json($pathname))
@@ -5391,15 +5424,14 @@ sub read_module
 
 	if ($@)
 	{
-	    Heterarch::Test::Reporting::report_error_add
-	    (
-	     $fd_output,
-	     {
-	      description => $@,
-	      error => $@,
-	      module_name => $pathname,
-	     },
-	    );
+	    $reporter->report_error_add
+		(
+		 {
+		  description => $@,
+		  error => $@,
+		  module_name => $pathname,
+		 },
+		);
 	}
     }
     else
@@ -5408,15 +5440,14 @@ sub read_module
 
 	if ($@)
 	{
-	    Heterarch::Test::Reporting::report_error_add
-		    (
-		     $fd_output,
-		     {
-		      description => $@,
-		      error => $@,
-		      module_name => $pathname,
-		     },
-		    );
+	    $reporter->report_error_add
+		(
+		 {
+		  description => $@,
+		  error => $@,
+		  module_name => $pathname,
+		 },
+		);
 	}
     }
 
@@ -5463,9 +5494,8 @@ sub read_module
     {
 	if ($pathname ne "$global_config->{tests_directory}/$result->{name}")
 	{
-	    Heterarch::Test::Reporting::report_error_add
+	    $reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		     description => "the pathname ($pathname) and the test name ($result->{name}) are different",
 		     error => "the pathname ($pathname) and the test name ($result->{name}) are different",
@@ -5489,7 +5519,7 @@ sub check_description
 {
     my $module_definition = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
 
     my $module_name = $module_definition->{name};
 
@@ -5497,9 +5527,8 @@ sub check_description
     {
 	$module_definition->{description} = $module_definition->{name};
 
-	Heterarch::Test::Reporting::report_error_add
+	$reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => 'no module description',
 		  error => 'no module description',
@@ -5516,15 +5545,14 @@ sub check_name
 {
     my $module_definition = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
 
     if (!defined $module_definition->{name})
     {
 	$module_definition->{name} = 'unnamed';
 
-	Heterarch::Test::Reporting::report_error_add
+	$reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => 'unnamed module',
 		  error => 'unnamed module',
@@ -5535,25 +5563,6 @@ sub check_name
 
     return $module_definition->{name};
 }
-
-
-# sub is_selected
-# {
-#     my $self = shift;
-
-#     my $fd_output = shift;
-
-#     # implement a logical and of the different selection criteria
-
-#     my $result = $self->SUPER::is_selected($fd_output);
-
-#     if ($result)
-#     {
-# 	$result = $self->is_selected_by_tag($fd_output);
-#     }
-
-#     return $result;
-# }
 
 
 # check if this module is ready to run its tests.
@@ -5568,13 +5577,11 @@ sub md_run
 
     my $executor = shift;
 
-    my $reporter = shift;
+    my $reporter = $execution_context->{reporter};
 
-    my $fd_output = $reporter->{fd_output};
+    my $module_name = $self->check_name($reporter);
 
-    my $module_name = $self->check_name($fd_output);
-
-    my $module_description = $self->check_description($fd_output);
+    my $module_description = $self->check_description($reporter);
 
     # do selection and prepare the test environment
 
@@ -5603,7 +5610,7 @@ sub md_run
 
 	$command_definition->rebless();
 
-	my $error = $command_definition->cd_run($execution_context, $executor, $fd_output);
+	my $error = $command_definition->cd_run($execution_context, $executor);
     }
 
     # repair the test environment
@@ -5640,9 +5647,8 @@ sub md_run
 
 		my $description = $self->{description};
 
-		Heterarch::Test::Reporting::report_error_add
+		$reporter->report_error_add
 			(
-			 $fd_output,
 			 {
 			  description => $description,
 			  error => $error,
@@ -5741,7 +5747,9 @@ sub ex_mo_prepare
 
 	if ($option_verbose)
 	{
-	    print $global_fd_output "$0: Preparing $context_path\n";
+	    my $reporter = $execution_context->{reporter};
+
+	    $reporter->report_message_info("$0: Preparing $context_path\n");
 	}
 
 	$global_test_report->{selected}->{$module_name}
@@ -5825,7 +5833,9 @@ sub ex_ct_run
 
     if ($option_verbose)
     {
-	print $global_fd_output "$0: Preparing $context_path\n";
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_message_info("$0: Preparing $context_path\n");
     }
 
     $cloned_command_test->{context_path} = $context_path;
@@ -5897,7 +5907,9 @@ sub ex_cd_start
 
     if ($option_verbose)
     {
-	print $global_fd_output "$0: Preparing $context_path\n";
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_message_info("$0: Preparing $context_path\n");
     }
 
     $cloned_command_definition->{context_path} = $context_path;
@@ -5911,8 +5923,6 @@ sub ex_cd_start
 sub ex_terminate
 {
     my $self = shift;
-
-    my $fd_output = shift;
 
     my $test_module_library_contents = shift;
 
@@ -5954,9 +5964,12 @@ sub ex_terminate
     }
     else
     {
-	Heterarch::Test::Reporting::report_error_add
+	my $execution_context = $self->{execution_context};
+
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_error_add
 		(
-		 $fd_output,
 		 {
 		  description => "error creating the output_directory ($created)",
 		  error => "this test was tagged with the error flag",
@@ -5992,8 +6005,6 @@ sub ex_cd_start
     my $module_definition = $execution_context->get_module_definition();
 
     my $command_definition = $execution_context->get_command_definition();
-
-    my $fd_output = $self->{fd_output};
 
     # we have to either instantiate an object that produces output ...
 
@@ -7524,10 +7535,10 @@ sub render_raw_data
 
     my $command = "data_2_figure --figure-filename '$figure_definition_filename' --input-data '$data_filename' --output-filename '$output_filename'";
 
-    if ($option_verbose)
-    {
-	print $global_fd_output "$0: Executing '$command'\n";
-    }
+    # if ($option_verbose)
+    # {
+    # 	print $global_fd_output "$0: Executing '$command'\n";
+    # }
 
     system $command;
 
@@ -8208,8 +8219,6 @@ sub ex_terminate
 {
     my $self = shift;
 
-    my $fd_output = shift;
-
     my $test_module_library_contents = shift;
 
     # yaml out the test report
@@ -8232,7 +8241,11 @@ sub ex_terminate
 
     my $report_text = "\n" . Dump($report_yaml);
 
-    print $global_fd_output "$report_text\n";
+    my $execution_context = $self->{execution_context};
+
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message_info_no_rulers("$report_text");
 }
 
 
@@ -8364,8 +8377,6 @@ sub ex_terminate
 {
     my $self = shift;
 
-    my $fd_output = shift;
-
     my $test_module_library_contents = shift;
 
     # yaml out the test report
@@ -8388,7 +8399,11 @@ sub ex_terminate
 
     my $report_text = "\n" . Dump($report_yaml);
 
-    print $global_fd_output "$report_text\n";
+    my $execution_context = $self->{execution_context};
+
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message_info_no_rulers("$report_text");
 }
 
 
@@ -8579,6 +8594,19 @@ sub report_message_info
 }
 
 
+sub report_message_info_no_rulers
+{
+    if ($option_console_type eq 'linear')
+    {
+	return Heterarch::Test::Reporting::Linear::report_message_info_no_rulers(@_);
+    }
+    else
+    {
+	return Heterarch::Test::Reporting::Status::report_message_info_no_rulers(@_);
+    }
+}
+
+
 sub report_message_start
 {
     if ($option_console_type eq 'linear')
@@ -8753,9 +8781,11 @@ package Heterarch::Test::Reporting::Linear;
 
 sub report_error_add
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $arguments = shift;
+
+    my $fd_output = $self->{fd_output};
 
     my $description = $arguments->{description};
     my $error = $arguments->{error};
@@ -8889,9 +8919,11 @@ my $rulers_not_used
 
 sub report_message
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     print $fd_output "$message\n";
 }
@@ -8899,9 +8931,11 @@ sub report_message
 
 sub report_message_end
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     return _report_message_with_rulers($fd_output, 1, 2, $message);
 }
@@ -8909,19 +8943,35 @@ sub report_message_end
 
 sub report_message_info
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     return _report_message_with_rulers($fd_output, 1, 1, $message);
 }
 
 
-sub report_message_start
+sub report_message_info_no_rulers
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    return _report_message_with_rulers($fd_output, -1, -1, $message);
+}
+
+
+sub report_message_start
+{
+    my $self = shift;
+
+    my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     return _report_message_with_rulers($fd_output, 2, 1, $message);
 }
@@ -8949,12 +8999,20 @@ sub _report_message_with_rulers
 
     my $line = '-' x $longest;
 
-    print $fd_output "\n";
-    print $fd_output "$line\n" for 0 .. $top_ruler;
-    print $fd_output "\n";
-    print $fd_output "$message\n\n";
-    print $fd_output "$line\n" for 0 .. $bottom_ruler;
-    print $fd_output "\n";
+    if ($top_ruler > -1)
+    {
+	print $fd_output "\n";
+	print $fd_output "$line\n" for 0 .. $top_ruler;
+	print $fd_output "\n";
+    }
+
+    print $fd_output "$message\n";
+
+    if ($bottom_ruler > -1)
+    {
+	print $fd_output "$line\n" for 0 .. $bottom_ruler;
+	print $fd_output "\n";
+    }
 }
 
 
@@ -8963,9 +9021,11 @@ package Heterarch::Test::Reporting::Status;
 
 sub report_error_add
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $arguments = shift;
+
+    my $fd_output = $self->{fd_output};
 
     my $description = $arguments->{description};
     my $error = $arguments->{error};
@@ -9092,9 +9152,11 @@ sub report_error_add
 
 sub report_message
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     print $fd_output "$message\n";
 }
@@ -9102,9 +9164,11 @@ sub report_message
 
 sub report_message_end
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     return _report_message_with_rulers($fd_output, 1, 2, $message);
 }
@@ -9112,19 +9176,35 @@ sub report_message_end
 
 sub report_message_info
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     return _report_message_with_rulers($fd_output, 1, 1, $message);
 }
 
 
-sub report_message_start
+sub report_message_info_no_rulers
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    return _report_message_with_rulers($fd_output, -1, -1, $message);
+}
+
+
+sub report_message_start
+{
+    my $self = shift;
+
+    my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     return _report_message_with_rulers($fd_output, 2, 1, $message);
 }
@@ -9153,11 +9233,20 @@ sub _report_message_with_rulers
     my $line = '-' x $longest;
 
     print $fd_output "\n";
-    print $fd_output "$line\n" for 0 .. $top_ruler;
-    print $fd_output "\n";
+
+    if ($top_ruler > -1)
+    {
+	print $fd_output "$line\n" for 0 .. $top_ruler;
+	print $fd_output "\n";
+    }
+
     print $fd_output "$message\n\n";
-    print $fd_output "$line\n" for 0 .. $bottom_ruler;
-    print $fd_output "\n";
+
+    if ($bottom_ruler > -1)
+    {
+	print $fd_output "$line\n" for 0 .. $bottom_ruler;
+	print $fd_output "\n";
+    }
 }
 
 
