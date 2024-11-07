@@ -249,9 +249,16 @@ sub initialize_globals
 		      error_count => $global_error_count,
 		      status => 'initializing',
 		      test_counters => {
-					module_definition => 0,
-					command_definition => 0,
-					command_test => 0,
+					current => {
+						    module_definition => -1,
+						    command_definition => -1,
+						    command_test => -1,
+						   },
+					expected_totals => {
+							    module_definition => -1,
+							    command_definition => -1,
+							    command_test => -1,
+							   },
 				       },
 		      time_start => `date`,
 		     },
@@ -383,9 +390,60 @@ sub main
 
     my $executor = $option_output->new($execution_context);
 
+    # set expected totals for the test counters
+
+    my $expected_module_total = 0;
+
+    my $expected_command_total = 0;
+
+    my $expected_test_total = 0;
+
+    foreach my $module_definition (@$module_definitions)
+    {
+	#t should use ->md_run()
+
+	my $command_definitions = $module_definition->{command_definitions};
+
+	foreach my $command_definition (@$command_definitions)
+	{
+	    #t should use ->cd_run()
+
+	    my $command_tests = $command_definition->{command_tests};
+
+	    foreach my $command_test (@$command_tests)
+	    {
+		#t should use ->ct_run_complete()
+
+		$expected_test_total++;
+	    }
+
+	    $expected_command_total++;
+	}
+
+	$expected_module_total++;
+    }
+
+    $global_test_report->{global}->{test_counters}->{expected_totals}
+	= {
+	   module_definition => $expected_module_total,
+	   command_definition => $expected_command_total,
+	   command_test => $expected_test_total,
+	  };
+
+    $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = $expected_test_total;
+
+    my $reporter
+	= Heterarch::Test::Reporting->new(
+					  {
+					   configuration => $global_console_window_configuration,
+					   expected_total => $expected_test_total,
+					   fd_output => $global_fd_output,
+					  },
+					 );
+
     # set status
 
-    $global_test_report->{global}->{test_counters}
+    $global_test_report->{global}->{test_counters}->{current}
 	= {
 	   module_definition => 0,
 	   command_definition => 0,
@@ -400,9 +458,7 @@ sub main
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
-	my $fd_module_output = $global_fd_output;
-
-	my $error = $module_definition->md_run($execution_context, $executor, $fd_module_output);
+	my $error = $module_definition->md_run($execution_context, $executor, $reporter);
     }
 
     $global_test_report->{global}->{time_end} = `date`;
@@ -763,7 +819,7 @@ Email was not sent.
 
 	$exit_code ||= 1;
 
-	print $global_fd_output "$0: $global_test_report->{global}->{test_counters}->{command_test} test(s), $global_error_count error(s)\n";
+	print $global_fd_output "$0: $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s), $global_error_count error(s)\n";
 
 	print $global_fd_output "$0: exit_code $exit_code\n\n";
 
@@ -951,7 +1007,7 @@ sub cd_run
 
     # increment command definition test count
 
-    $global_test_report->{global}->{test_counters}->{command_definition}++;
+    $global_test_report->{global}->{test_counters}->{current}->{command_definition}++;
 
     return '';
 }
@@ -1562,7 +1618,7 @@ sub ct_run_complete
 
     # increment command test count
 
-    $global_test_report->{global}->{test_counters}->{command_test}++;
+    $global_test_report->{global}->{test_counters}->{current}->{command_test}++;
 
     return '';
 }
@@ -2774,7 +2830,7 @@ sub is_selected_by_tag
 	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
-Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
 	$global_test_report->{not_selected_by_tag}->{elements}->{$element_name} = 'not_selected_by_tag';
@@ -3149,7 +3205,7 @@ sub ec_end
 	else
 	{
 	    Heterarch::Test::Reporting::report_message_end($fd_output, "End for tests of $description
-Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
     }
 
@@ -3440,7 +3496,7 @@ sub is_disabled
 	if ($global_test_report->{output_format} eq 'executor')
 	{
 	    Heterarch::Test::Reporting::report_message_info($fd_output, "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_counters}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
 	return 1;
@@ -5502,7 +5558,9 @@ sub md_run
 
     my $executor = shift;
 
-    my $fd_output = shift;
+    my $reporter = shift;
+
+    my $fd_output = $reporter->{fd_output};
 
     my $module_name = $self->check_name($fd_output);
 
@@ -5587,7 +5645,7 @@ sub md_run
 
     # increment module definition test count
 
-    $global_test_report->{global}->{test_counters}->{module_definition}++;
+    $global_test_report->{global}->{test_counters}->{current}->{module_definition}++;
 
     # return result: execution completed
 
@@ -8428,6 +8486,23 @@ our $console_types
        linear => 'linearly flowing text',
        status => 'single line status bars',
       };
+
+
+sub new
+{
+    my $package = shift;
+
+    my $options = shift || {};
+
+    my $self
+	= {
+	   %$options,
+	  };
+
+    bless $self, $package;
+
+    return $self;
+}
 
 
 sub report_error_add
