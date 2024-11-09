@@ -4986,6 +4986,7 @@ sub construct
 	   }
 	   sort
 	   `find $tests_directory -name "*.t"`,
+	   `find $tests_directory -name "summary.yml"`,
 	  ];
 
     $self->{module_definition_filenames} = $module_definitions;
@@ -5021,7 +5022,21 @@ sub expand
 	    next;
 	}
 
-	my $module_definition = read_module($reporter, $test_module);
+	my $module_definition;
+
+	if ($test_module =~ /\.t$/)
+	{
+	    $module_definition = read_module_perl($reporter, $test_module);
+	}
+	elsif ($test_module =~ /summary\.yml$/)
+	{
+	    $module_definition = read_module_yml($reporter, $test_module);
+	}
+
+	if ($module_definition)
+	{
+	    read_module_process_options($reporter, $module_definition, $test_module);
+	}
 
 	if ($module_definition)
 	{
@@ -5376,7 +5391,7 @@ sub read_html
 }
 
 
-sub read_module
+sub read_module_perl
 {
     my $reporter = shift;
 
@@ -5451,6 +5466,20 @@ sub read_module
 	}
     }
 
+    return $result;
+}
+
+
+sub read_module_process_options
+{
+    my $reporter = shift;
+
+    my $module_definition = shift;
+
+    my $pathname = shift;
+
+    my $error;
+
     $pathname =~ m((.*)/(.*));
 
     my $filename = $2;
@@ -5467,7 +5496,7 @@ sub read_module
 
 	my $file = IO::File->new(">/tmp/$filename.js");
 
-	print $file $json->encode($result);
+	print $file $json->encode($module_definition);
 
 	$file->close();
     }
@@ -5478,34 +5507,123 @@ sub read_module
 
 	my $file = IO::File->new(">/tmp/$filename.pl");
 
-	print $file Dumper($result);
+	print $file Dumper($module_definition);
 
 	$file->close();
     }
 
     if ($option_dump_yaml)
     {
-	YAML::DumpFile("/tmp/$filename.yml", $result);
+	YAML::DumpFile("/tmp/$filename.yml", $module_definition);
     }
 
     # check if the name of the test and the pathname match
 
     if ($option_check_test_names)
     {
-	if ($pathname ne "$global_config->{tests_directory}/$result->{name}")
+	if ($pathname ne "$global_config->{tests_directory}/$module_definition->{name}")
 	{
+	    $error = "the pathname ($pathname) and the test name ($module_definition->{name}) are different";
 	    $reporter->report_error_add
 		(
 		 {
-		     description => "the pathname ($pathname) and the test name ($result->{name}) are different",
-		     error => "the pathname ($pathname) and the test name ($result->{name}) are different",
-		     module_name => $pathname,
+		  description => "the pathname ($pathname) and the test name ($module_definition->{name}) are different",
+		  error => $error,
+		  module_name => $pathname,
 		 },
 		);
+
 	}
     }
 
-    return $result;
+    return $error;
+}
+
+
+sub read_module_yml
+{
+    my $reporter = shift;
+
+    my $summary_pathname = shift;
+
+    my $error;
+
+    my $result;
+
+    # read the meta information of the module definition
+
+    use YAML;
+
+    eval
+    {
+	local $SIG{'__DIE__'};
+
+	$result = YAML::LoadFile($summary_pathname);
+    };
+
+    if ($@)
+    {
+	$error = $@;
+    }
+
+    if (!$error)
+    {
+	# read the command defintions of the module definition
+
+	$result->{command_definitions} = [];
+
+	my $command_definitions = $result->{command_definitions};
+
+	$summary_pathname =~ m((.*)/summary\.yml$);
+
+	my $directory = $1;
+
+	my $command_definition_filenames
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       sort
+	       `find $directory/command_definitions/*.yml`,
+	      ];
+
+	foreach my $command_definition_filename (@$command_definition_filenames)
+	{
+	    my $command_definition
+		= eval
+	          {
+		      local $SIG{'__DIE__'};
+
+		      YAML::LoadFile($command_definition_filename);
+		  };
+
+	    if ($@)
+	    {
+		$error = $@;
+
+		last;
+	    }
+	    else
+	    {
+		push @$command_definitions, $command_definition;
+	    }
+	}
+    }
+
+    if ($error)
+    {
+	$reporter->report_error_add
+	    (
+	     {
+	      description => $error,
+	      error => $error,
+	      module_name => $summary_pathname,
+	     },
+	    );
+    }
+
+    return $result
 }
 
 
