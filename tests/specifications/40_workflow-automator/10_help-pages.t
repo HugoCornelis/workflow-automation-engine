@@ -138,7 +138,7 @@ help_module_all:
 ',
 						  },
 						 ],
-				description => "default builtin targets",
+				description => "default builtin convenience modules",
 			       },
 			       {
 				command => 'bin/workflow builtin start_project --help',
@@ -156,7 +156,7 @@ arguments:
 ',
 						  },
 						 ],
-				description => "default builtin targets",
+				description => "default builtin targets: starting a new project",
 			       },
 			       {
 				command => 'bin/workflow builtin add_target --help',
@@ -182,7 +182,7 @@ options:
 ',
 						  },
 						 ],
-				description => "default builtin targets",
+				description => "default builtin targets: adding a new target",
 			       },
 			       {
 				command => 'bin/workflow builtin archive_configuration --help',
@@ -202,7 +202,7 @@ arguments:
 ',
 						  },
 						 ],
-				description => "default builtin targets",
+				description => "default builtin targets: archiving a_configuration",
 			       },
 			      ],
        description => "help pages",
