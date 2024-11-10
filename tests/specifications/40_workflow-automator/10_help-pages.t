@@ -210,7 +210,8 @@ arguments:
 			 explanation => "
 
 The workflow script enables the automation of customizable modular
-project-specific workflows that use system shell commands.
+project-specific workflows that capture the knowledge to execute the
+project based on system shell commands.
 
 ",
 			 purpose => "This module tests the help pages of the workflow automation engine.",
