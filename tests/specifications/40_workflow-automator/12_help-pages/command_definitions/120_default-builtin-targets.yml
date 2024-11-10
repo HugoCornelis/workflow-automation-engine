@@ -1,0 +1,11 @@
+---
+command: bin/workflow --help-targets
+command_tests:
+  - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
+    description: Can we display the builtin targets help page?
+    read: |2
+      
+      targets:
+        builtin:
+          description: the builtin target allows starting a new project and upgrading existing projects
+description: default builtin targets

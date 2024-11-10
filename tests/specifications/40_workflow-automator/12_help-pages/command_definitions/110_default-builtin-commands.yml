@@ -1,0 +1,14 @@
+---
+command: bin/workflow --help-commands
+command_tests:
+  - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
+    description: Can we display the builtin commands help page?
+    read: |2
+      
+      'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)':
+        - workflow builtin add_target --help
+        - workflow builtin archive_configuration --help
+        - workflow builtin install_scripts --help
+        - workflow builtin print_configuration_directory --help
+        - workflow builtin start_project --help
+description: default builtin commands

@@ -1,0 +1,14 @@
+---
+command: bin/workflow builtin start_project --help
+command_tests:
+  - description: Do we see the help page for starting a new project?
+    read: |
+      workflow builtin start_project: start a new project with a given name in the current directory.
+      
+      This will install a project descriptor, a configuration file and an
+      empty command file.
+      
+      arguments:
+      
+          name: name of the new project.
+description: 'default builtin targets: starting a new project'
