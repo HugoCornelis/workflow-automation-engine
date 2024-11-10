@@ -22,6 +22,7 @@ our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
 my $option_dump_yaml;
+my $option_dump_yaml_structured;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
 my $option_flattenout;
 my $option_help;
@@ -580,6 +581,7 @@ sub parse_options
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
 	     "dump-yaml!" => \$option_dump_yaml,
+	     "dump-yaml-structured!" => \$option_dump_yaml_structured,
 	     "email" => \$option_email,
 	     "flattenout" => \$option_flattenout,
 	     "help!" => \$option_help,
@@ -676,6 +678,7 @@ sub parse_options
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
 	   dump_yaml => $option_dump_yaml,
+	   dump_yaml_structured => $option_dump_yaml_structured,
 	   email => $option_email,
 	   flattenout => $option_flattenout,
 	   help => $option_help,
@@ -715,6 +718,7 @@ options:
     --dump-json                  dump test specifications to json files in /tmp/.
     --dump-perl                  dump test specifications to perl files in /tmp/.
     --dump-yaml                  dump test specifications to yaml files in /tmp/.
+    --dump-yaml-structured       dump test specifications to well structured yaml files and directories in /tmp/.
     --email                      allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
     --flattenout                 flattenout the test definitions before testing,
                                  this experimental feature might increase test performance,
@@ -5517,6 +5521,11 @@ sub read_module_process_options
 	YAML::DumpFile("/tmp/$filename.yml", $module_definition);
     }
 
+    if ($option_dump_yaml_structured)
+    {
+	read_module_dump_yaml_structured($pathname, $module_definition, $reporter);
+    }
+
     # check if the name of the test and the pathname match
 
     if ($option_check_test_names)
@@ -5537,6 +5546,102 @@ sub read_module_process_options
     }
 
     return $error;
+}
+
+
+sub sentence_summarize
+{
+    my $sentence = shift;
+
+    my $result = "$sentence";
+
+    $result =~ s( )(-)g;
+
+    my $remove_these = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', ];
+
+    foreach my $remove_this (@$remove_these)
+    {
+	$result =~ s(-$remove_this-)(-)g;
+	$result =~ s(^$remove_this-)()g;
+    }
+
+    return $result;
+}
+
+
+sub read_module_dump_yaml_structured
+{
+    my $pathname = shift;
+
+    my $module_definition = shift;
+
+    my $reporter = shift;
+
+    use Clone 'clone';
+
+    $module_definition = clone($module_definition);
+
+    my $command_definitions = $module_definition->{command_definitions};
+
+    delete $module_definition->{command_definitions};
+
+    my $module_pathname = "/tmp/$pathname";
+
+    $module_pathname =~ s(//)();
+    $module_pathname =~ s(\.t$)();
+
+    my $created;
+
+    if ( !-d "$module_pathname/command_definitions" )
+    {
+	use File::Path qw( make_path );
+
+	$created = make_path("$module_pathname/command_definitions");
+    }
+    else
+    {
+	$created = "exists";
+    }
+
+    if ($created)
+    {
+	my $module_summary_filename = "$module_pathname/summary.yml";
+
+	my $module_name = $module_pathname;
+
+	$module_name =~ s(/tmp/$global_config->{tests_directory}/)();
+
+	$module_definition->{name} = $module_name;
+
+	YAML::DumpFile($module_summary_filename, $module_definition);
+
+	my $prefix = 100;
+
+	foreach my $command_definition (@$command_definitions)
+	{
+	    my $description = $command_definition->{description};
+
+	    my $command_definition_filename = $prefix . "_" . sentence_summarize($description) . ".yml";
+
+	    my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
+
+	    YAML::DumpFile($command_definition_pathname, $command_definition);
+
+	    $prefix += 10;
+	}
+    }
+    else
+    {
+	$reporter->report_error_add
+		(
+		 {
+		  description => "error creating the output module_pathname ($created)",
+		  error => "error creating the output module_pathname",
+		  module_name => "read_module_dump_yaml_structured",
+		  subdescription => "error creating the module_pathname ($created)",
+		 },
+		);
+    }
 }
 
 
