@@ -2634,7 +2634,7 @@ sub _install_script_symbolic_link_to_commands_configured
 {
     my $project_name = shift;
 
-    my $option_install_force = shift;
+    my $option_install_commands = shift;
 
     my $option_install_report = shift;
 
@@ -2654,9 +2654,15 @@ sub _install_script_symbolic_link_to_commands_configured
     # 2. requires adding the targets defined in the script to the configuration
     # -- this requires to guess the targets.
 
+    if (defined $option_verbose
+	and $option_verbose > 2)
+    {
+	print "In: sub _install_script_symbolic_link_to_commands_configured()\n";
+    }
+
     my $commands_configured = _init_filenames_2_symlink_commands($command_filenames_configured);
 
-    _all_install_scripts_execute_shell_command_array($option_install_force, $option_install_report, "    # 2. Install to ~/bin: symbolic links for commands
+    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin: symbolic links for commands
 
     # 2.b. from configured filenames to symbolic links.
 ", $commands_configured);
@@ -2721,6 +2727,8 @@ sub _install_script_symbolic_link_to_commands_in_commands_directory
     if (defined $option_verbose
 	and $option_verbose > 2)
     {
+	print "In: sub _install_script_symbolic_link_to_commands_in_commands_directory()\n";
+
 	print Dumper(
 		     {
 		      # command_filenames_found_2 => $command_filenames_found_2,
@@ -2899,9 +2907,9 @@ sub builtin_install_scripts
 
     _install_script_symbolic_link_to_configuration($project_name, $option_install_commands, $option_install_report);
 
-    _install_script_symbolic_link_to_commands_in_commands_directory($project_name, $option_install_commands, $option_install_report);
+    # _install_script_symbolic_link_to_commands_in_commands_directory($project_name, $option_install_commands, $option_install_report);
 
-    _install_script_symbolic_link_to_commands_configured($project_name, $option_install_force, $option_install_report);
+    _install_script_symbolic_link_to_commands_configured($project_name, $option_install_commands, $option_install_report);
 
     if ($option_install_aliasses)
     {
@@ -3500,6 +3508,8 @@ sub _init_command_filenames_configured
 	   @$command_filenames_full_paths,
 	  ];
 
+    # print STDERR Dumper(@$command_filenames_full_paths_selected);
+
     my $result
 	= [
 	   sort
@@ -3530,9 +3540,11 @@ sub _init_command_filenames_configured
 		   use Cwd;
 
  		   $command_filename = Cwd::abs_path($command_filename);
+
+		   # print STDERR $!;
 	       }
 
-	       $command_filename;
+	       defined $command_filename ? $command_filename : ();
 	   }
 	   @$command_filenames_full_paths_selected
 	  ];

@@ -424,9 +424,9 @@ global_field_project_configuration:
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-configuration /home/neurospaces/bin/./workflow-tests-configuration
 #
-# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces/bin/./workflow-tests-commands-perl_examples
+# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces/bin/workflow-tests-commands-perl_examples
 #
-# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-python_examples /home/neurospaces/bin/./workflow-tests-commands-python_examples
+# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-python_examples /home/neurospaces/bin/workflow-tests-commands-python_examples
 #
 # bash -c "echo \'. /home/neurospaces/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
@@ -840,9 +840,9 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/./workflow-tests-configuration
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces2/bin/./workflow-tests-commands-perl_examples
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces2/bin/workflow-tests-commands-perl_examples
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples /home/neurospaces2/bin/./workflow-tests-commands-python_examples
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples /home/neurospaces2/bin/workflow-tests-commands-python_examples
 #
 # bash -c "echo \'. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces2/.bashrc"
