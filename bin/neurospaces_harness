@@ -687,7 +687,7 @@ sub parse_options
 	= {
 	   check_test_names => $option_check_test_names,
 	   config_filename => $option_config_filename,
-	   console_type => \$option_console_type,
+	   console_type => $option_console_type,
 	   debugging => $option_debugging,
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
