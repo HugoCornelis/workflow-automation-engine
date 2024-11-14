@@ -394,15 +394,29 @@ sub main
 
     $global_previous_command_side_effects = 0;
 
-    # find all the test module files
+    # instantiate the reporter
+
+    my $reporter_classes
+	= {
+	   'linear' => {
+			class => "Heterarch::Test::Reporting::Linear",
+		       },
+	   'status' => {
+			class => "Heterarch::Test::Reporting::Status",
+		       },
+	  };
+
+    my $reporter_class = $reporter_classes->{$option_console_type}->{class};
 
     my $reporter_library
-	= Heterarch::Test::Reporting->new(
-					  {
-					   configuration => $global_console_window_library_configuration,
-					   fd_output => $global_fd_output,
-					  },
-					 );
+	= $reporter_class->new(
+			       {
+				configuration => $global_console_window_library_configuration,
+				fd_output => $global_fd_output,
+			       },
+			      );
+
+    # find all the test module files
 
     my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter_library, );
 
@@ -503,13 +517,13 @@ sub main
     $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = $expected_test_total;
 
     my $reporter
-	= Heterarch::Test::Reporting->new(
-					  {
-					   configuration => $global_console_window_configuration,
-					   expected_total => $expected_test_total,
-					   fd_output => $global_fd_output,
-					  },
-					 );
+	= $reporter_class->new(
+			       {
+				configuration => $global_console_window_configuration,
+				expected_total => $expected_test_total,
+				fd_output => $global_fd_output,
+			       },
+			      );
 
     # set status
 
@@ -8765,84 +8779,6 @@ sub new
 }
 
 
-sub report_error_add
-{
-    if ($option_console_type eq 'linear')
-    {
-	return Heterarch::Test::Reporting::Linear::report_error_add(@_);
-    }
-    else
-    {
-	return Heterarch::Test::Reporting::Status::report_error_add(@_);
-    }
-}
-
-
-sub report_message
-{
-    if ($option_console_type eq 'linear')
-    {
-	return Heterarch::Test::Reporting::Linear::report_message(@_);
-    }
-    else
-    {
-	return Heterarch::Test::Reporting::Status::report_message(@_);
-    }
-}
-
-
-sub report_message_end
-{
-    if ($option_console_type eq 'linear')
-    {
-	return Heterarch::Test::Reporting::Linear::report_message_end(@_);
-    }
-    else
-    {
-	return Heterarch::Test::Reporting::Status::report_message_end(@_);
-    }
-}
-
-
-sub report_message_info
-{
-    if ($option_console_type eq 'linear')
-    {
-	return Heterarch::Test::Reporting::Linear::report_message_info(@_);
-    }
-    else
-    {
-	return Heterarch::Test::Reporting::Status::report_message_info(@_);
-    }
-}
-
-
-sub report_message_info_no_rulers
-{
-    if ($option_console_type eq 'linear')
-    {
-	return Heterarch::Test::Reporting::Linear::report_message_info_no_rulers(@_);
-    }
-    else
-    {
-	return Heterarch::Test::Reporting::Status::report_message_info_no_rulers(@_);
-    }
-}
-
-
-sub report_message_start
-{
-    if ($option_console_type eq 'linear')
-    {
-	return Heterarch::Test::Reporting::Linear::report_message_start(@_);
-    }
-    else
-    {
-	return Heterarch::Test::Reporting::Status::report_message_start(@_);
-    }
-}
-
-
 # A console window implementation to display diagnostic messages.
 
 package Heterarch::Test::Reporting::ConsoleWindow;
@@ -9000,6 +8936,9 @@ sub note
 
 
 package Heterarch::Test::Reporting::Linear;
+
+
+our @ISA = ("Heterarch::Test::Reporting");
 
 
 sub report_error_add
@@ -9240,6 +9179,9 @@ sub _report_message_with_rulers
 
 
 package Heterarch::Test::Reporting::Status;
+
+
+our @ISA = ("Heterarch::Test::Reporting");
 
 
 sub report_error_add
