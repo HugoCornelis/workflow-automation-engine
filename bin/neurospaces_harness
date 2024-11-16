@@ -1489,13 +1489,13 @@ our @ISA = ("Heterarch::Test::Element");
 
 
 #
-# _after_run()
+# after_testing()
 #
 # 1. records the time it took to execute the test.
 # 2. calls approximate testers if this is allowed by options.
 #
 
-sub _after_run
+sub after_testing
 {
     my $self = shift;
 
@@ -1573,18 +1573,6 @@ sub _after_run
     # return result
 
     return $test_result;
-}
-
-
-sub after_testing
-{
-    my $self = shift;
-
-    my $execution_context = shift;
-
-    my $test_result = shift;
-
-    return $self->_after_run($execution_context, $test_result);
 }
 
 
