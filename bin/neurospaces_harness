@@ -1266,7 +1266,7 @@ sub spawn_new
 
 		$global_running_command_definition = $command_line;
 
-		$reporter->report_message("*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
+		$reporter->report_message("message_command", "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
 
 		# remember to do startup testing
 
@@ -1278,7 +1278,7 @@ sub spawn_new
 	    }
 	    else
 	    {
-		$reporter->report_message("*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
+		$reporter->report_message("message_command", "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
 
 		$test_startup = 0;
 	    }
@@ -2185,7 +2185,7 @@ sub _prepare_run
 
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message("*** Shell: timeout $timeout $shell\n");
+	$reporter->report_message("message_test", "*** Shell: timeout $timeout $shell\n");
 
 	system "timeout $timeout $shell";
 
@@ -2234,7 +2234,7 @@ sub _process_write
     {
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message("*** Write: $write\n");
+	$reporter->report_message("message_test", "*** Write: $write\n");
 
 	$executor->{expect_object}->send("$write\n");
     }
@@ -2394,19 +2394,19 @@ sub ct_run_command
 
 	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 	{
-	    $reporter->report_message("*** Converting seen \\x0a to \\x0d \\x0a newlines\n");
+	    $reporter->report_message("message_test", "*** Converting seen \\x0a to \\x0d \\x0a newlines\n");
 
 	    $read =~ s(\x0a)(\x0d\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    $reporter->report_message("*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
+	    $reporter->report_message("message_test", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    $reporter->report_message("*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
+	    $reporter->report_message("message_test", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
@@ -2613,7 +2613,7 @@ sub ct_run_command
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("*** Application output file: $application_output_file (in $pwd)\n");
+    $reporter->report_message("message_test", "*** Application output file: $application_output_file (in $pwd)\n");
 
     # and compare it with the expected output file
 
@@ -2627,7 +2627,7 @@ sub ct_run_command
 
     if ($expected_output_file)
     {
-	$reporter->report_message("*** Expected output file: $expected_output_file\n");
+	$reporter->report_message("message_test", "*** Expected output file: $expected_output_file\n");
 
 	$expected_output = `cat "$expected_output_file"`;
     }
@@ -2883,7 +2883,7 @@ sub is_selected_by_tag
     {
 	if ($global_test_report->{output_format} eq 'executor')
 	{
-	    $reporter->report_message_info("Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+	    $reporter->report_message_info("message_info", "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
@@ -3258,7 +3258,7 @@ sub ec_end
 	}
 	else
 	{
-	    $reporter->report_message_end("End for tests of $description
+	    $reporter->report_message_end("message_info", "End for tests of $description
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
     }
@@ -3548,7 +3548,7 @@ sub is_disabled
 	{
 	    my $reporter = $self->{reporter};
 
-	    $reporter->report_message_info("Tests of $description are disabled ($disabled)
+	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
@@ -4005,16 +4005,16 @@ sub ec_examine
 
 	if (defined $command_test)
 	{
-	    $reporter->report_message($description);
+	    $reporter->report_message("message_test", $description);
 	}
 	else
 	{
-	    $reporter->report_message_start("Running tests of $description$name");
+	    $reporter->report_message_start("message_command", "Running tests of $description$name");
 	}
 
 	if ($comment)
 	{
-	    $reporter->report_message("*** Comment: $comment");
+	    $reporter->report_message("message_info", "*** Comment: $comment");
 	}
     }
 
@@ -4081,7 +4081,7 @@ sub wait
     {
 	my $reporter = $self->{reporter};
 
-	$reporter->report_message("*** Wait: $wait seconds\n");
+	$reporter->report_message("message_test", "*** Wait: $wait seconds\n");
 
 	select(undef, undef, undef, $wait);
     }
@@ -4291,7 +4291,7 @@ sub hs_preparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("*** Preparing $preparation_name ($preparation->{description})");
+    $reporter->report_message("message_harnessing", "*** Preparing $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -4331,7 +4331,7 @@ sub hs_reparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("*** Reparing ($reparation_description)");
+    $reporter->report_message("message_harnessing", "*** Reparing ($reparation_description)");
 
     # execute the reparation clause
 
@@ -4653,7 +4653,7 @@ sub hs_preparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("*** Preparing the Docker Container $preparation_name ($preparation->{description})");
+    $reporter->report_message("message_harnessing", "*** Preparing the Docker Container $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -4691,7 +4691,7 @@ sub hs_reparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("*** Reparing the Docker Container ($reparation_description)");
+    $reporter->report_message("message_harnessing", "*** Reparing the Docker Container ($reparation_description)");
 
     # execute the reparation clause
 
@@ -4701,7 +4701,7 @@ sub hs_reparer
 
     my $container_name = $self->{class}->{name_container};
 
-    $reporter->report_message("*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command exec -it $container_name bash'.)");
+    $reporter->report_message("message_harnessing", "*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command exec -it $container_name bash'.)");
 
     # remove the docker harness identifier from the active harnesses
 
@@ -4960,7 +4960,7 @@ sub ex_terminate
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("$report_text\n");
+    $reporter->report_message("message_info", "$report_text\n");
 
     #! this could be an error message
 
@@ -5333,7 +5333,7 @@ sub randomize_order
 
     if ($::option_verbose)
     {
-	$reporter->report_message("$0: Randomizing test specifications, random seed is $option_random_order\n");
+	$reporter->report_message("message_info", "$0: Randomizing test specifications, random seed is $option_random_order\n");
     }
 
     # by default the randomizer will choose a random_seed
@@ -5535,6 +5535,7 @@ sub read_module_process_options
 	if ($pathname ne "$global_config->{tests_directory}/$module_definition->{name}")
 	{
 	    $error = "the pathname ($pathname) and the test name ($module_definition->{name}) are different";
+
 	    $reporter->report_error_add
 		(
 		 {
@@ -5974,7 +5975,7 @@ sub ex_mo_prepare
 	{
 	    my $reporter = $execution_context->{reporter};
 
-	    $reporter->report_message_info("$0: Preparing $context_path\n");
+	    $reporter->report_message_info("message_harnessing", "$0: Preparing $context_path\n");
 	}
 
 	$global_test_report->{selected}->{$module_name}
@@ -6060,7 +6061,7 @@ sub ex_ct_run
     {
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message_info("$0: Preparing $context_path\n");
+	$reporter->report_message_info("message_info", "$0: Preparing $context_path\n");
     }
 
     $cloned_command_test->{context_path} = $context_path;
@@ -6134,7 +6135,7 @@ sub ex_cd_start
     {
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message_info("$0: Preparing $context_path\n");
+	$reporter->report_message_info("message_info", "$0: Preparing $context_path\n");
     }
 
     $cloned_command_definition->{context_path} = $context_path;
@@ -8470,7 +8471,7 @@ sub ex_terminate
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message_info_no_rulers("$report_text");
+    $reporter->report_message_info_no_rulers("message_info", "$report_text");
 }
 
 
@@ -8628,7 +8629,7 @@ sub ex_terminate
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message_info_no_rulers("$report_text");
+    $reporter->report_message_info_no_rulers("message_info", "$report_text");
 }
 
 
@@ -9071,6 +9072,8 @@ sub report_message
 {
     my $self = shift;
 
+    my $type = shift;
+
     my $message = shift;
 
     my $fd_output = $self->{fd_output};
@@ -9082,6 +9085,8 @@ sub report_message
 sub report_message_end
 {
     my $self = shift;
+
+    my $type = shift;
 
     my $message = shift;
 
@@ -9095,6 +9100,8 @@ sub report_message_info
 {
     my $self = shift;
 
+    my $type = shift;
+
     my $message = shift;
 
     my $fd_output = $self->{fd_output};
@@ -9107,6 +9114,8 @@ sub report_message_info_no_rulers
 {
     my $self = shift;
 
+    my $type = shift;
+
     my $message = shift;
 
     my $fd_output = $self->{fd_output};
@@ -9118,6 +9127,8 @@ sub report_message_info_no_rulers
 sub report_message_start
 {
     my $self = shift;
+
+    my $type = shift;
 
     my $message = shift;
 
@@ -9170,6 +9181,14 @@ package Heterarch::Test::Reporting::Status;
 
 
 our @ISA = ("Heterarch::Test::Reporting");
+
+
+sub new
+{
+    my ($class, @args) = @_;
+
+    my $self = $class->SUPER::new(@args);
+}
 
 
 sub report_error_add
@@ -9307,6 +9326,8 @@ sub report_message
 {
     my $self = shift;
 
+    my $type = shift;
+
     my $message = shift;
 
     my $fd_output = $self->{fd_output};
@@ -9318,6 +9339,8 @@ sub report_message
 sub report_message_end
 {
     my $self = shift;
+
+    my $type = shift;
 
     my $message = shift;
 
@@ -9331,6 +9354,8 @@ sub report_message_info
 {
     my $self = shift;
 
+    my $type = shift;
+
     my $message = shift;
 
     my $fd_output = $self->{fd_output};
@@ -9343,6 +9368,8 @@ sub report_message_info_no_rulers
 {
     my $self = shift;
 
+    my $type = shift;
+
     my $message = shift;
 
     my $fd_output = $self->{fd_output};
@@ -9354,6 +9381,8 @@ sub report_message_info_no_rulers
 sub report_message_start
 {
     my $self = shift;
+
+    my $type = shift;
 
     my $message = shift;
 
