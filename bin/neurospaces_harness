@@ -8856,23 +8856,20 @@ sub _global_error_add
 
     $global_test_report->{global}->{error_count} = $global_error_count;
 
-    if ($subdescription)
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
-    }
-    else
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
-    }
-
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
+    my $error_report
+	= {
+	   error => $error,
+	   (defined $subdescription) ? ($subdescription => { description => $description, }, ) : (description => $description),
+	  };
 
     if (defined $message)
     {
 	#! if message is defined, then a subdescription must be defined too.
 
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
+	$error_report->{$subdescription}->{report} = $message;
     }
+
+    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count} = $error_report;
 }
 
 
