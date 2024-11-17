@@ -1404,7 +1404,9 @@ sub cd_start
 
 	my $module_name = $module_definition->{name};
 
-	Heterarch::Test::Reporting::report_error_add
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_error_add
 		(
 		 {
 		  description => "command_definition $self->{description}",
@@ -8768,6 +8770,137 @@ sub new
 }
 
 
+sub report_error_add
+{
+    my $self = shift;
+
+    my $arguments = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    my $description = $arguments->{description};
+    my $error = $arguments->{error};
+    my $expected = $arguments->{expected};
+    my $message = $arguments->{message};
+    my $module_name = $arguments->{module_name};
+    my $seen = $arguments->{seen};
+    my $subdescription = $arguments->{subdescription};
+
+    my $package_name = $global_test_report->{description}->{package}->{name};
+
+    if (defined $option_debugging
+	and $option_debugging eq 'errors')
+    {
+	use Carp;
+
+	warn "$0: DEBUG errors";
+
+	print Carp::cluck(@_);
+    }
+
+    $global_error_count++;
+
+    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+
+    # fill in the error report
+
+    $global_test_report->{global}->{error_count} = $global_error_count;
+
+    if ($subdescription)
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
+    }
+    else
+    {
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
+    }
+
+    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
+
+    if (defined $message)
+    {
+	#! subdescription can be undefined here, in which case
+	#! $message is undefined too.  Both can be defined when
+	#! running in verbose mode seems, allows to track regex
+	#! problems ... I think.
+
+	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
+    }
+
+    if (defined $expected
+	and defined $seen)
+    {
+	my $processed_expected = [ split "\n", $expected, ];
+
+	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+
+	print $fd_output $processed_expected;
+
+	my $processed_seen = [ split "\n", $seen, ];
+
+	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
+
+	print $fd_output $processed_seen;
+
+	use IO::File;
+
+	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
+
+	my $expected_file = IO::File->new(">$expected_filename");
+
+	if ($expected_file)
+	{
+	    print $expected_file $expected;
+
+	    $expected_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
+	}
+
+	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
+
+	my $seen_file = IO::File->new(">$seen_filename");
+
+	if ($seen_filename)
+	{
+	    print $seen_file $seen;
+
+	    $seen_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
+	}
+
+	my $diff = `diff "$expected_filename" "$seen_filename"`;
+
+	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
+
+	my $diff_file = IO::File->new(">$diff_filename");
+
+	if ($diff_file)
+	{
+	    print $diff_file $diff;
+
+	    $diff_file->close();
+	}
+	else
+	{
+	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
+	}
+
+	my $processed_diff = [ split "\n", $diff, ];
+
+	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+
+	print $fd_output $processed_diff;
+    }
+
+}
+
+
 # A console window implementation to display diagnostic messages.
 
 package Heterarch::Test::Reporting::ConsoleWindow;
@@ -8936,128 +9069,7 @@ sub report_error_add
 
     my $arguments = shift;
 
-    my $fd_output = $self->{fd_output};
-
-    my $description = $arguments->{description};
-    my $error = $arguments->{error};
-    my $expected = $arguments->{expected};
-    my $message = $arguments->{message};
-    my $module_name = $arguments->{module_name};
-    my $seen = $arguments->{seen};
-    my $subdescription = $arguments->{subdescription};
-
-    my $package_name = $global_test_report->{description}->{package}->{name};
-
-    if (defined $option_debugging
-	and $option_debugging eq 'errors')
-    {
-	use Carp;
-
-	warn "$0: DEBUG errors";
-
-	print Carp::cluck(@_);
-    }
-
-    $global_error_count++;
-
-    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
-
-    # fill in the error report
-
-    $global_test_report->{global}->{error_count} = $global_error_count;
-
-    if ($subdescription)
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
-    }
-    else
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
-    }
-
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
-
-    if (defined $message)
-    {
-	#! subdescription can be undefined here, in which case
-	#! $message is undefined too.  Both can be defined when
-	#! running in verbose mode seems, allows to track regex
-	#! problems ... I think.
-
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
-    }
-
-    if (defined $expected
-	and defined $seen)
-    {
-	my $processed_expected = [ split "\n", $expected, ];
-
-	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
-
-	print $fd_output $processed_expected;
-
-	my $processed_seen = [ split "\n", $seen, ];
-
-	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
-
-	print $fd_output $processed_seen;
-
-	use IO::File;
-
-	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
-
-	my $expected_file = IO::File->new(">$expected_filename");
-
-	if ($expected_file)
-	{
-	    print $expected_file $expected;
-
-	    $expected_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
-	}
-
-	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
-
-	my $seen_file = IO::File->new(">$seen_filename");
-
-	if ($seen_filename)
-	{
-	    print $seen_file $seen;
-
-	    $seen_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
-	}
-
-	my $diff = `diff "$expected_filename" "$seen_filename"`;
-
-	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
-
-	my $diff_file = IO::File->new(">$diff_filename");
-
-	if ($diff_file)
-	{
-	    print $diff_file $diff;
-
-	    $diff_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
-	}
-
-	my $processed_diff = [ split "\n", $diff, ];
-
-	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
-
-	print $fd_output $processed_diff;
-    }
-
+    $self->SUPER::report_error_add($arguments);
 }
 
 
@@ -9197,128 +9209,7 @@ sub report_error_add
 
     my $arguments = shift;
 
-    my $fd_output = $self->{fd_output};
-
-    my $description = $arguments->{description};
-    my $error = $arguments->{error};
-    my $expected = $arguments->{expected};
-    my $message = $arguments->{message};
-    my $module_name = $arguments->{module_name};
-    my $seen = $arguments->{seen};
-    my $subdescription = $arguments->{subdescription};
-
-    my $package_name = $global_test_report->{description}->{package}->{name};
-
-    if (defined $option_debugging
-	and $option_debugging eq 'errors')
-    {
-	use Carp;
-
-	warn "$0: DEBUG errors";
-
-	print Carp::cluck(@_);
-    }
-
-    $global_error_count++;
-
-    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
-
-    # fill in the error report
-
-    $global_test_report->{global}->{error_count} = $global_error_count;
-
-    if ($subdescription)
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{description} = $description;
-    }
-    else
-    {
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{description} = $description;
-    }
-
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{error} = $error;
-
-    if (defined $message)
-    {
-	#! subdescription can be undefined here, in which case
-	#! $message is undefined too.  Both can be defined when
-	#! running in verbose mode seems, allows to track regex
-	#! problems ... I think.
-
-	$global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count}->{$subdescription}->{report} = $message;
-    }
-
-    if (defined $expected
-	and defined $seen)
-    {
-	my $processed_expected = [ split "\n", $expected, ];
-
-	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
-
-	print $fd_output $processed_expected;
-
-	my $processed_seen = [ split "\n", $seen, ];
-
-	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
-
-	print $fd_output $processed_seen;
-
-	use IO::File;
-
-	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
-
-	my $expected_file = IO::File->new(">$expected_filename");
-
-	if ($expected_file)
-	{
-	    print $expected_file $expected;
-
-	    $expected_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
-	}
-
-	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
-
-	my $seen_file = IO::File->new(">$seen_filename");
-
-	if ($seen_filename)
-	{
-	    print $seen_file $seen;
-
-	    $seen_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
-	}
-
-	my $diff = `diff "$expected_filename" "$seen_filename"`;
-
-	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
-
-	my $diff_file = IO::File->new(">$diff_filename");
-
-	if ($diff_file)
-	{
-	    print $diff_file $diff;
-
-	    $diff_file->close();
-	}
-	else
-	{
-	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
-	}
-
-	my $processed_diff = [ split "\n", $diff, ];
-
-	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
-
-	print $fd_output $processed_diff;
-    }
-
+    $self->SUPER::report_error_add($arguments);
 }
 
 
