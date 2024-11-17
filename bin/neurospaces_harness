@@ -63,7 +63,7 @@ our $global_config;
 my $global_console_window_configuration
     = {
        "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::status,
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::progress,
 			  "formatter_options" => {
 						  "decimals" => 0,
 						  "empty" => '-',
@@ -130,7 +130,7 @@ my $global_console_window_configuration
 my $global_console_window_library_configuration
     = {
        "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::status,
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::progress,
 			  "formatter_options" => {
 						  "decimals" => 0,
 						  "empty" => '-',
@@ -1244,9 +1244,18 @@ sub spawn_new
 
 		$global_exp = Expect->new();
 
-		#! see the expect manual for this one
+		#! From the manual: Set pty to raw mode before
+		#! spawning. This disables echoing and CR->LF
+		#! translation and gives a more pipe-like
+		#! behaviour. Note that this must be set before spawning
+		#! the program.
 
 		$global_exp->raw_pty(1);
+
+		if (not $reporter->isa("Heterarch::Test::Reporting::Linear"))
+		{
+		    $global_exp->log_stdout(0);
+		}
 
 		# 		    $exp->slave->stty(qw(raw -echo));
 
@@ -1691,6 +1700,10 @@ sub ct_run_complete
     # increment command test count
 
     $global_test_report->{global}->{test_counters}->{current}->{command_test}++;
+
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_progress("progress_bar", $global_test_report->{global}->{test_counters}->{current}->{command_test});
 
     return '';
 }
@@ -8943,7 +8956,7 @@ sub message
     {
 	my $line_number = $self->{configuration}->{$line}->{line_number};
 
-	print $cursor_forced_down x $line_number . "\r$self->{configuration}->{$line}->{prompt}";
+	print (($cursor_forced_down x $line_number) . "\r$self->{configuration}->{$line}->{prompt}");
 
 	my $formatter_options = $self->{configuration}->{$line};
 
@@ -8953,7 +8966,7 @@ sub message
 
 	if ($line ne "end")
 	{
-	    print $cursor_up x $line_number;
+	    print ($cursor_up x $line_number);
 
 	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
 
@@ -8980,17 +8993,27 @@ sub message
 #         fill        - Optional  : bar fill character (Str)
 #     """
 
-sub status
+sub progress
 {
     my $line_options = shift;
 
-    my $iteration = shift || -1;
+    my $iteration = shift;
 
-    my $total = shift || -1;
+    my $total = shift;
 
     my $prefix = shift || '';
 
     my $suffix = shift || '';
+
+    if (!defined $iteration)
+    {
+	$iteration = -1;
+    }
+
+    if (!defined $total)
+    {
+	$total = -1;
+    }
 
     my $options = $line_options->{formatter_options};
 
@@ -9032,7 +9055,7 @@ sub status
 
     my $filledLength = int($bar_length * $iteration / $total);
 
-    my $bar = $options->{fill} * $filledLength + $options->{empty} * ($bar_length - $filledLength);
+    my $bar = ($options->{fill} x $filledLength) . ($options->{empty} x ($bar_length - $filledLength));
 
     my $message = "$prefix|$bar| $percent$suffix";
 
@@ -9191,6 +9214,16 @@ sub report_message_start
 }
 
 
+sub report_progress
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $iteration = shift;
+}
+
+
 sub _report_message_with_rulers
 {
     my $fd_output = shift;
@@ -9274,7 +9307,7 @@ sub report_message
 
     my $fd_output = $self->{fd_output};
 
-    print $fd_output "$message\n";
+#     print $fd_output "$message\n";
 }
 
 
@@ -9288,7 +9321,7 @@ sub report_message_end
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 2, $message);
+#     return _report_message_with_rulers($fd_output, 1, 2, $message);
 }
 
 
@@ -9302,7 +9335,7 @@ sub report_message_info
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 1, $message);
+#     return _report_message_with_rulers($fd_output, 1, 1, $message);
 }
 
 
@@ -9316,7 +9349,7 @@ sub report_message_info_no_rulers
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, -1, -1, $message);
+#     return _report_message_with_rulers($fd_output, -1, -1, $message);
 }
 
 
@@ -9330,7 +9363,25 @@ sub report_message_start
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 2, 1, $message);
+#     return _report_message_with_rulers($fd_output, 2, 1, $message);
+}
+
+
+sub report_progress
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $iteration = shift;
+
+    my $configuration = $self->{configuration};
+
+    my $configuration_progress_bar = $configuration->{progress_bar};
+
+    my $formatter = $configuration_progress_bar->{formatter};
+
+    &$formatter($configuration_progress_bar, $iteration);
 }
 
 
