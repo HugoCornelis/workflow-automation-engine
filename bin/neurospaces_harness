@@ -76,42 +76,42 @@ my $global_console_window_configuration
 			  "line_number" => 0,
 			  "prompt" => "   Progress: ",
 			 },
-       "message_info" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => 120,
-			  "line_number" => 1,
-			  "prompt" => "Information: ",
-			 },
-       "message_warning" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => 120,
-			     "line_number" => 2,
-			     "prompt" => "    Warning: ",
-			    },
+       "message_harnessing" => {
+				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+				"length" => 120,
+				"line_number" => 1,
+				"prompt" => "    Harness: ",
+			       },
        "message_module" => {
 			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			    "length" => 120,
-			    "line_number" => 3,
+			    "line_number" => 2,
 			    "prompt" => "     Module: ",
 			   },
        "message_command" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			     "length" => 120,
-			     "line_number" => 4,
+			     "line_number" => 3,
 			     "prompt" => "    Command: ",
 			    },
        "message_test" => {
 			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			  "length" => 120,
-			  "line_number" => 5,
+			  "line_number" => 4,
 			  "prompt" => "       Test: ",
 			 },
-       "message_harnessing" => {
-				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-				"length" => 120,
-				"line_number" => 6,
-				"prompt" => "    Harness: ",
-			       },
+       "message_info" => {
+			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			  "length" => 120,
+			  "line_number" => 5,
+			  "prompt" => "Information: ",
+			 },
+       "message_warning" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 6,
+			     "prompt" => "    Warning: ",
+			    },
        "message_error" => {
 			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			   "length" => 120,
@@ -3535,8 +3535,6 @@ sub is_disabled
 
     my $command_test = shift;
 
-    my $module_name = $module_definition->{name};
-
     my $active_element
 	= (defined $command_test
 	   ? $command_test
@@ -3556,6 +3554,8 @@ sub is_disabled
 	       : (defined $command_definition
 		  ? "command_definitions"
 		  : "modules"));
+
+	my $module_name = $module_definition->{name};
 
 	$global_test_report->{disabled}->{$report_key}->{$module_name}->{$description} = $disabled;
 
@@ -3985,6 +3985,8 @@ sub ec_examine
 
     if ($global_test_report->{output_format} eq 'executor')
     {
+	my $message_level = '';
+
 	my $comment;
 
 	my $description;
@@ -3993,6 +3995,8 @@ sub ec_examine
 
 	if (defined $command_test)
 	{
+	    $message_level = "message_test";
+
 	    $comment = $command_test->{comment};
 
 	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Warning: no description of this command_test when examining the execution context)";
@@ -4001,6 +4005,8 @@ sub ec_examine
 	}
 	elsif (defined $command_definition)
 	{
+	    $message_level = "message_command";
+
 	    $comment = $command_definition->{comment};
 
 	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Warning: no description of this command_definition when examining the execution context)";
@@ -4009,6 +4015,8 @@ sub ec_examine
 	}
 	else
 	{
+	    $message_level = "message_module";
+
 	    $comment = $module_definition->{comment};
 
 	    $description = "module $module_definition->{description}";
@@ -4024,7 +4032,7 @@ sub ec_examine
 	}
 	else
 	{
-	    $reporter->report_message_start("message_command", "Running tests of $description$name");
+	    $reporter->report_message_start($message_level, "Running tests of $description$name");
 	}
 
 	if ($comment)
@@ -4360,7 +4368,11 @@ sub hs_reparer
 
     my $harness_class = $self->{class};
 
-    if ($harnessing_identifier ne $harness_class->{identifier})
+    #t how can any of these not be defined?
+
+    if ((defined $harnessing_identifier)
+	and (defined $harness_class->{identifier})
+	and $harnessing_identifier ne $harness_class->{identifier})
     {
 	die "$0: *** Error: package Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer pops a harnessing_identifier ($harnessing_identifier) that is different from what it previously pushed ($harness_class->{identifier}).";
     }
@@ -4410,7 +4422,7 @@ our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
 
 our $docker_snapshot_count = 1;
 
-our $docker_command = "docker";
+our $docker_command = "docker >/dev/null 2>&1 ";
 
 
 sub _docker_preparer
@@ -4443,14 +4455,14 @@ sub _docker_preparer
 
 	my $name_image = $harness_class->{name_image};
 
-	system "docker image prune -f";
+	system "$docker_command image prune -f";
 
 	if ($?)
 	{
 	    return \ '_docker_preparer image prune failed';
 	}
 
-	system "docker build --tag $name_image --file $dockerfile .";
+	system "$docker_command build --tag $name_image --file $dockerfile .";
 
 	if ($?)
 	{
@@ -4529,6 +4541,8 @@ sub _generate_command_prefix
 
     my $prefix_docker
 	= [
+	   # I assume this should be $docker_command without the redirection
+
 	   'docker',
 	   'exec',
 	   '-it',
@@ -5990,7 +6004,7 @@ sub ex_mo_prepare
 	{
 	    my $reporter = $execution_context->{reporter};
 
-	    $reporter->report_message_info("message_harnessing", "$0: Preparing $context_path\n");
+	    $reporter->report_message_info("message_info", "$0: Preparing $context_path\n");
 	}
 
 	$global_test_report->{selected}->{$module_name}
@@ -8783,6 +8797,51 @@ sub new
 }
 
 
+my $cursor_up = "\033[A";
+my $cursor_down = "\033[B";
+my $cursor_forced_down = "\n";
+my $erase_line = "\33[2K";
+
+
+sub message
+{
+    my $self = shift;
+
+    my $line = shift;
+
+    my $arguments = shift;
+
+    my $enabled = $self->{configuration}->{$line}->{enabled} || 'by default';
+
+    if ($enabled)
+    {
+	my $line_number = $self->{configuration}->{$line}->{line_number};
+
+	print $cursor_forced_down x $line_number;
+	print "\r$self->{configuration}->{$line}->{prompt}";
+
+	my $formatter_options = $self->{configuration}->{$line};
+
+	my $formatter = $self->{configuration}->{$line}->{formatter};
+
+        &$formatter($formatter_options, $arguments);
+
+	if ($line ne "end")
+	{
+	    print ($cursor_up x $line_number);
+
+	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
+
+	    select()->flush();
+	}
+	else
+	{
+	    print "\n";
+	}
+    }
+}
+
+
 sub _error_process_differences
 {
     my $fd_output = shift;
@@ -8920,62 +8979,6 @@ sub report_error_add
 
 package Heterarch::Test::Reporting::ConsoleWindow;
 
-my $cursor_up = "\033[A";
-my $cursor_down = "\033[B";
-my $cursor_forced_down = "\n";
-my $erase_line = "\33[2K";
-
-sub new
-{
-    my $package = shift;
-
-    my $options = shift || {};
-
-    my $self
-	= {
-	   configuration => $options,
-	  };
-
-    bless $self, $package;
-
-    return $self;
-}
-
-
-sub message
-{
-    my $self = shift;
-
-    my $line = shift;
-
-    my $arguments = shift;
-
-    my $enabled = $self->{configuration}->{$line}->{enabled} || 'by default';
-
-    if ($enabled)
-    {
-	my $line_number = $self->{configuration}->{$line}->{line_number};
-
-	print (($cursor_forced_down x $line_number) . "\r$self->{configuration}->{$line}->{prompt}");
-
-	my $formatter_options = $self->{configuration}->{$line};
-
-	my $formatter = $self->{configuration}->{$line}->{formatter};
-
-        &$formatter($formatter_options, $arguments);
-
-	if ($line ne "end")
-	{
-	    print ($cursor_up x $line_number);
-
-	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
-
-	    select()->flush();
-	}
-    }
-}
-
-
 # print iterations progress.
 #
 # modified from https://stackoverflow.com/questions/3173320/text-progress-bar-in-terminal-with-block-characters
@@ -8997,13 +9000,15 @@ sub progress
 {
     my $line_options = shift;
 
-    my $iteration = shift;
+    my $arguments = shift;
 
-    my $total = shift;
+    my $iteration = $arguments->{iteration};
 
-    my $prefix = shift || '';
+    my $total = $arguments->{total};
 
-    my $suffix = shift || '';
+    my $prefix = $arguments->{prefix} || '';
+
+    my $suffix = $arguments->{suffix} || '';
 
     if (!defined $iteration)
     {
@@ -9044,7 +9049,7 @@ sub progress
 
     if ($needs_percentage)
     {
-        my $percent = sprintf("%.$options->{decimals}f", 100 * ($iteration / $total));
+        $percent = sprintf("%.$options->{decimals}f", 100 * ($iteration / $total));
 
         $percent = "$percent% ";
 
@@ -9065,19 +9070,21 @@ sub progress
 
 sub note
 {
-    my $options = shift;
+    my $line_options = shift;
 
-    my $data = shift || '';
+    my $arguments = shift;
 
-    my $length = $options->{length};
+    my $length = $line_options->{length};
 
-    if (length $data > $length)
+    my $message = $arguments->{message};
+
+    if (length $message > $length)
     {
-	print substr($data, 0, $length);
+	print substr($message, 0, $length);
     }
     else
     {
-	print $data;
+	print $message;
     }
 }
 
@@ -9269,6 +9276,24 @@ package Heterarch::Test::Reporting::Status;
 our @ISA = ("Heterarch::Test::Reporting");
 
 
+sub end
+{
+    my $self = shift;
+
+    my $iteration = $global_console_window_configuration->{progress_bar}->{formatter_options}->{total};
+
+    $self->message('progress_bar', { iteration => $iteration, }, );
+
+    $self->message('end', { message => 'Done', }, );
+
+    # end
+#
+#             args.console_window.message("progress_bar", iteration = expected_requests)
+#             args.console_window.message("totals", data = f"Done")
+#             args.console_window.message("end", data = f"Created file {output_filename}.")
+}
+
+
 sub new
 {
     my ($class, @args) = @_;
@@ -9305,9 +9330,15 @@ sub report_message
 
     my $message = shift;
 
-    my $fd_output = $self->{fd_output};
+    chomp $message;
 
-#     print $fd_output "$message\n";
+    if ($type eq "message_harnessing"
+        or $type eq "message_module"
+        or $type eq "message_test"
+        or $type eq "message_command")
+    {
+	$self->message($type, { message => $message, }, );
+    }
 }
 
 
@@ -9361,9 +9392,7 @@ sub report_message_start
 
     my $message = shift;
 
-    my $fd_output = $self->{fd_output};
-
-#     return _report_message_with_rulers($fd_output, 2, 1, $message);
+    $self->report_message($type, $message, @_);
 }
 
 
@@ -9375,13 +9404,13 @@ sub report_progress
 
     my $iteration = shift;
 
-    my $configuration = $self->{configuration};
+    $self->message($type, { iteration => $iteration, }, );
 
-    my $configuration_progress_bar = $configuration->{progress_bar};
+    # my $configuration_progress_bar = $configuration->{progress_bar};
 
-    my $formatter = $configuration_progress_bar->{formatter};
+    # my $formatter = $configuration_progress_bar->{formatter};
 
-    &$formatter($configuration_progress_bar, $iteration);
+    # &$formatter($configuration_progress_bar, $iteration);
 }
 
 
