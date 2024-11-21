@@ -202,6 +202,8 @@ my $global_all_output_levels
        "command_test",
       ];
 
+my $global_configuration_initialized;
+
 my $global_error_count = 0;
 our $global_fd_output;
 my $global_previous_command_side_effects;
@@ -217,7 +219,14 @@ $SIG{'__DIE__'}
 
 	  $global_test_report->{global}->{status} = 'Died';
 
-	  report_exit(3, @_);
+	  if ($global_configuration_initialized)
+	  {
+	      report_exit(3, @_);
+	  }
+	  else
+	  {
+	      exit 3;
+	  }
       };
 
 
@@ -226,7 +235,14 @@ $SIG{'INT'}
       {
 	  $global_test_report->{global}->{status} = 'Interrupted';
 
-	  report_exit(2);
+	  if ($global_configuration_initialized)
+	  {
+	      report_exit(2);
+	  }
+	  else
+	  {
+	      exit 2;
+	  }
       };
 
 
@@ -375,6 +391,8 @@ sub initialize_config
     }
 
     unshift @INC, $global_config->{tests_directory};
+
+    $global_configuration_initialized = 'from initialize_config';
 }
 
 
