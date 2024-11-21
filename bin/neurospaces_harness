@@ -9424,9 +9424,7 @@ sub report_message_info_no_rulers
 
     my $message = shift;
 
-    my $fd_output = $self->{fd_output};
-
-#     return _report_message_with_rulers($fd_output, -1, -1, $message);
+    $self->message($type, { message => $message, }, );
 }
 
 
