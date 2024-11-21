@@ -585,7 +585,6 @@ workflow-tests-workflow: created the shell command file for target new_target',
 						   wait => 1,
 						   read => {
 							    application_output_file => './workflow-tests-configuration-data/targets.yml',
-							    # comment => "note that the '../' is required because the preparation clause switches to the './tmp' directory",
 							    expected_output_file => "$::global_config->{tests_directory}/strings/two-targets-added.txt",
 							   },
 						   read_not_used => 'workflow-tests-workflow: added target new_target2 to /home/neurospaces/workflow-test/workflow-tests-configuration-data/targets.yml
