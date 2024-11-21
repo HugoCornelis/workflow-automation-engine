@@ -8797,12 +8797,6 @@ our $console_types
 sub end
 {
     my $self = shift;
-
-# end
-#
-#             args.console_window.message("progress_bar", iteration = expected_requests)
-#             args.console_window.message("totals", data = f"Done")
-#             args.console_window.message("end", data = f"Created file {output_filename}.")
 }
 
 
@@ -9331,12 +9325,6 @@ sub end
     $self->message('progress_bar', { iteration => $iteration, }, );
 
     $self->message('end', { message => 'Done', }, );
-
-    # end
-#
-#             args.console_window.message("progress_bar", iteration = expected_requests)
-#             args.console_window.message("totals", data = f"Done")
-#             args.console_window.message("end", data = f"Created file {output_filename}.")
 }
 
 
@@ -9447,52 +9435,6 @@ sub report_progress
     my $iteration = shift;
 
     $self->message($type, { iteration => $iteration, }, );
-
-    # my $configuration_progress_bar = $configuration->{progress_bar};
-
-    # my $formatter = $configuration_progress_bar->{formatter};
-
-    # &$formatter($configuration_progress_bar, $iteration);
-}
-
-
-sub _report_message_with_rulers
-{
-    my $fd_output = shift;
-
-    my $top_ruler = shift;
-
-    my $bottom_ruler = shift;
-
-    my $message = shift;
-
-    my $lines = [ split '\n', $message, ];
-
-    my $longest = 0;
-
-    map
-    {
-	($longest < length) && ($longest = length)
-    }
-	@$lines;
-
-    my $line = '-' x $longest;
-
-    print $fd_output "\n";
-
-    if ($top_ruler > -1)
-    {
-	print $fd_output "$line\n" for 0 .. $top_ruler;
-	print $fd_output "\n";
-    }
-
-    print $fd_output "$message\n\n";
-
-    if ($bottom_ruler > -1)
-    {
-	print $fd_output "$line\n" for 0 .. $bottom_ruler;
-	print $fd_output "\n";
-    }
 }
 
 
