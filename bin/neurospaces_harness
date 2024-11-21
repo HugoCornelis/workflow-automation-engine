@@ -3258,6 +3258,8 @@ sub ec_end
 
     if ($global_test_report->{output_format} eq 'executor')
     {
+	my $message_level;
+
 	my $module_name = $module_definition->{name};
 
 	my $description;
@@ -3266,18 +3268,24 @@ sub ec_end
 
 	if (defined $command_test)
 	{
+	    $message_level = "message_test";
+
 	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Warning: no description of this command_test when ending the execution context)";
 
 	    $name = "";
 	}
 	elsif (defined $command_definition)
 	{
+	    $message_level = "message_command";
+
 	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Warning: no description of this command_definition when ending the execution context)";
 
 	    $name = " ($command_definition->{command})";
 	}
 	else
 	{
+	    $message_level = "message_module";
+
 	    $description = "module $module_definition->{description}";
 
 	    $name = " ($module_definition->{name})";
@@ -3291,7 +3299,7 @@ sub ec_end
 	}
 	else
 	{
-	    $reporter->report_message_end("message_info", "End for tests of $description
+	    $reporter->report_message_end($message_level, "End for tests of $description
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
     }
@@ -4003,7 +4011,7 @@ sub ec_examine
 
     if ($global_test_report->{output_format} eq 'executor')
     {
-	my $message_level = '';
+	my $message_level;
 
 	my $comment;
 
@@ -9021,6 +9029,10 @@ sub note
 
     my $message = $arguments->{message};
 
+    my $counter_message = "$message";
+
+    my $newline_count = $counter_message =~ tr/\n/\n/;
+
     if (length $message > $length)
     {
 	print substr($message, 0, $length);
@@ -9029,6 +9041,8 @@ sub note
     {
 	print $message;
     }
+
+    print ($cursor_up x $newline_count);
 }
 
 
@@ -9384,9 +9398,7 @@ sub report_message_end
 
     my $message = shift;
 
-    my $fd_output = $self->{fd_output};
-
-#     return _report_message_with_rulers($fd_output, 1, 2, $message);
+    $self->message("message_info", { message => $message, }, );
 }
 
 
