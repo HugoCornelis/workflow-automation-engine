@@ -3703,6 +3703,73 @@ sub _init_filenames_2_symlink_commands
 }
 
 
+package Command::Git;
+
+
+# Based on https://gist.github.com/bonovoxly/b4f7502f2b6cdb26a779dbfb73d4d134
+
+sub builtin_git_move_file_across_keep_history
+{
+    my $git_source = $ARGV[0];
+
+    my $git_source_branch = $ARGV[1];
+
+    my $git_target = $ARGV[2];
+
+    my $git_target_branch = $ARGV[3];
+
+    #! git support muliple --path arguments, the filename could be a comma separated list of filenames
+
+    my $filename = $ARGV[4];
+
+    my $working_directory = $ARGV[5] || "/tmp/working-directory";
+
+    # determine the source and target project names
+
+    $git_source =~ m(.*/(.*)$);
+
+    my $git_source_name = $git_source;
+
+    $git_target =~ m(.*/(.*)$);
+
+    my $git_target_name = $git_target;
+
+    # copy a file across repositories and keep its history
+
+    my $commands
+	= [
+	   ## git-filter-repo
+
+	   # - Stage a working area. These are somewhat throwaway directories and local git repos.
+	   # - clone both source and target repos.
+
+	   "mkdir '$working_directory'",
+	   "cd '$working_directory'",
+	   "git clone '$git_source",
+	   "git clone '$git_target'",
+
+	   ### In source repo
+
+	   # We checkout a branch that we will filter against. We specify the path(s) that we want.
+
+	   "cd './$git_source'",
+	   "git checkout '$git_source_branch'",
+	   "git filter-repo --path '$filename' --refs refs/heads/filter-source --force",
+
+	   ## In target repo
+
+	   "cd '../$git_target_name'",
+	   "git checkout -b '$git_target_branch'",
+	   "git remote add repo-source '../git_source_name'",
+	   "git fetch repo-source",
+	   "git branch branch-source 'remotes/repo-source/$git_source_branch'",
+	   "git merge branch-source --allow-unrelated-histories",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
 package Command::GitLab;
 
 
@@ -7113,6 +7180,10 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
 	my $known_command_packages_builtin
 	    = {
+	       'Command::Git' => {
+				  description => 'workflows for working with git',
+				  documentation => 'These workflows implement convenience interactions with git.',
+				 },
 	       'Command::GitLab' => {
 				     description => 'workflows for working with GitLab',
 				     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',

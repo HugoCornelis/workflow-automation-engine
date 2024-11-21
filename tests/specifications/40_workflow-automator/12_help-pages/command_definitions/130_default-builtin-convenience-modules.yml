@@ -7,8 +7,11 @@ command_tests:
       
       help_module_all:
         Command:
-          description: "a library of workflows (try these ones: 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module')"
+          description: "a library of workflows (try these ones: 'workflow Command::Git --help-module' or 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module')"
           documentation: each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects
+        Command::Git:
+          description: workflows for working with git
+          documentation: These workflows implement convenience interactions with git.
         Command::GitLab:
           description: workflows for working with GitLab
           documentation: These workflows implement convenience interactions to push and pull source code from GitLab.
