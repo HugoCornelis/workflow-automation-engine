@@ -8797,12 +8797,6 @@ sub new
 }
 
 
-my $cursor_up = "\033[A";
-my $cursor_down = "\033[B";
-my $cursor_forced_down = "\n";
-my $erase_line = "\33[2K";
-
-
 sub message
 {
     my $self = shift;
@@ -8811,34 +8805,7 @@ sub message
 
     my $arguments = shift;
 
-    my $enabled = $self->{configuration}->{$line}->{enabled} || 'by default';
-
-    if ($enabled)
-    {
-	my $line_number = $self->{configuration}->{$line}->{line_number};
-
-	print $cursor_forced_down x $line_number;
-	print "\r$self->{configuration}->{$line}->{prompt}";
-
-	my $formatter_options = $self->{configuration}->{$line};
-
-	my $formatter = $self->{configuration}->{$line}->{formatter};
-
-        &$formatter($formatter_options, $arguments);
-
-	if ($line ne "end")
-	{
-	    print ($cursor_up x $line_number);
-
-	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
-
-	    select()->flush();
-	}
-	else
-	{
-	    print "\n";
-	}
-    }
+    Heterarch::Test::Reporting::ConsoleWindow::message($self->{configuration}, $line, $arguments);
 }
 
 
@@ -8979,6 +8946,74 @@ sub report_error_add
 
 package Heterarch::Test::Reporting::ConsoleWindow;
 
+
+my $cursor_up = "\033[A";
+my $cursor_down = "\033[B";
+my $cursor_forced_down = "\n";
+my $erase_line = "\33[2K";
+
+
+sub message
+{
+    my $self = shift;
+
+    my $line = shift;
+
+    my $arguments = shift;
+
+    my $enabled = $self->{$line}->{enabled} || 'by default';
+
+    if ($enabled)
+    {
+	my $line_number = $self->{$line}->{line_number};
+
+	print $cursor_forced_down x $line_number . $erase_line;
+
+	print "\r$self->{$line}->{prompt}";
+
+	my $formatter_options = $self->{$line};
+
+	my $formatter = $self->{$line}->{formatter};
+
+        &$formatter($formatter_options, $arguments);
+
+	if ($line ne "end")
+	{
+	    print ($cursor_up x $line_number);
+
+	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
+
+	    select()->flush();
+	}
+	else
+	{
+	    print "\n";
+	}
+    }
+}
+
+
+sub note
+{
+    my $line_options = shift;
+
+    my $arguments = shift;
+
+    my $length = $line_options->{length};
+
+    my $message = $arguments->{message};
+
+    if (length $message > $length)
+    {
+	print substr($message, 0, $length);
+    }
+    else
+    {
+	print $message;
+    }
+}
+
+
 # print iterations progress.
 #
 # modified from https://stackoverflow.com/questions/3173320/text-progress-bar-in-terminal-with-block-characters
@@ -9065,27 +9100,6 @@ sub progress
     my $message = "$prefix|$bar| $percent$suffix";
 
     print $message;
-}
-
-
-sub note
-{
-    my $line_options = shift;
-
-    my $arguments = shift;
-
-    my $length = $line_options->{length};
-
-    my $message = $arguments->{message};
-
-    if (length $message > $length)
-    {
-	print substr($message, 0, $length);
-    }
-    else
-    {
-	print $message;
-    }
 }
 
 
