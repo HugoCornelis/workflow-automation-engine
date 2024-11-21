@@ -9350,7 +9350,9 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+    my $message = "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
+
+    $self->message("message_error", { message => $message, }, );
 }
 
 
