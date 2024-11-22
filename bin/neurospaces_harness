@@ -9046,20 +9046,14 @@ sub note
 
     my $message = $arguments->{message};
 
-    my $counter_message = "$message";
-
-    my $newline_count = $counter_message =~ tr/\n/\n/;
-
     if (length $message > $length)
     {
-	print substr($message, 0, $length);
-    }
-    else
-    {
-	print $message;
+	$message = substr($message, 0, $length);
     }
 
-    print ($cursor_up x $newline_count);
+    my $newline_count = $message =~ tr/\n/\n/;
+
+    print $message . ($cursor_up x $newline_count);
 }
 
 
