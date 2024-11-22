@@ -76,53 +76,59 @@ my $global_console_window_configuration
 			  "line_number" => 0,
 			  "prompt" => "   Progress: ",
 			 },
-       "message_harnessing" => {
-				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-				"length" => 120,
-				"line_number" => 1,
-				"prompt" => "    Harness: ",
-			       },
        "message_module" => {
 			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			    "length" => 120,
 			    "line_number" => 2,
 			    "prompt" => "     Module: ",
 			   },
+       "message_harnessing" => {
+				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+				"length" => 120,
+				"line_number" => 3,
+				"prompt" => "    Harness: ",
+			       },
        "message_command" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			     "length" => 120,
-			     "line_number" => 3,
+			     "line_number" => 4,
 			     "prompt" => "    Command: ",
 			    },
        "message_test" => {
 			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			  "length" => 120,
-			  "line_number" => 4,
+			  "line_number" => 5,
 			  "prompt" => "       Test: ",
 			 },
+       "message_details" => {
+			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+			     "length" => 120,
+			     "line_number" => 6,
+			     "prompt" => "    Details: ",
+			    },
        "message_info" => {
 			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			  "length" => 120,
-			  "line_number" => 5,
+			  "line_number" => 8,
 			  "prompt" => "Information: ",
 			 },
        "message_warning" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			     "length" => 120,
-			     "line_number" => 6,
+			     "line_number" => 10,
 			     "prompt" => "    Warning: ",
 			    },
        "message_error" => {
 			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 			   "length" => 120,
-			   "line_number" => 7,
-			   "prompt" => " Test Error: ",
+			   "line_number" => 11,
+			   "prompt" => " Last Error: ",
 			  },
        "end" => {
 		 "enabled" => "yes",
 		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
 		 "length" => 120,
-		 "line_number" => 10,
+		 "line_number" => 12,
 		 "prompt" => "   Finished: ",
 		},
       };
@@ -2218,7 +2224,7 @@ sub _prepare_run
 
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message("message_test", "*** Shell: timeout $timeout $shell\n");
+	$reporter->report_message("message_details", "*** Shell: timeout $timeout $shell\n");
 
 	system "timeout $timeout $shell";
 
@@ -2267,7 +2273,7 @@ sub _process_write
     {
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message("message_test", "*** Write: $write\n");
+	$reporter->report_message("message_details", "*** Write: $write\n");
 
 	$executor->{expect_object}->send("$write\n");
     }
@@ -2427,19 +2433,19 @@ sub ct_run_command
 
 	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 	{
-	    $reporter->report_message("message_test", "*** Converting seen \\x0a to \\x0d \\x0a newlines\n");
+	    $reporter->report_message("message_details", "*** Converting seen \\x0a to \\x0d \\x0a newlines\n");
 
 	    $read =~ s(\x0a)(\x0d\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    $reporter->report_message("message_test", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
+	    $reporter->report_message("message_details", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    $reporter->report_message("message_test", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
+	    $reporter->report_message("message_details", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
@@ -2646,7 +2652,7 @@ sub ct_run_command
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_test", "*** Application output file: $application_output_file (in $pwd)\n");
+    $reporter->report_message("message_details", "*** Application output file: $application_output_file (in $pwd)\n");
 
     # and compare it with the expected output file
 
@@ -2660,7 +2666,7 @@ sub ct_run_command
 
     if ($expected_output_file)
     {
-	$reporter->report_message("message_test", "*** Expected output file: $expected_output_file\n");
+	$reporter->report_message("message_details", "*** Expected output file: $expected_output_file\n");
 
 	$expected_output = `cat "$expected_output_file"`;
     }
@@ -4063,7 +4069,7 @@ sub ec_examine
 
 	if ($comment)
 	{
-	    $reporter->report_message("message_info", "*** Comment: $comment");
+	    $reporter->report_message("message_details", "*** Comment: $comment");
 	}
     }
 
@@ -4130,7 +4136,7 @@ sub wait
     {
 	my $reporter = $self->{reporter};
 
-	$reporter->report_message("message_test", "*** Wait: $wait seconds\n");
+	$reporter->report_message("message_details", "*** Wait: $wait seconds\n");
 
 	select(undef, undef, undef, $wait);
     }
@@ -9370,8 +9376,10 @@ sub report_message
 
     if ($type eq "message_harnessing"
         or $type eq "message_module"
+        or $type eq "message_info"
         or $type eq "message_test"
-        or $type eq "message_command")
+        or $type eq "message_command"
+	or $type eq "message_details")
     {
 	$self->message($type, { message => $message, }, );
     }
