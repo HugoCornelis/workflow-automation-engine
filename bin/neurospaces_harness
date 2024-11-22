@@ -1939,10 +1939,6 @@ sub rebless
 
 		    my $expected_output_file = $read->{expected_output_file};
 
-		    local $/;
-
-		    my $application_output = `cat "$application_output_file"`;
-
 		    if ($expected_output_file)
 		    {
 		    }
@@ -2662,7 +2658,7 @@ sub ct_run_command
 
     local $/;
 
-    my $application_output = `cat "$application_output_file"`;
+    my $application_output = $self->file_content_read($execution_context, "command_test $self->{description}", $application_output_file);
 
     my $expected_output;
 
@@ -2670,7 +2666,7 @@ sub ct_run_command
     {
 	$reporter->report_message("message_details", "*** Expected output file: $expected_output_file\n");
 
-	$expected_output = `cat "$expected_output_file"`;
+	$expected_output = $self->file_content_read($execution_context, "command_test $self->{description}", $expected_output_file);
     }
     elsif (defined $read->{expected_output})
     {
@@ -2702,6 +2698,52 @@ sub ct_run_command
     # return the final test result
 
     return $test_result;
+}
+
+
+sub file_content_read
+{
+    my $command_test = shift;
+
+    my $execution_context = shift;
+
+    my $description = shift;
+
+    my $filename = shift;
+
+    my $content;
+
+    use IO::File;
+
+    my $file = IO::File->new("<$filename");
+
+    if ($file)
+    {
+	local $/; # enable 'slurp' mode
+
+	$content = <$file>;
+
+	$file->close();
+    }
+    else
+    {
+	my $module_definition = $execution_context->get_module_definition();
+
+	my $module_name = $module_definition->{name};
+
+	my $reporter = $execution_context->{reporter};
+
+	$reporter->report_error_add
+	    (
+	     {
+	      description => "file open error for $description",
+	      error => "$description cannot open file $filename",
+	      module_name => $module_name,
+	     },
+	    );
+    }
+
+    return $content;
 }
 
 
