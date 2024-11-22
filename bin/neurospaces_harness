@@ -9022,7 +9022,7 @@ sub message
 
 	if ($line ne "end")
 	{
-	    print ($cursor_up x $line_number);
+	    print "\r" . ($cursor_up x $line_number);
 
 	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
 
