@@ -1153,9 +1153,11 @@ sub rebless
 {
     my $command_definition = shift;
 
+    # by default we have a regular command definition, but the hacked exceptions are ...
+
     my $target_package = "Heterarch::Test::CommandDefinition";
 
-    # we have to either instantiate an object that produces output ...
+    # ... we have to either instantiate an object that produces output ...
 
     if ($command_definition->{class})
     {
