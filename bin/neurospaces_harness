@@ -3639,8 +3639,8 @@ sub is_disabled
 	{
 	    my $reporter = $self->{reporter};
 
-	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)");
+# Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
 	return 1;
