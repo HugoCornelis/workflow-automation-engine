@@ -17,7 +17,7 @@ use YAML;
 
 my $option_check_test_names;
 my $option_config_filename = './tests.config';
-my $option_console_type = 'linear';
+my $option_console_type = 'status';
 our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
