@@ -6359,7 +6359,7 @@ sub generate_command_hash_typed
 
     my $result = {};
 
-    my $commands_subs = generate_command_hash_subs($with_feature_subs);
+    my $commands_subs = generate_command_hash_subs("Command::", $with_feature_subs);
 
     $result
 	= {
@@ -6458,8 +6458,18 @@ sub generate_command_hash_yaml
 }
 
 
+#
+# generate all the subs in the given package and return them as a hash
+# with the values defining their type.
+#
+# with_feature_subs is either "with help subs" or "with completion
+# subs".
+#
+
 sub generate_command_hash_subs
 {
+    my $package_name = shift;
+
     my $with_feature_subs = shift;
 
     # generate a list of the available command subroutines
@@ -6476,7 +6486,7 @@ sub generate_command_hash_subs
 
 		       map
 		       {
-			   "Command::$_";
+			   "$package_name$_";
 		       }
 
 		       # select only code references
@@ -7206,6 +7216,15 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 			    },
 	       %$known_command_packages_builtin,
 	      };
+
+	my $module_all_help
+	    = [
+	       map
+	       {
+		   generate_command_hash_subs($_, "with help subs");
+	       }
+	       keys %$known_command_packages,
+	      ];
 
 	if ($option_help_module)
 	{
