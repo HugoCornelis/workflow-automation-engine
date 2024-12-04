@@ -988,7 +988,7 @@ sub cd_construct_command_line
 
     # if we have a command_prefix
 
-    if ($command_prefix
+    if (defined $command_prefix
 	and scalar @$command_prefix)
     {
 	# the command is the first element of the command prefix, the rest are arguments
@@ -1010,6 +1010,7 @@ sub cd_construct_command_line
 	    = {
 	       arguments => $command_and_arguments,
 	       command => $command,
+	       original_command => $command_line,
 	      };
 
 	return $command_line_object;
@@ -1037,12 +1038,15 @@ sub cd_construct_command_line
 
 	my $command_arguments = [ @$command_array, @$argument_array, ];
 
+	my $command_line = join ' ', @$command_arguments;
+
 	my $command = shift @$command_arguments;
 
 	my $command_line_object
 	    = {
 	       arguments => $command_arguments,
 	       command => $command,
+	       original_command => $command_line,
 	      };
 
 	return $command_line_object;
@@ -1205,6 +1209,20 @@ sub spawn_new
 
     my $command_line = $execution_context->ec_construct_command_line($command_definition);
 
+    if (defined $option_debugging
+	and $option_debugging eq 'spawn_new')
+    {
+	use YAML;
+
+	print Dump(
+		   {
+		    option_debugging => {
+					 command_line => $command_line,
+					},
+		   },
+		  );
+    }
+
     my $test_startup = "yes, do the startup testing";
 
     if (exists $command_line->{command})
@@ -1277,7 +1295,7 @@ sub spawn_new
 
 		$global_running_command_definition = $command_line;
 
-		$reporter->report_message("message_command", "*** Executing $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
+		$reporter->report_message("message_command", "*** Executing $command $command_line->{original_command}");
 
 		# remember to do startup testing
 
@@ -1289,7 +1307,7 @@ sub spawn_new
 	    }
 	    else
 	    {
-		$reporter->report_message("message_command", "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n");
+		$reporter->report_message("message_command", "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments));
 
 		$test_startup = 0;
 	    }
