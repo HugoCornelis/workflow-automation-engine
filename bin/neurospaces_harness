@@ -9086,7 +9086,7 @@ sub message
 
         my $user_message = &$formatter($formatter_options, $arguments);
 
-	my $control_suffix = ($line ne "end") ? "\r" . ($cursor_up x $line_number) : "\n";
+	my $control_suffix = ($line ne "end") ? ("\r" . ($cursor_up x $line_number)) : "\n";
 
 	_emit($control_prefix, $user_message, $control_suffix);
 
@@ -9108,11 +9108,15 @@ sub _emit
 
     my $control_suffix = shift;
 
+    # make sure we end the cursor where we started with it
+
     my $newline_count = $user_message =~ tr/\n/\n/;
 
     my $message = $user_message . ($cursor_up x $newline_count);
 
-    print "$control_prefix$message$control_suffix";
+    # print the message at the correct location and move the cursor back to the origin
+
+    print $control_prefix . $message . $control_suffix;
 }
 
 
