@@ -9048,29 +9048,43 @@ sub message
     {
 	my $line_number = $self->{$line}->{line_number};
 
-	print $cursor_forced_down x $line_number . $erase_line;
+	my $control_prefix = $cursor_forced_down x $line_number . $erase_line;
 
-	print "\r$self->{$line}->{prompt}";
+	$control_prefix .= "\r$self->{$line}->{prompt}";
 
 	my $formatter_options = $self->{$line};
 
 	my $formatter = $self->{$line}->{formatter};
 
-        &$formatter($formatter_options, $arguments);
+        my $user_message = &$formatter($formatter_options, $arguments);
+
+	my $control_suffix = ($line ne "end") ? "\r" . ($cursor_up x $line_number) : "\n";
+
+	_emit($control_prefix, $user_message, $control_suffix);
 
 	if ($line ne "end")
 	{
-	    print "\r" . ($cursor_up x $line_number);
-
 	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
 
 	    select()->flush();
 	}
-	else
-	{
-	    print "\n";
-	}
     }
+}
+
+
+sub _emit
+{
+    my $control_prefix = shift;
+
+    my $user_message = shift;
+
+    my $control_suffix = shift;
+
+    my $newline_count = $user_message =~ tr/\n/\n/;
+
+    my $message = $user_message . ($cursor_up x $newline_count);
+
+    print "$control_prefix$message$control_suffix";
 }
 
 
@@ -9089,9 +9103,7 @@ sub note
 	$message = substr($message, 0, $length);
     }
 
-    my $newline_count = $message =~ tr/\n/\n/;
-
-    print $message . ($cursor_up x $newline_count);
+    return $message;
 }
 
 
@@ -9180,7 +9192,7 @@ sub progress
 
     my $message = "$prefix|$bar| $percent$suffix";
 
-    print $message;
+    return $message;
 }
 
 
