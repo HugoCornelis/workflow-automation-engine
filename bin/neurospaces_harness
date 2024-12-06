@@ -203,7 +203,7 @@ $SIG{'__DIE__'}
 
 	  if ($global_configuration_initialized)
 	  {
-	      report_exit(3, @_);
+	      report_exit({ exit_code => 3, reason => [ @_, ] , }, );
 	  }
 	  else
 	  {
@@ -219,7 +219,7 @@ $SIG{'INT'}
 
 	  if ($global_configuration_initialized)
 	  {
-	      report_exit(2);
+	      report_exit({ exit_code => 2, }, );
 	  }
 	  else
 	  {
@@ -577,7 +577,7 @@ sub main
 
     # final report
 
-    report_exit(0, $test_library);
+    report_exit({ exit_code => 0, reporter => $reporter, }, );
 }
 
 
@@ -769,9 +769,23 @@ options:
 
 sub report_exit
 {
-    my $exit_code = shift;
+    my $options = shift;
 
-    my $description = shift;
+    my $exit_code = $options->{exit_code};
+
+    my $reporter;
+
+    if (exists $options->{reporter})
+    {
+	$reporter = $options->{reporter};
+    }
+
+    my $description = "";
+
+    if (exists $options->{reason})
+    {
+	$description = $options->{reason};
+    }
 
     if (defined $description
         && $exit_code eq 3)
@@ -794,7 +808,14 @@ sub report_exit
     }
     else
     {
-	print $global_fd_output "*** Info: See '$report_filename' for the detailed report\n";
+	# if ($reporter)
+	# {
+	#     $reporter->report_message_info("message_info", "See '$report_filename' for the detailed report.");
+	# }
+	# else
+	{
+	    print $global_fd_output "*** Info: See '$report_filename' for the detailed report\n";
+	}
     }
 
     # if email enabled by the options
@@ -906,8 +927,15 @@ Email was not sent.
     }
     else
     {
-	print $global_fd_output "No email sent.
+	# if ($reporter)
+	# {
+	#     $reporter->report_message_info("message_info", "No email sent.");
+	# }
+	# else
+	{
+	    print $global_fd_output "No email sent.
 ";
+	}
     }
 
     # if there were errors
