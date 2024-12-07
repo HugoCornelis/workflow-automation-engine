@@ -3002,8 +3002,8 @@ sub is_selected_by_tag
     {
 	if ($global_test_report->{output_format} eq 'executor')
 	{
-	    $reporter->report_message_info("message_info", "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).");
-# Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+	    $reporter->report_message_info("message_info", "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
 	$global_test_report->{not_selected_by_tag}->{elements}->{$element_name} = 'not_selected_by_tag';
@@ -3391,8 +3391,8 @@ sub ec_end
 	}
 	else
 	{
-	    $reporter->report_message_end($message_level, "End for tests of $description");
-# Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+	    $reporter->report_message_end($message_level, "End for tests of $description
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
     }
 
@@ -3681,8 +3681,8 @@ sub is_disabled
 	{
 	    my $reporter = $self->{reporter};
 
-	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)");
-# Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
 
 	return 1;
@@ -5082,32 +5082,37 @@ sub ex_terminate
 
     my $test_module_library_contents = shift;
 
-    # yaml out the test report
+    # # yaml out the test report
 
-    my $report_yaml
-	= {
-	   description => $global_test_report->{description},
-	  };
+    # my $report_yaml
+    # 	= {
+    # 	   description => $global_test_report->{description},
+    # 	  };
 
-    # add output specific to the output selection
+    # # add output specific to the output selection
 
-    if ($option_report_disabled)
-    {
-	$report_yaml->{disabled} = $global_test_report->{disabled};
-    }
+    # if ($option_report_disabled)
+    # {
+    # 	$report_yaml->{disabled} = $global_test_report->{disabled};
+    # }
 
-    $report_yaml->{errors} = $global_test_report->{errors};
-    $report_yaml->{global} = $global_test_report->{global};
+    # $report_yaml->{errors} = $global_test_report->{errors};
+    # $report_yaml->{global} = $global_test_report->{global};
 
-    use YAML;
+    # use YAML;
 
-    my $report_text = "\n" . Dump($report_yaml);
+    # my $report_text = "\n" . Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_info", "$report_text\n");
+    $reporter->report_message("message_info", "
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) in total)
+ Started at: $global_test_report->{global}->{time_start},
+Finished at: $global_test_report->{global}->{time_end}.
+");
+    # $reporter->report_message("message_info", "$report_text\n");
 
     #! this could be an error message
 
