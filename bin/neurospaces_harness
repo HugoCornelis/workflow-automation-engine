@@ -1590,8 +1590,6 @@ sub after_testing
 
     if ($option_timings)
     {
-	my $module_definition = $self->{module_definition};
-
 	my $module_name = $module_definition->{name};
 
 	my $description = $self->{description};
@@ -1609,8 +1607,6 @@ sub after_testing
 
 	if ($test_result->{error})
 	{
-	    my $module_definition = $self->{module_definition};
-
 	    # if allowed to compare numerically
 
 	    if ((!$self->{string_only}
