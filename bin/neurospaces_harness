@@ -53,7 +53,7 @@ my $option_show;
 my $option_show_command_tests;
 my $option_tags = [];
 my $option_timeout_multiplier = 1;
-my $option_timings;
+my $option_timings = 1;
 my $option_trace;
 our $option_verbose;
 
@@ -1594,7 +1594,9 @@ sub after_testing
 
 	my $description = $self->{description};
 
-	$global_test_report->{timings}->{$module_name}->{$description} = $time_elapsed;
+	my $test_counter = $execution_context->get_command_test_counter_global();
+
+	$global_test_report->{timings}->{$module_name}->{"$test_counter. $description"} = $time_elapsed;
     }
 
     # attempt to correct if the result is almost correct
@@ -3130,6 +3132,12 @@ our $command_test_counter_per_module = 0;
 our $command_test_counter_global = 0;
 
 our $module_counter_global = 0;
+
+
+sub get_command_test_counter_global
+{
+    return $command_test_counter_global;
+}
 
 
 sub _maintain_counters
