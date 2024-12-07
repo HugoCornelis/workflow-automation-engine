@@ -793,150 +793,11 @@ sub report_exit
 	print STDERR "*** die: $description\n";
     }
 
-    # write the full report to a file
-
-    my $report_filename = ">/tmp/report_$global_config->{package}->{name}.yml";
-
-    eval
-    {
-	YAML::DumpFile($report_filename, $global_test_report);
-    };
-
-    if ($@)
-    {
-	print STDERR "*** Error: Failed to write output report to $report_filename\n";
-    }
-    else
-    {
-	# if ($reporter)
-	# {
-	#     $reporter->report_message_info("message_info", "See '$report_filename' for the detailed report.");
-	# }
-	# else
-	{
-	    print $global_fd_output "*** Info: See '$report_filename' for the detailed report\n";
-	}
-    }
+    report_file_dump();
 
     # if email enabled by the options
 
-    if ($option_email)
-    {
-	# check for a default route
-
-	#! from perl/basic.t
-
-	my $no_default_route = (`/sbin/route` =~ /default/ ? '' : 'no default route to the internet found');
-
-	if (!$no_default_route)
-	{
-	    # ask if sending an email is ok
-
-	    my $default_answer_prompt = $global_error_count ? "Y/n" : "y/N";
-
-	    print $global_fd_output "\n---\n  These tests generated $global_error_count error(s)";
-	    print $global_fd_output ( $global_error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
-	    print $global_fd_output "\n  Ok to send an email to hugo.cornelis\@gmail.com for this test report,\n  this email will not reveal your identity to the recipient ?  [$default_answer_prompt]";
-
-	    my $answer = readline(*STDIN);
-
-	    # send an email if ok
-
-	    if ($answer =~ /^y/)
-	    {
-		#t perhaps should consider Mail::Builder, don't know
-
-		if ($loaded_mail_sender)
-		{
-		    my $sender
-			= Mail::Sender->new
-			    (
-			     {
-# 			      smtp => 'googlemail.l.google.com',
-			      smtp => 'mta1.uthscsa.edu',
-			      from => 'hugo.cornelis@gmail.com',
-			     },
-			    );
-
-		    print $global_fd_output "Sending ... should not take more than 30 seconds
-";
-
-		    my $message
-			= (
-			   "neurospaces_harness test report\n"
-			   . "Generated on " . `date` . "\n"
-			   . "\n========\n"
-			   . Dump($global_test_report)
-			   . "\n========\n"
-			  );
-
-		    $sender->MailMsg
-			(
-			 {
-			  to => 'cornelis@uthscsa.edu',
-			  subject => '[neurospaces_harness] test report',
-			  msg => $message,
-			 },
-			);
-
-		    # 	    $sender->Attach
-		    # 		(
-		    # 		 {
-		    # 		  description => 'global_test_report',
-		    # 		 },
-		    # 		);
-
-		    $sender->Close();
-
-		    if ($sender->{error})
-		    {
-			print STDERR
-			    "*** Error: $sender->{error}
-Email was not sent.
-";
-		    }
-		    else
-		    {
-			print $global_fd_output
-			    "Email was sent.
-";
-		    }
-		}
-		else
-		{
-		    print STDERR
-			"*** Error: Cannot load the perl module Mail::Sender, contact your sysadmin to install this perl module.
-(use the shell command \"sudo perl -MCPAN -e 'install Mail::Sender'\")
-Email was not sent.
-";
-		}
-	    }
-	    else
-	    {
-		print $global_fd_output
-		    "Email was not sent.
-";
-	    }
-	}
-	else
-	{
-	    print STDERR "*** Warning: No default route to the internet found.
-Email was not sent.
-";
-	}
-    }
-    else
-    {
-	# if ($reporter)
-	# {
-	#     $reporter->report_message_info("message_info", "No email sent.");
-	# }
-	# else
-	{
-	    print $global_fd_output "No email sent.
-";
-	}
-    }
+    report_send_by_email();
 
     # if there were errors
 
@@ -963,6 +824,159 @@ Email was not sent.
 
 	exit $exit_code;
     }
+}
+
+
+sub report_file_dump
+{
+    my $reporter = shift;
+
+    # write the full report to a file
+
+    my $report_filename = ">/tmp/report_$global_config->{package}->{name}.yml";
+
+    eval
+    {
+	YAML::DumpFile($report_filename, $global_test_report);
+    };
+
+    if ($@)
+    {
+	print STDERR "*** Error: Failed to write output report to $report_filename\n";
+    }
+    else
+    {
+	# if ($reporter)
+	# {
+	#     $reporter->report_message_info("message_info", "See '$report_filename' for the detailed report.");
+	# }
+	# else
+	{
+	    print $global_fd_output "*** Info: See '$report_filename' for the detailed report\n";
+	}
+    }
+}
+
+
+sub report_send_by_email
+{
+    my $reporter = shift;
+
+    if (!$option_email)
+    {
+	# if ($reporter)
+	# {
+	#     $reporter->report_message_info("message_info", "No email sent.");
+	# }
+	# else
+	{
+	    print $global_fd_output "No email sent.
+";
+	}
+
+	return '';
+    }
+
+    # check for a default route
+
+    #! from perl/basic.t
+
+    my $no_default_route = (`/sbin/route` =~ /default/ ? '' : 'no default route to the internet found');
+
+    if (!$no_default_route)
+    {
+	# ask if sending an email is ok
+
+	my $default_answer_prompt = $global_error_count ? "Y/n" : "y/N";
+
+	print $global_fd_output "\n---\n  These tests generated $global_error_count error(s)";
+	print $global_fd_output ( $global_error_count ? "  Because errors were found, you should really consider sending an email to inform the developer of this software package\n" : "" );
+	print $global_fd_output "\n  Ok to send an email to hugo.cornelis\@gmail.com for this test report,\n  this email will not reveal your identity to the recipient ?  [$default_answer_prompt]";
+
+	my $answer = readline(*STDIN);
+
+	# send an email if ok
+
+	if ($answer =~ /^y/)
+	{
+	    #t perhaps should consider Mail::Builder, don't know
+
+	    if ($loaded_mail_sender)
+	    {
+		my $sender
+		    = Mail::Sender->new
+		    (
+		     {
+		      # smtp => 'googlemail.l.google.com',
+		      smtp => 'mta1.uthscsa.edu',
+		      from => 'hugo.cornelis@gmail.com',
+		     },
+		    );
+
+		print $global_fd_output "Sending ... should not take more than 30 seconds
+";
+
+		my $message
+		    = (
+		       "neurospaces_harness test report\n"
+		       . "Generated on " . `date` . "\n"
+		       . "\n========\n"
+		       . Dump($global_test_report)
+		       . "\n========\n"
+		      );
+
+		$sender->MailMsg
+		    (
+		     {
+		      to => 'cornelis@uthscsa.edu',
+		      subject => '[neurospaces_harness] test report',
+		      msg => $message,
+		     },
+		    );
+
+		# 	    $sender->Attach
+		# 		(
+		# 		 {
+		# 		  description => 'global_test_report',
+		# 		 },
+		# 		);
+
+		$sender->Close();
+
+		if ($sender->{error})
+		{
+		    print STDERR "*** Error: $sender->{error}
+Email was not sent.
+";
+		}
+		else
+		{
+		    print $global_fd_output "Email was sent.
+";
+		}
+	    }
+	    else
+	    {
+		print STDERR "*** Error: Cannot load the perl module Mail::Sender, contact your sysadmin to install this perl module.
+(use the shell command \"sudo perl -MCPAN -e 'install Mail::Sender'\")
+Email was not sent.
+";
+	    }
+	}
+	else
+	{
+	    print $global_fd_output "Email was not sent.
+";
+	}
+    }
+    else
+    {
+	print STDERR "*** Warning: No default route to the internet found.
+Email was not sent.
+";
+    }
+
+    return 'email sent';
 }
 
 
