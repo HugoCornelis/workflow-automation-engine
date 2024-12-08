@@ -678,6 +678,11 @@ sub parse_options
 	$global_test_report->{output_format} = 'not_executor';
     }
 
+    if ($option_output ne "Heterarch::Test::Executor")
+    {
+	$option_console_type = 'linear';
+    }
+
     if (not scalar @$option_output_levels)
     {
 	use Clone 'clone';
