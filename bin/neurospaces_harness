@@ -518,6 +518,9 @@ sub main
 
     $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = $expected_test_total;
 
+    # for an unknown total testing of the progress bar
+    # $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = 0;
+
     my $reporter
 	= $reporter_class->new(
 			       {
@@ -9184,6 +9187,79 @@ sub note
 #         fill        - Optional  : bar fill character (Str)
 #     """
 
+my $black   = "\033[0;30m";
+my $red     = "\033[0;31m";
+my $green   = "\033[0;32m";
+my $yellow  = "\033[0;33m";
+my $white   = "\033[0;37m";
+my $nocolor = "\033[0m";
+
+my $simple_bar_spinner = [ '<->', '<\>', '<|>', '</>', ];
+
+# based on https://stackoverflow.com/questions/2685435/cooler-ascii-spinners
+
+my $arrow_spinner = [ '←', '↖', '↑', '↗', '→', '↘', '↓', '↙', ];
+my $impatient_clock_hands_spinner = [ '◴', '◷', '◶', '◵', ];
+my $impatient_pie_clock_spinner = [ '◐', '◓', '◑', '◒', ];
+my $jumping_block_spinner = [ '▖', '▘', '▝', '▗', ];
+my $overdoing_braille_spinner = [ '⣾', '⣽', '⣻', '⢿', '⡿', '⣟', '⣯', '⣷', ];
+my $right_angle__spinner = [ '┤', '┘', '┴', '└', '├', '┌', '┬', '┐', ];
+my $rising_block_spinner = ['▁','▃','▄','▅','▆','▇','█','▇','▆','▅','▄','▃', ];
+my $simple_braille_spinner = [ '⠁', '⠂', '⠄', '⡀', '⢀', '⠠', '⠐', '⠈', ];
+my $square_corner_spinner = [ '◰', '◳', '◲', '◱', ];
+my $triangle_spinner = [ '◢', '◣', '◤', '◥', ];
+my $tworolling_eyes_spinner = [ '◡◡', '⊙⊙', '◠◠', ];
+my $vertical_line_spinner = [ '▉', '▊', '▋', '▌', '▍', '▎', '▏', '▎', '▍', '▌', '▋', '▊', '▉', ];
+
+my $careted_rising_block_spinner = ['<▁▁▁>','<▃▃▃>','<▄▄▄>','<▅▅▅>','<▆▆▆>','<▇▇▇>','<███>','<▇▇▇>','<▆▆▆>','<▅▅▅>','<▄▄▄>','<▃▃▃>', ];
+
+my $colored_careted_rising_block_spinner
+    = [
+        "<$green▁▁▁$nocolor>",
+        "<$green▃▃▃$nocolor>",
+       "<$yellow▄▄▄$nocolor>",
+       "<$yellow▅▅▅$nocolor>",
+       "<$yellow▆▆▆$nocolor>",
+          "<$red▇▇▇$nocolor>",
+          "<$red███$nocolor>",
+          "<$red▇▇▇$nocolor>",
+          "<$red▆▆▆$nocolor>",
+       "<$yellow▅▅▅$nocolor>",
+       "<$yellow▄▄▄$nocolor>",
+        "<$green▃▃▃$nocolor>",
+      ];
+
+my $long_block_spinner = [ '█████', ];
+
+# more can be found here:
+# https://antofthy.gitlab.io/info/ascii/Spinners.txt
+# https://gist.github.com/asika32764/19956edcc5e893b2cbe3768e91590cf1
+
+my $spinners
+    = {
+       arrow_spinner => $arrow_spinner,
+       careted_rising_block_spinner => $careted_rising_block_spinner,
+       colored_careted_rising_block_spinner => $colored_careted_rising_block_spinner,
+       impatient_clock_hands_spinner => $impatient_clock_hands_spinner,
+       impatient_pie_clock_spinner => $impatient_pie_clock_spinner,
+       jumping_block_spinner => $jumping_block_spinner,
+       long_block_spinner => $long_block_spinner,
+       overdoing_braille_spinner => $overdoing_braille_spinner,
+       right_angle__spinner => $right_angle__spinner,
+       rising_block_spinner => $rising_block_spinner,
+       simple_bar_spinner => $simple_bar_spinner,
+       simple_braille_spinner => $simple_braille_spinner,
+       square_corner_spinner => $square_corner_spinner,
+       triangle_spinner => $triangle_spinner,
+       tworolling_eyes_spinner => $tworolling_eyes_spinner,
+       vertical_line_spinner => $vertical_line_spinner,
+     };
+
+my $global_spinner = $spinners->{careted_rising_block_spinner};
+my $global_scalar_spinner = scalar @$global_spinner;
+
+my $global_iteration_no_total = 0;
+
 sub progress
 {
     my $line_options = shift;
@@ -9231,26 +9307,68 @@ sub progress
 
     my $without_bar_length = length($without_bar);
 
-    my $percent = '';
+    my $message;
 
-    my $needs_percentage = exists $options->{percentage} ? $options->{percentage} : 'by default';
-
-    if ($needs_percentage)
+    if ($total == 0)
     {
-        $percent = sprintf("%.$options->{decimals}f", 100 * ($iteration / $total));
+	if ($iteration == -1)
+	{
+	    $global_iteration_no_total++;
 
-        $percent = "$percent% ";
+	    $iteration = $global_iteration_no_total;
+	}
 
-	$without_bar_length += 5
+	my $bar_prefix = '-';
+
+        my $bar_cursor = $global_spinner->[$iteration % ($global_scalar_spinner)];
+
+        my $bar_suffix = '-';
+
+	my $bar_prefix_length = $iteration;
+
+        my $bar_length = $length - $without_bar_length - length($bar_cursor);
+
+        my $bar_wrap_arounds = int($iteration / $bar_length);
+
+        my $bar_direction = $bar_wrap_arounds % 2; # 0: to the right and requires addition, 1: to the left and requires subtraction
+
+        my $bar_cursor_position = $bar_prefix_length % $bar_length;
+
+        if ($bar_direction == 1)
+	{
+            $bar_cursor_position = $bar_length - $bar_cursor_position;
+
+            $bar_cursor = $global_spinner->[($global_scalar_spinner) - $iteration % ($global_scalar_spinner) - 1];
+	}
+
+        # bar_cursor = f"<{iteration},{bar_wrap_arounds},{bar_direction},{bar_prefix_length},{bar_cursor_position},{bar_length}>"
+        my $bar = ($options->{empty} x $bar_cursor_position) . $bar_cursor . ($options->{empty} x ($bar_length - $bar_cursor_position));
+
+        $message = "$prefix|$bar| $suffix";
     }
+    else
+    {
+	my $percent = '';
 
-    my $bar_length = $line_options->{length} - $without_bar_length;
+	my $needs_percentage = exists $options->{percentage} ? $options->{percentage} : 'by default';
 
-    my $filledLength = int($bar_length * $iteration / $total);
+	if ($needs_percentage)
+	{
+	    $percent = sprintf("%.$options->{decimals}f", 100 * ($iteration / $total));
 
-    my $bar = ($options->{fill} x $filledLength) . ($options->{empty} x ($bar_length - $filledLength));
+	    $percent = "$percent% ";
 
-    my $message = "$prefix|$bar| $percent$suffix";
+	    $without_bar_length += 5
+	}
+
+	my $bar_length = $line_options->{length} - $without_bar_length;
+
+	my $filledLength = int($bar_length * $iteration / $total);
+
+	my $bar = ($options->{fill} x $filledLength) . ($options->{empty} x ($bar_length - $filledLength));
+
+	$message = "$prefix|$bar| $percent$suffix";
+    }
 
     return $message;
 }
@@ -9564,6 +9682,9 @@ sub report_progress
     my $iteration = shift;
 
     $self->message($type, { iteration => $iteration, }, );
+
+    # for an unknown total testing of the progress bar
+    # $self->message($type, { iteration => -1, }, );
 }
 
 
