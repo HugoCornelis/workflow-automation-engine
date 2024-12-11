@@ -4545,8 +4545,8 @@ our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
 
 our $docker_snapshot_count = 1;
 
-our $docker_command = "docker >/dev/null 2>&1 ";
-
+our $docker_command_no_redirect = 'docker';
+our $docker_command_with_redirect = "$docker_command_no_redirect >/dev/null 2>&1 ";
 
 sub _docker_preparer
 {
@@ -4578,14 +4578,14 @@ sub _docker_preparer
 
 	my $name_image = $harness_class->{name_image};
 
-	system "$docker_command image prune -f";
+	system "$docker_command_with_redirect image prune -f";
 
 	if ($?)
 	{
 	    return \ '_docker_preparer image prune failed';
 	}
 
-	system "$docker_command build --tag $name_image --file $dockerfile .";
+	system "$docker_command_with_redirect build --tag $name_image --file $dockerfile .";
 
 	if ($?)
 	{
@@ -4605,14 +4605,14 @@ sub _docker_preparer
 
     my $name_container = $harness_class->{name_container};
 
-    system "$docker_command container stop -t 3 $name_container";
-    system "$docker_command container rm $name_container";
+    system "$docker_command_with_redirect container stop -t 3 $name_container";
+    system "$docker_command_with_redirect container rm $name_container";
 
     # start the built container
 
     my $name_image = $harness_class->{name_image};
 
-    system "$docker_command run -d -t --name $name_container $name_image";
+    system "$docker_command_with_redirect run -d -t --name $name_container $name_image";
 
     # return no errors
 
@@ -4664,9 +4664,7 @@ sub _generate_command_prefix
 
     my $prefix_docker
 	= [
-	   # I assume this should be $docker_command without the redirection
-
-	   'docker',
+	   $docker_command_no_redirect,
 	   'exec',
 	   '-it',
 	  ];
@@ -4727,7 +4725,7 @@ sub _docker_snapshot
     # see https://docs.docker.com/reference/cli/docker/container/commit/ for how to expose a port during the commit
     # docker commit --change='CMD ["apachectl", "-DFOREGROUND"]' -c "EXPOSE 80" c3f279d17e0a  svendowideit/testimage:version4
 
-    my $command = "$docker_command commit $name_container $name_image";
+    my $command = "$docker_command_with_redirect commit $name_container $name_image";
 
     $docker_snapshot_count++;
 
@@ -4853,7 +4851,7 @@ sub hs_reparer
 
     my $container_name = $self->{class}->{name_container};
 
-    $reporter->report_message("message_harnessing", "*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command exec -it $container_name bash'.)");
+    $reporter->report_message("message_harnessing", "*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command_no_redirect exec -it $container_name bash'.)");
 
     # remove the docker harness identifier from the active harnesses
 
@@ -4931,14 +4929,14 @@ sub _docker_preparer
 
     my $name_container = $harness_class->{name_container};
 
-    system "$docker_command container stop -t 3 $name_container";
-    system "$docker_command container rm $name_container";
+    system "$docker_command_with_redirect container stop -t 3 $name_container";
+    system "$docker_command_with_redirect container rm $name_container";
 
     # start the built container
 
     my $name_image = $harness_class->{name_image};
 
-    system "$docker_command run -d -t --name $name_container $name_image";
+    system "$docker_command_with_redirect run -d -t --name $name_container $name_image";
 
     # return no errors
 
