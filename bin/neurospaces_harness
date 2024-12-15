@@ -212,42 +212,6 @@ my $global_previous_command_side_effects;
 my $global_test_report;
 
 
-$SIG{'__DIE__'}
-    = sub
-      {
-	  use Carp;
-
-	  print STDERR Carp::longmess(@_);
-
-	  $global_test_report->{global}->{status} = 'Died';
-
-	  if ($global_configuration_initialized)
-	  {
-	      report_exit({ exit_code => 3, reason => [ @_, ] , }, );
-	  }
-	  else
-	  {
-	      exit 3;
-	  }
-      };
-
-
-$SIG{'INT'}
-    = sub
-      {
-	  $global_test_report->{global}->{status} = 'Interrupted';
-
-	  if ($global_configuration_initialized)
-	  {
-	      report_exit({ exit_code => 2, }, );
-	  }
-	  else
-	  {
-	      exit 2;
-	  }
-      };
-
-
 sub command_run
 {
     my $command = shift;
@@ -265,6 +229,8 @@ sub command_run
 sub command_run_tests
 {
     my $command = shift;
+
+    initialize_signal_handlers();
 
     # obtain a copy of stdout for the reporters
 
@@ -467,6 +433,10 @@ sub initialize
     initialize_config_environment();
 
     initialize_globals();
+
+    # initialize_signal_handlers() is called in the command executor
+    # because the signal handlers assume that some of the global
+    # variables have been initialized (the $reporter ao.).
 }
 
 
@@ -628,6 +598,45 @@ sub initialize_globals
     # the previous command had no side effects on the loaded model (since there is no model yet)
 
     $global_previous_command_side_effects = 0;
+}
+
+
+sub initialize_signal_handlers
+{
+    $SIG{'__DIE__'}
+	= sub
+          {
+	      use Carp;
+
+	      print STDERR Carp::longmess(@_);
+
+	      $global_test_report->{global}->{status} = 'Died';
+
+	      if ($global_configuration_initialized)
+	      {
+		  report_exit({ exit_code => 3, reason => [ @_, ] , }, );
+	      }
+	      else
+	      {
+		  exit 3;
+	      }
+	  };
+
+
+    $SIG{'INT'}
+	= sub
+          {
+	      $global_test_report->{global}->{status} = 'Interrupted';
+
+	      if ($global_configuration_initialized)
+	      {
+		  report_exit({ exit_code => 2, }, );
+	      }
+	      else
+	      {
+		  exit 2;
+	      }
+	  };
 }
 
 
