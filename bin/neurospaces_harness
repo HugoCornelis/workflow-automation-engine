@@ -67,7 +67,10 @@ my $global_command_configuration
        default_command => "run-tests",
        known_commands => {
 			  "help" => "Show the help page.",
-			  # "module-create" => "Create a new module with the given name.",
+			  "module-create" => {
+					      description => "Create a new module with the given name.",
+					      executor => "command_module_create",
+					     },
 			  # "module-update" => {
 			  # 		      description => "An example of a command with possible subcommands: Update the given module with the given arguments and directives.",
 			  # 		      subcommands => [],
@@ -210,6 +213,151 @@ my $global_error_count = 0;
 our $global_fd_output;
 my $global_previous_command_side_effects;
 my $global_test_report;
+
+
+sub command_module_create
+{
+    my $command = shift;
+
+    my $module_name = shift @ARGV;
+
+    if (! defined $module_name)
+    {
+	die "$0: *** Error: $command expects an argument for the name of the new module";
+    }
+
+    my $summary
+	= {
+	   comment => "This type of comment element can be inserted at any level in the YAML files that define tests.
+
+The top level summary file of a test module gives general information about the module without specifying any tests.
+
+Recognized key words are (in alphabetical order):
+
+description: Gives a general description of the test module.
+disable: Gives the reason why this test module is disabled.
+documentation: Has keywords with information for inclusion in documents.  They are not considered druing tests.
+error: Gives the reason why this test module will always fail.
+harnessing: A harnessing key word defines the container that is used to run the commands to be tested.
+
+In most cases the harnessing keyword has one subkeyword 'class' that defines:
+
+    default_user: The name of the user inside the container running the tests.
+    dockerfile: A relative pathname to the Dockerfile that defines the docker image.
+    identifier: An internal Docker container identifier.
+    name_container: The public name of the Docker container.
+    name_image: The public name of the Docker image that is used to instantiate the container.
+    type: The internal type of the code that is used to manage the container, most commonly 'Heterarch::Test::ExecutionContext::Harness::Docker'.
+
+name: The name of the module, this must match with the pathname of the module.  It is used for error reporting.
+numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+tag: An array of tags associated with this test module.  These are matched with the tags given on the command line.
+
+",
+	   description => "<description of your module>",
+	   documentation => {
+			     explanation => "<a few sentences that explain the purpose of the program being tested>",
+			     purpose => "<a single line description of the purpose of this test module>",
+			    },
+	   name => "<the full pathname of this test module, relative to the test specifications directory>",
+	  };
+
+    my $command_definition1
+	= {
+	   comment => "This type of comment element can be inserted at any level in the YAML files that define tests.
+
+For a concise example, see the second command definition that was generated with this one.
+
+The tests are defined with arrays of command definitions that each can have an array of command tests.
+
+Recognized key words at the level of the command definitions are (in alphabetical order):
+
+class: The name of a perl class that will execute the tests.
+command: The command the must be tested, with space seperated arguments and options.
+command_tests: An array of the tests executed against the command.
+disable: Gives the reason why this test command is disabled.
+description: A single line description of all the tests for the given command.
+error: Gives the reason why this test command will always fail.
+numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+tag: An array of tags associated with this command.  These are matched with the tags given on the command line.
+
+",
+	   command => "# <the command with its single space seperated arguments to be tested>",
+	   command_tests => [
+			     {
+			      comment => "This type of comment element can be inserted at any level in the YAML files that define tests.
+
+The command tests defines an array of tests that must be executed against the command.
+
+Possible keywords are:
+
+application_output_file: The pathname of a file that will be produced by the test.
+description: A single line description: of the executed test.
+disable: Gives the reason why this command test is disabled.
+error: Gives the reason why this command test will always fail.
+expected_output_file: The pathname of a file with the contents that is expected.
+read: The expected output on STDOUT of the command.  This can be a regular expression (take a look at the examples).
+tag: An array of tags associated with this command test.  These are matched with the tags given on the command line.
+tester: A shell command that will be run after the command has produced output (likely to be combined with a wait keyword for reliability and reproducibility).
+timeout: An optional timeout after which the test will fail if the expected output is not seen yet.
+wait: An optional number of seconds to wait before attempting to read from STDIN of the command.
+white_space: If this has the value 'convert seen 0a to 0d 0a newlines', that is what it will do.  This is used when running the tests inside a Docker container.
+write: An optional string to write to STDIN of the command, where the command is then expected to produce the expected output.
+
+
+Note that more keywords have been defined, including for running C and perl code.  They are currently not documented.
+
+",
+			      description => "<a single line description of the specific test, it can be a question that asks what is tested>",
+			      read => "<the output that is expected from running the test>",
+			     },
+			     {
+			      description => "<a single line description of the specific test, it can be a question that asks what is tested>",
+			      read => "<a string that is expected from running the test after writing to STDOUT what is specified with the 'write' keyword>",
+			      write => "<a string that must be written to STDIN>",
+			     },
+			    ],
+	   description => "<a single line description of the command being tested>",
+	  };
+
+    my $command_definition2
+	= {
+	   command => "# <the command with its single space seperated arguments to be tested>",
+	   command_tests => [
+			     {
+			      description => "<a single line description of the specific test, it can be a question that asks what is tested>",
+			      read => "<the output that is expected from running the test>",
+			     },
+			     {
+			      description => "<a single line description of the specific test, it can be a question that asks what is tested>",
+			      read => "<a string that is expected from running the test after writing to STDOUT what is specified with the 'write' keyword>",
+			      timeout => "<the number of seconds to wait before failing the test>",
+			      wait => "<the number of seconds to wait before attempting to read from STDIN>",
+			      write => "<a string that must be written to STDIN>",
+			     },
+			    ],
+	   description => "<a single line description of the command being tested>",
+	  };
+
+    $summary->{command_definitions} = [ $command_definition1, $command_definition2, ];
+
+    # my $path_name_prefix = $global_config->{tests_directory} || "tests/specifications";
+
+    # my $path_name = "$path_name_prefix/$module_name";
+
+    # my $created = path_create($path_name);
+
+    my $result = Heterarch::Test::Library::read_module_dump_yaml_structured($module_name, $summary, $global_config->{tests_directory}, undef);
+
+    if ($result =~ /error/i)
+    {
+	print "$0: Error creating test module $module_name in $global_config->{tests_directory} ($result)\n";
+    }
+    else
+    {
+	print "$0: Created test module $module_name in $global_config->{tests_directory}\n";
+    }
+}
 
 
 sub command_run
@@ -5603,6 +5751,27 @@ sub new
 }
 
 
+sub path_create
+{
+    my $path_name = shift;
+
+    my $created;
+
+    if ( !-d $path_name )
+    {
+	use File::Path qw( make_path );
+
+	$created = make_path($path_name);
+    }
+    else
+    {
+	$created = "exists";
+    }
+
+    return $created;
+}
+
+
 sub randomize_order
 {
     my $test_modules = shift;
@@ -5805,7 +5974,7 @@ sub read_module_process_options
 
     if ($option_dump_yaml_structured)
     {
-	read_module_dump_yaml_structured($pathname, $module_definition, $reporter);
+	read_module_dump_yaml_structured($pathname, $module_definition, "/tmp", $reporter);
     }
 
     # check if the name of the test and the pathname match
@@ -5832,6 +6001,39 @@ sub read_module_process_options
 }
 
 
+sub strings_remove
+{
+    my $strings = shift;
+
+    my $options = shift;
+
+    my $sentence = shift;
+
+    if ($options eq 'with-dash-keep')
+    {
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s(-$string-)(-)g;
+	    $sentence =~ s(^$string-)()g;
+	    $sentence =~ s($string$)()g;
+	}
+    }
+    elsif ($options eq 'without-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s($string)()g;
+	}
+    }
+    else
+    {
+	die "$0: Internal error in strings_remove()";
+    }
+
+    return $sentence;
+}
+
+
 sub sentence_summarize
 {
     my $sentence = shift;
@@ -5840,13 +6042,13 @@ sub sentence_summarize
 
     $result =~ s( )(-)g;
 
-    my $remove_these = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', ];
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', ];
 
-    foreach my $remove_this (@$remove_these)
-    {
-	$result =~ s(-$remove_this-)(-)g;
-	$result =~ s(^$remove_this-)()g;
-    }
+    $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
+
+    my $remove_these_chars = [ '<', '>', ];
+
+    $result = strings_remove($remove_these_chars, 'without-dash', $result);
 
     return $result;
 }
@@ -5858,7 +6060,11 @@ sub read_module_dump_yaml_structured
 
     my $module_definition = shift;
 
+    my $path_prefix = shift;
+
     my $reporter = shift;
+
+    my $result = 'created';
 
     use Clone 'clone';
 
@@ -5868,54 +6074,61 @@ sub read_module_dump_yaml_structured
 
     delete $module_definition->{command_definitions};
 
-    my $module_pathname = "/tmp/$pathname";
+    my $module_pathname = "$path_prefix/$pathname";
 
     $module_pathname =~ s(//)();
     $module_pathname =~ s(\.t$)();
 
-    my $created;
+    my $path_name = "$module_pathname/command_definitions";
 
-    if ( !-d "$module_pathname/command_definitions" )
-    {
-	use File::Path qw( make_path );
-
-	$created = make_path("$module_pathname/command_definitions");
-    }
-    else
-    {
-	$created = "exists";
-    }
+    my $created = path_create($path_name);
 
     if ($created)
     {
 	my $module_summary_filename = "$module_pathname/summary.yml";
 
-	my $module_name = $module_pathname;
-
-	$module_name =~ s(/tmp/$global_config->{tests_directory}/)();
-
-	$module_definition->{name} = $module_name;
-
-	YAML::DumpFile($module_summary_filename, $module_definition);
-
-	my $prefix = 100;
-
-	foreach my $command_definition (@$command_definitions)
+	if (! -f $module_summary_filename)
 	{
-	    my $description = $command_definition->{description};
+	    my $module_name = $module_pathname;
 
-	    my $command_definition_filename = $prefix . "_" . sentence_summarize($description) . ".yml";
+	    $module_name =~ s($path_prefix/)();
 
-	    my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
+	    $module_definition->{name} = "$module_name/summary.yml";
 
-	    YAML::DumpFile($command_definition_pathname, $command_definition);
+	    YAML::DumpFile($module_summary_filename, $module_definition);
 
-	    $prefix += 10;
+	    my $prefix = 100;
+
+	    foreach my $command_definition (@$command_definitions)
+	    {
+		my $description = $command_definition->{description};
+
+		my $command_definition_filename = $prefix . "_" . sentence_summarize($description) . ".yml";
+
+		my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
+
+		if (! -f $command_definition_pathname)
+		{
+		    YAML::DumpFile($command_definition_pathname, $command_definition);
+		}
+		else
+		{
+		    $result = "Error: $command_definition_pathname already exists";
+		}
+
+		$prefix += 10;
+	    }
+	}
+	else
+	{
+	    $result = "Error: $module_summary_filename already exists";
 	}
     }
     else
     {
-	$reporter->report_error_add
+	if ($reporter)
+	{
+	    $reporter->report_error_add
 		(
 		 {
 		  description => "error creating the output module_pathname ($created)",
@@ -5924,7 +6137,16 @@ sub read_module_dump_yaml_structured
 		  subdescription => "error creating the module_pathname ($created)",
 		 },
 		);
+	}
+	else
+	{
+	    die "$0: *** Error: error creating the output module_pathname ($created)";
+	}
+
+	$result = '';
     }
+
+    return $result;
 }
 
 
