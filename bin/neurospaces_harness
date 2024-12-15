@@ -62,6 +62,24 @@ our $option_verbose;
 
 our $global_config;
 
+my $global_command_configuration
+    = {
+       default_command => "run-tests",
+       known_commands => {
+			  "help" => "Show the help page.",
+			  # "module-create" => "Create a new module with the given name.",
+			  # "module-update" => {
+			  # 		      description => "An example of a command with possible subcommands: Update the given module with the given arguments and directives.",
+			  # 		      subcommands => [],
+			  # 		     },
+			  # "query" => "Query the tests, print the query result.",
+			  "run-tests" => {
+					  description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
+					  executor => "command_run_tests",
+					 },
+			 },
+      };
+
 my $global_console_window_configuration
     = {
        "progress_bar" => {
@@ -230,171 +248,27 @@ $SIG{'INT'}
       };
 
 
-sub initialize_config_environment
+sub command_run
 {
-    my $fd_initialization;
+    my $command = shift;
 
-    open($fd_initialization, ">&STDOUT");
+    my $command_executor = $global_command_configuration->{known_commands}->{$command}->{executor};
 
-    my $environment_settings = $global_config->{environment_settings};
-
-    foreach my $environment_setting_name (keys %$environment_settings)
     {
-	my $environment_setting = $environment_settings->{$environment_setting_name};
+	no strict "refs";
 
-	# if simply setting values in the environment
-
-	if (!ref $environment_setting)
-	{
-	    # set the value in the environment
-
-	    $ENV{$environment_setting_name} = $environment_setting;
-	}
-
-	# if additional initialization required
-
-	elsif (ref $environment_setting eq 'HASH')
-	{
-	    # get environment_setting value
-
-	    my $value = $environment_setting->{value};
-
-	    # set the value in the environment
-
-	    $ENV{$environment_setting_name} = $value;
-
-	    # give feedback
-
-	    my $description = $environment_setting->{description};
-
-	    $description =~ s/%value/$value/g;
-
-	    if ($option_verbose)
-	    {
-		print $fd_initialization $description;
-	    }
-
-	    # loop over shell commands for initialization
-
-	    my $shell_commands = $environment_setting->{initialization}->{shell};
-
-	    foreach my $shell_command (@$shell_commands)
-	    {
-		# replace value
-
-		$shell_command =~ s/%value/$value/g;
-
-		# execute command
-
-		if ($option_verbose)
-		{
-		    print $fd_initialization "$0: Executing ($shell_command)\n";
-		}
-
-		system $shell_command;
-	    }
-	}
-	else
-	{
-	    die "$0: illegal environment_settings, was processing $environment_setting";
-	}
+	&$command_executor($command);
     }
 }
 
 
-sub initialize_globals
+sub command_run_tests
 {
-    $global_test_report
-	= {
-	   %$global_test_report,
-	   description => {
-			   command => $0,
-			   name => "Test report",
-			   package => $global_config->{package},
-			  },
-	   global => {
-		      config => $global_config,
-		      error_count => $global_error_count,
-		      status => 'initializing',
-		      test_counters => {
-					current => {
-						    module_definition => -1,
-						    command_definition => -1,
-						    command_test => -1,
-						   },
-					expected_totals => {
-							    module_definition => -1,
-							    command_definition => -1,
-							    command_test => -1,
-							   },
-				       },
-		      time_start => strftime("%Y-%m-%d %H:%M:%S", localtime(time())),
-		     },
-	   target => {
-		      OS => $^O,
-		      system => {
-				 libc => (join '', `(ls -l /lib/libc-* && ls -l /usr/lib/libc-*) 2>/dev/null`),
-				 uname => (join '', `uname -a`),
-				 cpu => (join '', `cat /proc/cpuinfo`),
-				},
-		      packages => {
-				   '/etc/lsb-release' => (join '', `cat 2>&1 /etc/lsb-release`),
-				   autoconf => (join '', `autoconf 2>&1 --version`),
-				   automake => (join '', `automake 2>&1 --version`),
-				   bison => (join '', `bison 2>&1 --version`),
-				   flex => (join '', `flex 2>&1 --version`),
-				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
-				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
-				   python => (join '', `python 2>&1 --version`),
-				   python_installation => (join '', `./contrib/pythontest 2>&1`),
-				   swig => (join '', `swig 2>&1 -version`),
-				  },
-		     },
-	  };
-}
+    my $command = shift;
 
-
-sub initialize_config
-{
-    # find the package core directory
-
-    $global_config = do $option_config_filename;
-
-    if (not defined $global_config)
-    {
-	die "No test configuration found";
-    }
-
-    # add to tests directory to include paths
-
-    if (not exists $global_config->{tests_directory})
-    {
-	$global_config->{tests_directory} = "./tests/specifications";
-
-	$global_config->{introduction_filename} = "tests/introduction.html";
-    }
-
-    unshift @INC, $global_config->{tests_directory};
-
-    $global_configuration_initialized = 'from initialize_config';
-}
-
-
-sub main
-{
-    parse_options();
-
-    initialize_config();
-
-    initialize_config_environment();
-
-    initialize_globals();
+    # obtain a copy of stdout for the reporters
 
     open($global_fd_output, ">&STDOUT");
-
-    # the previous command had no side effects on the loaded model (since there is no model yet)
-
-    $global_previous_command_side_effects = 0;
 
     # instantiate the reporter
 
@@ -586,9 +460,288 @@ sub main
 }
 
 
+sub initialize
+{
+    initialize_config();
+
+    initialize_config_environment();
+
+    initialize_globals();
+}
+
+
+sub initialize_config
+{
+    # find the package core directory
+
+    $global_config = do $option_config_filename;
+
+    if (not defined $global_config)
+    {
+	die "No test configuration found";
+    }
+
+    # add to tests directory to include paths
+
+    if (not exists $global_config->{tests_directory})
+    {
+	$global_config->{tests_directory} = "./tests/specifications";
+
+	$global_config->{introduction_filename} = "tests/introduction.html";
+    }
+
+    unshift @INC, $global_config->{tests_directory};
+
+    # correct numerical_compare mode for this configuration
+
+    if (not $option_numerical_compare)
+    {
+	$option_numerical_compare = $global_config->{numerical_compare} || 0;
+    }
+
+    $global_configuration_initialized = 'from initialize_config';
+}
+
+
+sub initialize_config_environment
+{
+    my $fd_initialization;
+
+    open($fd_initialization, ">&STDOUT");
+
+    my $environment_settings = $global_config->{environment_settings};
+
+    foreach my $environment_setting_name (keys %$environment_settings)
+    {
+	my $environment_setting = $environment_settings->{$environment_setting_name};
+
+	# if simply setting values in the environment
+
+	if (!ref $environment_setting)
+	{
+	    # set the value in the environment
+
+	    $ENV{$environment_setting_name} = $environment_setting;
+	}
+
+	# if additional initialization required
+
+	elsif (ref $environment_setting eq 'HASH')
+	{
+	    # get environment_setting value
+
+	    my $value = $environment_setting->{value};
+
+	    # set the value in the environment
+
+	    $ENV{$environment_setting_name} = $value;
+
+	    # give feedback
+
+	    my $description = $environment_setting->{description};
+
+	    $description =~ s/%value/$value/g;
+
+	    if ($option_verbose)
+	    {
+		print $fd_initialization $description;
+	    }
+
+	    # loop over shell commands for initialization
+
+	    my $shell_commands = $environment_setting->{initialization}->{shell};
+
+	    foreach my $shell_command (@$shell_commands)
+	    {
+		# replace value
+
+		$shell_command =~ s/%value/$value/g;
+
+		# execute command
+
+		if ($option_verbose)
+		{
+		    print $fd_initialization "$0: Executing ($shell_command)\n";
+		}
+
+		system $shell_command;
+	    }
+	}
+	else
+	{
+	    die "$0: illegal environment_settings, was processing $environment_setting";
+	}
+    }
+}
+
+
+sub initialize_globals
+{
+    $global_test_report
+	= {
+	   %$global_test_report,
+	   description => {
+			   command => $0,
+			   name => "Test report",
+			   package => $global_config->{package},
+			  },
+	   global => {
+		      config => $global_config,
+		      error_count => $global_error_count,
+		      status => 'initializing',
+		      test_counters => {
+					current => {
+						    module_definition => -1,
+						    command_definition => -1,
+						    command_test => -1,
+						   },
+					expected_totals => {
+							    module_definition => -1,
+							    command_definition => -1,
+							    command_test => -1,
+							   },
+				       },
+		      time_start => strftime("%Y-%m-%d %H:%M:%S", localtime(time())),
+		     },
+	   target => {
+		      OS => $^O,
+		      system => {
+				 libc => (join '', `(ls -l /lib/libc-* && ls -l /usr/lib/libc-*) 2>/dev/null`),
+				 uname => (join '', `uname -a`),
+				 cpu => (join '', `cat /proc/cpuinfo`),
+				},
+		      packages => {
+				   '/etc/lsb-release' => (join '', `cat 2>&1 /etc/lsb-release`),
+				   autoconf => (join '', `autoconf 2>&1 --version`),
+				   automake => (join '', `automake 2>&1 --version`),
+				   bison => (join '', `bison 2>&1 --version`),
+				   flex => (join '', `flex 2>&1 --version`),
+				   gcc => (join '', `gcc 2>&1 --version && gcc 2>&1 -v`),
+				   perl => (join '', `perl 2>&1 -v && perl 2>&1 -V`),
+				   python => (join '', `python 2>&1 --version`),
+				   python_installation => (join '', `./contrib/pythontest 2>&1`),
+				   swig => (join '', `swig 2>&1 -version`),
+				  },
+		     },
+	  };
+
+    # the previous command had no side effects on the loaded model (since there is no model yet)
+
+    $global_previous_command_side_effects = 0;
+}
+
+
+sub main
+{
+    my $command = parse_command_line();
+
+    initialize();
+
+    command_run($command);
+}
+
+
+sub parse_command
+{
+    my $command_result = shift @ARGV || $global_command_configuration->{default_command};
+
+    my $known_commands = $global_command_configuration->{known_commands};
+
+    if (not exists $known_commands->{$command_result})
+    {
+	$command_result = "help";
+    }
+
+    return $command_result;
+}
+
+
+sub parse_command_line
+{
+    my $option_result = parse_options();
+
+    my $command_result = parse_command();
+
+    if ($option_result eq 'help'
+	or $command_result eq 'help')
+    {
+	my $command_descriptions = "The default command is '$global_command_configuration->{default_command}'.
+
+commands:
+";
+
+	my $known_commands = $global_command_configuration->{known_commands};
+
+	foreach my $known_command (sort keys %$known_commands)
+	{
+	    my $command_help = $known_commands->{$known_command};
+
+	    if (ref $command_help)
+	    {
+		$command_help = $command_help->{description};
+	    }
+
+	    my $command_description = sprintf("    %-15s %-15s\n", $known_command, $command_help);
+
+	    $command_descriptions .= $command_description;
+	}
+
+	print
+	    "
+$0: test definition executor
+
+synopsis:
+
+$0 <command> <options>
+
+$command_descriptions
+options:
+    --check-test-names           Check the pathnames of the specification files against the names of the tests.
+    --config-filename            The name of the file with the configuration (default is: $option_config_filename).
+    --console-type               The type of the console output (one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ").
+    --debugging                  Enable specific debugging options.
+    --dump-json                  Dump test specifications to json files in /tmp/.
+    --dump-perl                  Dump test specifications to perl files in /tmp/.
+    --dump-yaml                  Dump test specifications to yaml files in /tmp/.
+    --dump-yaml-structured       Dump test specifications to well structured yaml files and directories in /tmp/.
+    --email                      Allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
+    --flattenout                 Flattenout the test definitions before testing,
+                                 this experimental feature might increase test performance,
+                                 by recycling test definitions.
+    --help                       Print usage information.
+    --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
+    --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
+    --input-modules              Merge the given file or directory as modules to be tested (can given several times).
+    --numerical-compare          Attempt to compare numbers numerically when string differences are found (default enabled).
+    --output                     The class that should generate the output (default is '$option_output').
+    --output-content-line-limit  Maximum number of lines when generating content output (latex, html, pdf).
+    --output-figures             Generate figures for test output with a figure clause.
+    --output-html                Generate HTML output.
+    --output-latex               Generate Latex output.
+    --output-levels              Generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
+    --output-pdf                 Generate PDF output.
+    --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
+    --regex-selector             Defines a regex to run specific tests.
+    --report-disabled            Include information of disabled tests in the test report.
+    --show                       Show tests that would be run using the current configuration.
+    --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
+    --tags                       Only test test modules that have been tagged with these tags (default: all tags).
+    --timeout-multiplier         Multiply all timeout values with this constant.
+    --timings                    Add timing information about the tests to the report.
+    --trace                      Enable tracing using the strace unix shell command.
+    --verbose                    Set verbosity level.
+";
+
+	exit 1;
+    }
+
+    return $command_result;
+}
+
+
 sub parse_options
 {
-    $option_numerical_compare = $global_config->{numerical_compare} || 0;
+    my $option_result = '';
 
     my $result
 	= GetOptions
@@ -730,50 +883,10 @@ sub parse_options
 
     if ($option_help)
     {
-	print
-	    "
-$0: test definition executor
-
-options:
-    --check-test-names           check the pathnames of the specification files against the names of the tests.
-    --config-filename            the name of the file with the configuration (default is: $option_config_filename).
-    --console-type               the type of the console output (one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ").
-    --debugging                  enable specific debugging options.
-    --dump-json                  dump test specifications to json files in /tmp/.
-    --dump-perl                  dump test specifications to perl files in /tmp/.
-    --dump-yaml                  dump test specifications to yaml files in /tmp/.
-    --dump-yaml-structured       dump test specifications to well structured yaml files and directories in /tmp/.
-    --email                      allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
-    --flattenout                 flattenout the test definitions before testing,
-                                 this experimental feature might increase test performance,
-                                 by recycling test definitions.
-    --help                       print usage information.
-    --input-command-tests        merge the given file or directory as command tests to be executed (can be given several times).
-    --input-commands             merge the given file or directory as commands to be tested (can be given several times).
-    --input-modules              merge the given file or directory as modules to be tested (can given several times).
-    --numerical-compare          attempt to compare numbers numerically when string differences are found (default enabled).
-    --output                     the class that should generate the output (default is '$option_output').
-    --output-content-line-limit  maximum number of lines when generating content output (latex, html, pdf).
-    --output-figures             generate figures for test output with a figure clause.
-    --output-html                generate HTML output.
-    --output-latex               generate Latex output.
-    --output-levels              generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
-    --output-pdf                 generate PDF output.
-    --randomize-order            randomize the order of the tests before executing them (require List::Util to be installed).
-    --regex-selector             defines a regex to run specific tests.
-    --report-disabled            include information of disabled tests in the test report.
-    --show                       show tests that would be run using the current configuration.
-    --show-command-tests         show all the command definitions that would be run during test execution, including the input to those commands.
-    --tags                       only test test modules that have been tagged with these tags (default: all tags).
-    --timeout-multiplier         multiply all timeout values with this constant.
-    --timings                    add timing information about the tests to the report.
-    --trace                      enable tracing using the strace unix shell command.
-    --verbose                    set verbosity level.
-";
-
-	exit 1;
+	$option_result = 'help';
     }
 
+    return $option_result;
 }
 
 
