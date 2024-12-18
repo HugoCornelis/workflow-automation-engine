@@ -537,6 +537,8 @@ sub command_run_tests
 
     my $executor = $option_output->new($execution_context);
 
+    $reporter->start();
+
     # loop over all module definitions
 
     foreach my $module_definition (@$module_definitions)
@@ -9451,6 +9453,12 @@ sub report_error_add
 }
 
 
+sub start
+{
+    my $self = shift;
+}
+
+
 # A console window implementation to display diagnostic messages.
 
 package Heterarch::Test::Reporting::ConsoleWindow;
@@ -10054,6 +10062,16 @@ sub report_progress
 
     # for an unknown total testing of the progress bar
     # $self->message($type, { iteration => -1, }, );
+}
+
+
+sub start
+{
+    my $self = shift;
+
+    my $iteration = 0;
+
+    $self->message('progress_bar', { iteration => $iteration, }, );
 }
 
 
