@@ -582,6 +582,8 @@ sub initialize
 
     initialize_globals();
 
+    initialize_harness();
+
     # initialize_signal_handlers() is called in the command executor
     # because the signal handlers assume that some of the global
     # variables have been initialized (the $reporter ao.).
@@ -746,6 +748,12 @@ sub initialize_globals
     # the previous command had no side effects on the loaded model (since there is no model yet)
 
     $global_previous_command_side_effects = 0;
+}
+
+
+sub initialize_harness
+{
+    return Heterarch::Test::ExecutionContext::Harness::Docker::select_docker_command($option_console_type);
 }
 
 
@@ -4821,6 +4829,8 @@ our $docker_snapshot_count = 1;
 our $docker_command_no_redirect = 'docker';
 our $docker_command_with_redirect = "$docker_command_no_redirect >/dev/null 2>&1 ";
 
+our $docker_command_selected;
+
 sub _docker_preparer
 {
     my $self = shift;
@@ -4851,14 +4861,14 @@ sub _docker_preparer
 
 	my $name_image = $harness_class->{name_image};
 
-	system "$docker_command_with_redirect image prune -f";
+	system "$docker_command_selected image prune -f";
 
 	if ($?)
 	{
 	    return \ '_docker_preparer image prune failed';
 	}
 
-	system "$docker_command_with_redirect build --tag $name_image --file $dockerfile .";
+	system "$docker_command_selected build --tag $name_image --file $dockerfile .";
 
 	if ($?)
 	{
@@ -4878,14 +4888,14 @@ sub _docker_preparer
 
     my $name_container = $harness_class->{name_container};
 
-    system "$docker_command_with_redirect container stop -t 3 $name_container";
-    system "$docker_command_with_redirect container rm $name_container";
+    system "$docker_command_selected container stop -t 3 $name_container";
+    system "$docker_command_selected container rm $name_container";
 
     # start the built container
 
     my $name_image = $harness_class->{name_image};
 
-    system "$docker_command_with_redirect run -d -t --name $name_container $name_image";
+    system "$docker_command_selected run -d -t --name $name_container $name_image";
 
     # return no errors
 
@@ -4998,7 +5008,7 @@ sub _docker_snapshot
     # see https://docs.docker.com/reference/cli/docker/container/commit/ for how to expose a port during the commit
     # docker commit --change='CMD ["apachectl", "-DFOREGROUND"]' -c "EXPOSE 80" c3f279d17e0a  svendowideit/testimage:version4
 
-    my $command = "$docker_command_with_redirect commit $name_container $name_image";
+    my $command = "$docker_command_selected commit $name_container $name_image";
 
     $docker_snapshot_count++;
 
@@ -5171,6 +5181,21 @@ sub new
 }
 
 
+sub select_docker_command
+{
+    my $console_type = shift;
+
+    if ($console_type eq 'linear')
+    {
+	$docker_command_selected = $docker_command_no_redirect;
+    }
+    else
+    {
+	$docker_command_selected = $docker_command_with_redirect;
+    }
+}
+
+
 package Heterarch::Test::ExecutionContext::Harness::Docker::Image;
 
 our @ISA = ("Heterarch::Test::ExecutionContext::Harness::Docker");
@@ -5202,14 +5227,14 @@ sub _docker_preparer
 
     my $name_container = $harness_class->{name_container};
 
-    system "$docker_command_with_redirect container stop -t 3 $name_container";
-    system "$docker_command_with_redirect container rm $name_container";
+    system "$docker_command_selected container stop -t 3 $name_container";
+    system "$docker_command_selected container rm $name_container";
 
     # start the built container
 
     my $name_image = $harness_class->{name_image};
 
-    system "$docker_command_with_redirect run -d -t --name $name_container $name_image";
+    system "$docker_command_selected run -d -t --name $name_container $name_image";
 
     # return no errors
 
