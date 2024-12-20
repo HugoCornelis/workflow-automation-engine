@@ -9482,15 +9482,17 @@ sub message
 
     if ($enabled)
     {
-	my $line_number = $self->{$line}->{line_number};
-
-	my $control_prefix = $cursor_forced_down x $line_number . $erase_line;
-
-	$control_prefix .= "\r$self->{$line}->{prompt}";
+	$self->{has_been_used} = 'yes';
 
 	my $formatter_options = $self->{$line};
 
-	my $formatter = $self->{$line}->{formatter};
+	my $line_number = $formatter_options->{line_number};
+
+	my $control_prefix = $cursor_forced_down x $line_number . $erase_line;
+
+	$control_prefix .= "\r$formatter_options->{prompt}";
+
+	my $formatter = $formatter_options->{formatter};
 
         my $user_message = &$formatter($formatter_options, $arguments);
 
