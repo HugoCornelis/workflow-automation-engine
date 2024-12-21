@@ -666,8 +666,6 @@ sub initialize_config
 	$global_config->{introduction_filename} = "tests/introduction.html";
     }
 
-    unshift @INC, $global_config->{tests_directory};
-
     # correct numerical_compare mode for this configuration
 
     if (not $option_numerical_compare)
