@@ -450,18 +450,9 @@ sub command_run_tests
 
     my $model_library_shas = {};
 
-    if (defined ($global_config->{external_model_libraries}))
+    if (defined $global_config->{external_model_libraries})
     {
-	# compute the shas of the modeling libraries
-
-	my $external_model_libraries = $global_config->{external_model_libraries};
-
-	foreach my $external_modeling_library (@$external_model_libraries)
-	{
-	    my $sha = ModelLibrary::sha($external_modeling_library);
-
-	    $model_library_shas->{$external_modeling_library}->{sha} = $sha;
-	}
+	$model_library_shas = ModelLibrary::shas($global_config->{external_model_libraries});
     }
 
     # set expected totals for the test counters
@@ -1273,7 +1264,34 @@ Email was not sent.
 package ModelLibrary;
 
 
-sub sha
+sub shas
+{
+    # model_libraries is an array of paths
+
+    my $model_libraries = shift;
+
+    # if there are model libraries
+
+    my $model_library_shas = {};
+
+    {
+	# compute the shas of the modeling libraries
+
+	foreach my $modeling_library (@$model_libraries)
+	{
+	    my $sha = _sha($modeling_library);
+
+	    $model_library_shas->{$modeling_library}->{sha} = $sha;
+	}
+    }
+
+    # return result
+
+    return $model_library_shas;
+}
+
+
+sub _sha
 {
     my $modeling_library_path = shift;
 
@@ -4231,7 +4249,7 @@ sub new
 
     bless $self, $package;
 
-    $self->{external_model_libraries} = $model_library_shas;
+    $self->{external_model_libraries_shas} = $model_library_shas;
 
     return $self;
 }
@@ -6380,17 +6398,19 @@ sub md_run
 
     # if there are modeling libraries
 
-    if (defined ($global_config->{external_model_libraries}))
+    if (defined $global_config->{external_model_libraries})
     {
 	# compute the shas of the modeling libraries
+
+	my $model_library_shas_after = ModelLibrary::shas($global_config->{external_model_libraries});
 
 	my $external_model_libraries = $global_config->{external_model_libraries};
 
 	foreach my $external_modeling_library (@$external_model_libraries)
 	{
-	    my $library_sha_before = $execution_context->{external_model_libraries}->{$external_modeling_library}->{sha};
+	    my $library_sha_before = $execution_context->{external_model_libraries_shas}->{$external_modeling_library}->{sha};
 
-	    my $library_sha_after = ModelLibrary::sha($external_modeling_library);
+	    my $library_sha_after = $model_library_shas_after->{$external_modeling_library};
 
 	    # if the shas are different
 
@@ -6403,13 +6423,13 @@ sub md_run
 		my $description = $self->{description};
 
 		$reporter->report_error_add
-			(
-			 {
-			  description => $description,
-			  error => $error,
-			  module_name => $module_name,
-			 },
-			);
+		    (
+		     {
+		      description => $description,
+		      error => $error,
+		      module_name => $module_name,
+		     },
+		    );
 	    }
 	}
     }
