@@ -71,16 +71,27 @@ my $global_command_configuration
 					      description => "Create a new module with the given name.",
 					      executor => "command_module_create",
 					     },
-			  # "module-update" => {
-			  # 		      description => "An example of a command with possible subcommands: Update the given module with the given arguments and directives.",
-			  # 		      subcommands => [],
-			  # 		     },
+			  "module-update" => {
+					      description => "An example of a command with possible subcommands: Update the given module with the given arguments and directives.",
+					      executor => "command_module_update",
+					      subcommands => [],
+					     },
 			  # "query" => "Query the tests, print the query result.",
 			  "run-tests" => {
 					  description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
 					  executor => "command_run_tests",
 					 },
 			 },
+      };
+
+my $global_reporter_classes
+    = {
+       'linear' => {
+		    class => "Heterarch::Test::Reporting::Linear",
+		   },
+       'status' => {
+		    class => "Heterarch::Test::Reporting::Status",
+		   },
       };
 
 my $global_console_window_configuration
@@ -219,6 +230,8 @@ sub command_module_create
 {
     my $command = shift;
 
+    my $reporter = shift;
+
     my $module_name = shift @ARGV;
 
     if (! defined $module_name)
@@ -347,7 +360,7 @@ Note that more keywords have been defined, including for running C and perl code
 
     # my $created = path_create($path_name);
 
-    my $result = Heterarch::Test::Library::read_module_dump_yaml_structured($module_name, $summary, $global_config->{tests_directory}, undef);
+    my $result = Heterarch::Test::Library::read_module_dump_yaml_structured($module_name, $summary, $global_config->{tests_directory}, $reporter);
 
     if ($result =~ /error/i)
     {
@@ -360,16 +373,90 @@ Note that more keywords have been defined, including for running C and perl code
 }
 
 
+sub command_module_update
+{
+    my $command = shift;
+
+    my $reporter = shift;
+
+    my $module_name = shift @ARGV;
+
+    if (! defined $module_name)
+    {
+	die "$0: *** Error: $command expects an argument for the name of the module to be updated";
+    }
+
+    # find the test module that must be updated
+
+    my $tests_directory = $global_config->{tests_directory};
+
+    my $module_path_name = "$tests_directory/$module_name/summary.yml";
+
+    if (-r $module_path_name)
+    {
+    }
+    else
+    {
+	die "$0: *** Error: $module_path_name not found.";
+    }
+
+    my $module_definition = Heterarch::Test::Library::read_module_yml($reporter, $module_path_name);
+
+    #t command_definition 0, command_test 0, read clause.
+
+    # we don't care about a possible model library
+
+    my $model_library_shas = {};
+
+    # if (defined ($global_config->{external_model_libraries}))
+    # {
+    # 	$model_library_shas = ModelLibrary::shas($global_config->{external_model_libraries});
+    # }
+
+    # create an execution context for running the tests
+
+    my $execution_context = Heterarch::Test::ExecutionContext->new($model_library_shas, $reporter, );
+
+    # create a test executor for running and updating the tests
+
+    my $executor = Heterarch::Test::Executor::ModuleUpdater->new($execution_context);
+
+    $reporter->start();
+
+    {
+	bless $module_definition, "Heterarch::Test::Module";
+
+	my $error = $module_definition->md_run($execution_context, $executor);
+    }
+}
+
+
 sub command_run
 {
     my $command = shift;
 
     my $command_executor = $global_command_configuration->{known_commands}->{$command}->{executor};
 
+    # obtain a copy of stdout for the reporters
+
+    open($global_fd_output, ">&STDOUT");
+
+    # instantiate the reporter
+
+    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
+
+    my $default_reporter
+	= $reporter_class->new(
+			       {
+				configuration => $global_console_window_library_configuration,
+				fd_output => $global_fd_output,
+			       },
+			      );
+
     {
 	no strict "refs";
 
-	&$command_executor($command);
+	&$command_executor($command, $default_reporter);
     }
 }
 
@@ -378,37 +465,11 @@ sub command_run_tests
 {
     my $command = shift;
 
-    initialize_signal_handlers();
-
-    # obtain a copy of stdout for the reporters
-
-    open($global_fd_output, ">&STDOUT");
-
-    # instantiate the reporter
-
-    my $reporter_classes
-	= {
-	   'linear' => {
-			class => "Heterarch::Test::Reporting::Linear",
-		       },
-	   'status' => {
-			class => "Heterarch::Test::Reporting::Status",
-		       },
-	  };
-
-    my $reporter_class = $reporter_classes->{$option_console_type}->{class};
-
-    my $reporter_library
-	= $reporter_class->new(
-			       {
-				configuration => $global_console_window_library_configuration,
-				fd_output => $global_fd_output,
-			       },
-			      );
+    my $default_reporter = shift;
 
     # find all the test module files
 
-    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter_library, );
+    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $default_reporter, );
 
     $test_library->construct();
 
@@ -437,7 +498,7 @@ sub command_run_tests
 
 	my $random_seed;
 
-	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order, $reporter_library);
+	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order, $default_reporter);
 
 	$global_test_report->{random_seed} = $random_seed;
     }
@@ -499,6 +560,8 @@ sub command_run_tests
 
     # for an unknown total testing of the progress bar
     # $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = 0;
+
+    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
 
     my $reporter
 	= $reporter_class->new(
@@ -5441,6 +5504,28 @@ Finished at: $global_test_report->{global}->{time_end}.
 }
 
 
+package Heterarch::Test::Executor::ModuleUpdater;
+
+
+our @ISA = ("Heterarch::Test::Executor");
+
+
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    $self = $self->SUPER::ex_terminate(@_);
+
+    #t update the tests using the generated errors
+
+    #! this could be an error message
+
+    return undef;
+}
+
+
 package Heterarch::Test::Library;
 
 
@@ -5970,6 +6055,16 @@ sub read_module_perl
 }
 
 
+#
+# process the options
+#
+# option_dump_json
+# option_dump_perl
+# option_dump_yaml
+# option_dump_yaml_structured
+# option_check_test_names
+#
+
 sub read_module_process_options
 {
     my $reporter = shift;
@@ -6171,22 +6266,15 @@ sub read_module_dump_yaml_structured
     }
     else
     {
-	if ($reporter)
-	{
-	    $reporter->report_error_add
-		(
-		 {
-		  description => "error creating the output module_pathname ($created)",
-		  error => "error creating the output module_pathname",
-		  module_name => "read_module_dump_yaml_structured",
-		  subdescription => "error creating the module_pathname ($created)",
-		 },
-		);
-	}
-	else
-	{
-	    die "$0: *** Error: error creating the output module_pathname ($created)";
-	}
+	$reporter->report_error_add
+	    (
+	     {
+	      description => "error creating the output module_pathname ($created)",
+	      error => "error creating the output module_pathname",
+	      module_name => "read_module_dump_yaml_structured",
+	      subdescription => "error creating the module_pathname ($created)",
+	     },
+	    );
 
 	$result = '';
     }
@@ -6442,6 +6530,12 @@ sub md_run
 
     return '';
 }
+
+
+package Heterarch::Test::ModuleUpdater;
+
+
+our @ISA = ("Heterarch::Test::Module");
 
 
 package Heterarch::Test::Output;
