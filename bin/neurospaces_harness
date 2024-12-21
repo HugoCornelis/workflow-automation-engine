@@ -360,7 +360,7 @@ Note that more keywords have been defined, including for running C and perl code
 
     # my $created = path_create($path_name);
 
-    my $result = Heterarch::Test::Library::read_module_dump_yaml_structured($module_name, $summary, $global_config->{tests_directory}, $reporter);
+    my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_name, $summary, $global_config->{tests_directory}, $reporter);
 
     if ($result =~ /error/i)
     {
@@ -6114,7 +6114,7 @@ sub read_module_process_options
 
     if ($option_dump_yaml_structured)
     {
-	read_module_dump_yaml_structured($pathname, $module_definition, "/tmp", $reporter);
+	read_module_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter);
     }
 
     # check if the name of the test and the pathname match
@@ -6194,7 +6194,7 @@ sub sentence_summarize
 }
 
 
-sub read_module_dump_yaml_structured
+sub read_module_dump_file_structured_yaml
 {
     my $pathname = shift;
 
@@ -6271,7 +6271,7 @@ sub read_module_dump_yaml_structured
 	     {
 	      description => "error creating the output module_pathname ($created)",
 	      error => "error creating the output module_pathname",
-	      module_name => "read_module_dump_yaml_structured",
+	      module_name => "read_module_dump_file_structured_yaml",
 	      subdescription => "error creating the module_pathname ($created)",
 	     },
 	    );
