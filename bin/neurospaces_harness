@@ -9525,7 +9525,7 @@ sub _global_error_add
 }
 
 
-sub report_error_add
+sub _report_error_add
 {
     my $self = shift;
 
@@ -9555,7 +9555,7 @@ sub report_error_add
 
     my $differences = _error_process_differences($fd_output, $arguments);
 
-    #t an ugly hack that does the job of suppressing output
+    # suppress output when asked so
 
     if ($verbose ne 'no-output')
     {
@@ -9903,7 +9903,7 @@ sub report_error_add
 
     my $arguments = shift;
 
-    $self->SUPER::report_error_add('with-diff-output', $arguments);
+    $self->SUPER::_report_error_add('with-diff-output', $arguments);
 
     my $fd_output = $self->{fd_output};
 
@@ -10077,7 +10077,7 @@ sub report_error_add
 
     my $arguments = shift;
 
-    $self->SUPER::report_error_add('no-output', $arguments);
+    $self->SUPER::_report_error_add('no-output', $arguments);
 
     my $fd_output = $self->{fd_output};
 
