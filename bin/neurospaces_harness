@@ -1829,6 +1829,7 @@ sub cd_start
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => $execution_context->get_context_path(),
 		  description => "command_definition $self->{description}",
 		  error => $error,
 		  module_name => $module_name,
@@ -1893,6 +1894,7 @@ sub cd_start
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => $execution_context->get_context_path(),
 		  description => "Heterarch::Test::CommandDefinition::IsFileExecutable $self->{description}",
 		  error => $error,
 		  module_name => $module_name,
@@ -2087,6 +2089,7 @@ sub ct_run_complete
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => $execution_context->get_context_path(),
 		  description => $description,
 		  error => $error,
 		  expected => $execution_result->{expected},
@@ -3119,6 +3122,7 @@ sub file_content_read
 	$reporter->report_error_add
 	    (
 	     {
+	      context_path => $execution_context->get_context_path(),
 	      description => "file open error for $description",
 	      error => "$description cannot open file $filename",
 	      module_name => $module_name,
@@ -3771,9 +3775,11 @@ sub get_context_path
 
     # add module counter and identifier
 
+    my $path_separator = "___/___";
+
     my $result = $self->get_module_definition_counter();
 
-    $result .= "_";
+    $result .= $path_separator;
 
     $result .= $self->get_module_definition()->{name};
 
@@ -3783,14 +3789,18 @@ sub get_context_path
 
     if (defined $command_definition)
     {
-	$result .= "_";
+	$result .= $path_separator;
 
 	$result .= $self->get_counter_command_definition_per_module();
 
-	$result .= "_";
+	$result .= $path_separator;
 
 	# the command_definition identifier is based on the system
 	# shell command that is used to perform the tests
+
+	#t Depending on the command definition in the test module,
+	#t this may expand to a command with or without its arguments,
+	#t with or without any spaces.
 
 	if (exists $command_definition->{command})
 	{
@@ -3807,11 +3817,11 @@ sub get_context_path
 
 	if (defined $command_test)
 	{
-	    $result .= "_";
+	    $result .= $path_separator;
 
 	    $result .= $self->get_counter_command_test_per_command_definition();
 
-	    $result .= "_";
+	    $result .= $path_separator;
 
 	    # the command_test identifier is based on the write clause
 
@@ -3974,6 +3984,7 @@ sub has_error_flag
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => $self->get_context_path(),
 		  description => $description,
 		  error => "this test was tagged with the error flag",
 		  module_name => $module_name,
@@ -4248,6 +4259,7 @@ sub _preparation
 		$reporter->report_error_add
 			(
 			 {
+			  context_path => $self->get_context_path(),
 			  description => $preparation_name,
 			  error => $preparation_error,
 			  module_name => $module_name,
@@ -4392,6 +4404,7 @@ sub _reparation
 		$reporter->report_error_add
 			(
 			 {
+			  context_path => $self->get_context_path(),
 			  description => $reparation_description,
 			  error => $reparation_error,
 			  module_name => $module_name,
@@ -4563,6 +4576,7 @@ sub ec_terminate
 	$reporter->report_error_add
 	    (
 	     {
+	      context_path => $self->get_context_path(),
 	      description => "execution context invalid",
 	      error => "left over elements in the execution context after it was terminated",
 	      module_name => $module_name,
@@ -5992,6 +6006,7 @@ sub read_module_perl
 	    $reporter->report_error_add
 		(
 		 {
+		  context_path => 'read_module_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -6024,6 +6039,7 @@ sub read_module_perl
 	    $reporter->report_error_add
 		(
 		 {
+		  context_path => 'read_module_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -6040,6 +6056,7 @@ sub read_module_perl
 	    $reporter->report_error_add
 		(
 		 {
+		  context_path => 'read_module_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -6125,6 +6142,7 @@ sub read_module_process_options
 	    $reporter->report_error_add
 		(
 		 {
+		  context_path => 'read_module_process_options',
 		  description => "the pathname ($pathname) and the test name ($module_definition->{name}) are different",
 		  error => $error,
 		  module_name => $pathname,
@@ -6266,6 +6284,7 @@ sub read_module_dump_file_structured_yaml
 	$reporter->report_error_add
 	    (
 	     {
+	      context_path => 'read_module_dump_file_structured_yaml',
 	      description => "error creating the output module_pathname ($created)",
 	      error => "error creating the output module_pathname",
 	      module_name => "read_module_dump_file_structured_yaml",
@@ -6356,6 +6375,7 @@ sub read_module_yml
 	$reporter->report_error_add
 	    (
 	     {
+	      context_path => 'read_module_yml',
 	      description => $error,
 	      error => $error,
 	      module_name => $summary_pathname,
@@ -6388,6 +6408,7 @@ sub check_description
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => "check_description($module_name)",
 		  description => 'no module description',
 		  error => 'no module description',
 		  module_name => $module_name,
@@ -6412,6 +6433,7 @@ sub check_name
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => "check_name, unnamed module",
 		  description => 'unnamed module',
 		  error => 'unnamed module',
 		  module_name => 'unnamed module',
@@ -6510,6 +6532,7 @@ sub md_run
 		$reporter->report_error_add
 		    (
 		     {
+		      context_path => $execution_context->get_context_path(),
 		      description => $description,
 		      error => $error,
 		      module_name => $module_name,
@@ -6837,6 +6860,7 @@ sub ex_terminate
 	$reporter->report_error_add
 		(
 		 {
+		  context_path => $execution_context->get_context_path(),
 		  description => "error creating the output_directory ($created)",
 		  error => "this test was tagged with the error flag",
 		  module_name => "END",
@@ -9519,6 +9543,7 @@ sub _global_error_add
 {
     my $arguments = shift;
 
+    my $context_path = $arguments->{context_path};
     my $description = $arguments->{description};
     my $error = $arguments->{error};
     my $message = $arguments->{message};
@@ -9533,6 +9558,7 @@ sub _global_error_add
 
     my $error_report
 	= {
+	   context_path => $context_path,
 	   error => $error,
 	   (defined $subdescription) ? ($subdescription => { description => $description, }, ) : (description => $description),
 	  };
@@ -9558,6 +9584,7 @@ sub _report_error_add
 
     my $error_report = clone($arguments);
 
+    my $context_path = $arguments->{context_path};
     my $description = $arguments->{description};
     my $error = $arguments->{error};
     my $message = $arguments->{message};
@@ -9936,6 +9963,10 @@ sub report_error_add
     my $package_name = $global_test_report->{description}->{package}->{name};
 
     print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+
+    my $context_path = $arguments->{context_path};
+
+    print $fd_output "*** Error $global_error_count: $context_path\n";
 
     _error_report_differences($fd_output, $error_report);
 
