@@ -415,19 +415,21 @@ sub command_module_update
 
     # create an execution context for running the tests
 
-    my $execution_context = Heterarch::Test::ExecutionContext->new($model_library_shas, $reporter, );
+    my $execution_context = Heterarch::Test::ExecutionContext->new($model_library_shas, 0, );
 
     # create a test executor for running and updating the tests
 
     my $executor = Heterarch::Test::Executor::ModuleUpdater->new($execution_context);
-
-    $reporter->start();
 
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
 	my $error = $module_definition->md_run($execution_context, $executor);
     }
+
+    # end the execution_context
+
+    $execution_context->ec_terminate();
 }
 
 
@@ -556,22 +558,6 @@ sub command_run_tests
 	   command_test => $expected_test_total,
 	  };
 
-    $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = $expected_test_total;
-
-    # for an unknown total testing of the progress bar
-    # $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = 0;
-
-    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
-
-    my $reporter
-	= $reporter_class->new(
-			       {
-				configuration => $global_console_window_configuration,
-				expected_total => $expected_test_total,
-				fd_output => $global_fd_output,
-			       },
-			      );
-
     # set status
 
     $global_test_report->{global}->{test_counters}->{current}
@@ -585,13 +571,11 @@ sub command_run_tests
 
     # create an execution context for running the tests
 
-    my $execution_context = Heterarch::Test::ExecutionContext->new($model_library_shas, $reporter, );
+    my $execution_context = Heterarch::Test::ExecutionContext->new($model_library_shas, $expected_test_total, );
 
     # create a test executor for running the tests following the requested type of output
 
     my $executor = $option_output->new($execution_context);
-
-    $reporter->start();
 
     # loop over all module definitions
 
@@ -616,17 +600,13 @@ sub command_run_tests
 
     Heterarch::Test::CommandDefinition::Interactive::close_pending();
 
-    # end the console reporting
-
-    $reporter->end();
-
     # close the test report
 
     $global_test_report->{global}->{status} = 'Finished';
 
     # final report
 
-    report_exit({ exit_code => 0, reporter => $reporter, }, );
+    report_exit({ exit_code => 0, reporter => $default_reporter, }, );
 }
 
 
@@ -4296,13 +4276,26 @@ sub new
 
     my $model_library_shas = shift;
 
-    my $reporter = shift;
+    my $expected_test_total = shift;
 
-    my $options = shift || {};
+    $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = $expected_test_total;
+
+    # for an unknown total testing of the progress bar
+    # $global_console_window_configuration->{progress_bar}->{formatter_options}->{total} = 0;
+
+    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
+
+    my $reporter
+	= $reporter_class->new(
+			       {
+				configuration => $global_console_window_configuration,
+				expected_total => $expected_test_total,
+				fd_output => $global_fd_output,
+			       },
+			      );
 
     my $self
 	= {
-	   %$options,
 	   path => [],
 	   preparation_result => [],
 	   reporter => $reporter,
@@ -4311,6 +4304,8 @@ sub new
     bless $self, $package;
 
     $self->{external_model_libraries_shas} = $model_library_shas;
+
+    $reporter->start();
 
     return $self;
 }
@@ -4555,6 +4550,8 @@ sub ec_terminate
 
     my $path = $self->{path};
 
+    my $reporter = $self->{reporter};
+
     if (scalar @$path)
     {
 	my $module_definition = $self->get_module_definition();
@@ -4562,8 +4559,6 @@ sub ec_terminate
 	my $description = "module $module_definition->{description}";
 
 	my $module_name = $module_definition->{name};
-
-	my $reporter = $self->{reporter};
 
 	$reporter->report_error_add
 	    (
@@ -4574,6 +4569,10 @@ sub ec_terminate
 	     },
 	    );
     }
+
+    # end the console reporting
+
+    $reporter->end();
 }
 
 
