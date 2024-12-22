@@ -9414,7 +9414,7 @@ sub message
 }
 
 
-sub _error_process_differences
+sub _differences_process
 {
     my $fd_output = shift;
 
@@ -9436,6 +9436,8 @@ sub _error_process_differences
 
 	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
 
+	$result->{expected_filename} = $expected_filename;
+
 	my $expected_file = IO::File->new(">$expected_filename");
 
 	if ($expected_file)
@@ -9450,6 +9452,8 @@ sub _error_process_differences
 	}
 
 	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
+
+	$result->{seen_filename} = $seen_filename;
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
@@ -9466,7 +9470,11 @@ sub _error_process_differences
 
 	my $diff = `diff "$expected_filename" "$seen_filename"`;
 
+	$result->{diff} = $diff;
+
 	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
+
+	$result->{diff_filename} = $diff_filename;
 
 	my $diff_file = IO::File->new(">$diff_filename");
 
@@ -9481,11 +9489,26 @@ sub _error_process_differences
 	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
 	}
 
-	my $processed_diff = [ split "\n", $diff, ];
 
-	$processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+	{
+	    my $processed_expected = [ split "\n", $expected, ];
 
-	$result->{processed_diff} = $processed_diff;
+	    $processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+
+	    $result->{processed_expected} = $processed_expected;
+
+	    my $processed_seen = [ split "\n", $seen, ];
+
+	    $processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
+
+	    $result->{processed_seen} = $processed_seen;
+
+	    my $processed_diff = [ split "\n", $diff, ];
+
+	    $processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+
+	    $result->{processed_diff} = $processed_diff;
+	}
     }
 
     return $result;
@@ -9529,9 +9552,11 @@ sub _report_error_add
 {
     my $self = shift;
 
-    my $verbose = shift;
-
     my $arguments = shift;
+
+    use Clone 'clone';
+
+    my $error_report = clone($arguments);
 
     my $description = $arguments->{description};
     my $error = $arguments->{error};
@@ -9553,14 +9578,11 @@ sub _report_error_add
 
     my $fd_output = $self->{fd_output};
 
-    my $differences = _error_process_differences($fd_output, $arguments);
+    my $differences_report = _differences_process($fd_output, $arguments);
 
-    # suppress output when asked so
+    $error_report->{differences_report} = $differences_report;
 
-    if ($verbose ne 'no-output')
-    {
-	print $fd_output $differences->{processed_diff};
-    }
+    return $error_report;
 }
 
 
@@ -9874,25 +9896,25 @@ sub _error_report_differences
 {
     my $fd_output = shift;
 
-    my $arguments = shift;
+    my $error_report = shift;
 
-    my $expected = $arguments->{expected};
-    my $seen = $arguments->{seen};
-
-    if (defined $expected
-	and defined $seen)
+    if (exists $error_report->{differences_report})
     {
-	my $processed_expected = [ split "\n", $expected, ];
+	my $differences_report = $error_report->{differences_report};
 
-	$processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+	my $processed_expected = $differences_report->{processed_expected};
+	my $processed_seen = $differences_report->{processed_seen};
+	my $processed_diff = $differences_report->{processed_diff};
 
-	print $fd_output $processed_expected;
+	if (defined $processed_expected
+	    and defined $processed_seen)
+	{
+	    print $fd_output $processed_expected;
 
-	my $processed_seen = [ split "\n", $seen, ];
+	    print $fd_output $processed_seen;
 
-	$processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
-
-	print $fd_output $processed_seen;
+	    print $fd_output $processed_diff;
+	}
     }
 }
 
@@ -9903,7 +9925,7 @@ sub report_error_add
 
     my $arguments = shift;
 
-    $self->SUPER::_report_error_add('with-diff-output', $arguments);
+    my $error_report = $self->SUPER::_report_error_add($arguments);
 
     my $fd_output = $self->{fd_output};
 
@@ -9915,7 +9937,9 @@ sub report_error_add
 
     print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
 
-    _error_report_differences($fd_output, $arguments);
+    _error_report_differences($fd_output, $error_report);
+
+    return $error_report;
 }
 
 
@@ -10077,7 +10101,7 @@ sub report_error_add
 
     my $arguments = shift;
 
-    $self->SUPER::_report_error_add('no-output', $arguments);
+    my $error_report = $self->SUPER::_report_error_add($arguments);
 
     my $fd_output = $self->{fd_output};
 
@@ -10090,6 +10114,8 @@ sub report_error_add
     my $message = "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
 
     $self->message("message_error", { message => $message, }, );
+
+    return $error_report;
 }
 
 
