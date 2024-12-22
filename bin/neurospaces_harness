@@ -10103,15 +10103,7 @@ sub report_message
 
     chomp $message;
 
-    if ($type eq "message_harnessing"
-        or $type eq "message_module"
-        or $type eq "message_info"
-        or $type eq "message_test"
-        or $type eq "message_command"
-	or $type eq "message_details")
-    {
-	$self->message($type, { message => $message, }, );
-    }
+    $self->message($type, { message => $message, }, );
 }
 
 
