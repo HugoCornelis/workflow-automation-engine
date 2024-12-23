@@ -364,11 +364,11 @@ Note that more keywords have been defined, including for running C and perl code
 
     if ($result =~ /error/i)
     {
-	print "$0: Error creating test module $module_name in $global_config->{tests_directory} ($result)\n";
+	print "$0: Error creating test module $module_name in $global_config->{tests_directory} ($result).\n";
     }
     else
     {
-	print "$0: Created test module $module_name in $global_config->{tests_directory}\n";
+	print "$0: Created test module $module_name in $global_config->{tests_directory}.\n";
     }
 }
 
