@@ -9447,7 +9447,7 @@ sub _differences_process
     my $expected = $arguments->{expected};
     my $seen = $arguments->{seen};
 
-    my $result
+    my $differences_report
 	= {
 	   expected => $expected,
 	   seen => $seen,
@@ -9460,7 +9460,7 @@ sub _differences_process
 
 	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
 
-	$result->{expected_filename} = $expected_filename;
+	$differences_report->{expected_filename} = $expected_filename;
 
 	my $expected_file = IO::File->new(">$expected_filename");
 
@@ -9477,7 +9477,7 @@ sub _differences_process
 
 	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
 
-	$result->{seen_filename} = $seen_filename;
+	$differences_report->{seen_filename} = $seen_filename;
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
@@ -9494,11 +9494,11 @@ sub _differences_process
 
 	my $diff = `diff "$expected_filename" "$seen_filename"`;
 
-	$result->{diff} = $diff;
+	$differences_report->{diff} = $diff;
 
 	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
 
-	$result->{diff_filename} = $diff_filename;
+	$differences_report->{diff_filename} = $diff_filename;
 
 	my $diff_file = IO::File->new(">$diff_filename");
 
@@ -9519,36 +9519,36 @@ sub _differences_process
 
 	    $processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
 
-	    $result->{processed_expected} = $processed_expected;
+	    $differences_report->{processed_expected} = $processed_expected;
 
 	    my $processed_seen = [ split "\n", $seen, ];
 
 	    $processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
 
-	    $result->{processed_seen} = $processed_seen;
+	    $differences_report->{processed_seen} = $processed_seen;
 
 	    my $processed_diff = [ split "\n", $diff, ];
 
 	    $processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
 
-	    $result->{processed_diff} = $processed_diff;
+	    $differences_report->{processed_diff} = $processed_diff;
 	}
     }
 
-    return $result;
+    return $differences_report;
 }
 
 
 sub _global_error_add
 {
-    my $arguments = shift;
+    my $error_report = shift;
 
-    my $context_path = $arguments->{context_path};
-    my $description = $arguments->{description};
-    my $error = $arguments->{error};
-    my $message = $arguments->{message};
-    my $module_name = $arguments->{module_name};
-    my $subdescription = $arguments->{subdescription};
+    my $context_path = $error_report->{context_path};
+    my $description = $error_report->{description};
+    my $error = $error_report->{error};
+    my $message = $error_report->{message};
+    my $module_name = $error_report->{module_name};
+    my $subdescription = $error_report->{subdescription};
 
     $global_error_count++;
 
@@ -9556,7 +9556,7 @@ sub _global_error_add
 
     $global_test_report->{global}->{error_count} = $global_error_count;
 
-    my $error_report
+    my $error_report_brief
 	= {
 	   context_path => $context_path,
 	   error => $error,
@@ -9567,10 +9567,12 @@ sub _global_error_add
     {
 	#! if message is defined, then a subdescription must be defined too.
 
-	$error_report->{$subdescription}->{report} = $message;
+	$error_report_brief->{$subdescription}->{report} = $message;
     }
 
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count} = $error_report;
+    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count} = $error_report_brief;
+
+    $global_test_report->{errors}->{error_reports}->{$global_error_count} = $error_report;
 }
 
 
@@ -9584,13 +9586,6 @@ sub _report_error_add
 
     my $error_report = clone($arguments);
 
-    my $context_path = $arguments->{context_path};
-    my $description = $arguments->{description};
-    my $error = $arguments->{error};
-    my $message = $arguments->{message};
-    my $module_name = $arguments->{module_name};
-    my $subdescription = $arguments->{subdescription};
-
     if (defined $option_debugging
 	and $option_debugging eq 'errors')
     {
@@ -9601,13 +9596,13 @@ sub _report_error_add
 	print Carp::cluck(@_);
     }
 
-    _global_error_add($arguments);
-
     my $fd_output = $self->{fd_output};
 
-    my $differences_report = _differences_process($fd_output, $arguments);
+    my $differences_report = _differences_process($fd_output, $error_report);
 
     $error_report->{differences_report} = $differences_report;
+
+    _global_error_add($error_report);
 
     return $error_report;
 }
