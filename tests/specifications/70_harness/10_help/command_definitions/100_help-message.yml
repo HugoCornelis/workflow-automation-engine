@@ -26,7 +26,7 @@ command_tests:
           --dump-json                  Dump test specifications to json files in /tmp/.
           --dump-perl                  Dump test specifications to perl files in /tmp/.
           --dump-yaml                  Dump test specifications to yaml files in /tmp/.
-          --dump-yaml-structured       Dump test specifications to well structured yaml files and directories in /tmp/.
+          --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
           --email                      Allow to send emails, the default is taken from $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
           --flattenout                 Flattenout the test definitions before testing,
                                        this experimental feature might increase test performance,

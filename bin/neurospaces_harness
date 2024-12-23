@@ -24,7 +24,7 @@ our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
 my $option_dump_yaml;
-my $option_dump_yaml_structured;
+my $option_dump_file_structured_yaml;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
 my $option_flattenout;
 my $option_help;
@@ -902,7 +902,7 @@ options:
     --dump-json                  Dump test specifications to json files in /tmp/.
     --dump-perl                  Dump test specifications to perl files in /tmp/.
     --dump-yaml                  Dump test specifications to yaml files in /tmp/.
-    --dump-yaml-structured       Dump test specifications to well structured yaml files and directories in /tmp/.
+    --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
     --email                      Allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
     --flattenout                 Flattenout the test definitions before testing,
                                  this experimental feature might increase test performance,
@@ -952,7 +952,7 @@ sub parse_options
 	     "dump-json!" => \$option_dump_json,
 	     "dump-perl!" => \$option_dump_perl,
 	     "dump-yaml!" => \$option_dump_yaml,
-	     "dump-yaml-structured!" => \$option_dump_yaml_structured,
+	     "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
 	     "email" => \$option_email,
 	     "flattenout" => \$option_flattenout,
 	     "help!" => \$option_help,
@@ -1054,7 +1054,7 @@ sub parse_options
 	   dump_json => $option_dump_json,
 	   dump_perl => $option_dump_perl,
 	   dump_yaml => $option_dump_yaml,
-	   dump_yaml_structured => $option_dump_yaml_structured,
+	   dump_file_structured_yaml => $option_dump_file_structured_yaml,
 	   email => $option_email,
 	   flattenout => $option_flattenout,
 	   help => $option_help,
@@ -6075,7 +6075,7 @@ sub read_module_perl
 # option_dump_json
 # option_dump_perl
 # option_dump_yaml
-# option_dump_yaml_structured
+# option_dump_file_structured_yaml
 # option_check_test_names
 #
 
@@ -6126,7 +6126,7 @@ sub read_module_process_options
 	YAML::DumpFile("/tmp/$filename.yml", $module_definition);
     }
 
-    if ($option_dump_yaml_structured)
+    if ($option_dump_file_structured_yaml)
     {
 	read_module_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter);
     }
