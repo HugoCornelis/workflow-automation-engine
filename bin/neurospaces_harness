@@ -402,6 +402,8 @@ sub command_module_update
 
     my $module_definition = Heterarch::Test::Library::read_module_yml($reporter, $module_path_name);
 
+    my $module_definitions = [ $module_definition, ];
+
     #t command_definition 0, command_test 0, read clause.
 
     # we don't care about a possible model library
@@ -421,11 +423,22 @@ sub command_module_update
 
     my $executor = Heterarch::Test::Executor::ModuleUpdater->new($execution_context);
 
+    # note that there is only one module_definition
+
+    foreach my $module_definition (@$module_definitions)
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
 	my $error = $module_definition->md_run($execution_context, $executor);
     }
+
+    # do final processing of the executor
+
+    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter, );
+
+    $test_library->{test_modules} = $module_definitions;
+
+    $executor->ex_terminate($test_library);
 
     # end the execution_context
 
@@ -3773,67 +3786,104 @@ sub get_context_path
 {
     my $self = shift;
 
+    my $decorated_context_path = shift;
+
     # add module counter and identifier
 
-    my $path_separator = "___/___";
+    my $context_path_separator = "___/___";
 
-    my $result = $self->get_module_definition_counter();
+    my $result;
 
-    $result .= $path_separator;
-
-    $result .= $self->get_module_definition()->{name};
-
-    # add command_definition counter and identifier
-
-    my $command_definition = $self->get_command_definition();
-
-    if (defined $command_definition)
+    if ($decorated_context_path)
     {
-	$result .= $path_separator;
+	$result = $self->get_module_definition_counter();
 
-	$result .= $self->get_counter_command_definition_per_module();
+	$result .= $context_path_separator;
 
-	$result .= $path_separator;
+	$result .= $self->get_module_definition()->{name};
 
-	# the command_definition identifier is based on the system
-	# shell command that is used to perform the tests
+	# add command_definition counter and identifier
 
-	#t Depending on the command definition in the test module,
-	#t this may expand to a command with or without its arguments,
-	#t with or without any spaces.
+	my $command_definition = $self->get_command_definition();
 
-	if (exists $command_definition->{command})
+	if (defined $command_definition)
 	{
-	    $result .= $command_definition->{command};
-	}
-	else
-	{
-	    $result .= "NONE";
-	}
+	    $result .= $context_path_separator;
 
-	# add command_test counter and identifier
+	    $result .= $self->get_counter_command_definition_per_module();
 
-	my $command_test = $self->get_command_test();
+	    $result .= $context_path_separator;
 
-	if (defined $command_test)
-	{
-	    $result .= $path_separator;
+	    # the command_definition identifier is based on the system
+	    # shell command that is used to perform the tests
 
-	    $result .= $self->get_counter_command_test_per_command_definition();
+	    #t Depending on the command definition in the test module,
+	    #t this may expand to a command with or without its arguments,
+	    #t with or without any spaces.
 
-	    $result .= $path_separator;
-
-	    # the command_test identifier is based on the write clause
-
-	    if (exists $command_test->{write}
-		and defined $command_test->{write})
+	    if (exists $command_definition->{command})
 	    {
-		$result .= $command_test->{write};
+		$result .= $command_definition->{command};
 	    }
 	    else
 	    {
 		$result .= "NONE";
 	    }
+
+	    # add command_test counter and identifier
+
+	    my $command_test = $self->get_command_test();
+
+	    if (defined $command_test)
+	    {
+		$result .= $context_path_separator;
+
+		$result .= $self->get_counter_command_test_per_command_definition();
+
+		$result .= $context_path_separator;
+
+		# the command_test identifier is based on the write clause
+
+		if (exists $command_test->{write}
+		    and defined $command_test->{write})
+		{
+		    $result .= $command_test->{write};
+		}
+		else
+		{
+		    $result .= "NONE";
+		}
+	    }
+	}
+    }
+    else
+    {
+	$result = $self->get_module_definition_counter();
+
+	$result .= $context_path_separator;
+
+	my $command_definition = $self->get_command_definition();
+
+	if (defined $command_definition)
+	{
+	    $result .= $self->get_counter_command_definition_per_module();
+	}
+	else
+	{
+	    $result .= "-1";
+	}
+
+	$result .= $context_path_separator;
+
+	my $command_test = $self->get_command_test();
+
+	if (defined $command_test)
+	{
+	    $result .= $self->get_counter_command_test_per_command_definition();
+	}
+	else
+	{
+	    $result .= "-1";
 	}
     }
 
@@ -5527,9 +5577,116 @@ sub ex_terminate
 
     my $test_module_library_contents = shift;
 
-    $self = $self->SUPER::ex_terminate(@_);
+    $self->SUPER::ex_terminate(@_);
 
-    #t update the tests using the generated errors
+    # update the tests using the generated errors
+
+    my $error_module_names = $global_test_report->{errors}->{modules};
+
+    foreach my $error_module_name (sort keys %$error_module_names)
+    {
+	my $error_counts = $error_module_names->{$error_module_name};
+
+	foreach my $error_count (sort keys %$error_counts)
+	{
+	    my $error_report = $error_counts->{$error_count};
+
+	    my $context_path = $error_report->{context_path};
+
+	    my $context_path_separator = "___/___";
+
+	    my $decorated_context_path = '';
+
+	    if ($decorated_context_path)
+	    {
+		# context_path: 1___/___./tests/specifications/70_harness/10_help/summary.yml___/___1___/___bin/neurospaces_harness___/___1___/___NONE
+		# context_path: 2___/___90_yaml/70_harness/10_help.t___/___1___/___bin/neurospaces_harness___/___1___/___NONE
+
+		my $number_matcher = "([0-9]+)";
+
+		my $filename_and_command_matcher = "([a-z0-9_/\.]+)";
+
+		$context_path =~ m(([0-9]+?)${context_path_separator}([a-z0-9_/\.]+?)${context_path_separator}([0-9]+?)${context_path_separator}([a-z0-9_/\.]+?)${context_path_separator}([0-9]+?)${context_path_separator}([a-z0-9_/\.]+?));
+
+		$context_path =~ m(([0-9]+?)${context_path_separator}([a-z0-9_/\.]+?)${context_path_separator});
+
+		my $module_counter = $1;
+		my $module_filename = $2;
+		my $command_definition_counter = $3;
+		my $command_definition_command = $4;
+		my $command_test_counter = $5;
+		my $command_test_tester = $6;
+	    }
+	    else
+	    {
+		# process the context path of the current error ...
+
+		# context_path: 1___/___1___/___1
+		# context_path: 2___/___1___/___1
+
+		my $matcher = "^([-0-9]+)${context_path_separator}([-0-9]+)${context_path_separator}([-0-9]+)\$";
+
+		$context_path =~ m(([-0-9]+)${context_path_separator}([-0-9]+)${context_path_separator}([-0-9]+));
+
+		# .., and extract the counters of module, command definition and command test
+
+		my $module_counter = $1;
+		my $command_definition_counter = $2;
+		my $command_test_counter = $3;
+
+		# walk the library to get to the appropriate test definition
+
+		my $module_definitions = $test_module_library_contents->{test_modules};
+
+		my $module_definition = $module_definitions->[$module_counter - 1];
+
+		my $command_definitions = $module_definition->{command_definitions};
+
+		my $command_definition = $command_definitions->[$command_definition_counter - 1];
+
+		my $command_tests = $command_definition->{command_tests};
+
+		my $command_test = $command_tests->[$command_test_counter - 1];
+
+		# walk the error reports to obtain the text seen during testing
+
+		my $error_report = $global_test_report->{errors}->{error_reports}->{$error_count};
+
+		my $differences_report = $error_report->{differences_report};
+
+		my $seen = $differences_report->{seen};
+
+		# fill the seen text in in the test definition
+
+		$command_test->{read} = $seen;
+
+		# remove the existing module definition
+
+		my $module_pathname = $error_report->{module_name};
+
+		$module_pathname =~ s(/summary.yml$)();
+
+		`rm -fr '$global_config->{tests_directory}/$module_pathname'`;
+
+		# write the module definition to structure yaml
+
+		my $execution_context = $self->{execution_context};
+
+		my $reporter = $execution_context->{reporter};
+
+		my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_pathname, $module_definition, $global_config->{tests_directory}, $reporter);
+
+		if ($result =~ /error/i)
+		{
+		    print "$0: Error updating test module $module_pathname in $global_config->{tests_directory} ($result).\n";
+		}
+		else
+		{
+		    print "$0: Updated test module $module_pathname in $global_config->{tests_directory}, please check the result carefully.\n";
+		}
+	    }
+	}
+    }
 
     #! this could be an error message
 
@@ -6250,7 +6407,17 @@ sub read_module_dump_file_structured_yaml
 
 	    $module_definition->{name} = "$module_name/summary.yml";
 
-	    YAML::DumpFile($module_summary_filename, $module_definition);
+	    {
+		# https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
+
+		# use Data::Structure::Util qw( unbless );
+
+		# unbless($module_definition);
+
+		my $unblessed_module_definition = { %$module_definition, };
+
+		YAML::DumpFile($module_summary_filename, $unblessed_module_definition);
+	    }
 
 	    my $prefix = 100;
 
@@ -6264,7 +6431,15 @@ sub read_module_dump_file_structured_yaml
 
 		if (! -f $command_definition_pathname)
 		{
-		    YAML::DumpFile($command_definition_pathname, $command_definition);
+		    # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
+
+		    # use Data::Structure::Util qw( unbless );
+
+		    # unbless($command_definition);
+
+		    my $unblessed_command_definition = { %$command_definition, };
+
+		    YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
 		}
 		else
 		{
