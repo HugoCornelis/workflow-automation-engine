@@ -18,4 +18,4 @@ documentation:
     that guarantee correct application behaviour.
 
   purpose: Help page.
-name: ./tests/specifications/70_harness/10_help/summary.yml
+name: 70_harness/10_help/summary.yml
