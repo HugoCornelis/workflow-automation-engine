@@ -1940,20 +1940,18 @@ sub after_testing
 
     my $test_result = shift;
 
-    my $command_definition = $execution_context->get_command_definition();
-
     my $module_definition = $execution_context->get_module_definition();
-
-    my $command = $command_definition->{command};
-
-    my $time_start = $self->{time_start};
-
-    my $time_elapsed = tv_interval($time_start);
 
     # fill in the elapsed time in the report
 
     if ($option_timings)
     {
+	use Time::HiRes qw(tv_interval);
+
+	my $time_start = $self->{time_start};
+
+	my $time_elapsed = tv_interval($time_start);
+
 	my $module_name = $module_definition->{name};
 
 	my $description = $self->{description};
@@ -1966,6 +1964,10 @@ sub after_testing
     # attempt to correct if the result is almost correct
 
     #! perl code does not produce a full test result object, so we cannot try to correct an almost correct result
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $command = $command_definition->{command};
 
     if (not (ref $command eq 'CODE'))
     {
@@ -2019,7 +2021,7 @@ sub _before_run
 
     # record time
 
-    use Time::HiRes qw(gettimeofday tv_interval);
+    use Time::HiRes qw(gettimeofday);
 
     my $time_start = [ gettimeofday(), ];
 
