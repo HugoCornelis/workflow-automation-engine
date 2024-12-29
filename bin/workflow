@@ -3770,6 +3770,193 @@ sub builtin_git_move_file_across_keep_history
 }
 
 
+package Command::Git::RepositorySet;
+
+
+our $project_name = 'example_project';
+
+my $source_code_directory_prefix = "$ENV{HOME}/projects/$project_name/source";
+
+my $all_repository_descriptors
+    = {
+       simple_repository1 => {
+			      name => 'simple_repository1',
+			      repository => 'git@gitlab.com:example_repositories/simple_repository1.git',
+			     },
+       simple_repository2 => {
+			      name => 'simple_repository2',
+			      repository => 'git@gitlab.com:example_repositories/simple_repository2.git',
+			     },
+       recursive_repository => {
+				name => 'recursive_repository',
+				recurse => 1,
+				repository => 'git@gitlab.com:example_repositories/recursive_repository.git',
+			       },
+      };
+
+
+sub _repository_2_directory
+{
+    my $repository = shift;
+
+    $repository =~ m(:(([0-9]+)/)?(.*?)/([^/]*\.git)$);
+
+    my $port = $2;
+
+    my $directory = $3;
+
+    my $repository_name = $4;
+
+    # use Data::Dumper;
+
+    # print Dumper(
+    # 		 {
+    # 		  port => $port,
+    # 		  directory => $directory,
+    # 		  repository_name => $repository_name,
+    # 		 },
+    # 		);
+
+    return "$source_code_directory_prefix/$directory/$repository_name";
+}
+
+
+sub _populate_directories
+{
+    foreach my $repository_descriptor_key (sort keys %$all_repository_descriptors)
+    {
+	my $repository_descriptor = $all_repository_descriptors->{$repository_descriptor_key};
+
+	my $repository = $repository_descriptor->{repository};
+
+	$repository_descriptor->{directory} = _repository_2_directory($repository);
+    }
+}
+
+
+sub _commands_create
+{
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
+
+	       my $directory = $repository_descriptor->{directory};
+
+	       my $name = $repository_descriptor->{name};
+
+	       my $repository = $repository_descriptor->{repository};
+
+	       my $recurse = $repository_descriptor->{recurse};
+
+	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
+
+	       ("mkdir -p '$directory'",
+		"cd '$directory'",
+		"echo '---\n$name'",
+		"git clone $recurse_option '$repository' .");
+	   }
+	   sort keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _flags_create
+{
+    return
+    {
+     allow_fail => 'to allow partial updates after new repositories have been added',
+     quiet => 'always',
+    };
+}
+
+
+sub _commands_echo_directories
+{
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
+
+	       my $directory = $repository_descriptor->{directory};
+
+	       my $repository = $repository_descriptor->{repository};
+
+	       ("echo '---\n$directory'",
+		"echo '    --> $repository'");
+	   }
+	   sort keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _flags_echo_directories
+{
+    return { quiet => 'always', };
+}
+
+
+sub _commands_pull
+{
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
+
+	       my $directory = $repository_descriptor->{directory};
+
+	       my $repository = $repository_descriptor->{repository};
+
+	       my $recurse = $repository_descriptor->{recurse};
+
+	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
+
+	       ("cd '$directory'",
+		"git pull $recurse_option");
+	   }
+	   sort keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _flags_pull
+{
+    return ();
+}
+
+
+
+sub _commands_status
+{
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
+
+	       my $directory = $repository_descriptor->{directory};
+
+	       my $repository = $repository_descriptor->{repository};
+
+	       my $recurse = $repository_descriptor->{recurse};
+
+	       ("cd '$directory'",
+		"git status");
+	   }
+	   sort keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _flags_status
+{
+    return ();
+}
+
+
 package Command::GitLab;
 
 
@@ -7194,6 +7381,10 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				  description => 'workflows for working with git',
 				  documentation => 'These workflows implement convenience interactions with git.',
 				 },
+	       'Command::Git::RepositorySet' => {
+						 description => 'workflows for working with git repositories',
+						 documentation => 'These workflows implement convenience interactions with a set of Git repositories..',
+						},
 	       'Command::GitLab' => {
 				     description => 'workflows for working with GitLab',
 				     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',
