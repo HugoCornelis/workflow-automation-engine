@@ -8,7 +8,7 @@ my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
 
-use Getopt::Long;
+use Getopt::Long qw(:config require_order);
 
 use Neurospaces::Tester;
 
