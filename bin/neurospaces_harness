@@ -72,7 +72,7 @@ my $global_command_configuration
 					      executor => "command_module_create",
 					     },
 			  "module-update" => {
-					      description => "An example of a command with possible subcommands: Update the given module with the given arguments and directives.",
+					      description => "Update the given module with the given arguments and directives.",
 					      executor => "command_module_update",
 					      subcommands => [],
 					     },
