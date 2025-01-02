@@ -5,10 +5,17 @@ command_tests:
     description: Can we display the builtin commands help page?
     read: |2
       
-      'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)':
-        - workflow builtin add_target --help
-        - workflow builtin archive_configuration --help
-        - workflow builtin install_scripts --help
-        - workflow builtin print_configuration_directory --help
-        - workflow builtin start_project --help
+      0_description: |-
+        The list of available commands for this project are
+          (copy-paste the one you would like to execute,
+           try them with the --dry-run and --interactions options,
+           some commands may implement a usage message available with the --help option):
+      1_commmands:
+        - workflow builtin add_target
+        - workflow builtin archive_configuration
+        - workflow builtin install_scripts
+        - workflow builtin print_configuration_directory
+        - workflow builtin start_project
+        - workflow builtin tmux_create_sessions
+        - workflow builtin tmux_kill_sessions
 description: default builtin commands

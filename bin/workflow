@@ -7356,12 +7356,20 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	       }
 	       map
 	       {
-		   "$global_program_name $_ --help";
+		   "$global_program_name $_";
 	       }
 	       @$commands,
 	      ];
 
-	print Dump( { "available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)" => $commands, }, );
+	print Dump(
+		   {
+		    '0_description' => "The list of available commands for this project are
+  (copy-paste the one you would like to execute,
+   try them with the --dry-run and --interactions options,
+   some commands may implement a usage message available with the --help option):",
+		    '1_commmands' => $commands,
+		   },
+		  );
 
 	exit 0;
     }

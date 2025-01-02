@@ -474,19 +474,26 @@ conf.workflow-tests-configuration
 						  {
 						   description => "Have the project workflows been correctly installed?",
 						   read => '
-\'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
-  - workflow-tests-workflow builtin add_target --help
-  - workflow-tests-workflow builtin archive_configuration --help
-  - workflow-tests-workflow builtin install_scripts --help
-  - workflow-tests-workflow builtin print_configuration_directory --help
-  - workflow-tests-workflow builtin start_project --help
-  - workflow-tests-workflow examples_sh sh_array_of_commands --help
-  - workflow-tests-workflow examples_sh sh_remote_execution --help
-  - workflow-tests-workflow examples_sh sh_single_command --help
-  - workflow-tests-workflow perl_examples array_of_commands --help
-  - workflow-tests-workflow perl_examples array_of_commands_remote_execution --help
-  - workflow-tests-workflow perl_examples sequencing_and_composition --help
-  - workflow-tests-workflow perl_examples single_command --help
+0_description: |-
+  The list of available commands for this project are
+    (copy-paste the one you would like to execute,
+     try them with the --dry-run and --interactions options,
+     some commands may implement a usage message available with the --help option):
+1_commmands:
+  - workflow-tests-workflow builtin add_target
+  - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin install_scripts
+  - workflow-tests-workflow builtin print_configuration_directory
+  - workflow-tests-workflow builtin start_project
+  - workflow-tests-workflow builtin tmux_create_sessions
+  - workflow-tests-workflow builtin tmux_kill_sessions
+  - workflow-tests-workflow examples_sh sh_array_of_commands
+  - workflow-tests-workflow examples_sh sh_remote_execution
+  - workflow-tests-workflow examples_sh sh_single_command
+  - workflow-tests-workflow perl_examples array_of_commands
+  - workflow-tests-workflow perl_examples array_of_commands_remote_execution
+  - workflow-tests-workflow perl_examples sequencing_and_composition
+  - workflow-tests-workflow perl_examples single_command
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -499,19 +506,26 @@ conf.workflow-tests-configuration
 						  {
 						   description => "Have the project workflows been correctly installed, different working directory?",
 						   read => '
-\'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)\':
-  - workflow-tests-workflow builtin add_target --help
-  - workflow-tests-workflow builtin archive_configuration --help
-  - workflow-tests-workflow builtin install_scripts --help
-  - workflow-tests-workflow builtin print_configuration_directory --help
-  - workflow-tests-workflow builtin start_project --help
-  - workflow-tests-workflow examples_sh sh_array_of_commands --help
-  - workflow-tests-workflow examples_sh sh_remote_execution --help
-  - workflow-tests-workflow examples_sh sh_single_command --help
-  - workflow-tests-workflow perl_examples array_of_commands --help
-  - workflow-tests-workflow perl_examples array_of_commands_remote_execution --help
-  - workflow-tests-workflow perl_examples sequencing_and_composition --help
-  - workflow-tests-workflow perl_examples single_command --help
+0_description: |-
+  The list of available commands for this project are
+    (copy-paste the one you would like to execute,
+     try them with the --dry-run and --interactions options,
+     some commands may implement a usage message available with the --help option):
+1_commmands:
+  - workflow-tests-workflow builtin add_target
+  - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin install_scripts
+  - workflow-tests-workflow builtin print_configuration_directory
+  - workflow-tests-workflow builtin start_project
+  - workflow-tests-workflow builtin tmux_create_sessions
+  - workflow-tests-workflow builtin tmux_kill_sessions
+  - workflow-tests-workflow examples_sh sh_array_of_commands
+  - workflow-tests-workflow examples_sh sh_remote_execution
+  - workflow-tests-workflow examples_sh sh_single_command
+  - workflow-tests-workflow perl_examples array_of_commands
+  - workflow-tests-workflow perl_examples array_of_commands_remote_execution
+  - workflow-tests-workflow perl_examples sequencing_and_composition
+  - workflow-tests-workflow perl_examples single_command
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
