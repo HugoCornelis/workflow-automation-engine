@@ -3203,6 +3203,93 @@ arguments:
 }
 
 
+sub _builtin_tmux_sessions
+{
+    my $force = $ARGV[0];
+
+    my $target_servers = $global_technical_project_configuration->{target_servers};
+
+    my $tmux_sessions = [];
+
+    foreach my $target_server_name (keys %$target_servers)
+    {
+	my $target_server = $target_servers->{$target_server_name};
+
+	my $name = $target_server->{name};
+
+	if ($name =~ m(^tmux_))
+	{
+	    my $remote_policy = $target_server->{remote_policy};
+
+	    $remote_policy =~ m(-t ([^\s]+));
+
+	    my $tmux_session_name = $1;
+
+	    push @$tmux_sessions, $tmux_session_name;
+	}
+    }
+
+    return $tmux_sessions;
+}
+
+
+sub builtin_tmux_create_sessions
+{
+    my $force = $ARGV[0];
+
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    my $tmux_session_commands
+	= [
+	   map { "tmux new-session -d -s $_"; }
+	   @$tmux_sessions,
+	  ];
+
+    my $tmux_session_attach_commands
+	= [
+	   map { "echo For tmux session $_, attach with: 'tmux attach-session -t $_'"; }
+	   @$tmux_sessions,
+	  ];
+
+    if (scalar @$tmux_session_commands)
+    {
+	execute_shell_command_array
+	    (
+	     [ @$tmux_session_commands, @$tmux_session_attach_commands, ],
+	     {
+	      quiet => (! $force),
+	      allow_fail => $force,
+	     },
+	    );
+    }
+}
+
+
+sub builtin_tmux_kill_sessions
+{
+    my $force = $ARGV[0];
+
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    my $tmux_session_commands
+	= [
+	   map { "tmux kill-session -t $_"; }
+	   @$tmux_sessions,
+	  ];
+
+    if (scalar @$tmux_session_commands)
+    {
+	execute_shell_command_array
+	    (
+	     $tmux_session_commands,
+	     {
+	      allow_fail => $force,
+	     },
+	    );
+    }
+}
+
+
 sub execute_shell_command
 {
     return Engine::execute_shell_command(@_);
