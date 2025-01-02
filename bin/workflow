@@ -194,69 +194,53 @@ sub _all_install_scripts_execute_shell_command_array
 }
 
 
-sub _builtin_project_bash_completion_create
+#
+# add the given command filename to the list in the configuration.
+#
+# The type and target_name arguments are only there for diagnostics.
+#
+
+sub _builtin_add_command_filename
 {
     my $field_project_configuration = shift;
 
-    my $project_name = shift;
+    my $type = shift;
 
-    my $project_name_dash = $project_name;
+    my $target_name = shift;
 
-    $project_name_dash =~ s(_)(-)g;
+    my $new_command_filename = shift;
 
-    my $project_name_underscore = $project_name;
+    my $error;
 
-    $project_name_underscore =~ s(-)(_)g;
+    my $configuration_data_directory = $field_project_configuration->{true_technical_project_data_configuration_directory};
 
-    #! see https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html
-    #! see https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion-Builtins.html
+    # read the commands configuration file
 
-    my $bash_completion_code
-	= "#/usr/bin/env bash
-_${project_name_underscore}_configuration_completions()
-{
-    COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+    my $command_filenames;
 
-    COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
-}
+    my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
 
-# complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
-# complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
-complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration -o bashdefault -o default
-complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration -o bashdefault -o default
-
-
-_${project_name_underscore}_workflow_completions()
-{
-    COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
-
-    COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
-}
-
-# complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
-# complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
-complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow -o bashdefault -o default
-complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow -o bashdefault -o default
-
-";
-
-    my $error = '';
-
-    use IO::File;
-
-    my $file = IO::File->new("> $project_name-bash-completion.sh");
-
-    if (defined $file)
+    if (not $error)
     {
-	print $file $bash_completion_code;
-
-	$file->close();
-
-	chmod 0700, "$project_name-bash-completion.sh";
+	$command_filenames = YAML::LoadFile($command_filenames_configuration_filename);
     }
-    else
+
+    # add the commands filename corresponding to the new target name
+
+    if (not $error)
     {
-	$error = "cannot open $project_name-bash-completion.sh";
+	my $command_filenames_array = $command_filenames->{command_filenames};
+
+	push @$command_filenames_array, $new_command_filename;
+    }
+
+    # write the commands configuration file
+
+    if (not $error)
+    {
+	YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
+
+	print "$global_program_name: registered the $type command file name $new_command_filename for target $target_name\n";
     }
 
     return $error;
@@ -536,6 +520,105 @@ else
 ';
 
     return $code;
+}
+
+
+sub _builtin_create_directories
+{
+    my $pathname = shift;
+
+    use File::Basename;
+    use File::Path qw/make_path/;
+
+    my $directory = dirname($pathname);
+
+    make_path($directory);
+
+    my $filename = basename($pathname);
+
+    return ($directory, $filename);
+}
+
+
+sub _builtin_create_directory
+{
+    my $directory = shift;
+
+    my $error = '';
+
+    if (not mkdir $directory)
+    {
+	$error = "error: $!";
+    }
+}
+
+
+sub _builtin_project_bash_completion_create
+{
+    my $field_project_configuration = shift;
+
+    my $project_name = shift;
+
+    my $project_name_dash = $project_name;
+
+    $project_name_dash =~ s(_)(-)g;
+
+    my $project_name_underscore = $project_name;
+
+    $project_name_underscore =~ s(-)(_)g;
+
+    #! see https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion.html
+    #! see https://www.gnu.org/software/bash/manual/html_node/Programmable-Completion-Builtins.html
+
+    my $bash_completion_code
+	= "#/usr/bin/env bash
+_${project_name_underscore}_configuration_completions()
+{
+    COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+
+    COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
+}
+
+# complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
+# complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
+complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration -o bashdefault -o default
+complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration -o bashdefault -o default
+
+
+_${project_name_underscore}_workflow_completions()
+{
+    COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+
+    COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
+}
+
+# complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
+# complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
+complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow -o bashdefault -o default
+complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow -o bashdefault -o default
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $project_name-bash-completion.sh");
+
+    if (defined $file)
+    {
+	print $file $bash_completion_code;
+
+	$file->close();
+
+	chmod 0700, "$project_name-bash-completion.sh";
+    }
+    else
+    {
+	$error = "cannot open $project_name-bash-completion.sh";
+    }
+
+    return $error;
 }
 
 
@@ -1066,49 +1149,6 @@ sub _builtin_project_commands_sh_create
 }
 
 
-sub _builtin_project_commands_yml_create
-{
-    my $field_project_configuration = shift;
-
-    my $project_name = shift;
-
-    my $target_name = shift;
-
-    my $command_name = shift;
-
-    my $yml_string = shift;
-
-    my $commands_data_directory = "$project_name-commands-data";
-
-    my $error = '';
-
-    my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
-
-    my $true_technical_project_data_commands_directory = $field_project_configuration->{true_technical_project_data_commands_directory};
-
-    my $filename = "$true_technical_project_data_commands_directory/$target_name//$command_name.yml";
-
-    _builtin_create_directories($filename);
-
-    use IO::File;
-
-    my $file = IO::File->new("> $filename");
-
-    if (defined $file)
-    {
-	print $file $yml_string;
-
-	$file->close();
-    }
-    else
-    {
-	$error = "cannot open $filename";
-    }
-
-    return $error;
-}
-
-
 sub _builtin_project_commands_sh_template_create
 {
     my $field_project_configuration = shift;
@@ -1165,6 +1205,49 @@ echo an example of the invocation of a single command
     if (not $error)
     {
 	$error = _builtin_project_commands_sh_create($field_project_configuration, $project_name, $target_name, "sh_single_command", $single_command_sh_example);
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_yml_create
+{
+    my $field_project_configuration = shift;
+
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $command_name = shift;
+
+    my $yml_string = shift;
+
+    my $commands_data_directory = "$project_name-commands-data";
+
+    my $error = '';
+
+    my $true_technical_project_configuration_directory = $field_project_configuration->{true_technical_project_configuration_directory};
+
+    my $true_technical_project_data_commands_directory = $field_project_configuration->{true_technical_project_data_commands_directory};
+
+    my $filename = "$true_technical_project_data_commands_directory/$target_name//$command_name.yml";
+
+    _builtin_create_directories($filename);
+
+    use IO::File;
+
+    my $file = IO::File->new("> $filename");
+
+    if (defined $file)
+    {
+	print $file $yml_string;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $filename";
     }
 
     return $error;
@@ -1240,33 +1323,81 @@ help: this command echos a string to the terminal
 }
 
 
-sub _builtin_create_directories
+sub _builtin_project_configuration_build_servers_create
 {
-    my $pathname = shift;
+    my $project_name = shift;
 
-    use File::Basename;
-    use File::Path qw/make_path/;
+    my $configuration_data_directory = shift;
 
-    my $directory = dirname($pathname);
+    my $user = shift;
 
-    make_path($directory);
-
-    my $filename = basename($pathname);
-
-    return ($directory, $filename);
-}
-
-
-sub _builtin_create_directory
-{
-    my $directory = shift;
+    my $configuration_file_part
+	= "---
+build_servers:
+  laptop:
+    description: local laptop
+    name: laptop
+    ssh_port: 22
+    ssh_server: localhost
+    ssh_user: $user
+";
 
     my $error = '';
 
-    if (not mkdir $directory)
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/build_servers.yml");
+
+    if (defined $file)
     {
-	$error = "error: $!";
+	print $file $configuration_file_part;
+
+	$file->close();
     }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/build_servers.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_command_filenames_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+#     my $configuration_file_part
+# 	= "---
+# command_filenames:
+#   - $project_name-commands
+# ";
+
+    my $configuration_file_part
+	= "---
+command_filenames: []
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/command_filenames.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/command_filenames.yml";
+    }
+
+    return $error;
 }
 
 
@@ -1364,84 +1495,6 @@ my \$configuration = {
     else
     {
 	$error = "cannot open $project_name-configuration";
-    }
-
-    return $error;
-}
-
-
-sub _builtin_project_configuration_build_servers_create
-{
-    my $project_name = shift;
-
-    my $configuration_data_directory = shift;
-
-    my $user = shift;
-
-    my $configuration_file_part
-	= "---
-build_servers:
-  laptop:
-    description: local laptop
-    name: laptop
-    ssh_port: 22
-    ssh_server: localhost
-    ssh_user: $user
-";
-
-    my $error = '';
-
-    use IO::File;
-
-    my $file = IO::File->new("> $configuration_data_directory/build_servers.yml");
-
-    if (defined $file)
-    {
-	print $file $configuration_file_part;
-
-	$file->close();
-    }
-    else
-    {
-	$error = "cannot open $configuration_data_directory/build_servers.yml";
-    }
-
-    return $error;
-}
-
-
-sub _builtin_project_configuration_command_filenames_create
-{
-    my $project_name = shift;
-
-    my $configuration_data_directory = shift;
-
-#     my $configuration_file_part
-# 	= "---
-# command_filenames:
-#   - $project_name-commands
-# ";
-
-    my $configuration_file_part
-	= "---
-command_filenames: []
-";
-
-    my $error = '';
-
-    use IO::File;
-
-    my $file = IO::File->new("> $configuration_data_directory/command_filenames.yml");
-
-    if (defined $file)
-    {
-	print $file $configuration_file_part;
-
-	$file->close();
-    }
-    else
-    {
-	$error = "cannot open $configuration_data_directory/command_filenames.yml";
     }
 
     return $error;
@@ -1935,443 +1988,33 @@ return \$configuration;
 }
 
 
-#
-# add the given command filename to the list in the configuration.
-#
-# The type and target_name arguments are only there for diagnostics.
-#
-
-sub _builtin_add_command_filename
+sub _builtin_tmux_sessions
 {
-    my $field_project_configuration = shift;
+    my $force = $ARGV[0];
 
-    my $type = shift;
+    my $target_servers = $global_technical_project_configuration->{target_servers};
 
-    my $target_name = shift;
+    my $tmux_sessions = [];
 
-    my $new_command_filename = shift;
-
-    my $error;
-
-    my $configuration_data_directory = $field_project_configuration->{true_technical_project_data_configuration_directory};
-
-    # read the commands configuration file
-
-    my $command_filenames;
-
-    my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
-
-    if (not $error)
+    foreach my $target_server_name (keys %$target_servers)
     {
-	$command_filenames = YAML::LoadFile($command_filenames_configuration_filename);
-    }
+	my $target_server = $target_servers->{$target_server_name};
 
-    # add the commands filename corresponding to the new target name
+	my $name = $target_server->{name};
 
-    if (not $error)
-    {
-	my $command_filenames_array = $command_filenames->{command_filenames};
-
-	push @$command_filenames_array, $new_command_filename;
-    }
-
-    # write the commands configuration file
-
-    if (not $error)
-    {
-	YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
-
-	print "$global_program_name: registered the $type command file name $new_command_filename for target $target_name\n";
-    }
-
-    return $error;
-}
-
-
-sub builtin_add_target
-{
-    my $option_install_command_pl;
-    my $option_install_command_python;
-    my $option_install_command_sh;
-    # my $option_install_command_yml;
-
-    our $install_options
-      = {
-	 "install-commands-pl!" => \$option_install_command_pl,
-	 "install-commands-python!" => \$option_install_command_python,
-	 "install-commands-sh!" => \$option_install_command_sh,
-	 # "install-commands-yml!" => \$option_install_command_yml,
-	};
-
-    use Getopt::Long qw(GetOptionsFromArray);;
-
-    my $result = GetOptionsFromArray(\@ARGV, %$install_options);
-
-    if (!$result)
-    {
-        die "$global_program_name: *** error in option processing, try --help";
-    }
-
-    # if ($option_install_command_pl
-    # 	and $option_install_command_python)
-    # {
-    #     die "$global_program_name: *** error: you cannot install both perl and python command files for the same target, please choose at most one of these.";
-    # }
-
-    if ($option_verbose)
-    {
-	use Data::Dumper;
-
-	print "$global_program_name: builtin_add_target, installation options:\n";
-
-	print Dumper( { install_options => $install_options, }, );
-    }
-
-    my $error = '';
-
-    my $target_name = $ARGV[0];
-
-    if (not $error)
-    {
-	if (not defined $target_name)
+	if ($name =~ m(^tmux_))
 	{
-	    $error = 'no target_name found on the command line';
+	    my $remote_policy = $target_server->{remote_policy};
+
+	    $remote_policy =~ m(-t ([^\s]+));
+
+	    my $tmux_session_name = $1;
+
+	    push @$tmux_sessions, $tmux_session_name;
 	}
     }
 
-    my $target_description = $ARGV[1];
-
-    if (not $error)
-    {
-	if (not defined $target_description)
-	{
-	    $error = 'no target_description found on the command line';
-	}
-    }
-
-#     use Data::Dumper;
-
-#     print Dumper($global_technical_project_configuration);
-
-#     print Dumper($global_field_project_configuration);
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name};
-
-    if (not $error)
-    {
-	if (not $field_project_name)
-	{
-	    $error = 'no valid field_project_name found in the field_project_configuration';
-	}
-    }
-
-    my $configuration_data_directory = $global_field_project_configuration->{true_technical_project_data_configuration_directory};
-
-    if (not $error)
-    {
-	if (not $configuration_data_directory)
-	{
-	    $error = 'no valid configuration_data_directory found in the field_project_configuration';
-	}
-    }
-
-    # read the targets configuration file
-
-    my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
-
-    my $targets = YAML::LoadFile($targets_configuration_filename);
-
-    if (not $error)
-    {
-	if (exists $targets->{targets}->{$target_name})
-	{
-	    $error = "target $target_name already exists";
-	}
-    }
-
-    # add the new target
-
-    if (not $error)
-    {
-	$targets->{targets}->{$target_name}->{description} = $target_description;
-    }
-
-    # write the new targets configuration file
-
-    if (not $error)
-    {
-	YAML::DumpFile($targets_configuration_filename, $targets);
-
-	print "$global_program_name: added target $target_name to $targets_configuration_filename\n";
-    }
-
-    if ($option_install_command_pl)
-    {
-	my $new_command_filename = "$field_project_name-commands-$target_name";
-
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
-
-	# add a template commands file with the given name
-
-	if (not $error)
-	{
-	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
-
-	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
-	}
-    }
-
-    if ($option_install_command_python)
-    {
-	my $new_command_filename = "$field_project_name-commands-$target_name";
-
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
-
-	# add a template commands file with the given name
-
-	if (not $error)
-	{
-	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
-
-	    # print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
-	}
-    }
-
-    if ($option_install_command_sh)
-    {
-	if (not $error)
-	{
-	    $error = _builtin_project_commands_sh_template_create($global_field_project_configuration, $field_project_name, $target_name);
-
-	    print "$global_program_name: created the shell command file for target $target_name\n";
-	}
-    }
-
-    # if ($option_install_command_yml)
-    # {
-    # 	if (not $error)
-    # 	{
-    # 	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
-
-    # 	    print "$global_program_name: created the yml command file for target $target_name\n";
-    # 	}
-    # }
-
-    # return errors
-
-    return $error;
-}
-
-
-sub builtin_add_target_completions
-{
-    my $complete_command_string = shift;
-
-    my $complete_arguments_array = shift;
-
-    my $debug_completion = 0;
-
-    if ($debug_completion > 2)
-    {
-	print STDERR Dumper(
-			    {
-			     arguments => \@_,
-			     complete_arguments_array => $complete_arguments_array,
-			     complete_command_string => $complete_command_string,
-			    },
-			   );
-    }
-
-    my $completions_hash
-	= {
-	   "1.<target_name>" => {
-				 "<target_description>" => 'abc',
-				 "_target_description_" => 'abc',
-				},
-	   "2.<target_description>" => 'abc',
-	  };
-
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
-}
-
-
-sub builtin_add_target_help
-{
-    my $command = shift;
-
-    return "$command: add a new target and update the configuration to integrate it.
-
-synopsis:
-
-$command <target-name> <target-description> [-- <options>]
-
-arguments:
-
-    ARGV[0]: name of the new target.
-    ARGV[1]: description of the new target.
-
-options:
-
-    --install-commands-pl: install a perl command file template.
-    --install-commands-sh: install a shell command file template.
-";
-}
-
-
-sub builtin_archive_configuration
-{
-    my $scripts_directory = $global_field_project_configuration->{true_technical_project_configuration_directory};
-
-    my $tar_filename = $ARGV[0];
-
-    # make sure the --interactions family of options works
-
-    if ($::option_dry_run)
-    {
-	return '';
-    }
-
-    if (not defined $tar_filename)
-    {
-	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename as its only argument on the command line";
-    }
-
-    use Archive::Tar;
-
-    my $compression = COMPRESS_GZIP;
-
-    if ($tar_filename =~ m(^.*tar\.gz$))
-    {
-	$compression = COMPRESS_GZIP;
-    }
-    elsif ($tar_filename =~ m(^.*tar\.bz2$))
-    {
-	$compression = COMPRESS_BZIP;
-    }
-    elsif ($tar_filename =~ m(^.*tgz$))
-    {
-	$compression = COMPRESS_GZIP;
-    }
-    elsif ($tar_filename =~ m(^.*tbz$))
-    {
-	$compression = COMPRESS_BZIP;
-    }
-    else
-    {
-	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename to end with .tar.gz, .tar.bz2, .tgz or .tbz";
-    }
-
-    {
-	my $archive_directory = "$scripts_directory/..";
-
-	$scripts_directory =~ m(.*/(.*));
-
-	my $directory_inside_tar_name = $1;
-
-	use Cwd 'abs_path';
-
-	use File::chdir;
-
-	local $CWD = $archive_directory;
-
-	my $getcwd = Cwd::getcwd();
-
-	my $scripts
-	    = [
-	       sort
-	       map
-	       {
-		   chomp; $_;
-	       }
-	       grep
-	       {
-		   my $filename = $_;
-
-		   my $exclude = '';
-
-		   if ($filename =~ m(_Inline))
-		   {
-		       $exclude = 'is_inline_directory';
-		   }
-
-		   not $exclude;
-	       }
-	       `find $directory_inside_tar_name -type f`,
-	      ];
-
-	my $tar = Archive::Tar->new();
-
-	$tar->add_files(@$scripts);
-
-	$tar->write($tar_filename, $compression);
-
-	if ($::option_verbose)
-	{
-	    use YAML;
-
-	    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
-
-	    print Dump
-		(
-		 {
-		  CWD => $CWD,
-		  # directory_inside_tar_name => $directory_inside_tar_name,
-		  # getcwd => $getcwd,
-		  scripts => $scripts,
-		  tar_filename => $tar_filename,
-		 },
-		);
-	}
-    }
-
-    return '';
-}
-
-
-sub builtin_archive_configuration_completions
-{
-    my $complete_command_string = shift;
-
-    my $complete_arguments_array = shift;
-
-    my $completions_hash
-	= {
-	   ".tar.gz" => 'abc',
-	  };
-
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
-}
-
-
-sub builtin_archive_configuration_help
-{
-    my $command = shift;
-
-    return "$command: create a tarball with the configuration of the current workflow project.
-
-synopsis:
-
-$command <tarball-name>
-
-arguments:
-
-    ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
-
-";
+    return $tmux_sessions;
 }
 
 
@@ -2829,6 +2472,393 @@ sub _install_script_symbolic_link_to_engine
 }
 
 
+sub builtin_add_target
+{
+    my $option_install_command_pl;
+    my $option_install_command_python;
+    my $option_install_command_sh;
+    # my $option_install_command_yml;
+
+    our $install_options
+      = {
+	 "install-commands-pl!" => \$option_install_command_pl,
+	 "install-commands-python!" => \$option_install_command_python,
+	 "install-commands-sh!" => \$option_install_command_sh,
+	 # "install-commands-yml!" => \$option_install_command_yml,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray(\@ARGV, %$install_options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** error in option processing, try --help";
+    }
+
+    # if ($option_install_command_pl
+    # 	and $option_install_command_python)
+    # {
+    #     die "$global_program_name: *** error: you cannot install both perl and python command files for the same target, please choose at most one of these.";
+    # }
+
+    if ($option_verbose)
+    {
+	use Data::Dumper;
+
+	print "$global_program_name: builtin_add_target, installation options:\n";
+
+	print Dumper( { install_options => $install_options, }, );
+    }
+
+    my $error = '';
+
+    my $target_name = $ARGV[0];
+
+    if (not $error)
+    {
+	if (not defined $target_name)
+	{
+	    $error = 'no target_name found on the command line';
+	}
+    }
+
+    my $target_description = $ARGV[1];
+
+    if (not $error)
+    {
+	if (not defined $target_description)
+	{
+	    $error = 'no target_description found on the command line';
+	}
+    }
+
+#     use Data::Dumper;
+
+#     print Dumper($global_technical_project_configuration);
+
+#     print Dumper($global_field_project_configuration);
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    if (not $error)
+    {
+	if (not $field_project_name)
+	{
+	    $error = 'no valid field_project_name found in the field_project_configuration';
+	}
+    }
+
+    my $configuration_data_directory = $global_field_project_configuration->{true_technical_project_data_configuration_directory};
+
+    if (not $error)
+    {
+	if (not $configuration_data_directory)
+	{
+	    $error = 'no valid configuration_data_directory found in the field_project_configuration';
+	}
+    }
+
+    # read the targets configuration file
+
+    my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
+
+    my $targets = YAML::LoadFile($targets_configuration_filename);
+
+    if (not $error)
+    {
+	if (exists $targets->{targets}->{$target_name})
+	{
+	    $error = "target $target_name already exists";
+	}
+    }
+
+    # add the new target
+
+    if (not $error)
+    {
+	$targets->{targets}->{$target_name}->{description} = $target_description;
+    }
+
+    # write the new targets configuration file
+
+    if (not $error)
+    {
+	YAML::DumpFile($targets_configuration_filename, $targets);
+
+	print "$global_program_name: added target $target_name to $targets_configuration_filename\n";
+    }
+
+    if ($option_install_command_pl)
+    {
+	my $new_command_filename = "$field_project_name-commands-$target_name";
+
+	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
+
+	# add a template commands file with the given name
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+
+	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_python)
+    {
+	my $new_command_filename = "$field_project_name-commands-$target_name";
+
+	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
+
+	# add a template commands file with the given name
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+
+	    # print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_sh)
+    {
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_sh_template_create($global_field_project_configuration, $field_project_name, $target_name);
+
+	    print "$global_program_name: created the shell command file for target $target_name\n";
+	}
+    }
+
+    # if ($option_install_command_yml)
+    # {
+    # 	if (not $error)
+    # 	{
+    # 	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
+
+    # 	    print "$global_program_name: created the yml command file for target $target_name\n";
+    # 	}
+    # }
+
+    # return errors
+
+    return $error;
+}
+
+
+sub builtin_add_target_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $debug_completion = 0;
+
+    if ($debug_completion > 2)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => \@_,
+			     complete_arguments_array => $complete_arguments_array,
+			     complete_command_string => $complete_command_string,
+			    },
+			   );
+    }
+
+    my $completions_hash
+	= {
+	   "1.<target_name>" => {
+				 "<target_description>" => 'abc',
+				 "_target_description_" => 'abc',
+				},
+	   "2.<target_description>" => 'abc',
+	  };
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+}
+
+
+sub builtin_add_target_help
+{
+    my $command = shift;
+
+    return "$command: add a new target and update the configuration to integrate it.
+
+synopsis:
+
+$command <target-name> <target-description> [-- <options>]
+
+arguments:
+
+    ARGV[0]: name of the new target.
+    ARGV[1]: description of the new target.
+
+options:
+
+    --install-commands-pl: install a perl command file template.
+    --install-commands-sh: install a shell command file template.
+";
+}
+
+
+sub builtin_archive_configuration
+{
+    my $scripts_directory = $global_field_project_configuration->{true_technical_project_configuration_directory};
+
+    my $tar_filename = $ARGV[0];
+
+    # make sure the --interactions family of options works
+
+    if ($::option_dry_run)
+    {
+	return '';
+    }
+
+    if (not defined $tar_filename)
+    {
+	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename as its only argument on the command line";
+    }
+
+    use Archive::Tar;
+
+    my $compression = COMPRESS_GZIP;
+
+    if ($tar_filename =~ m(^.*tar\.gz$))
+    {
+	$compression = COMPRESS_GZIP;
+    }
+    elsif ($tar_filename =~ m(^.*tar\.bz2$))
+    {
+	$compression = COMPRESS_BZIP;
+    }
+    elsif ($tar_filename =~ m(^.*tgz$))
+    {
+	$compression = COMPRESS_GZIP;
+    }
+    elsif ($tar_filename =~ m(^.*tbz$))
+    {
+	$compression = COMPRESS_BZIP;
+    }
+    else
+    {
+	die "$global_program_name: *** Error: builtin_archive_scripts expects the tar_filename to end with .tar.gz, .tar.bz2, .tgz or .tbz";
+    }
+
+    {
+	my $archive_directory = "$scripts_directory/..";
+
+	$scripts_directory =~ m(.*/(.*));
+
+	my $directory_inside_tar_name = $1;
+
+	use Cwd 'abs_path';
+
+	use File::chdir;
+
+	local $CWD = $archive_directory;
+
+	my $getcwd = Cwd::getcwd();
+
+	my $scripts
+	    = [
+	       sort
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       grep
+	       {
+		   my $filename = $_;
+
+		   my $exclude = '';
+
+		   if ($filename =~ m(_Inline))
+		   {
+		       $exclude = 'is_inline_directory';
+		   }
+
+		   not $exclude;
+	       }
+	       `find $directory_inside_tar_name -type f`,
+	      ];
+
+	my $tar = Archive::Tar->new();
+
+	$tar->add_files(@$scripts);
+
+	$tar->write($tar_filename, $compression);
+
+	if ($::option_verbose)
+	{
+	    use YAML;
+
+	    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+
+	    print Dump
+		(
+		 {
+		  CWD => $CWD,
+		  # directory_inside_tar_name => $directory_inside_tar_name,
+		  # getcwd => $getcwd,
+		  scripts => $scripts,
+		  tar_filename => $tar_filename,
+		 },
+		);
+	}
+    }
+
+    return '';
+}
+
+
+sub builtin_archive_configuration_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   ".tar.gz" => 'abc',
+	  };
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+}
+
+
+sub builtin_archive_configuration_help
+{
+    my $command = shift;
+
+    return "$command: create a tarball with the configuration of the current workflow project.
+
+synopsis:
+
+$command <tarball-name>
+
+arguments:
+
+    ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+
+";
+}
+
+
 sub builtin_install_scripts
 {
 #     use Data::Dumper;
@@ -3200,36 +3230,6 @@ arguments:
 
     name: name of the new project.
 ";
-}
-
-
-sub _builtin_tmux_sessions
-{
-    my $force = $ARGV[0];
-
-    my $target_servers = $global_technical_project_configuration->{target_servers};
-
-    my $tmux_sessions = [];
-
-    foreach my $target_server_name (keys %$target_servers)
-    {
-	my $target_server = $target_servers->{$target_server_name};
-
-	my $name = $target_server->{name};
-
-	if ($name =~ m(^tmux_))
-	{
-	    my $remote_policy = $target_server->{remote_policy};
-
-	    $remote_policy =~ m(-t ([^\s]+));
-
-	    my $tmux_session_name = $1;
-
-	    push @$tmux_sessions, $tmux_session_name;
-	}
-    }
-
-    return $tmux_sessions;
 }
 
 
