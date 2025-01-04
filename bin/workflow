@@ -525,31 +525,40 @@ else
 
 sub _builtin_create_directories
 {
-    my $pathname = shift;
-
-    use File::Basename;
-    use File::Path qw/make_path/;
-
-    my $directory = dirname($pathname);
-
-    make_path($directory);
-
-    my $filename = basename($pathname);
-
-    return ($directory, $filename);
-}
-
-
-sub _builtin_create_directory
-{
     my $directory = shift;
 
-    my $error = '';
+    my $result;
 
-    if (not mkdir $directory)
+    use File::Path qw/make_path/;
+
+    my $error;
+
+    make_path($directory, { error => \$error, }, );
+
+    if ($error && @$error)
     {
-	$error = "error: $!";
+	for my $diagnosis (@$error)
+	{
+	    my ($path, $message) = %$diagnosis;
+
+	    $result = "error creating $path: $message";
+
+	    if ($path eq '')
+	    {
+		# print "general error: $message\n";
+	    }
+	    else
+	    {
+		# print "problem unlinking $file: $message\n";
+	    }
+	}
     }
+    else
+    {
+	# print "No error encountered\n";
+    }
+
+    return $result;
 }
 
 
@@ -1124,25 +1133,30 @@ sub _builtin_project_commands_sh_create
 
     my $true_technical_project_data_commands_directory = $field_project_configuration->{true_technical_project_data_commands_directory};
 
-    my $filename = "$true_technical_project_data_commands_directory/$target_name/$command_name.sh";
+    my $directory = "$true_technical_project_data_commands_directory/$target_name";
 
-    _builtin_create_directories($filename);
+    $error = _builtin_create_directories($directory);
 
-    use IO::File;
-
-    my $file = IO::File->new("> $filename");
-
-    if (defined $file)
+    if (not $error)
     {
-	print $file $sh_string;
+	use IO::File;
 
-	$file->close();
+	my $filename = "$directory/$command_name.sh";
 
-	chmod 0755, $filename;
-    }
-    else
-    {
-	$error = "cannot open $filename";
+	my $file = IO::File->new("> $filename");
+
+	if (defined $file)
+	{
+	    print $file $sh_string;
+
+	    $file->close();
+
+	    chmod 0755, $filename;
+	}
+	else
+	{
+	    $error = "cannot open $filename";
+	}
     }
 
     return $error;
@@ -1231,23 +1245,28 @@ sub _builtin_project_commands_yml_create
 
     my $true_technical_project_data_commands_directory = $field_project_configuration->{true_technical_project_data_commands_directory};
 
-    my $filename = "$true_technical_project_data_commands_directory/$target_name//$command_name.yml";
+    my $directory = "$true_technical_project_data_commands_directory/$target_name";
 
-    _builtin_create_directories($filename);
+    $error = _builtin_create_directories($directory);
 
-    use IO::File;
-
-    my $file = IO::File->new("> $filename");
-
-    if (defined $file)
+    if (not $error)
     {
-	print $file $yml_string;
+	use IO::File;
 
-	$file->close();
-    }
-    else
-    {
-	$error = "cannot open $filename";
+	my $filename = "$directory/$command_name.yml";
+
+	my $file = IO::File->new("> $filename");
+
+	if (defined $file)
+	{
+	    print $file $yml_string;
+
+	    $file->close();
+	}
+	else
+	{
+	    $error = "cannot open $filename";
+	}
     }
 
     return $error;
@@ -1448,7 +1467,7 @@ my \$configuration = {
 
     if (not $error)
     {
-	$error = _builtin_create_directory($configuration_data_directory);
+	$error = _builtin_create_directories($configuration_data_directory);
     }
 
     if (not $error)
