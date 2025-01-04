@@ -4276,7 +4276,15 @@ sub working_directory_for_interaction_role_apply
 
     my $result = $command;
 
-    if ($interaction_role ne "localuser\@localhost")
+    if ($interaction_role eq "localuser\@localhost")
+    {
+	#t I would expect that CD is still to be applied?
+    }
+    elsif ($interaction_role =~ m(^tmux_))
+    {
+	$result = "'$command' ENTER";
+    }
+    else
     {
 	my $current_working_directory = $global_remote_working_directory->{$interaction_role};
 
