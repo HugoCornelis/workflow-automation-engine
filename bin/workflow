@@ -1562,6 +1562,7 @@ sub _builtin_project_configuration_targets_create
 
     my $configuration_file_part
 	= "---
+description: The following are example targets, modify/remove/add according to your project needs.
 targets:
   all:
     description: used for processing of target files that are produced by other targets
