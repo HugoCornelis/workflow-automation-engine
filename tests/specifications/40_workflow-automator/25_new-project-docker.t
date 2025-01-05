@@ -401,11 +401,11 @@ global_field_project_configuration:
   field_project_name: workflow-tests
   from_directory: .
   from_executable: workflow on the command line
-  technical_project_configuration_directory: .
-  true_technical_project_configuration_directory: /home/neurospaces/workflow-test
-  true_technical_project_configuration_filename: /home/neurospaces/workflow-test/workflow-project.pl
-  true_technical_project_data_commands_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
-  true_technical_project_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
+  search_path_workflow_executable_directory: .
+  sources_configuration_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
+  sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
+  sources_configuration_directory: /home/neurospaces/workflow-test
+  sources_configuration_filename: /home/neurospaces/workflow-test/workflow-project.pl
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -721,12 +721,11 @@ available_workflow automation projects (copy-paste the one you would like to get
 global_field_project_configuration:
   field_project_name: workflow-tests
   from_executable: dynamically_generated from the executable script name
-  technical_project_configuration_directory: /home/neurospaces/bin
-  technical_project_configuration_filename: /home/neurospaces/bin/workflow-tests-configuration
-  true_technical_project_configuration_directory: /home/neurospaces/workflow-test
-  true_technical_project_configuration_filename: /home/neurospaces/workflow-test/workflow-tests-configuration
-  true_technical_project_data_commands_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
-  true_technical_project_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
+  search_path_workflow_executable_directory: /home/neurospaces/bin
+  sources_configuration_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
+  sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
+  sources_configuration_directory: /home/neurospaces/workflow-test
+  sources_configuration_filename: /home/neurospaces/workflow-test/workflow-tests-configuration
 ---
 CWD: /home/neurospaces
 scripts:
@@ -903,12 +902,11 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 global_field_project_configuration:
   field_project_name: workflow-tests
   from_executable: dynamically_generated from the executable script name
-  technical_project_configuration_directory: /home/neurospaces2/bin
-  technical_project_configuration_filename: /home/neurospaces2/bin/workflow-tests-configuration
-  true_technical_project_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test
-  true_technical_project_configuration_filename: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration
-  true_technical_project_data_commands_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
-  true_technical_project_data_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration-data
+  search_path_workflow_executable_directory: /home/neurospaces2/bin
+  sources_configuration_data_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration-data
+  sources_configuration_data_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
+  sources_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test
+  sources_configuration_filename: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
