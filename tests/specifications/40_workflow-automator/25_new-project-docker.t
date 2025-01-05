@@ -402,7 +402,6 @@ global_field_project_configuration:
   from_directory: .
   from_executable: workflow on the command line
   search_path_workflow_executable_directory: .
-  sources_configuration_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
   sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
   sources_configuration_directory: /home/neurospaces/workflow-test
   sources_configuration_filename: /home/neurospaces/workflow-test/workflow-project.pl
@@ -722,7 +721,6 @@ global_field_project_configuration:
   field_project_name: workflow-tests
   from_executable: dynamically_generated from the executable script name
   search_path_workflow_executable_directory: /home/neurospaces/bin
-  sources_configuration_data_configuration_directory: /home/neurospaces/workflow-test/workflow-tests-configuration-data
   sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
   sources_configuration_directory: /home/neurospaces/workflow-test
   sources_configuration_filename: /home/neurospaces/workflow-test/workflow-tests-configuration
@@ -903,7 +901,6 @@ global_field_project_configuration:
   field_project_name: workflow-tests
   from_executable: dynamically_generated from the executable script name
   search_path_workflow_executable_directory: /home/neurospaces2/bin
-  sources_configuration_data_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration-data
   sources_configuration_data_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
   sources_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test
   sources_configuration_filename: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration

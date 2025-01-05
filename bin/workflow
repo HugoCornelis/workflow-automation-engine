@@ -212,7 +212,11 @@ sub _builtin_add_command_filename
 
     my $error;
 
-    my $configuration_data_directory = $field_project_configuration->{sources_configuration_data_configuration_directory};
+    my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
+
+    my $field_project_name = $field_project_configuration->{field_project_name};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
 
     # read the commands configuration file
 
@@ -2578,7 +2582,9 @@ sub builtin_add_target
 	}
     }
 
-    my $configuration_data_directory = $global_field_project_configuration->{sources_configuration_data_configuration_directory};
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
 
     if (not $error)
     {
@@ -3106,7 +3112,6 @@ sub builtin_start_project
 	       sources_configuration_directory => '.',
 	       sources_configuration_filename => "./$project_name-configuration",
 	       sources_configuration_data_directory => "./$project_name-commands-data",
-	       sources_configuration_data_configuration_directory => "./$project_name-configuration-data",
 	      };
 
 	if (not $error)
@@ -6083,8 +6088,6 @@ sub _init_get_field_project_configuration
 
 	my $sources_configuration_directory = $1;
 
-	my $sources_configuration_data_configuration_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
-
 	my $sources_configuration_data_directory = "$sources_configuration_directory/$field_project_name-commands-data";
 
 	# set result
@@ -6098,7 +6101,6 @@ sub _init_get_field_project_configuration
 	       sources_configuration_directory => $sources_configuration_directory,
 	       sources_configuration_filename => $sources_configuration_filename,
 	       sources_configuration_data_directory => $sources_configuration_data_directory,
-	       sources_configuration_data_configuration_directory => $sources_configuration_data_configuration_directory,
 	      };
     }
 
@@ -6157,8 +6159,6 @@ sub _init_get_field_project_configuration
 
 	    my $sources_configuration_directory = $1;
 
-	    my $sources_configuration_data_configuration_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
-
 	    my $sources_configuration_data_directory = "$sources_configuration_directory/$field_project_name-commands-data";
 
 	    # set result: field project name, it is used to find configuration and command files
@@ -6173,7 +6173,6 @@ sub _init_get_field_project_configuration
 		   sources_configuration_directory => $sources_configuration_directory,
 		   sources_configuration_filename => $sources_configuration_filename,
 		   sources_configuration_data_directory => $sources_configuration_data_directory,
-		   sources_configuration_data_configuration_directory => $sources_configuration_data_configuration_directory,
 		  };
 	}
 
