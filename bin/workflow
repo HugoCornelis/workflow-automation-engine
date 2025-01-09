@@ -2035,7 +2035,7 @@ sub _builtin_tmux_sessions
 	{
 	    my $remote_policy = $target_server->{remote_policy};
 
-	    $remote_policy =~ m(-t ([^\s]+));
+	    $remote_policy =~ m(-t ([^:\s]+)(:[^\s]+)?);
 
 	    my $tmux_session_name = $1;
 
