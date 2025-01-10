@@ -3831,31 +3831,90 @@ package Command::Git;
 
 sub builtin_git_move_file_across_keep_history
 {
-    my $git_source = $ARGV[0];
+    my $git_source_repo = $ARGV[0];
+
+    if (!defined $git_source_repo)
+    {
+	die "$0: *** Error: git_source_repo, ARGV[0] is not defined.";
+    }
 
     my $git_source_branch = $ARGV[1];
 
-    my $git_target = $ARGV[2];
+    if (!defined $git_source_branch)
+    {
+	die "$0: *** Error: git_source_branch, ARGV[1] is not defined.";
+    }
+
+    my $git_target_repo = $ARGV[2];
+
+    if (!defined $git_target_repo)
+    {
+	die "$0: *** Error: git_target_repo, ARGV[2] is not defined.";
+    }
 
     my $git_target_branch = $ARGV[3];
 
-    #! git support muliple --path arguments, the filename could be a comma separated list of filenames
+    if (!defined $git_target_branch)
+    {
+	die "$0: *** Error: git_target_branch, ARGV[3] is not defined.";
+    }
+
+    #! git supports muliple --path arguments, the filename could be a comma separated list of filenames
 
     my $filename = $ARGV[4];
 
+    if (!defined $filename)
+    {
+	die "$0: *** Error: filename, ARGV[4] is not defined.";
+    }
+
     my $working_directory = $ARGV[5] || "/tmp/working-directory";
+
+    if (!defined $working_directory)
+    {
+	die "$0: *** Error: working_directory, ARGV[5] is not defined.";
+    }
 
     # determine the source and target project names
 
-    $git_source =~ m(.*/(.*)$);
+    $git_source_repo =~ m(.*/(.*)$);
 
-    my $git_source_name = $git_source;
+    my $git_source_name = $1;
 
-    $git_target =~ m(.*/(.*)$);
+    $git_target_repo =~ m(.*/(.*)$);
 
-    my $git_target_name = $git_target;
+    my $git_target_name = $1;
+
+    if (!defined $git_source_repo
+	|| !defined $git_source_branch
+	|| !defined $git_target_repo
+	|| !defined $git_target_branch
+	|| !defined $filename
+	|| !defined $working_directory
+	|| !defined $git_source_name
+	|| !defined $git_target_name)
+    {
+    }
 
     # copy a file across repositories and keep its history
+
+    # 11143  cd ~/projects/git-copy-file-between-repos/
+    # ...
+    # 11160  git clone --no-local ~/projects/developer/source/snapshots/master ./developer
+    # 11161  git clone --no-local ~/projects/workflow-automation-engine/source/snapshots/master ./workflow-automation-engine
+
+    # 11162  cd ./developer/
+    # 11163  git checkout master
+    # ...
+    # 11168  git filter-repo --force --path bin/neurospaces_harness --refs refs/heads/master
+    # ...
+    # 11171  cd ../workflow-automation-engine/
+    # 11172  git checkout -b add-harness
+    # 11173  git remote add repo-source ../developer/
+    # 11174  git fetch repo-source
+    # ...
+    # 11178  git branch branch-source remotes/repo-source/master
+    # 11179  git merge branch-source --allow-unrelated-histories
 
     my $commands
 	= [
@@ -3864,18 +3923,21 @@ sub builtin_git_move_file_across_keep_history
 	   # - Stage a working area. These are somewhat throwaway directories and local git repos.
 	   # - clone both source and target repos.
 
-	   "mkdir '$working_directory'",
+	   "mkdir -p '$working_directory'",
 	   "cd '$working_directory'",
-	   "git clone '$git_source",
-	   "git clone '$git_target'",
+	   "git clone '$git_source_repo",
+	   "git clone '$git_target_repo'",
 
 	   ### In source repo
 
 	   # We checkout a branch that we will filter against. We specify the path(s) that we want.
 
-	   "cd './$git_source'",
+	   "cd './$git_source_name'",
 	   "git checkout '$git_source_branch'",
-	   "git filter-repo --path '$filename' --refs refs/heads/filter-source --force",
+
+	   #! note: requires 'sudo apt install git-filter-repo'
+
+	   "git filter-repo --path '$filename' --refs refs/heads/$git_source_branch --force",
 
 	   ## In target repo
 
