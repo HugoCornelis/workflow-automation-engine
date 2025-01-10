@@ -1,16 +1,21 @@
 $files = {
-           '_<bin/neurospaces-workflow' => [
-                                             {
-                                               'expr' => undef,
-                                               'text' => 'my $global_business_project_configuration_filename = "project.pl";
+           '_<./bin/workflow' => [
+                                   {
+                                     'expr' => undef,
+                                     'fname' => './bin/workflow',
+                                     'line' => '7764',
+                                     'text' => '    if ($option_target eq \'builtin\'
 ',
-                                               'value' => '1',
-                                               'type' => 'user',
-                                               'line' => '95',
-                                               'fname' => 'bin/neurospaces-workflow'
-                                             }
-                                           ]
+                                     'type' => 'user',
+                                     'value' => '1'
+                                   }
+                                 ]
          };
-$expr_list = [];
+$expr_list = [
+               {
+                 'depth' => -1,
+                 'expr' => '@ARGV'
+               }
+             ];
 $eval_saved_text = undef;
 $main_win_geometry = '1920x1001+0+0';

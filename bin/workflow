@@ -125,6 +125,40 @@ our $global_program_rel_directory;
 our $global_program_name;
 our $global_scheduled_commands = [];
 
+my $global_builtin_commands
+    = {
+       add_target => 1,
+       archive_configuration => 1,
+       install_scripts => 1,
+       print_configuration_directory => 1,
+       start_project => 1,
+      };
+
+my $global_known_command_packages_builtin
+    = {
+       'Command::Git' => {
+			  description => 'workflows for working with git',
+			  documentation => 'These workflows implement convenience interactions with git.',
+			 },
+       'Command::Git::RepositorySet' => {
+					 description => 'workflows for working with git repositories',
+					 documentation => 'These workflows implement convenience interactions with a set of Git repositories..',
+					},
+       'Command::GitLab' => {
+			     description => 'workflows for working with GitLab',
+			     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',
+			    },
+       'Command::Linux' => {
+			    description => 'workflows for working with the Linux kernel source code',
+			    documentation => 'The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.',
+			   },
+       'Command::Net::IPerf' => {
+				 description => 'workflows for measuring the performance of a network connection',
+				 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine',
+				},
+      };
+
+
 {
     use Cwd;
 
@@ -3953,6 +3987,42 @@ sub builtin_git_move_file_across_keep_history
 }
 
 
+sub builtin_git_move_file_across_keep_history_help
+{
+    my $command = shift;
+
+    return "$command: given a source and target git repository and a file in the
+source, copy the file with its Git history to the target repository.
+
+This workflow:
+
+(1) clones the two given repositories in the working_directory
+
+(2) in the cloned source repository, removes all files in the source
+branch, except the given file,
+
+(3) adds the cloned source repository as a remote to the cloned target
+repository
+
+(4) merges the source branch with the target branch.
+
+This workflow depends on 'git-filter-repo'.  To install it on Ubuntu
+you use:
+
+'sudo apt install git-filter-repo'
+
+arguments:
+
+    ARGV[0]: source_repo
+    ARGV[1]: source_branch
+    ARGV[2]: target_repo
+    ARGV[3]: target_branch
+    ARGV[4]: filename
+    ARGV[5]: working_directory, which defaults to /tmp/working-directory
+";
+}
+
+
 package Command::Git::RepositorySet;
 
 
@@ -7223,16 +7293,45 @@ sub main
 	}
 	else
 	{
-	    # if help was requested for this command
+	    my $command_implementation;
 
-	    if ($option_help)
+	    my $type_package_builtin;
+
+	    if (exists $global_known_command_packages_builtin->{$command})
 	    {
-		# call the subroutine that implements the help function
+		my $sub_name = shift @ARGV;
 
-		$command .= "_help";
+		if (!defined $sub_name)
+		{
+		    die "$0: *** Error: No function name given while trying to use a builtin package '$command'";
+		}
+
+		$type_package_builtin = $command;
+
+		# if help was requested for this command
+
+		if ($option_help)
+		{
+		    # call the subroutine that implements the help function
+
+		    $sub_name .= "_help";
+		}
+
+		$command_implementation = "${command}::$sub_name";
 	    }
+	    else
+	    {
+		# if help was requested for this command
 
-	    my $command_implementation = "Command::${requested_target}_${command}";
+		if ($option_help)
+		{
+		    # call the subroutine that implements the help function
+
+		    $command .= "_help";
+		}
+
+		$command_implementation = "Command::${requested_target}_${command}";
+	    }
 
 	    if ($option_verbose)
 	    {
@@ -7248,10 +7347,11 @@ sub main
 	    {
 		use Data::Dumper;
 
-		print Dumper( { command_hash => $command_hash, }, );
+		print Dumper( { command_hash_with_help_subs => $command_hash, }, );
 	    }
 
-	    if (exists $command_hash->{"$requested_target $command"})
+	    if (exists $command_hash->{"$requested_target $command"}
+	        or $type_package_builtin)
 	    {
 		# ... either invoke the --help sub
 
@@ -7294,7 +7394,8 @@ sub main
 
 		    # ... either as a regular perl sub ...
 
-		    if ($type eq 'sub')
+		    if ($type_package_builtin
+			or $type eq 'sub')
 		    {
 			no strict "refs";
 
@@ -7568,37 +7669,13 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
 	}
 
-	my $known_command_packages_builtin
-	    = {
-	       'Command::Git' => {
-				  description => 'workflows for working with git',
-				  documentation => 'These workflows implement convenience interactions with git.',
-				 },
-	       'Command::Git::RepositorySet' => {
-						 description => 'workflows for working with git repositories',
-						 documentation => 'These workflows implement convenience interactions with a set of Git repositories..',
-						},
-	       'Command::GitLab' => {
-				     description => 'workflows for working with GitLab',
-				     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',
-				    },
-	       'Command::Linux' => {
-				    description => 'workflows for working with the Linux kernel source code',
-				    documentation => 'The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.',
-				   },
-	       'Command::Net::IPerf' => {
-					 description => 'workflows for measuring the performance of a network connection',
-					 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine',
-					},
-	      };
-
 	my $known_command_packages
 	    = {
 	       'Command' => {
-			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$known_command_packages_builtin ) . ')',
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_command_packages_builtin ) . ')',
 			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
 			    },
-	       %$known_command_packages_builtin,
+	       %$global_known_command_packages_builtin,
 	      };
 
 	my $module_all_help
@@ -7731,18 +7808,10 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     #! they should do their own checking for a valid
     #! field_configuration, project_name as required.
 
-    my $builtin_commands
-	= {
-	   add_target => 1,
-	   archive_configuration => 1,
-	   install_scripts => 1,
-	   print_configuration_directory => 1,
-	   start_project => 1,
-	  };
-
     if ($option_target eq 'builtin'
 	and (defined $option_commands->[0]
-	     and exists $builtin_commands->{$option_commands->[0]}))
+	     and exists $global_builtin_commands->{$option_commands->[0]})
+	or exists $global_known_command_packages_builtin->{$option_commands->[0]})
     {
     }
     else
