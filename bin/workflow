@@ -7256,7 +7256,7 @@ sub main
 
 			my $shell_script = "$commands_data_directory/$requested_target/$command";
 
-			Command::execute_shell_command("$shell_script.sh");
+			Command::execute_shell_command(join ' ', "$shell_script.sh", @ARGV);
 		    }
 
 		    # ... or as a yaml script ...
