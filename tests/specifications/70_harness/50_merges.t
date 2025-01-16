@@ -11,7 +11,7 @@ my $test
 				command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --config-filename ./tests-merge.config --input-modules ./tests/to-be-merged/110_mid-level/ --input-modules ./tests/to-be-merged/111_low-level/ --show-command-tests',
 				command_tests => [
 						  {
-						   description => "Can we merge several parial test specifications and then run the tests they embed?",
+						   description => "Can we merge several partial test specifications and then run the tests they embed?",
 						   read => "
 ---
 description:
