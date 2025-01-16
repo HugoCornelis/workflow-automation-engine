@@ -8,7 +8,7 @@ my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
 
-use Getopt::Long qw(:config require_order);
+use Getopt::Long qw(GetOptionsFromArray :config require_order);
 
 use Neurospaces::Tester;
 
@@ -58,6 +58,43 @@ my $option_timeout_multiplier = 1;
 my $option_timings = 1;
 my $option_trace;
 our $option_verbose;
+
+
+my $global_options
+    = {
+       "check-test-names!" => \$option_check_test_names,
+       "config-filename=s" => \$option_config_filename,
+       "console-type=s" => \$option_console_type,
+       "debugging=s" => \$option_debugging,
+       "dump-json!" => \$option_dump_json,
+       "dump-perl!" => \$option_dump_perl,
+       "dump-yaml!" => \$option_dump_yaml,
+       "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
+       "email" => \$option_email,
+       "flattenout" => \$option_flattenout,
+       "help!" => \$option_help,
+       "input-command-tests=s" => $option_input_command_tests,
+       "input-commands=s" => $option_input_commands,
+       "input-modules=s" => $option_input_modules,
+       "numerical-compare!" => \$option_numerical_compare,
+       "output=s" => \$option_output,
+       "output-content-line-limit=s" => \$option_output_content_line_limit,
+       "output-figures" => \$option_output_figures,
+       "output-html" => \$option_output_html,
+       "output-latex" => \$option_output_latex,
+       "output-levels=s" => $option_output_levels,
+       "output-pdf" => \$option_output_pdf,
+       "randomize-order=s" => \$option_random_order,
+       "regex-selector=s" => \$option_regex_selector,
+       "report-disabled!" => \$option_report_disabled,
+       "show!" => \$option_show,
+       "show-command-tests!" => \$option_show_command_tests,
+       "tags=s" => $option_tags,
+       "timeout-multiplier=s" => \$option_timeout_multiplier,
+       "timings!" => \$option_timings,
+       "trace=s" => \$option_trace,
+       "v|verbose+" => \$option_verbose,
+      };
 
 
 our $global_config;
@@ -955,42 +992,7 @@ sub parse_options
 {
     my $option_result = '';
 
-    my $result
-	= GetOptions
-	    (
-	     "check-test-names!" => \$option_check_test_names,
-	     "config-filename=s" => \$option_config_filename,
-	     "console-type=s" => \$option_console_type,
-	     "debugging=s" => \$option_debugging,
-	     "dump-json!" => \$option_dump_json,
-	     "dump-perl!" => \$option_dump_perl,
-	     "dump-yaml!" => \$option_dump_yaml,
-	     "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
-	     "email" => \$option_email,
-	     "flattenout" => \$option_flattenout,
-	     "help!" => \$option_help,
-	     "input-command-tests=s" => $option_input_command_tests,
-	     "input-commands=s" => $option_input_commands,
-	     "input-modules=s" => $option_input_modules,
-	     "numerical-compare!" => \$option_numerical_compare,
-	     "output=s" => \$option_output,
-	     "output-content-line-limit=s" => \$option_output_content_line_limit,
-	     "output-figures" => \$option_output_figures,
-	     "output-html" => \$option_output_html,
-	     "output-latex" => \$option_output_latex,
-	     "output-levels=s" => $option_output_levels,
-	     "output-pdf" => \$option_output_pdf,
-	     "randomize-order=s" => \$option_random_order,
-	     "regex-selector=s" => \$option_regex_selector,
-	     "report-disabled!" => \$option_report_disabled,
-	     "show!" => \$option_show,
-	     "show-command-tests!" => \$option_show_command_tests,
-	     "tags=s" => $option_tags,
-	     "timeout-multiplier=s" => \$option_timeout_multiplier,
-	     "timings!" => \$option_timings,
-	     "trace=s" => \$option_trace,
-	     "v|verbose+" => \$option_verbose,
-	    );
+    my $result = GetOptionsFromArray(\@ARGV, %$global_options);
 
     if (!$result)
     {
