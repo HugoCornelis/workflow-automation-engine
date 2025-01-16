@@ -1,0 +1,77 @@
+# this file should be copied to /usr/share/grc/
+#
+#    Black: \u001b[30m.
+#    Red: \u001b[31m.
+#    Green: \u001b[32m.
+#    Yellow: \u001b[33m.
+#    Blue: \u001b[34m.
+#    Magenta: \u001b[35m.
+#    Cyan: \u001b[36m.
+#    White: \u001b[37m.
+#
+# targets
+# -
+# regexp=all
+# colours=green bold
+# -
+# regexp=cr(?!-workflow)
+# colours=green bold
+# -
+# commands
+regexp=(\S+) --dry
+colours=yellow bold
+-
+regexp= --dry
+colours=white
+-
+# specific IP addresses
+regexp=^.*192\.168\.[345]\..*$
+colours=green bold
+-
+# MAC addresses
+regexp=(([a-zA-Z0-9][a-zA-Z0-9]:){5}[a-zA-Z0-9][a-zA-Z0-9])
+colours=blue
+-
+# vlans
+regexp=(vlan_id: [0-9]{1,4})
+colours=cyan bold
+-
+# devices and interfaces
+regexp=(enp[03456]\w*)
+colours=white underline
+-
+regexp=(eth[012]\w*)
+colours=white underline
+-
+regexp=(lan[1234]\w*)
+colours=white underline
+-
+regexp=(enx............)
+colours=white underline
+-
+regexp=wlp1s0
+colours=white underline
+-
+regexp=wlo1
+colours=white underline
+-
+regexp=/dev/\S*
+colours=yellow underline
+count=more
+-
+regexp=/mnt/\S*
+colours=magenta underline
+count=more
+-
+regexp=/media/\S*
+colours=magenta underline
+count=more
+-
+# interaction diagram
+regexp=ROLE:.*$
+colours=magenta bold underline
+-
+regexp=COMMAND:.*$
+colours=cyan underline
+
+

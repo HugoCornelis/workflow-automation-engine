@@ -1,0 +1,286 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+require YAML;
+
+my $build_servers = YAML::LoadFile('tests-configuration-data/build_servers.yml');
+
+my $command_filenames = YAML::LoadFile('tests-configuration-data/command_filenames.yml');
+
+my $node_configuration = YAML::LoadFile('tests-configuration-data/node_configuration.yml');
+
+my $target_servers = YAML::LoadFile('tests-configuration-data/target_servers.yml');
+
+my $targets = YAML::LoadFile('tests-configuration-data/targets.yml');
+
+my $configuration = {
+		      %$build_servers,
+		      %$command_filenames,
+		      %$node_configuration,
+		      %$target_servers,
+		      %$targets,
+		     };
+
+($0 =~ m(.*/(\S+)));
+
+my $program_name = $1;
+
+
+if ($program_name =~ m(configuration$))
+{
+    # loop over the command line arguments
+
+    while (@ARGV)
+    {
+	my $argument = shift @ARGV;
+
+	# "--" means list keys
+
+	if ($argument eq "--")
+	{
+	    $configuration = [ sort keys %$configuration, ];
+	}
+
+	# "-1" means list keys one level deep
+
+	elsif ($argument eq "-1")
+	{
+	    if (ref $configuration eq "HASH")
+	    {
+		$configuration
+		    = {
+		       map
+		       {
+			   my $result;
+
+			   if (ref $configuration eq "HASH")
+			   {
+			       $result = "$configuration->{$_}";
+			   }
+			   elsif (ref $configuration eq "ARRAY")
+			   {
+			       $result = join ", ", map { "$_" } @$configuration;
+			   }
+			   else
+			   {
+			       $result = "$configuration";
+			   }
+
+			   $_ => $result;
+		       }
+		       keys %$configuration,
+		      };
+	    }
+	}
+
+	# "-2" means list keys two levels deep
+
+	elsif ($argument eq "-2")
+	{
+	    $configuration
+		= {
+		   map
+		   {
+		       my $result;
+
+		       my $configuration_snippet = $configuration->{$_};
+
+		       if (ref $configuration_snippet eq "HASH")
+		       {
+			   $result
+			       = {
+				  map
+				  {
+				      my $result;
+
+				      if (ref $configuration_snippet eq "HASH")
+				      {
+					  $result = "$configuration_snippet->{$_}";
+				      }
+				      elsif (ref $configuration_snippet eq "ARRAY")
+				      {
+					  $result = join ", ", map { "$_" } @$configuration_snippet;
+				      }
+				      else
+				      {
+					  $result = "$configuration_snippet";
+				      }
+
+				      $_ => $result;
+				  }
+				  keys %$configuration_snippet,
+				 };
+		       }
+		       else
+		       {
+			   $result = "$configuration";
+		       }
+
+		       $_ => $result;
+		   }
+		   keys %$configuration,
+		  };
+	}
+
+	# "-3" means list keys three levels deep
+
+	elsif ($argument eq "-3")
+	{
+	    $configuration
+		= {
+		   map
+		   {
+		       my $result;
+
+		       my $configuration_snippet_a = $configuration->{$_};
+
+		       if (ref $configuration_snippet_a eq "HASH")
+		       {
+			   $result
+			       = {
+				  map
+				  {
+				      my $result;
+
+				      my $configuration_snippet_b = $configuration_snippet_a->{$_};
+
+				      if (ref $configuration_snippet_b eq "HASH")
+				      {
+					  $result
+					      = {
+						 map
+						 {
+						     my $result;
+
+						     if (ref $configuration_snippet_b eq "HASH")
+						     {
+							 $result = "$configuration_snippet_b->{$_}";
+						     }
+						     elsif (ref $configuration_snippet_b eq "ARRAY")
+						     {
+							 $result = join ", ", map { "$_" } @$configuration_snippet_b;
+						     }
+						     else
+						     {
+							 $result = "$configuration_snippet_b";
+						     }
+
+						     $_ => $result;
+						 }
+						 keys %$configuration_snippet_b,
+						};
+				      }
+				      else
+				      {
+					  $result = "$configuration_snippet_b";
+				      }
+
+				      $_ => $result;
+				  }
+				  keys %$configuration_snippet_a,
+				 };
+		       }
+		       else
+		       {
+			   $result = "$configuration_snippet_a";
+		       }
+
+		       $_ => $result;
+		   }
+		   keys %$configuration,
+		  };
+	}
+
+	# else use the argument to descend in the hierarchy
+
+	else
+	{
+	    if (ref $configuration eq "HASH")
+	    {
+		#! note that regex selection will only work for the
+		#! last argument because the rest of the selection code
+		#! assumes there is a single result
+
+		if ($argument =~ /\*|\+/)
+		{
+		    $configuration
+			= {
+			   map
+			   {
+			       $_ => $configuration->{$_}
+			   }
+			   grep
+			   {
+			       $_ =~ /$argument/
+			   }
+			   keys %$configuration,
+			  };
+		}
+		else
+		{
+		    $configuration = $configuration->{$argument};
+		}
+	    }
+	    elsif (ref $configuration eq "ARRAY")
+	    {
+		# give output consistent with other use cases
+
+		$configuration = $argument;
+	    }
+	}
+    }
+
+    # choose one of "Data::Dumper", "yaml", "json", "json_pretty"
+
+    my $output_format = "yaml";
+
+    if ($output_format eq "yaml")
+    {
+	require YAML;
+
+	print YAML::Dump($configuration);
+    }
+    elsif ($output_format eq "json")
+    {
+	require JSON;
+
+        my $json = JSON->new(); # ->allow_nonref;
+
+	$json->allow_unknown(1);
+
+	my $encoded = $json->encode($configuration);
+
+	print $encoded;
+    }
+    elsif ($output_format eq "json_pretty")
+    {
+	require JSON;
+
+        my $json = JSON->new(); # ->allow_nonref;
+
+	$json->allow_unknown(1);
+
+	my $encoded = $json->pretty()->encode($configuration);
+
+	print $encoded;
+    }
+    else
+    {
+	require Data::Dumper;
+
+	no warnings;
+
+	$Data::Dumper::Sortkeys = "always";
+
+	print Data::Dumper::Dumper($configuration);
+    }
+}
+else
+{
+    return $configuration;
+}
+
+
