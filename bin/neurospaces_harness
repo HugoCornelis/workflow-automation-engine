@@ -99,24 +99,29 @@ my $global_options
 
 our $global_config;
 
-my $global_command_configuration
+my $global_harness_command_configuration
     = {
        default_command => "run-tests",
        known_commands => {
+			  "configuration-create" => {
+						     description => "Create an initial test configuration with instructions how to expand it to a full test suite.",
+						     skip_configuration => 'a command that creates a configuration cannot require a configuration',
+						     executor => "harness_command_configuration_create",
+						    },
 			  "help" => "Show the help page.",
 			  "module-create" => {
 					      description => "Create a new module with the given name.",
-					      executor => "command_module_create",
+					      executor => "harness_command_module_create",
 					     },
 			  "module-update" => {
 					      description => "Update the given module with the given arguments and directives.",
-					      executor => "command_module_update",
+					      executor => "harness_command_module_update",
 					      subcommands => [],
 					     },
 			  # "query" => "Query the tests, print the query result.",
 			  "run-tests" => {
 					  description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
-					  executor => "command_run_tests",
+					  executor => "harness_command_run_tests",
 					 },
 			 },
       };
@@ -263,7 +268,74 @@ my $global_previous_command_side_effects;
 my $global_test_report;
 
 
-sub command_module_create
+sub harness_command_configuration_create
+{
+    my $command = shift;
+
+    my $reporter = shift;
+
+    my $package_name = shift @ARGV;
+
+    my $package_version = shift @ARGV || 'alpha';
+
+    my $test_configuration_template
+	= "
+#!/usr/bin/perl -w
+#!/usr/bin/perl -d:ptkdb
+#
+
+use strict;
+
+
+# \$Format: \"my \$package_name = \\\"\${package}\\\";\"\$
+my \$package_name = \"$package_name\";
+
+# \$Format: \"my \$package_version = \\\"\${label}\\\";\"\$
+my \$package_version = \"$package_version\";
+
+
+my \$config
+    = {
+       core_directory => './',
+       description => '$package_name function, unit and regression tests, documenting $package_name functionality.',
+       environment_settings => {
+				MY_PROJECT_SPECIFIC_VARIABLE => 'MY_PROJECT_SPECIFIC_VARIABLE_VALUE',
+			       },
+       html_output_directory => './tests/html',
+       package => {
+		   name => \$package_name,
+		   version => \$package_version,
+		  }
+      };
+
+
+return \$config;
+
+
+";
+
+    use IO::File;
+
+    my $file = IO::File->new("> tests.config");
+
+    if (defined $file)
+    {
+	print $file $test_configuration_template;
+
+	$file->close();
+
+	chmod 0700, "tests.config";
+
+	print "$0: Created a template test configuration in ./tests.config.\n";
+    }
+    else
+    {
+	print "$0: *** Error: Could not creat a template test configuration in ./tests.config.\n";
+    }
+}
+
+
+sub harness_command_module_create
 {
     my $command = shift;
 
@@ -410,7 +482,7 @@ Note that more keywords have been defined, including for running C and perl code
 }
 
 
-sub command_module_update
+sub harness_command_module_update
 {
     my $command = shift;
 
@@ -483,11 +555,11 @@ sub command_module_update
 }
 
 
-sub command_run
+sub harness_command_run
 {
-    my $command = shift;
+    my $harness_command = shift;
 
-    my $command_executor = $global_command_configuration->{known_commands}->{$command}->{executor};
+    my $harness_command_executor = $global_harness_command_configuration->{known_commands}->{$harness_command}->{executor};
 
     # obtain a copy of stdout for the reporters
 
@@ -508,12 +580,12 @@ sub command_run
     {
 	no strict "refs";
 
-	&$command_executor($command, $default_reporter);
+	&$harness_command_executor($harness_command, $default_reporter);
     }
 }
 
 
-sub command_run_tests
+sub harness_command_run_tests
 {
     my $command = shift;
 
@@ -662,11 +734,21 @@ sub command_run_tests
 
 sub initialize
 {
-    initialize_config();
+    my $harness_command = shift;
 
-    initialize_config_environment();
+    my $harness_command_definition = $global_harness_command_configuration->{known_commands}->{$harness_command};
 
-    initialize_globals();
+    my $requires_configuration = (!exists $harness_command_definition->{skip_configuration}
+				  || !$harness_command_definition->{skip_configuration});
+
+    if ($requires_configuration)
+    {
+	initialize_config();
+
+	initialize_config_environment();
+
+	initialize_globals();
+    }
 
     initialize_harness();
 
@@ -882,19 +964,19 @@ sub initialize_signal_handlers
 
 sub main
 {
-    my $command = parse_command_line();
+    my $harness_command = parse_command_line();
 
-    initialize();
+    initialize($harness_command);
 
-    command_run($command);
+    harness_command_run($harness_command);
 }
 
 
 sub parse_command
 {
-    my $command_result = shift @ARGV || $global_command_configuration->{default_command};
+    my $command_result = shift @ARGV || $global_harness_command_configuration->{default_command};
 
-    my $known_commands = $global_command_configuration->{known_commands};
+    my $known_commands = $global_harness_command_configuration->{known_commands};
 
     if (not exists $known_commands->{$command_result})
     {
@@ -914,12 +996,12 @@ sub parse_command_line
     if ($option_result eq 'help'
 	or $command_result eq 'help')
     {
-	my $command_descriptions = "The default command is '$global_command_configuration->{default_command}'.
+	my $command_descriptions = "The default command is '$global_harness_command_configuration->{default_command}'.
 
 commands:
 ";
 
-	my $known_commands = $global_command_configuration->{known_commands};
+	my $known_commands = $global_harness_command_configuration->{known_commands};
 
 	foreach my $known_command (sort keys %$known_commands)
 	{
@@ -930,7 +1012,7 @@ commands:
 		$command_help = $command_help->{description};
 	    }
 
-	    my $command_description = sprintf("    %-15s %-15s\n", $known_command, $command_help);
+	    my $command_description = sprintf("    %-21s%-20s\n", $known_command, $command_help);
 
 	    $command_descriptions .= $command_description;
 	}

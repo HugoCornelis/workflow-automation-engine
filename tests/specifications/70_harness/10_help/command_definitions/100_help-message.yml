@@ -15,10 +15,11 @@ command_tests:
       The default command is 'run-tests'.
       
       commands:
-          help            Show the help page.
-          module-create   Create a new module with the given name.
-          module-update   An example of a command with possible subcommands: Update the given module with the given arguments and directives.
-          run-tests       Run the tests, possibly with an executor that converts the tests rather than running them.
+          configuration-create Create an initial test configuration with instructions how to expand it to a full test suite.
+          help                 Show the help page. 
+          module-create        Create a new module with the given name.
+          module-update        Update the given module with the given arguments and directives.
+          run-tests            Run the tests, possibly with an executor that converts the tests rather than running them.
       
       options:
           --check-test-names           Check the pathnames of the specification files against the names of the tests.
