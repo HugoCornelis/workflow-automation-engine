@@ -981,7 +981,7 @@ options:
     --verbose                    Set verbosity level.
 ";
 
-	exit 1;
+	exit 0;
     }
 
     return $command_result;
