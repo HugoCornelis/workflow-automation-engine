@@ -3426,6 +3426,16 @@ sub execute_shell_script
 }
 
 
+sub execute_shell_script_command
+{
+    my $script_command = shift;
+
+    my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
+
+    return Engine::execute_shell_command("cd '$commands_data_directory' && $script_command");
+}
+
+
 # given a local script filename, execute the script remotely
 
 sub execute_shell_script_remote
