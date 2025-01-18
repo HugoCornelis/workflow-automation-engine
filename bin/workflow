@@ -1920,14 +1920,16 @@ configuration for the $project_name project.
 
 The workflow automation engine offers the following functions:
 
-- Easy to start a new project, new _targets_ and new _commands_.
+- Easy to start a new _project_, and add new _targets_ and new
+  _commands_ to a project.
 - Integration with `bash` completion allows exploring and browsing
   project specific _targets_, project specific _commands_ and project
   specific _configuration_.
 - Integration with `grc` for project specific _keyword highlighting_.
-- Support for different _roles_ allows remote execution, in a Docker
-  container or a `tmux` session.
-
+- The use of different _roles_ allows remote execution of commands
+  over an ssh session, in a Docker container or a `tmux` session.
+- Modular construction of complex worfklow that combine several
+  features of the workflow engine.
 
 ## Installation
 
@@ -1939,15 +1941,15 @@ https://github.com/HugoCornelis/workflow-automation-engine/blob/master/README.md
 Typical prerequisites are `grc`, `yaml` related libraries and
 developer tools such as `automake`.
 
-After installation of the workflow engine use the following command
+After installation of the workflow engine, use the following command
 from this directory to make this project configuration available to
 the workflow engine:
 
 `\$ workflow builtin install_scripts -- --engine --commands --aliasses --bash-completion`
 
-The output of the command explains what has been done.  It is
-recommended to carefully inspect this output.  The help page of the
-command explains:
+The output of the command explains what has been done and it is
+recommended to carefully inspect it.  The help page of the command
+explains:
 
 ```
 \$ workflow builtin install_scripts --help
@@ -1971,8 +1973,9 @@ access to be configured.
 ## Use
 
 If you used one of the `--bash-completion` or `--path-in-bashrc`
-options, execute your `.bashrc` or login with a new shell to ensure
-that `bash` knows about the new completions and paths..
+options during the installation of the workflow scripts, execute your
+`.bashrc` or login with a new shell to ensure that `bash` is
+configured with the new completions and paths.
 
 Afterwards a good starting point for using the configuration is:
 
@@ -1988,7 +1991,7 @@ if executed without options:
 ```
 
 You are ready to use this configuration.  Don't forget to use bash
-completion to explore the available commands.
+completion to explore the available targets and commands.
 ";
 
     my $error = '';
