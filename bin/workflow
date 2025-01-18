@@ -7081,6 +7081,8 @@ sub main
     if ($option_bash_completion)
     {
 	bash_completion();
+
+	#! bash_completion() never returns
     }
 
     # parse package directories
