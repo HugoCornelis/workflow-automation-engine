@@ -265,12 +265,27 @@ sub _builtin_add_command_filename
 
     # add the commands filename corresponding to the new target name
 
+    my $command_filenames_array = $command_filenames->{command_filenames};
+
     if (not $error)
     {
-	my $command_filenames_array = $command_filenames->{command_filenames};
-
 	push @$command_filenames_array, $new_command_filename;
     }
+
+    # remove possible duplicate filenames, this allows updates of the description to be written
+
+    my $command_filenames_hash
+	= {
+	   map
+	   {
+	       $_ => $_;
+	   }
+	   @$command_filenames_array,
+	  };
+
+    $command_filenames_array = [ sort keys %$command_filenames_hash, ];
+
+    $command_filenames->{command_filenames} = $command_filenames_array;
 
     # write the commands configuration file
 
@@ -2645,16 +2660,18 @@ sub builtin_add_target
 	}
     }
 
-    # add the new target
+    # add the new target, if the file already exists, we overwrite the old description
 
-    if (not $error)
+    if (!$error
+	|| $error eq "target $target_name already exists")
     {
 	$targets->{targets}->{$target_name}->{description} = $target_description;
     }
 
     # write the new targets configuration file
 
-    if (not $error)
+    if (!$error
+	|| $error eq "target $target_name already exists")
     {
 	YAML::DumpFile($targets_configuration_filename, $targets);
 
@@ -2695,7 +2712,8 @@ sub builtin_add_target
 
     if ($option_install_command_sh)
     {
-	if (not $error)
+	if (!$error
+	    || $error eq "target $target_name already exists")
 	{
 	    $error = _builtin_project_commands_sh_template_create($global_field_project_configuration, $field_project_name, $target_name);
 
@@ -3554,6 +3572,7 @@ sub _c_init
 
     my $command_filenames_to_use
 	= [
+	   sort
 	   grep
 	   {
 	       # remove duplicate filenames to avoid duplicate command definitions
