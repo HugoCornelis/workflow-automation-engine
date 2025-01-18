@@ -4467,20 +4467,29 @@ sub working_directory_for_interaction_role_apply
 
     if ($interaction_role eq "localuser\@localhost")
     {
-	#t I would expect that CD is still to be applied?
     }
-    elsif ($interaction_role =~ m(^tmux_))
-    {
-	$result = "'$command' ENTER";
-    }
-    else
-    {
-	my $current_working_directory = $global_remote_working_directory->{$interaction_role};
 
-	if (defined $current_working_directory)
+    # apply the current directory
+
+    my $current_working_directory = $global_remote_working_directory->{$interaction_role};
+
+    if (defined $current_working_directory)
+    {
+	if ($interaction_role eq "localuser\@localhost")
 	{
+	    $result = "cd '$current_working_directory' && $command";
+	}
+	else
+	{
+	    #! quoting is a problem here
+
 	    $result = "'cd $current_working_directory && $command'";
 	}
+    }
+
+    if ($interaction_role =~ m(^tmux_))
+    {
+	$result = "'$command' ENTER";
     }
 
     return $result;
@@ -4497,14 +4506,16 @@ sub _working_directory_for_interaction_role_change
 
     my $current_working_directory = $global_remote_working_directory->{$interaction_role};
 
-    if (not defined $current_working_directory
-	and $interaction_role eq 'localuser@localhost')
+    if (not defined $current_working_directory)
     {
-	$current_working_directory = '.';
-    }
-    else
-    {
-	$current_working_directory = '~';
+	if ($interaction_role eq 'localuser@localhost')
+	{
+	    $current_working_directory = '.';
+	}
+	else
+	{
+	    $current_working_directory = '~';
+	}
     }
 
     use File::Spec;
