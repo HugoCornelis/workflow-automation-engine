@@ -2886,7 +2886,7 @@ sub builtin_archive_configuration
 
 	$tar->write($tar_filename, $compression);
 
-	if ($::option_verbose)
+	if ($option_verbose)
 	{
 	    use YAML;
 
@@ -4060,7 +4060,7 @@ package Command::Git::RepositorySet;
 
 our $project_name = 'example_project';
 
-my $source_code_directory_prefix = "$ENV{HOME}/projects/$project_name/source";
+our $source_code_directory_prefix = "$ENV{HOME}/projects/$project_name/source";
 
 my $all_repository_descriptors
     = {
@@ -4092,15 +4092,23 @@ sub _repository_2_directory
 
     my $repository_name = $4;
 
-    # use Data::Dumper;
+    if (defined $option_verbose
+	and $option_verbose > 3)
+    {
+	use Data::Dumper;
 
-    # print Dumper(
-    # 		 {
-    # 		  port => $port,
-    # 		  directory => $directory,
-    # 		  repository_name => $repository_name,
-    # 		 },
-    # 		);
+	print Dumper(
+		     {
+		      _repository_2_directory => {
+						  port => $port,
+						  directory => $directory,
+						  repository_name => $repository_name,
+						  repository => $repository,
+						  source_code_directory_prefix => $source_code_directory_prefix,
+						 },
+		     },
+		    );
+    }
 
     return "$source_code_directory_prefix/$directory/$repository_name";
 }
