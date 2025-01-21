@@ -33,7 +33,7 @@ my $test
 			  },
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows && workflow builtin install_scripts -- --bash --alias --commands --engine',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --alias --commands --engine',
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation configuration for the feature tests?",
@@ -41,11 +41,11 @@ my $test
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/tests-workflow
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows/tests-configuration /home/neurospaces/bin/./tests-configuration
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-configuration /home/neurospaces/bin/./tests-configuration
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows/tests-commands /home/neurospaces/bin/tests-commands
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-commands /home/neurospaces/bin/tests-commands
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows/tests-commands-features /home/neurospaces/bin/tests-commands-features
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-commands-features /home/neurospaces/bin/tests-commands-features
 #
 # bash -c "echo \'# tests-workflow
 
@@ -53,7 +53,7 @@ alias tests-workflow=\"grc tests-workflow\"
 alias tests-configuration=\"grc tests-configuration\"
 \' | cat >>/home/neurospaces/.bashrc"
 #
-# bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows/tests-bash-completion.sh
+# bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
 #
 # sudo     bash -c "echo \'
@@ -67,9 +67,9 @@ conf.tests-configuration
 
 \' | cat >>/etc/grc.conf"
 #
-# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows/conf.tests-configuration /usr/share/grc/conf.tests-configuration
+# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.tests-configuration /usr/share/grc/conf.tests-configuration
 #
-# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/configured-workflows/conf.tests-workflow /usr/share/grc/conf.tests-workflow
+# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.tests-workflow /usr/share/grc/conf.tests-workflow
 #
 ',
 						   wait => 2,
@@ -91,12 +91,12 @@ project-specific workflows consisting of shell commands.
 			},
        harnessing => {
 		      class => {
-				comment => 'Enter this container with "docker exec -it workflow_features_container bash"',
+				comment => 'Enter this container with "docker exec -it workflow_feature_testing_container bash"',
 				default_user => 'neurospaces',
-				dockerfile => './tests/specifications/dockerfiles/Dockerfile.workflow-features',
-				identifier => 'docker_based_harness_features',
-				name_container => 'workflow_features_container',
-				name_image => 'workflow_features_image',
+				dockerfile => './tests/specifications/dockerfiles/Dockerfile.workflow-feature-testing',
+				identifier => 'docker_based_harness_feature_testing',
+				name_container => 'workflow_feature_testing_container',
+				name_image => 'workflow_feature_testing_image',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },
