@@ -6,7 +6,7 @@ use warnings;
 
 my $configuration
     = {
-       field_project_name => 'tests',
+       field_project_name => 'feature-testing',
       };
 
 return $configuration;

@@ -14,9 +14,9 @@
 # add this at the top of /etc/grc.conf
 #
 #
-# # tests configuration
-# (^|[/\w\.]+/)tests-configuration
-# conf.tests-configuration
+# # feature-testing configuration
+# (^|[/\w\.]+/)feature-testing-configuration
+# conf.feature-testing-configuration
 #
 #
 # maintainance laptop according to the documentation
@@ -28,7 +28,7 @@ regexp=laptop_developer
 colours=yellow
 -
 # target
-regexp=tests
+regexp=feature-testing
 colours=yellow
 -
 # descriptions

@@ -1,16 +1,15 @@
 ---
+description: The following are example targets, modify/remove/add according to your project needs.
 targets:
   all:
     description: used for processing of target files that are produced by other targets
   docker:
     description: interaction with the docker build container
-  documentation:
-    description: Documentation generation
-  examples:
-    description: these are examples that explain how to use the APIs
+  perl_examples:
+    description: these are perl examples that explain how to use the APIs
+  python_examples:
+    description: these are python examples that explain how to use the APIs
   source_code:
     description: operations on the source code that is used for testing
-  test:
-    description: Commands for testing functions of the engine.
   wiki_gitlab:
     description: pulls the wiki pages from gitlab (and possibly other sources) and converts them PDF (or other formats)

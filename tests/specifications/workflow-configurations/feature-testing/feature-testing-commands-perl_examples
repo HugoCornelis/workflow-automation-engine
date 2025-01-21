@@ -1,0 +1,313 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our $option_verbose;
+
+our $global_technical_project_configuration;
+
+
+package Command;
+
+
+sub perl_examples_single_command
+{
+    my $force = $ARGV[0] || "";
+
+    my $command = 'echo an example of the invocation of a single command';
+
+    execute_shell_command($command);
+
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   dry_run: do not execute this command.
+    #   remote: a remote that is defined in feature-testing-configuration.
+    #   quiet: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #
+    # execute_shell_command($command, { remote => '<name of a remote that is defined in feature-testing-configuration>, } );
+    #
+    # These options can given to any of the functions that execute commands.
+}
+
+
+sub perl_examples_single_command_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   "1._<your_completion_without_spaces_here>" => "explain_the_purpose_of_the_completion_here",
+	   "2._<another_completion_here>" => "the_numbers_preserve_the_order_for_this_example",
+	   "3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash" => "further_explanation",
+	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	# insert your completions here as a hash when there are arguments to complete,
+	# the workflow engine will select the correct level in your hash of completins.
+	# bash will select those that apply to the current argument to be completed.
+
+	return {
+		aa => {
+		       12 => {
+			      cc => 1,
+			     },
+		       34 => {
+			      dd => 1,
+			     },
+		      },
+		bb => {
+		       56 => {
+			      ee => 1,
+			     },
+		       78 => {
+			      ff => 1,
+			     },
+		      },
+	       };
+    }
+    else
+    {
+	return $completions_hash;
+    }
+
+    return $completions_hash;
+}
+
+
+sub perl_examples_single_command_help
+{
+    my $command = shift;
+
+    return "$command: an example of the invocation a single command.
+
+arguments:
+
+    force: command arguments can be parsed from @ARGV.
+";
+}
+
+
+sub perl_examples_array_of_commands
+{
+    my $force = $ARGV[0] || "";
+
+    my $local_commands
+	= [
+	   'echo an example of the invocation of an array of commands',
+	   'echo this is the second command in the array',
+	  ];
+
+    execute_shell_command_array($local_commands);
+}
+
+
+sub perl_examples_array_of_commands_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   "1.<your_completion_without_spaces_here>" => "explain_the_purpose_of_the_completion_here",
+	   "2.<another_completion_here>" => "the_numbers_preserve_the_order_for_this_example",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+
+    return $completions_hash;
+}
+
+
+sub perl_examples_array_of_commands_help
+{
+    my $command = shift;
+
+    return "$command: an example of the invocation an array of commands.
+
+arguments:
+
+    force: command arguments can be parsed from \@ARGV.
+";
+}
+
+
+our $target_servers = $::global_technical_project_configuration->{target_servers};
+
+sub perl_examples_array_of_commands_remote_execution
+{
+    my $force = $ARGV[0] || "";
+
+    my $remote = $target_servers->{build};
+
+    my $remote_commands
+	= [
+	   'echo',
+	   'echo an example of the invocation of an array of remote commands',
+	   'echo this is the second command in the array',
+	   'echo',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  remote => $remote,
+	 },
+	);
+
+    my $local_commands
+	= [
+	   'echo a few locally executed commands',
+	   'echo more locally executed commands',
+	  ];
+
+    execute_shell_command_array($local_commands);
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  remote => $remote,
+	 },
+	);
+}
+
+
+sub perl_examples_array_of_commands_remote_execution_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   "1.<your_completion_without_spaces_here>" => "explain_the_purpose_of_the_completion_here",
+	   "2.<another_completion_here>" => "the_numbers_preserve_the_order_for_this_example",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+
+    return $completions_hash;
+}
+
+
+sub perl_examples_array_of_commands_remote_execution_help
+{
+    my $command = shift;
+
+    return "$command: an example of the invocation an array of commands that are executed on a remote machine.
+
+arguments:
+
+    none.
+";
+}
+
+
+sub perl_examples_sequencing_and_composition
+{
+    my $force = $ARGV[0] || "";
+
+    my $local_commands
+	= [
+	   'echo this examples composes other examples into one sequence of commands',
+	  ];
+
+    execute_shell_command_array($local_commands);
+
+    perl_examples_single_command();
+    perl_examples_array_of_commands();
+}
+
+
+sub perl_examples_sequencing_and_composition_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   "1.<your_completion_without_spaces_here>" => "explain_the_purpose_of_the_completion_here",
+	   "2.<another_completion_here>" => "the_numbers_preserve_the_order_for_this_example",
+	  };
+
+    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # allows to dynamically insert other completions when there are arguments to complete.
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
+
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+
+    return $completions_hash;
+}
+
+
+sub perl_examples_sequencing_and_composition_help
+{
+    my $command = shift;
+
+    return "$command: an example that composes other examples into one sequence of commands.
+
+arguments:
+
+    none.
+";
+}
+
+
+# return success
+
+1;
+
+

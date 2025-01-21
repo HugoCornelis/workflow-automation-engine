@@ -39,37 +39,37 @@ my $test
 						   description => "Can we install the workflow automation configuration for the feature tests?",
 						   read => '# mkdir --parents /home/neurospaces/bin
 #
-# ln -sf /usr/local/bin/workflow /home/neurospaces/bin/tests-workflow
+# ln -sf /usr/local/bin/workflow /home/neurospaces/bin/feature-testing-workflow
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-configuration /home/neurospaces/bin/./tests-configuration
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration /home/neurospaces/bin/./feature-testing-configuration
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-commands /home/neurospaces/bin/tests-commands
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/bin/feature-testing-commands-perl_examples
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-commands-features /home/neurospaces/bin/tests-commands-features
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-python_examples /home/neurospaces/bin/feature-testing-commands-python_examples
 #
-# bash -c "echo \'# tests-workflow
+# bash -c "echo \'# feature-testing-workflow
 
-alias tests-workflow=\"grc tests-workflow\"
-alias tests-configuration=\"grc tests-configuration\"
+alias feature-testing-workflow=\"grc feature-testing-workflow\"
+alias feature-testing-configuration=\"grc feature-testing-configuration\"
 \' | cat >>/home/neurospaces/.bashrc"
 #
-# bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/tests-bash-completion.sh
+# bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
 #
 # sudo     bash -c "echo \'
-# tests-workflow
-(^|[/\w\.]+/)tests-workflow\s?
-conf.tests-workflow
+# feature-testing-workflow
+(^|[/\w\.]+/)feature-testing-workflow\s?
+conf.feature-testing-workflow
 
-# tests-configuration
-(^|[/\w\.]+/)tests-configuration\s?
-conf.tests-configuration
+# feature-testing-configuration
+(^|[/\w\.]+/)feature-testing-configuration\s?
+conf.feature-testing-configuration
 
 \' | cat >>/etc/grc.conf"
 #
-# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.tests-configuration /usr/share/grc/conf.tests-configuration
+# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.feature-testing-configuration /usr/share/grc/conf.feature-testing-configuration
 #
-# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.tests-workflow /usr/share/grc/conf.tests-workflow
+# sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.feature-testing-workflow /usr/share/grc/conf.feature-testing-workflow
 #
 ',
 						   wait => 2,

@@ -1,4 +1,13 @@
 ---
+# Target servers identify roles that execute command on different hosts.
+# Each host has a 'remote_policy' that is prefixed to the command to be executed.
+# For some roles the remote_policy is dynamically built.  A typical example is an remote ssh server.
+#
+# A role that has a 'localuser' set to 'yes' has no remote_policy.
+#
+# A tmux remote_policy requires its name to have a 'tmux_' prefix.
+# This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
+
 target_servers:
   build:
     description: your build server that does builds and is used for testing
