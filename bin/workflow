@@ -3530,6 +3530,11 @@ sub _file_contains_regex
 
     my $string = shift;
 
+    if (!-e $filename)
+    {
+	return '';
+    }
+
     my $data
 	= do {
 	    open my $fh, '<', $filename;
