@@ -4490,7 +4490,7 @@ sub working_directory_for_interaction_role_apply
     {
 	if ($interaction_role eq "localuser\@localhost")
 	{
-	    $result = "cd '$current_working_directory' && $command";
+	    #! the cd command will be executed by the (process running the) workflow engine.
 	}
 	else
 	{
