@@ -2341,11 +2341,11 @@ export PATH="$HOME/bin:$PATH"
     {
 	if (not $bashrc_matches)
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc already $bin_path_marker\n";
+	    print "$global_program_name: all_install_scripts: .bashrc does not have $bin_path_marker, installing it\n";
 	}
 	else
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc does not have $bin_path_marker, installing it\n";
+	    print "$global_program_name: all_install_scripts: .bashrc already $bin_path_marker\n";
 	}
     }
 
@@ -2365,6 +2365,11 @@ sub _install_script_symbolic_link_to_commands_configured
     my $option_install_commands = shift;
 
     my $option_install_report = shift;
+
+    if ($option_verbose)
+    {
+	print "$global_program_name: _install_script_symbolic_link_to_commands_configured with (--install-commands == $option_install_commands, --install-report == $option_install_report)\n";
+    }
 
     # 2.b. from configured filenames to symbolic links.
 
@@ -2404,6 +2409,11 @@ sub _install_script_symbolic_link_to_commands_in_commands_directory
     my $option_install_commands = shift;
 
     my $option_install_report = shift;
+
+    if ($option_verbose)
+    {
+	print "$global_program_name: _install_script_symbolic_link_to_commands_in_commands_directory with (--install-commands == $option_install_commands, --install-report == $option_install_report)\n";
+    }
 
     # 2. Install to ~/bin: symbolic links for commands
 
@@ -2496,9 +2506,10 @@ sub _install_script_symbolic_link_to_configuration
 
     my $option_install_report = shift;
 
-    # $configuration_filename normally becomes 'workflow-project.pl'
-
-    # my $configuration_filename = "$field_configuration->{field_project_configuration_directory}/$field_configuration->{field_project_configuration_filename}";
+    if ($option_verbose)
+    {
+	print "$global_program_name: installation of the workflow configuration with (--install-commands == $option_install_commands, --install-report == $option_install_report)\n";
+    }
 
     my $configuration_filenames_found_2
 	= {
@@ -2540,19 +2551,10 @@ sub _install_script_symbolic_link_to_engine
     {
 	if ($option_verbose)
 	{
-	    print "$global_program_name: executing installation of the workflow engine with (install-engine == $option_install_engine)\n";
-
-	    print "$global_program_name: creating $target\n";
+	    print "$global_program_name: installation of the workflow engine with (--install-engine == $option_install_engine, --install-report == $option_install_report)\n";
 	}
 
 	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
-    }
-    else
-    {
-	if ($option_verbose)
-	{
-	    print "$global_program_name: NOT executing installation of the workflow engine because it already seems to exist.\n";
-	}
     }
 }
 
@@ -2968,7 +2970,7 @@ sub builtin_install_scripts
     our $install_options
 	= {
 	   "aliasses!" => \$option_install_aliasses,
-	   "bash-completion=s" => \$option_install_bash_completion,
+	   "bash-completion!" => \$option_install_bash_completion,
 	   "commands!" => \$option_install_commands,
 	   "engine!" => \$option_install_engine,
 	   "force!" => \$option_install_force,
@@ -2987,7 +2989,7 @@ sub builtin_install_scripts
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    # need to do four things:
+    # need to take these actions:
     #
     # 1. Install to ~/bin: symbolic link for the workflow engine with correct name and the configuration of the project
     # 2. Install to ~/bin: symbolic links for commands
