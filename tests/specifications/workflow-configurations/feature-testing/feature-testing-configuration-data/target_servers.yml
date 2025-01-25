@@ -25,4 +25,11 @@ target_servers:
     ssh_port: 22
     ssh_server: 192.168.4.70
     ssh_user: hugo
-
+  tmux_cd:
+    description: interaction with the tmux session to test cd commands
+    name: tmux_cd
+    remote_policy: 'tmux send-keys -t cd '
+  tmux_ssh_cd:
+    description: interaction with the combined ssh / tmux session to test cd commands
+    name: tmux_ssh_cd
+    remote_policy: 'ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null hugo@localhost tmux send-keys -t ssh_cd '

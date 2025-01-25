@@ -2081,7 +2081,7 @@ sub _builtin_tmux_sessions
 
     my $tmux_sessions = [];
 
-    foreach my $target_server_name (keys %$target_servers)
+    foreach my $target_server_name (sort keys %$target_servers)
     {
 	my $target_server = $target_servers->{$target_server_name};
 

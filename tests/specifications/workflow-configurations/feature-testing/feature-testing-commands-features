@@ -47,6 +47,31 @@ sub features_cd_tests
 
 our $target_servers = $::global_technical_project_configuration->{target_servers};
 
+sub features_cd_tests_tmux
+{
+    my $remote = $target_servers->{tmux_cd};
+
+    my $remote_commands
+	= [
+	   'pwd',
+	   'cd bin',
+	   'pwd',
+	   'cd ..',
+	   'pwd',
+	   'cd /',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  remote => $remote,
+	 },
+	);
+}
+
+
 # return success
 
 1;

@@ -155,6 +155,58 @@ conf.feature-testing-configuration
 						 ],
 				description => "correct changes in directory during a workflow execution that uses the 'cd' command",
 			       },
+			       {
+				command => 'feature-testing-workflow builtin tmux_create_sessions',
+				command_tests => [
+						  {
+						   description => "Can we create the tmux sessions for testing workflow cd commands?",
+						   read => "For tmux session cd, attach with: tmux attach-session -t cd
+For tmux session ssh_cd, attach with: tmux attach-session -t ssh_cd
+",
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "create the tmux sessions for testing workflow cd commands",
+			       },
+			       {
+				command => 'tmux ls',
+				command_tests => [
+						  {
+						   description => "Have the tmux sessions been created?",
+						   read => [ '-re', "cd: 1 windows \(created [^\)]*\)
+ssh_cd: 1 windows \(created [^\)]*\)
+", ],
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "check if the tmux sessions have been created",
+				disabled => 'the regex does not work',
+			       },
+			       {
+				command => 'feature-testing-workflow features cd_tests_tmux',
+				command_tests => [
+						  {
+						   description => "Do we see correct changes in directory during a workflow execution in a tmux session that uses the 'cd' command?",
+						   read => "# tmux send-keys -t cd    'pwd' ENTER
+#
+# tmux send-keys -t cd    'cd bin' ENTER
+#
+# tmux send-keys -t cd    'pwd' ENTER
+#
+# tmux send-keys -t cd    'cd ..' ENTER
+#
+# tmux send-keys -t cd    'pwd' ENTER
+#
+# tmux send-keys -t cd    'cd /' ENTER
+#
+# tmux send-keys -t cd    'pwd' ENTER
+#
+",
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "correct changes in directory during a workflow execution that uses the 'cd' command",
+			       },
 			      ],
        description => "testing the workflow automation engine",
        documentation => {
