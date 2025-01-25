@@ -1,4 +1,5 @@
 ---
 command_filenames:
+  - feature-testing-commands-features
   - feature-testing-commands-perl_examples
   - feature-testing-commands-python_examples

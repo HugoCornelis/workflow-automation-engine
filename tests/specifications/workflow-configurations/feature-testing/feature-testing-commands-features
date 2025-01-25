@@ -1,0 +1,54 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our $option_verbose;
+
+our $global_technical_project_configuration;
+
+
+package Command;
+
+
+sub features_cd_tests
+{
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   dry_run: do not execute this command.
+    #   remote: a remote that is defined in feature-testing-configuration.
+    #   quiet: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #
+    # execute_shell_command($command, { remote => '<name of a remote that is defined in feature-testing-configuration>, } );
+    #
+    # These options can given to any of the functions that execute commands.
+
+    my $local_commands
+	= [
+	   'pwd',
+	   'cd bin',
+	   'pwd',
+	   'cd ..',
+	   'pwd',
+	   'cd /',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array($local_commands);
+}
+
+
+our $target_servers = $::global_technical_project_configuration->{target_servers};
+
+# return success
+
+1;
+
+

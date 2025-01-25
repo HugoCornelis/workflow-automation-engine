@@ -1,10 +1,12 @@
 ---
-description: The following are example targets, modify/remove/add according to your project needs.
+description: 'The following are example targets, modify/remove/add according to your project needs.'
 targets:
   all:
     description: used for processing of target files that are produced by other targets
   docker:
     description: interaction with the docker build container
+  features:
+    description: testing of workflow features
   perl_examples:
     description: these are perl examples that explain how to use the APIs
   python_examples:

@@ -31,27 +31,40 @@ my $test
 									},
 						    },
 			  },
+       commands_to_try => {
+			   commands => [
+					'cd ~/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing' => 1,
+
+					'workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses' => 'does not work',
+
+					'workflow builtin install_scripts -- --no-aliasses --engine --commands' => 'does work',
+
+					'rm -fr ~/bin && rm -f .bashrc',
+				       ],
+			  },
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --alias --commands --engine',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation configuration for the feature tests?",
-						   read => '# mkdir --parents /home/neurospaces/bin
+						   read => '# bash -c "echo \'# necessary for $project_name-workflow
+
+export PATH=\"$HOME/bin:$PATH\"
+
+\' | cat >>/home/neurospaces/.bashrc"
+#
+# mkdir --parents /home/neurospaces/bin
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/feature-testing-workflow
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration /home/neurospaces/bin/./feature-testing-configuration
 #
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/bin/feature-testing-commands-features
+#
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/bin/feature-testing-commands-perl_examples
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-python_examples /home/neurospaces/bin/feature-testing-commands-python_examples
-#
-# bash -c "echo \'# feature-testing-workflow
-
-alias feature-testing-workflow=\"grc feature-testing-workflow\"
-alias feature-testing-configuration=\"grc feature-testing-configuration\"
-\' | cat >>/home/neurospaces/.bashrc"
 #
 # bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
@@ -78,6 +91,70 @@ conf.feature-testing-configuration
 						 ],
 				description => "installing the workflow automation configuration for the feature tests",
 			       },
+			       {
+				command => 'workflow --help-projects',
+				command_tests => [
+						  {
+						   description => "Can we find the workflow project for the feature tests?",
+						   read => 'available_workflow automation projects (copy-paste the one you would like to get help for):
+  - feature-testing-workflow --help-commands
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "find the workflow project for the feature tests",
+			       },
+			       {
+				command => 'feature-testing-workflow',
+				command_tests => [
+						  {
+						   description => "Do we get a reasonable error message when invoking the engine without arguments?",
+						   read => 'feature-testing-workflow: *** Error: neither a target option nor target argument given, try --help',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "reasonable error message when invoking the engine without arguments",
+			       },
+			       {
+				command => 'feature-testing-workflow perl_examples single_command',
+				command_tests => [
+						  {
+						   description => "Do we get the template response when inoking the engine with a pre-configured example command?",
+						   read => 'an example of the invocation of a single command',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "template response when inoking the engine with a pre-configured example command",
+			       },
+			       {
+				command => 'feature-testing-workflow features cd_tests',
+				command_tests => [
+						  {
+						   description => "Do we see correct changes in directory during a workflow execution that uses the 'cd' command?",
+						   read => "# pwd
+#
+/home/neurospaces
+# cd bin
+#
+# pwd
+#
+/home/neurospaces/bin
+# cd ..
+#
+# pwd
+#
+/home/neurospaces
+# cd /
+#
+# pwd
+#
+/
+",
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "correct changes in directory during a workflow execution that uses the 'cd' command",
+			       },
 			      ],
        description => "testing the workflow automation engine",
        documentation => {
@@ -100,7 +177,7 @@ project-specific workflows consisting of shell commands.
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },
-       name => '40_workflow-automator/30_specific-features.t',
+       name => '40_workflow-automator/30_specific-features-cd.t',
        tags => [ 'manual' ],
       };
 

@@ -71,6 +71,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libengine-pkcs11-openssl \
     sbsigntool
 
+# packages required for testing of: tmux
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    tmux
+
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
