@@ -25,6 +25,14 @@ target_servers:
     ssh_port: 22
     ssh_server: 192.168.4.70
     ssh_user: hugo
+  ssh_cd:
+    description: interaction with the combined ssh to test cd commands
+    name: ssh_cd
+    ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    ssh_password: harness
+    ssh_port: 22
+    ssh_server: 172.17.0.2
+    ssh_user: root
   tmux_cd:
     description: interaction with the tmux session to test cd commands
     name: tmux_cd
@@ -32,4 +40,10 @@ target_servers:
   tmux_ssh_cd:
     description: interaction with the combined ssh / tmux session to test cd commands
     name: tmux_ssh_cd
-    remote_policy: 'ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null hugo@localhost tmux send-keys -t ssh_cd '
+    remote_policy1: 'ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2 tmux send-keys -t ssh_cd '
+    remote_policy: 'tmux send-keys -t ssh_cd '
+    ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    ssh_password: harness
+    ssh_port: 22
+    ssh_server: 172.17.0.2
+    ssh_user: root

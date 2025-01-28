@@ -187,25 +187,107 @@ ssh_cd: 1 windows \(created [^\)]*\)
 				command_tests => [
 						  {
 						   description => "Do we see correct changes in directory during a workflow execution in a tmux session that uses the 'cd' command?",
-						   read => "# tmux send-keys -t cd    'pwd' ENTER
+						   read => "# tmux send-keys -t cd    'pwd >>/tmp/tmux-pwd.txt' ENTER
 #
 # tmux send-keys -t cd    'cd bin' ENTER
 #
-# tmux send-keys -t cd    'pwd' ENTER
+# tmux send-keys -t cd    'pwd >>/tmp/tmux-pwd.txt' ENTER
 #
 # tmux send-keys -t cd    'cd ..' ENTER
 #
-# tmux send-keys -t cd    'pwd' ENTER
+# tmux send-keys -t cd    'pwd >>/tmp/tmux-pwd.txt' ENTER
 #
 # tmux send-keys -t cd    'cd /' ENTER
 #
-# tmux send-keys -t cd    'pwd' ENTER
+# tmux send-keys -t cd    'pwd >>/tmp/tmux-pwd.txt' ENTER
 #
 ",
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "correct changes in directory during a workflow execution that uses the 'cd' command",
+				description => "correct changes in directory during a workflow execution that uses the 'cd' command in a tmux session",
+			       },
+			       {
+				command => 'cat /tmp/tmux-pwd.txt',
+				command_tests => [
+						  {
+						   description => "Do we see the correct changes in the working directory after a workflow execution in a tmux session that uses the 'cd' command?",
+						   read => "/home/neurospaces
+/home/neurospaces/bin
+/home/neurospaces
+/
+",
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "the correct changes in directory after a workflow execution that uses the 'cd' command in a tmux session",
+			       },
+			       {
+				comments => '
+This was taken from:
+
+https://satvikakolisetty.medium.com/running-ssh-server-in-a-docker-container-55eb2a3add35
+
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y openssh-server
+# Configure SSH
+RUN mkdir /var/run/sshd
+RUN echo \'root:redhat\' | chpasswd
+#password for user login
+RUN sed -i \'s/#PermitRootLogin prohibit-password/PermitRootLogin yes/\' /etc/ssh/sshd_config
+EXPOSE 22
+# Start SSH server
+CMD ["/usr/sbin/sshd", "-D"]
+
+https://circleci.com/blog/ssh-into-docker-container/#c-consent-modal
+
+FROM ubuntu:20.04
+
+RUN apt update && apt install -y openssh-server
+RUN sed -i \'s/PermitRootLogin prohibit-password/PermitRootLogin yes/\' /etc/ssh/sshd_config
+
+RUN useradd -m -s /bin/bash bilbo
+RUN echo "bilbo:insecure_password" | chpasswd
+
+EXPOSE 22
+
+ENTRYPOINT service ssh start && bash
+
+Then:
+
+$ docker inspect --format=\'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}\' workflow_feature_testing_container
+172.17.0.2
+
+
+',
+				command => 'feature-testing-workflow features cd_tests_ssh',
+				command_tests => [
+						  {
+						   description => "Do we see correct changes in directory during a workflow execution in an ssh session that uses the 'cd' command?",
+						   read => '# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    pwd
+#
+/root
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    cd /bin
+#
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin && pwd\'
+#
+/bin
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin && cd ..\'
+#
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin/.. && pwd\'
+#
+/
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin/.. && cd /\'
+#
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd / && pwd\'
+#
+/
+',
+						   timeout => 10,
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "correct changes in directory during a workflow execution that uses the 'cd' command in an ssh session",
 			       },
 			      ],
        description => "testing the workflow automation engine",
