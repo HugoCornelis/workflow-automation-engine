@@ -31,7 +31,7 @@ target_servers:
     ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
     ssh_password: harness
     ssh_port: 22
-    ssh_server: 172.17.0.2
+    ssh_server: 172.18.0.22
     ssh_user: root
   tmux_cd:
     description: interaction with the tmux session to test cd commands
@@ -45,5 +45,5 @@ target_servers:
     ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
     ssh_password: harness
     ssh_port: 22
-    ssh_server: 172.17.0.2
+    ssh_server: 172.18.0.22
     ssh_user: root

@@ -264,22 +264,22 @@ $ docker inspect --format=\'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{e
 				command_tests => [
 						  {
 						   description => "Do we see correct changes in directory during a workflow execution in an ssh session that uses the 'cd' command?",
-						   read => '# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    pwd
+						   read => '# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    pwd
 #
 /root
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    cd /bin
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    cd /bin
 #
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin && pwd\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    \'cd /bin && pwd\'
 #
 /bin
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin && cd ..\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    \'cd /bin && cd ..\'
 #
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin/.. && pwd\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    \'cd /bin/.. && pwd\'
 #
 /
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd /bin/.. && cd /\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    \'cd /bin/.. && cd /\'
 #
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2    \'cd / && pwd\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.18.0.22    \'cd / && pwd\'
 #
 /
 ',
@@ -302,10 +302,11 @@ project-specific workflows consisting of shell commands.
 			},
        harnessing => {
 		      class => {
-				comment => 'Enter this container with "docker exec -it workflow_feature_testing_container bash"',
+				comment => 'Enter this container with "docker exec -it workflow_feature_testing_container bash", note that it has a fixed ip address of 172.18.0.22 as assumed by the test scripts',
 				default_user => 'neurospaces',
 				dockerfile => './tests/specifications/dockerfiles/Dockerfile.workflow-feature-testing',
 				identifier => 'docker_based_harness_feature_testing',
+				ip_address_container => '172.18.0.22',
 				name_container => 'workflow_feature_testing_container',
 				name_image => 'workflow_feature_testing_image',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
