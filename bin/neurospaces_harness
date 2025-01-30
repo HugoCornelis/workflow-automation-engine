@@ -1134,7 +1134,7 @@ options:
     --tags                       Only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier         Multiply all timeout values with this constant.
     --timings                    Add timing information about the tests to the report.
-    --trace                      Enable tracing using the given unix shell command (eg. 'strace -f', 'retsnoop' or 'RRLOG=/tmp/rr.log rr record').
+    --trace                      Enable tracing using the given unix shell command (eg. 'strace -f', 'retsnoop', 'RRLOG=/tmp/rr.log rr record' or syzbot/syzkaller, https://hackerbikepacker.com/syzbot).
     --verbose                    Set verbosity level.
 ";
 
