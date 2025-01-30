@@ -5821,11 +5821,15 @@ sub ex_terminate
 
 		$command_test->{read} = $seen;
 
-		# remove the existing module definition
+		# obtain a canonical module_pathname
 
 		my $module_pathname = $error_report->{module_name};
 
 		$module_pathname =~ s(/summary.yml$)();
+
+		$module_pathname =~ s(^$global_config->{tests_directory}/)();
+
+		# remove the existing module definition
 
 		`rm -fr '$global_config->{tests_directory}/$module_pathname'`;
 
@@ -6599,6 +6603,21 @@ sub read_module_dump_file_structured_yaml
 		    # unbless($command_definition);
 
 		    my $unblessed_command_definition = { %$command_definition, };
+
+		    #t I am not sure what the consequences are of unblessing all the command tests ...
+
+		    my $command_tests = $command_definition->{command_tests};
+
+		    my $command_tests_unblessed = [];
+
+		    foreach my $command_test (@$command_tests)
+		    {
+			$command_test = { %$command_test, };
+
+			push @$command_tests_unblessed, $command_test;
+		    }
+
+		    $command_definition->{command_tests} = $command_tests_unblessed;
 
 		    YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
 		}
