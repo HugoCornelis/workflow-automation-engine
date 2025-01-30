@@ -680,6 +680,13 @@ sub harness_command_run_tests
 
     $test_library->merge_command_tests($option_input_command_tests);
 
+    my $library_error = $test_library->validate();
+
+    if ($library_error)
+    {
+	die "$0: *** Test Library Error: $library_error";
+    }
+
     # randomize test module order if requested
 
     my $module_definitions = $test_library->{test_modules};
@@ -5871,8 +5878,8 @@ sub construct
 	       chomp; $_;
 	   }
 	   sort
-	   `find $tests_directory -name "*.t"`,
-	   `find $tests_directory -name "summary.yml"`,
+	   `find $tests_directory 2>/dev/null -name "*.t"`,
+	   `find $tests_directory 2>/dev/null -name "summary.yml"`,
 	  ];
 
     $self->{module_definition_filenames} = $module_definitions;
@@ -6713,6 +6720,25 @@ sub read_module_yml
     }
 
     return $result
+}
+
+
+sub validate
+{
+    my $test_library = shift;
+
+    #t should call here: check_description(), check_name(), and more.
+
+    my $error;
+
+    my $module_definitions = $test_library->{test_modules};
+
+    if (not scalar @$module_definitions)
+    {
+	$error = "no module_definitions found";
+    }
+
+    return $error;
 }
 
 
