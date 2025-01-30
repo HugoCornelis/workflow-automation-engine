@@ -278,6 +278,13 @@ sub harness_command_configuration_create
 
     my $package_version = shift @ARGV || 'alpha';
 
+    my $test_module_name = shift @ARGV || '000_module_template';
+
+    if (! defined $package_name)
+    {
+	die "$0: *** Error: $command expects an argument for the name of the new package/project";
+    }
+
     my $test_configuration_template
 	= "
 #!/usr/bin/perl -w
@@ -297,7 +304,7 @@ my \$package_version = \"$package_version\";
 my \$config
     = {
        core_directory => './',
-       description => '$package_name function, unit and regression tests, documenting $package_name functionality.',
+       description => '$package_name function, unit, regression and inter-active tests, that partially document $package_name functionality.',
        environment_settings => {
 				MY_PROJECT_SPECIFIC_VARIABLE => 'MY_PROJECT_SPECIFIC_VARIABLE_VALUE',
 			       },
@@ -314,24 +321,69 @@ return \$config;
 
 ";
 
-    use IO::File;
+    my $error = '';
 
-    my $file = IO::File->new("> tests.config");
-
-    if (defined $file)
+    if (!-e 'tests.config')
     {
-	print $file $test_configuration_template;
+	# create the test configuration
 
-	$file->close();
+	use IO::File;
 
-	chmod 0700, "tests.config";
+	my $file = IO::File->new("> tests.config");
 
-	print "$0: Created a template test configuration in ./tests.config.\n";
+	if (defined $file)
+	{
+	    print $file $test_configuration_template;
+
+	    $file->close();
+
+	    chmod 0700, "tests.config";
+
+	    print "$0: Created a template test configuration in ./tests.config.\n";
+	}
+	else
+	{
+	    $error = "Cannot create a template test configuration in ./tests.config.";
+	}
     }
     else
     {
-	print "$0: *** Error: Could not creat a template test configuration in ./tests.config.\n";
+	$error = "There is a test configuration in ./tests.config, aborting.";
     }
+
+    # create the folders for the test specifications
+
+    if (!$error)
+    {
+	if (!mkdir 'tests')
+	{
+	    $error = "Cannot create the 'tests' directory (error number $!).";
+	}
+    }
+
+    if (!$error)
+    {
+	if (!mkdir 'tests/specifications')
+	{
+	    $error = "Cannot create the 'tests/specifications' directory (error number $!).";
+	}
+    }
+
+    # create a first test module definition
+
+    if (!$error)
+    {
+	$error = harness_command_module_create("harness_command_module_create", $reporter, $test_module_name);
+    }
+
+    if ($error)
+    {
+	print "$0: *** Error: $error\n";
+    }
+
+    # return the error if there is one
+
+    return $error;
 }
 
 
@@ -341,7 +393,7 @@ sub harness_command_module_create
 
     my $reporter = shift;
 
-    my $module_name = shift @ARGV;
+    my $module_name = shift || shift @ARGV;
 
     if (! defined $module_name)
     {
@@ -463,22 +515,29 @@ Note that more keywords have been defined, including for running C and perl code
 
     $summary->{command_definitions} = [ $command_definition1, $command_definition2, ];
 
-    # my $path_name_prefix = $global_config->{tests_directory} || "tests/specifications";
+    my $path_prefix = $global_config->{tests_directory} || "tests/specifications";
 
-    # my $path_name = "$path_name_prefix/$module_name";
+    my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_name, $summary, $path_prefix, $reporter);
 
-    # my $created = path_create($path_name);
-
-    my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_name, $summary, $global_config->{tests_directory}, $reporter);
+    my $error;
 
     if ($result =~ /error/i)
     {
-	print "$0: Error creating test module $module_name in $global_config->{tests_directory} ($result).\n";
+	$error = "Error creating test module $module_name in $path_prefix ($result).";
+    }
+
+    if ($error)
+    {
+	print "$0: *** Error: $error\n";
     }
     else
     {
-	print "$0: Created test module $module_name in $global_config->{tests_directory}.\n";
+	print "$0: Created test module $module_name in $path_prefix.\n";
     }
+
+    # return the error if there is one
+
+    return $error;
 }
 
 
@@ -539,6 +598,11 @@ sub harness_command_module_update
 	bless $module_definition, "Heterarch::Test::Module";
 
 	my $error = $module_definition->md_run($execution_context, $executor);
+
+	if ($error)
+	{
+	    return $error;
+	}
     }
 
     # do final processing of the executor
@@ -552,6 +616,10 @@ sub harness_command_module_update
     # end the execution_context
 
     $execution_context->ec_terminate();
+
+    # return no error
+
+    return '';
 }
 
 
@@ -580,7 +648,7 @@ sub harness_command_run
     {
 	no strict "refs";
 
-	&$harness_command_executor($harness_command, $default_reporter);
+	my $error = &$harness_command_executor($harness_command, $default_reporter);
     }
 }
 
