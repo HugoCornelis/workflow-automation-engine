@@ -5140,6 +5140,83 @@ our $docker_command_with_redirect = "$docker_command_no_redirect >/dev/null 2>&1
 
 our $docker_command_selected;
 
+our $docker_network_created;
+
+our $docker_network_exists;
+
+
+sub _docker_compute_next_ip_address
+{
+    my $network_definition = shift;
+
+    my $occupied_ip_addresses = shift || [];
+
+    use Net::IP;
+
+    $occupied_ip_addresses
+	= {
+	   map
+	   {
+	       my $ip_with_mask = $_;
+
+	       my $ip_without_mask = $ip_with_mask;
+
+	       $ip_without_mask =~ s(/.*$)();
+
+	       $ip_without_mask => $_;
+	   }
+	   @$occupied_ip_addresses,
+	  };
+
+    my $network_name = $network_definition->{name};
+
+    my $network_subnet = $network_definition->{subnet};
+
+    my $net_ip_network = Net::IP->new($network_subnet);
+
+    my $first_ip = $net_ip_network->ip();
+
+    my $last_ip = $net_ip_network->last_ip();
+
+    my $ip_iterator = Net::IP->new("$first_ip - $last_ip");
+
+    my $result;
+
+    #! Docker likes to use some of the early addresses without these
+    #! being easily accessible from a docker inspect.
+    #!
+    #! Let's just skip a few (ten).
+
+    # note: skip the first ip, it is the network address, not a device address
+
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+    ++$ip_iterator;
+
+    while (++$ip_iterator)
+    {
+	my $ip = $ip_iterator->ip();
+
+	if (not exists $occupied_ip_addresses->{$ip})
+	{
+	    $result = $ip;
+
+	    last;
+	}
+    }
+
+    return $result;
+}
+
+
 sub _docker_preparer
 {
     my $self = shift;
@@ -5195,16 +5272,85 @@ sub _docker_preparer
 
     # try to stop and remove a previous container of the same name
 
+    my $docker_network
+	= {
+	   # containers => {
+	   # 		  default => "172.18.0.22",
+	   # 		 },
+	   name => "harness_network",
+	   subnet => "172.18.0.0/16",
+	  };
+
     my $name_container = $harness_class->{name_container};
+
+    my $ip_address_container = exists $harness_class->{ip_address_container} ? $harness_class->{ip_address_container} : "dynamic"; # "172.18.0.22";
+
+    if ($ip_address_container eq 'dynamic')
+    {
+	# my $assigned_ip_addresses = `docker inspect '$network_name' | jq -r 'map(.Containers[].IPv4Address)[]'`;
+
+	my $assigned_ip_addresses_containers
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       sort
+	       `docker inspect '$docker_network->{name}' | jq -r 'map(.Containers[].IPv4Address)[]'`,
+	      ];
+
+	my $assigned_ip_addresses_gateway
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       sort
+	       `docker inspect bridge | jq -r 'map(.IPAM.Config[].Gateway)[]'`,
+	      ];
+
+	$ip_address_container = _docker_compute_next_ip_address(
+								$docker_network,
+								[
+								 @$assigned_ip_addresses_containers,
+								 @$assigned_ip_addresses_gateway,
+								]
+							       );
+    }
 
     system "$docker_command_selected container stop -t 3 $name_container";
     system "$docker_command_selected container rm $name_container";
+
+    # see: https://stackoverflow.com/questions/27937185/assign-static-ip-to-docker-container
+
+    my $docker_ip_address = $ip_address_container;
+
+    my $assigned_ip_network = `docker inspect harness_network | jq -r 'map(.IPAM.Config[].Subnet)[]'`;
+
+    chomp $assigned_ip_network;
+
+    if ($assigned_ip_network eq $docker_network->{subnet})
+    {
+	$docker_network_exists = "detected from `docker inspect harness_network | jq -r 'map(.IPAM.Config[].Subnet)[]'`";
+    }
+
+    if (!$docker_network_created
+        && !$docker_network_exists)
+    {
+	# system "yes | docker network prune";
+
+	system "docker network create --subnet=$docker_network->{subnet} $docker_network->{name}";
+
+	print "docker network: $!, $?\n";
+
+	$docker_network_created = 'yes';
+    }
 
     # start the built container
 
     my $name_image = $harness_class->{name_image};
 
-    system "$docker_command_selected run -d -t --name $name_container $name_image";
+    system "$docker_command_selected run --net $docker_network->{name} --ip $docker_ip_address -d -t --name $name_container $name_image";
 
     # return no errors
 
@@ -5544,6 +5690,9 @@ sub _docker_preparer
     # start the built container
 
     my $name_image = $harness_class->{name_image};
+
+    #t need more options to assign a static IP address,
+    #t see: https://stackoverflow.com/questions/27937185/assign-static-ip-to-docker-container
 
     system "$docker_command_selected run -d -t --name $name_container $name_image";
 
