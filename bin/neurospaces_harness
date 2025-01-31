@@ -3912,7 +3912,7 @@ sub ec_end
 	}
 	else
 	{
-	    $reporter->report_message_end($message_level, "End for tests of $description
+	    $reporter->report_message_end($message_level, "End of tests of $description
 Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
 	}
     }
