@@ -1563,6 +1563,8 @@ sub cd_construct_command_line
 	    $argument_array = $command_definition->{arguments};
 	}
 
+	#t when no command entry is present: Use of uninitialized value in concatenation (.) or string at /usr/local/bin/neurospaces_harness line 1566.
+
 	my $command_line = $command_definition->{command} . " " . (join ' ', @$argument_array);
 
 	my $command_and_arguments = [ @$command_prefix, $command_line, ];
@@ -4432,6 +4434,8 @@ sub _preparation
 
 	foreach my $preparation_harness (@$all_preparation_harnesses)
 	{
+	    #t when no command entry is present: Use of uninitialized value in concatenation (.) or string at /usr/local/bin/neurospaces_harness line 4435.
+
 	    my $preparation_name
 		= ($command_definition
 		   ? "command '$command_definition->{command}'"
@@ -5339,6 +5343,8 @@ sub hs_construct_command_line
     my $command_line;
 
     # if this is a command specific to this harness
+
+    #t when no command entry is present: Use of uninitialized value in pattern match (m//) at /usr/local/bin/neurospaces_harness line 5343.
 
     if ($command_definition->{command} =~ m'^docker-snapshot')
     {
