@@ -5156,6 +5156,10 @@ sub new
 
 package Heterarch::Test::ExecutionContext::Harness::Docker;
 
+# this package assumes that a docker image must be built from a
+# dockerfile with pathname $self->{class}->{docker}->{dockerfile}.
+
+
 our @ISA = ("Heterarch::Test::ExecutionContext::Harness");
 
 
@@ -5683,6 +5687,9 @@ sub select_docker_command
 
 
 package Heterarch::Test::ExecutionContext::Harness::Docker::Image;
+
+# this package assumes the existence of a pre-built image with name
+# $self->{class}->{docker}->{name_image}.
 
 our @ISA = ("Heterarch::Test::ExecutionContext::Harness::Docker");
 
