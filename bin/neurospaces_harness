@@ -2305,6 +2305,24 @@ sub ct_run_complete
 }
 
 
+#
+# rebless the given command_test to a package that is suitable to test
+# it, given its keys and properties.
+#
+# possible target packages are:
+#
+# "Heterarch::Test::CommandTest";
+# "Heterarch::Test::CommandTest::CommandObject"
+# this one is not supported anymore: $target_package = "Heterarch::Test::CommandTest::PerlCode";
+# "Heterarch::Test::CommandTest::Interactive"
+# "Heterarch::Test::CommandTest::Interactive::ShellTester"
+# "Heterarch::Test::CommandTest::Interactive::Literal"
+# "Heterarch::Test::CommandTest::Interactive::Regex"
+# "Heterarch::Test::CommandTest::Interactive::Alternatives"
+# "Heterarch::Test::CommandTest::Interactive::File"
+# "Heterarch::Test::CommandTest::Interactive::Shell"
+#
+
 sub rebless
 {
     my $command_test = shift;
