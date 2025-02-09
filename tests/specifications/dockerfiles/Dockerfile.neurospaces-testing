@@ -72,6 +72,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libfile-find-rule-perl-perl \
     libipc-system-simple-perl \
     libfile-chdir-perl \
+    libnet-ip-perl \
     grc
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
