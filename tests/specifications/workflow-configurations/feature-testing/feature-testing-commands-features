@@ -76,6 +76,14 @@ sub features_cd_tests_ssh
 {
     my $remote = $target_servers->{ssh_cd};
 
+    # make sure this works from localhost and from inside a docker test container
+
+    my $ssh_server = `hostname -i`;
+
+    chomp $ssh_server;
+
+    $remote->{ssh_server} = $ssh_server;
+
     my $remote_commands
 	= [
 	   'pwd',

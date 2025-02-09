@@ -3452,7 +3452,9 @@ sub execute_shell_script_command
 
     my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
 
-    return Engine::execute_shell_command("cd '$commands_data_directory' && $script_command");
+    my $arguments = join ' ', $script_command, map { "'$_'" } @_ ;
+
+    return Engine::execute_shell_command("cd '$commands_data_directory' && $script_command $arguments");
 }
 
 
