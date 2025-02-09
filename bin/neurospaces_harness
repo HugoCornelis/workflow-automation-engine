@@ -3011,6 +3011,21 @@ sub ct_run_command
 
     my $read = $self->{read};
 
+    if (exists $execution_context->{variable_actions})
+    {
+	my $variable_actions = $execution_context->{variable_actions};
+
+	foreach my $variable_actions_entry (@$variable_actions)
+	{
+	    foreach my $variable_name (sort keys %$variable_actions_entry)
+	    {
+		my $variable_value = $variable_actions_entry->{$variable_name};
+
+		$read =~ s/$variable_name/$variable_value/g;
+	    }
+	}
+    }
+
     # if literal text expected
 
     if (exists $self->{white_space})
@@ -3944,6 +3959,40 @@ Total of $global_test_report->{global}->{test_counters}->{current}->{command_tes
     }
 
     $self->_path_pop_current();
+}
+
+
+sub ec_variable_actions_pop
+{
+    my $self = shift;
+
+    if (not exists $self->{variable_actions})
+    {
+	$self->{variable_actions} = [];
+    }
+
+    my $variable_actions = $self->{variable_actions};
+
+    my $variable_action = pop @$variable_actions;
+
+    return $variable_action;
+}
+
+
+sub ec_variable_actions_push
+{
+    my $self = shift;
+
+    my $new_variable_actions = shift;
+
+    if (not exists $self->{variable_actions})
+    {
+	$self->{variable_actions} = [];
+    }
+
+    my $variable_actions = $self->{variable_actions};
+
+    push @$variable_actions, $new_variable_actions;
 }
 
 
@@ -5385,13 +5434,25 @@ sub _docker_preparer
 
     system "$docker_command_selected run --net $docker_network->{name} -d -t --name $name_container $name_image";
 
+    my $this_ip_address = `docker inspect '$name_container' | jq -r 'map(.NetworkSettings.Networks.harness_network.IPAddress)[]'`;
+
+    chomp $this_ip_address;
+
+    my $variable_actions
+	= {
+	   __DOCKER_HOST_IP_ADDRESS__ => $this_ip_address,
+	  };
+
     # return no errors
 
     #! the sub should return a user role object that
     #! has the interface to generate the necessary prefix
     #! for the command that is executed for the test.
 
-    return '_docker_preparer: executed';
+    return {
+	    variable_actions => $variable_actions,
+	    docker_preparer_result => '_docker_preparer: executed',
+	   };
 }
 
 
@@ -5584,6 +5645,31 @@ sub hs_preparer
 
     my $preparation_result = $self->_docker_preparer();
 
+    if (ref $preparation_result eq 'SCALAR')
+    {
+	my $error = $$preparation_result;
+
+	my $module_definition = $execution_context->get_module_definition();
+
+	my $module_name = $module_definition->{name};
+
+	$reporter->report_error_add
+	    (
+	     {
+	      context_path => $execution_context->get_context_path(),
+	      description => "Docker container $preparation_name: $error",
+	      error => $error,
+	      module_name => $module_name,
+	     },
+	    );
+    }
+    else
+    {
+	my $variable_actions = exists $preparation_result->{variable_actions} ? $preparation_result->{variable_actions} : {};
+
+	$execution_context->ec_variable_actions_push($variable_actions);
+    }
+
     # make the docker harness available by pushing it
 
     my $harness_class = $self->{class};
@@ -5592,9 +5678,9 @@ sub hs_preparer
 
     $execution_context->harness_identifier_push($harnessing_identifier);
 
-    $self->{preparation_result} = $preparation_result;
+    $self->{preparation_result} = $preparation_result->{docker_preparer_result};
 
-    return $preparation_result;
+    return $preparation_result->{docker_preparer_result};
 }
 
 
@@ -5621,6 +5707,29 @@ sub hs_reparer
     # $DB::single = 1;
 
     my $reparation_error = $self->_docker_reparer($preparation_result);
+
+    if (ref $reparation_error eq 'SCALAR')
+    {
+	my $error = $$reparation_error;
+
+	my $module_definition = $execution_context->get_module_definition();
+
+	my $module_name = $module_definition->{name};
+
+	$reporter->report_error_add
+	    (
+	     {
+	      context_path => $execution_context->get_context_path(),
+	      description => "Docker container $preparation_name: $error",
+	      error => $error,
+	      module_name => $module_name,
+	     },
+	    );
+    }
+    else
+    {
+	my $variable_actions = $execution_context->ec_variable_actions_pop();
+    }
 
     my $container_name = $self->{class}->{docker}->{name_container};
 
@@ -5739,7 +5848,9 @@ sub _docker_preparer
     #! has the interface to generate the necessary prefix
     #! for the command that is executed for the test.
 
-    return '_docker_preparer: executed';
+    return {
+	    docker_preparer_result => '_docker_preparer: executed',
+	   };
 }
 
 
