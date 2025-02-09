@@ -40,10 +40,12 @@ No email sent.
        harnessing => {
 		      class => {
 				comment => 'Enter this container with "docker exec -it neurospaces_developer_package_test_container bash"',
-				default_user => 'neurospaces',
+				docker => {
+					   default_user => 'neurospaces',
+					   name_container => 'neurospaces_developer_package_test_container',
+					   name_image => 'neurospaces-developer-image',
+					  },
 				identifier => 'docker_container_based_harness',
-				name_container => 'neurospaces_developer_package_test_container',
-				name_image => 'neurospaces-developer-image',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker::Image',
 			       },
 		     },

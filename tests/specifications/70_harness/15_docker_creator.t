@@ -74,11 +74,20 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 	    harnessing => {
 			   class => {
 				     comment => 'Enter this container with "docker exec -it neurospaces_harness_test_container bash"',
-				     default_user => 'neurospaces',
-				     dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
+				     description => '
+This class instantiates a docker image based on the given docker file, then runs a container based on that image.
+
+The name of image and the name of the container are controlled from the class properties.
+
+The class properties can include IP network information and IP address of the container.
+',
+				     docker => {
+						default_user => 'neurospaces',
+						dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
+						name_container => 'neurospaces_harness_test_container',
+						name_image => 'neurospaces_harness_test_image',
+					       },
 				     identifier => 'docker_based_harness',
-				     name_container => 'neurospaces_harness_test_container',
-				     name_image => 'neurospaces_harness_test_image',
 				     type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 				    },
 			  },
