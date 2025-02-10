@@ -4786,13 +4786,15 @@ sub apply_remote_record_exported_command
 
     my $export_sh_command = shift;
 
-    if ($remote_prefix)
-    {
-	# if we are exporting this one role
+    # if we are exporting remotes
 
-	if (defined $export_remote
-	    and (($export_remote eq $interaction_roles->{$current_interaction_role}->{name})
-		 or $export_remote eq $interaction_roles->{$current_interaction_role}->{number}))
+    if (defined $export_remote)
+    {
+	# if we are exporting this one role or all roles
+
+	if (($export_remote eq 0)
+	    or ($export_remote eq $interaction_roles->{$current_interaction_role}->{name})
+	    or $export_remote eq $interaction_roles->{$current_interaction_role}->{number})
 	{
 	    # we export the command without the remoting information
 
@@ -4805,20 +4807,38 @@ sub apply_remote_record_exported_command
 	{
 	    # export as a comment
 
-	    $export_sh_command = "# <remote command at $remote_prefix: $command>";
+	    if ($remote_prefix)
+	    {
+		$export_sh_command = "# <remote command at $remote_prefix: $command>";
+	    }
+	    else
+	    {
+		$export_sh_command = "# <local command: $command>";
+	    }
 	}
+
+	if ($current_interaction_role =~ m(^tmux_))
+	{
+	    $export_sh_command =~ s(\s+ENTER\s*$)();
+	}
+    }
+
+    # apply the remote prefix
+
+    if ($remote_prefix)
+    {
 
 	$command = "$remote_prefix   $command";
+    }
 
-	# if we are exporting all roles
+    # if we are exporting all roles
 
-	if (defined $export_remote
-	    and ($export_remote eq 0))
-	{
-	    # we export the command with the remoting information prefixed
+    if (defined $export_remote
+	and ($export_remote eq 0))
+    {
+	# we export the command with the remoting information prefixed
 
-	    $export_sh_command = $command;
-	}
+	$export_sh_command = $command;
     }
 
     return ($command, $export_sh_command);
@@ -5515,6 +5535,36 @@ sub execute_option_export_sh
 	print $global_exported_sh_file "#\n";
 	print $global_exported_sh_file "# $global_command_line\n";
 	print $global_exported_sh_file "#\n";
+
+	if (not defined $option_export_remote)
+	{
+	    print $global_exported_sh_file "# --export-remote is not set, exporting all roles without a remote prefix\n";
+	    print $global_exported_sh_file "#\n";
+	}
+	elsif ($option_export_remote eq 0)
+	{
+	    print $global_exported_sh_file "# --export-remote is 0, exporting all roles with the appriopriate remote prefix\n";
+	    print $global_exported_sh_file "#\n";
+	}
+	else
+	{
+	    my $export_remote_interaction_roles
+		= [
+		   grep
+		   {
+		       my $interaction_role = $_;
+
+		       $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
+			   or $option_export_remote eq $interaction_roles->{$interaction_role}->{number};
+		   }
+		   keys %$interaction_roles,
+		  ];
+
+	    my $export_remote_interaction_role = $export_remote_interaction_roles->[0] || 'undefined role';
+
+	    print $global_exported_sh_file "# --export-remote is $option_export_remote, role: $export_remote_interaction_role\n";
+	    print $global_exported_sh_file "#\n";
+	}
 
 	chmod 0755, $global_exported_sh_filename;
     }

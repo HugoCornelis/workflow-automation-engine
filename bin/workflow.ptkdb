@@ -1,20 +1,53 @@
 $files = {
-           '_<./bin/workflow' => [
-                                   {
-                                     'expr' => undef,
-                                     'fname' => './bin/workflow',
-                                     'line' => '7764',
-                                     'text' => '    if ($option_target eq \'builtin\'
+           '_</home/hugo/projects/workflow-automation-engine/source/snapshots/master/bin/workflow' => [
+                                                                                                        {
+                                                                                                          'expr' => undef,
+                                                                                                          'fname' => '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/bin/workflow',
+                                                                                                          'line' => 4791,
+                                                                                                          'text' => '    if (defined $export_remote)
 ',
-                                     'type' => 'user',
-                                     'value' => '1'
-                                   }
-                                 ]
+                                                                                                          'type' => 'user',
+                                                                                                          'value' => '1'
+                                                                                                        },
+                                                                                                        {
+                                                                                                          'expr' => undef,
+                                                                                                          'fname' => '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/bin/workflow',
+                                                                                                          'line' => 4779,
+                                                                                                          'text' => '    my $interaction_roles = shift;
+',
+                                                                                                          'type' => 'user',
+                                                                                                          'value' => '1'
+                                                                                                        }
+                                                                                                      ]
          };
 $expr_list = [
                {
                  'depth' => -1,
                  'expr' => '@ARGV'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$export_remote'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$export_sh_command'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$remote_prefix'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$interaction_roles->{$current_interaction_role}'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$command'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$current_interaction_role'
                }
              ];
 $eval_saved_text = undef;

@@ -105,6 +105,47 @@ sub features_cd_tests_ssh
 }
 
 
+sub features_export_sh
+{
+    my $remote_tmux = $target_servers->{tmux_cd};
+
+    my $remote_ssh = $target_servers->{ssh_cd};
+
+    # make sure this works from localhost and from inside a docker test container
+
+    my $ssh_server = `hostname -i`;
+
+    chomp $ssh_server;
+
+    $remote_ssh->{ssh_server} = $ssh_server;
+
+    my $remote_commands
+	= [
+	   'pwd',
+	   'cd /bin',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array($remote_commands);
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  remote => $remote_ssh,
+	 },
+	);
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  remote => $remote_tmux,
+	 },
+	);
+}
+
+
 # return success
 
 1;
