@@ -714,7 +714,13 @@ package Command;
 
 sub ${target_name}_single_command
 {
-    my \$force = \$ARGV[0] || \"\";
+    # arguments on the command line and to this sub are unified in the \$arguments array
+
+    my \$arguments = shift || [];
+
+    # a fictitious force argument can be fetched from the (possibly empty) \$arguments array
+
+    my \$force = \$arguments->[0] || \"\";
 
     my \$command = 'echo an example of the invocation of a single command';
 
