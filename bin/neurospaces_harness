@@ -297,6 +297,87 @@ my $global_previous_command_side_effects;
 my $global_test_report;
 
 
+sub command_line_dispatch
+{
+    my $harness_command = shift;
+
+    my $arguments = shift || [];
+
+    my $known_commands = $global_harness_command_configuration->{known_commands};
+
+    if (! exists $known_commands->{$harness_command})
+    {
+	print "\n$0: *** Error: The command '$harness_command' does not exist.\n";
+
+	exit 1;
+    }
+
+    if (!exists $known_commands->{$harness_command}->{options})
+    {
+	print "\n$0: *** Error: The command '$harness_command' does not have a '--help' option.\n";
+
+	exit 1;
+    }
+
+    my $options = $known_commands->{$harness_command}->{options};
+
+    my $option_result = GetOptionsFromArray($arguments, %$options);
+
+    if (! $option_result)
+    {
+	$options->{"help!"} = 'option processing error';
+    }
+
+    my $option_help = $options->{"help!"};
+
+    if ($$option_help)
+    {
+	if (! exists $known_commands->{$harness_command}->{help})
+	{
+	    print "\nNo help found for this command '$harness_command'\n";
+	}
+	else
+	{
+	    my $description = $known_commands->{$harness_command}->{description};
+
+	    my $help = $known_commands->{$harness_command}->{help};
+
+	    my $synopsis = $help->{synopsis} || "$0 $harness_command <options> <arguments>";
+
+	    my $usage = $help->{usage} || "No usage description found for this command '$harness_command'\n";;
+
+	    print "\n$synopsis\n\n$description\n\n$usage\n";
+	}
+
+	exit 0;
+    }
+
+    my $harness_command_executor = $global_harness_command_configuration->{known_commands}->{$harness_command}->{executor};
+
+    # obtain a copy of stdout for the reporters
+
+    open($global_fd_output, ">&STDOUT");
+
+    # instantiate the reporter
+
+    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
+
+    my $default_reporter
+	= $reporter_class->new(
+			       {
+				configuration => $global_console_window_library_configuration,
+				fd_output => $global_fd_output,
+			       },
+			      );
+
+    {
+	no strict "refs";
+
+	my $error = &$harness_command_executor($harness_command, $arguments, $default_reporter);
+    }
+}
+
+
 sub harness_command_configuration_create
 {
     my $command = shift;
@@ -659,87 +740,6 @@ sub harness_command_module_update
     # return no error
 
     return '';
-}
-
-
-sub harness_command_run
-{
-    my $harness_command = shift;
-
-    my $arguments = shift || [];
-
-    my $known_commands = $global_harness_command_configuration->{known_commands};
-
-    if (! exists $known_commands->{$harness_command})
-    {
-	print "\n$0: *** Error: The command '$harness_command' does not exist.\n";
-
-	exit 1;
-    }
-
-    if (!exists $known_commands->{$harness_command}->{options})
-    {
-	print "\n$0: *** Error: The command '$harness_command' does not have a '--help' option.\n";
-
-	exit 1;
-    }
-
-    my $options = $known_commands->{$harness_command}->{options};
-
-    my $option_result = GetOptionsFromArray($arguments, %$options);
-
-    if (! $option_result)
-    {
-	$options->{"help!"} = 'option processing error';
-    }
-
-    my $option_help = $options->{"help!"};
-
-    if ($$option_help)
-    {
-	if (! exists $known_commands->{$harness_command}->{help})
-	{
-	    print "\nNo help found for this command '$harness_command'\n";
-	}
-	else
-	{
-	    my $description = $known_commands->{$harness_command}->{description};
-
-	    my $help = $known_commands->{$harness_command}->{help};
-
-	    my $synopsis = $help->{synopsis} || "$0 $harness_command <options> <arguments>";
-
-	    my $usage = $help->{usage} || "No usage description found for this command '$harness_command'\n";;
-
-	    print "\n$synopsis\n\n$description\n\n$usage\n";
-	}
-
-	exit 0;
-    }
-
-    my $harness_command_executor = $global_harness_command_configuration->{known_commands}->{$harness_command}->{executor};
-
-    # obtain a copy of stdout for the reporters
-
-    open($global_fd_output, ">&STDOUT");
-
-    # instantiate the reporter
-
-    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
-
-    my $default_reporter
-	= $reporter_class->new(
-			       {
-				configuration => $global_console_window_library_configuration,
-				fd_output => $global_fd_output,
-			       },
-			      );
-
-    {
-	no strict "refs";
-
-	my $error = &$harness_command_executor($harness_command, $arguments, $default_reporter);
-    }
 }
 
 
@@ -1133,7 +1133,7 @@ sub main
 
     initialize($harness_command);
 
-    harness_command_run($harness_command, \@ARGV);
+    command_line_dispatch($harness_command, \@ARGV);
 }
 
 
