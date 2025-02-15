@@ -8,8 +8,6 @@ my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
 
-use Getopt::Long qw(GetOptionsFromArray :config require_order);
-
 use Neurospaces::Tester;
 
 use POSIX qw( strftime );
@@ -63,14 +61,81 @@ our $option_verbose;
 
 our $global_config;
 
+my $global_all_output_levels
+    = [
+       "meta",
+       "module",
+       "command_definition",
+       "command_test",
+      ];
+
+my $global_reporter_classes
+    = {
+       'linear' => {
+		    class => "Heterarch::Test::Reporting::Linear",
+		   },
+       'status' => {
+		    class => "Heterarch::Test::Reporting::Status",
+		   },
+      };
+
 my $global_command_line_configuration
     = {
+       application => {
+		       initialize_configuration_and_environment => "main::application_initialize_configuration_and_environment",
+		       synopsis => "
+$0: test definition processor and executor
+
+synopsis:
+
+$0 <command> <options>
+
+",
+		       usage => "
+options:
+    --check-test-names           Check the pathnames of the specification files against the names of the tests.
+    --config-filename            The name of the file with the configuration (default is: $option_config_filename).
+    --console-type               The type of the console output (one of " . (join ", ", sort keys %$global_reporter_classes) . ").
+    --debugging                  Enable specific debugging options.
+    --dump-json                  Dump test specifications to json files in /tmp/.
+    --dump-perl                  Dump test specifications to perl files in /tmp/.
+    --dump-yaml                  Dump test specifications to yaml files in /tmp/.
+    --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
+    --email                      Allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
+    --flattenout                 Flattenout the test definitions before testing,
+                                 this experimental feature might increase test performance,
+                                 by recycling test definitions.
+    --harness-prune              Remove all the docker containers.
+    --help                       Print usage information.
+    --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
+    --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
+    --input-modules              Merge the given file or directory as modules to be tested (can given several times).
+    --numerical-compare          Attempt to compare numbers numerically when string differences are found (default enabled).
+    --output                     The class that should generate the output.
+    --output-content-line-limit  Maximum number of lines when generating content output (latex, html, pdf).
+    --output-figures             Generate figures for test output with a figure clause.
+    --output-html                Generate HTML output.
+    --output-latex               Generate Latex output.
+    --output-levels              Generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
+    --output-pdf                 Generate PDF output.
+    --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
+    --regex-selector             Defines a regex to run specific tests.
+    --report-disabled            Include information of disabled tests in the test report.
+    --show                       Show tests that would be run using the current configuration.
+    --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
+    --tags                       Only test test modules that have been tagged with these tags (default: all tags).
+    --timeout-multiplier         Multiply all timeout values with this constant.
+    --timings                    Add timing information about the tests to the report.
+    --trace                      Enable tracing using the given unix shell command (eg. 'strace -f', 'retsnoop', 'RRLOG=/tmp/rr.log rr record' or syzbot/syzkaller, https://hackerbikepacker.com/syzbot).
+    --verbose                    Set verbosity level.
+",
+		      },
        command_configuration => {
 				 default_command => "run-tests",
 				 known_commands => {
 						    "configuration-create" => {
 									       description => "Create an initial test configuration with instructions how to expand it to a full test suite.",
-									       executor => "harness_command_configuration_create",
+									       executor => "main::harness_command_configuration_create",
 									       options => {
 											   "help!" => do { my $option_help; \$option_help; },
 											  },
@@ -79,7 +144,7 @@ my $global_command_line_configuration
 						    "help" => "Show the help page.",
 						    "module-create" => {
 									description => "Create a new module with the given name.",
-									executor => "harness_command_module_create",
+									executor => "main::harness_command_module_create",
 									help => {
 										 synopsis => "$0 module-create <options> <module-name>",
 										 usage => "Options:
@@ -92,7 +157,7 @@ my $global_command_line_configuration
 								       },
 						    "module-update" => {
 									description => "Update the given module with the given arguments and directives.",
-									executor => "harness_command_module_update",
+									executor => "main::harness_command_module_update",
 									help => {
 										 synopsis => "$0 module-update <options> <module-name>",
 										 usage => "Options:
@@ -107,7 +172,7 @@ my $global_command_line_configuration
 						    # "query" => "Query the tests, print the query result.",
 						    "run-tests" => {
 								    description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
-								    executor => "harness_command_run_tests",
+								    executor => "main::harness_command_run_tests",
 								    help => {
 									     usage => "Please use the 'help' command to see the help page of the 'run-tests' command.\n",
 									    },
@@ -156,16 +221,6 @@ my $global_command_line_configuration
 			       },
       };
 
-
-my $global_reporter_classes
-    = {
-       'linear' => {
-		    class => "Heterarch::Test::Reporting::Linear",
-		   },
-       'status' => {
-		    class => "Heterarch::Test::Reporting::Status",
-		   },
-      };
 
 my $global_console_window_configuration
     = {
@@ -283,20 +338,17 @@ my $global_console_window_library_configuration
 		},
       };
 
-my $global_all_output_levels
-    = [
-       "meta",
-       "module",
-       "command_definition",
-       "command_test",
-      ];
-
 my $global_configuration_initialized;
 
 my $global_error_count = 0;
 our $global_fd_output;
 my $global_previous_command_side_effects;
 my $global_test_report;
+
+
+package CommandLineDispatcher;
+
+use Getopt::Long qw(GetOptionsFromArray :config require_order);
 
 
 sub command_line_dispatch
@@ -382,6 +434,228 @@ sub command_line_dispatch
 	my $error = &$harness_command_executor($harness_command, $arguments, $default_reporter);
     }
 }
+
+
+sub command_line_application_initialize
+{
+    my $command_line_configuration = shift;
+
+    my $command = shift;
+
+    my $arguments = shift;
+
+    my $command_configuration = $command_line_configuration->{command_configuration};
+
+    my $harness_command_definition = $command_configuration->{known_commands}->{$command};
+
+    my $requires_configuration = (!exists $harness_command_definition->{skip_configuration}
+				  || !$harness_command_definition->{skip_configuration});
+
+    if ($requires_configuration)
+    {
+	my $application_initialize_configuration_and_environment = $command_line_configuration->{application}->{initialize_configuration_and_environment};
+
+	no strict "refs";
+
+	&$application_initialize_configuration_and_environment($command_line_configuration, $command);
+    }
+}
+
+
+sub parse_command
+{
+    my $command_line_configuration = shift;
+
+    my $arguments = shift;
+
+    my $command_configuration = $command_line_configuration->{command_configuration};
+
+    my $command_result = shift @$arguments || $command_configuration->{default_command};
+
+    my $known_commands = $command_configuration->{known_commands};
+
+    if (not exists $known_commands->{$command_result})
+    {
+	$command_result = "help";
+    }
+
+    return $command_result;
+}
+
+
+sub parse_command_line
+{
+    my $command_line_configuration = shift;
+
+    my $arguments = shift;
+
+    my $option_result = parse_options($command_line_configuration, $arguments);
+
+    my $command_result = parse_command($command_line_configuration, $arguments);
+
+    if ($option_result eq 'help'
+	or $command_result eq 'help')
+    {
+	my $command_configuration = $command_line_configuration->{command_configuration};
+
+	my $command_descriptions = "The default command is '$command_configuration->{default_command}'.
+
+commands:
+";
+
+	my $known_commands = $command_configuration->{known_commands};
+
+	foreach my $known_command (sort keys %$known_commands)
+	{
+	    my $command_help = $known_commands->{$known_command};
+
+	    if (ref $command_help)
+	    {
+		$command_help = $command_help->{description};
+	    }
+
+	    my $command_description = sprintf("    %-21s%-20s\n", $known_command, $command_help);
+
+	    $command_descriptions .= $command_description;
+	}
+
+	my $synopsis = $command_line_configuration->{application}->{synopsis};
+
+	my $usage = $command_line_configuration->{application}->{usage};
+
+	print "$synopsis$command_descriptions$usage";
+
+	exit 0;
+    }
+
+    return $command_result;
+}
+
+
+sub parse_options
+{
+    my $command_line_configuration = shift;
+
+    my $arguments = shift;
+
+    my $options = $command_line_configuration->{option_configuration}->{options};
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+	die "$0: Error in option processing";
+    }
+
+    if (not exists $Heterarch::Test::Reporting::console_types->{$option_console_type})
+    {
+	die "$0: *** Error --console-type should specify one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ".";
+    }
+
+    if (not defined $option_output)
+    {
+	if ($option_output_html)
+	{
+	    $global_test_report->{output_format} = 'yaml_exit';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::HTMLTable";
+	}
+	elsif ($option_output_latex)
+	{
+	    $global_test_report->{output_format} = 'latex';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::Latex";
+	}
+	elsif ($option_output_pdf)
+	{
+	    $global_test_report->{output_format} = 'pdf';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::PDF";
+	}
+	elsif ($option_show)
+	{
+	    $global_test_report->{output_format} = 'yaml_exit';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Summary";
+	}
+	elsif ($option_show_command_tests)
+	{
+	    $global_test_report->{output_format} = 'yaml_exit';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML::CommandTests";
+	}
+	else
+	{
+	    $global_test_report->{output_format} = 'executor';
+
+	    $option_output = "Heterarch::Test::Executor";
+	}
+    }
+    else
+    {
+	$global_test_report->{output_format} = 'not_executor';
+    }
+
+    if ($option_output ne "Heterarch::Test::Executor")
+    {
+	$option_console_type = 'linear';
+    }
+
+    if (not scalar @$option_output_levels)
+    {
+	use Clone 'clone';
+
+	$option_output_levels = clone($global_all_output_levels);
+    }
+
+    $global_test_report->{options}
+	= {
+	   check_test_names => $option_check_test_names,
+	   config_filename => $option_config_filename,
+	   console_type => $option_console_type,
+	   debugging => $option_debugging,
+	   dump_json => $option_dump_json,
+	   dump_perl => $option_dump_perl,
+	   dump_yaml => $option_dump_yaml,
+	   dump_file_structured_yaml => $option_dump_file_structured_yaml,
+	   email => $option_email,
+	   flattenout => $option_flattenout,
+	   harness_prune => $option_harness_prune,
+	   help => $option_help,
+	   input_commands => $option_input_commands,
+	   input_modules => $option_input_modules,
+	   input_command_tests => $option_input_command_tests,
+	   numerical_compare => $option_numerical_compare,
+	   output => $option_output,
+	   output_figures => $option_output_figures,
+	   output_html => $option_output_html,
+	   output_latex => $option_output_latex,
+	   output_levels => $option_output_levels,
+	   output_pdf => $option_output_pdf,
+	   random_order => $option_random_order,
+	   regex_selector => $option_regex_selector,
+	   report_disabled => $option_report_disabled,
+	   show => $option_show,
+	   show_command_tests => $option_show_command_tests,
+	   tags => $option_tags,
+	   timeout_multiplier => $option_timeout_multiplier,
+	   timings => $option_timings,
+	   trace => $option_trace,
+	   verbose => $option_verbose,
+	  };
+
+    my $option_result = '';
+
+    if ($option_help)
+    {
+	$option_result = 'help';
+    }
+
+    return $option_result;
+}
+
+
+package main;
 
 
 sub harness_command_configuration_create
@@ -903,29 +1177,19 @@ sub harness_command_run_tests
 }
 
 
-sub initialize
+sub application_initialize_configuration_and_environment
 {
     my $command_line_configuration = shift;
 
     my $harness_command = shift;
 
-    my $command_configuration = $command_line_configuration->{command_configuration};
+    initialize_config();
 
-    my $harness_command_definition = $command_configuration->{known_commands}->{$harness_command};
+    initialize_config_environment();
 
-    my $requires_configuration = (!exists $harness_command_definition->{skip_configuration}
-				  || !$harness_command_definition->{skip_configuration});
+    initialize_globals();
 
-    if ($requires_configuration)
-    {
-	initialize_config();
-
-	initialize_config_environment();
-
-	initialize_globals();
-    }
-
-    initialize_harness();
+    initialize_docker_harness();
 
     # initialize_signal_handlers() is called in the command executor
     # because the signal handlers assume that some of the global
@@ -1092,7 +1356,7 @@ sub initialize_globals
 }
 
 
-sub initialize_harness
+sub initialize_docker_harness
 {
     return Heterarch::Test::ExecutionContext::Harness::Docker::select_docker_command($option_console_type);
 }
@@ -1139,247 +1403,15 @@ sub initialize_signal_handlers
 
 sub main
 {
+    bless($global_command_line_configuration, "CommandLineDispatcher");
+
     my $arguments = [ @ARGV, ];
 
-    my $harness_command = parse_command_line($global_command_line_configuration, $arguments);
+    my $harness_command = $global_command_line_configuration->parse_command_line($arguments);
 
-    initialize($global_command_line_configuration, $harness_command);
+    $global_command_line_configuration->command_line_application_initialize($harness_command, $arguments);
 
-    command_line_dispatch($global_command_line_configuration, $harness_command, $arguments);
-}
-
-
-sub parse_command
-{
-    my $command_line_configuration = shift;
-
-    my $arguments = shift;
-
-    my $command_configuration = $command_line_configuration->{command_configuration};
-
-    my $command_result = shift @$arguments || $command_configuration->{default_command};
-
-    my $known_commands = $command_configuration->{known_commands};
-
-    if (not exists $known_commands->{$command_result})
-    {
-	$command_result = "help";
-    }
-
-    return $command_result;
-}
-
-
-sub parse_command_line
-{
-    my $command_line_configuration = shift;
-
-    my $arguments = shift;
-
-    my $option_result = parse_options($command_line_configuration, $arguments);
-
-    my $command_result = parse_command($command_line_configuration, $arguments);
-
-    if ($option_result eq 'help'
-	or $command_result eq 'help')
-    {
-	my $command_configuration = $command_line_configuration->{command_configuration};
-
-	my $command_descriptions = "The default command is '$command_configuration->{default_command}'.
-
-commands:
-";
-
-	my $known_commands = $command_configuration->{known_commands};
-
-	foreach my $known_command (sort keys %$known_commands)
-	{
-	    my $command_help = $known_commands->{$known_command};
-
-	    if (ref $command_help)
-	    {
-		$command_help = $command_help->{description};
-	    }
-
-	    my $command_description = sprintf("    %-21s%-20s\n", $known_command, $command_help);
-
-	    $command_descriptions .= $command_description;
-	}
-
-	print
-	    "
-$0: test definition executor
-
-synopsis:
-
-$0 <command> <options>
-
-$command_descriptions
-options:
-    --check-test-names           Check the pathnames of the specification files against the names of the tests.
-    --config-filename            The name of the file with the configuration (default is: $option_config_filename).
-    --console-type               The type of the console output (one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ").
-    --debugging                  Enable specific debugging options.
-    --dump-json                  Dump test specifications to json files in /tmp/.
-    --dump-perl                  Dump test specifications to perl files in /tmp/.
-    --dump-yaml                  Dump test specifications to yaml files in /tmp/.
-    --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
-    --email                      Allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
-    --flattenout                 Flattenout the test definitions before testing,
-                                 this experimental feature might increase test performance,
-                                 by recycling test definitions.
-    --harness-prune              Remove all the docker containers.
-    --help                       Print usage information.
-    --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
-    --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
-    --input-modules              Merge the given file or directory as modules to be tested (can given several times).
-    --numerical-compare          Attempt to compare numbers numerically when string differences are found (default enabled).
-    --output                     The class that should generate the output (default is '$option_output').
-    --output-content-line-limit  Maximum number of lines when generating content output (latex, html, pdf).
-    --output-figures             Generate figures for test output with a figure clause.
-    --output-html                Generate HTML output.
-    --output-latex               Generate Latex output.
-    --output-levels              Generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
-    --output-pdf                 Generate PDF output.
-    --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
-    --regex-selector             Defines a regex to run specific tests.
-    --report-disabled            Include information of disabled tests in the test report.
-    --show                       Show tests that would be run using the current configuration.
-    --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
-    --tags                       Only test test modules that have been tagged with these tags (default: all tags).
-    --timeout-multiplier         Multiply all timeout values with this constant.
-    --timings                    Add timing information about the tests to the report.
-    --trace                      Enable tracing using the given unix shell command (eg. 'strace -f', 'retsnoop', 'RRLOG=/tmp/rr.log rr record' or syzbot/syzkaller, https://hackerbikepacker.com/syzbot).
-    --verbose                    Set verbosity level.
-";
-
-	exit 0;
-    }
-
-    return $command_result;
-}
-
-
-sub parse_options
-{
-    my $command_line_configuration = shift;
-
-    my $arguments = shift;
-
-    my $options = $command_line_configuration->{option_configuration}->{options};
-
-    my $result = GetOptionsFromArray($arguments, %$options);
-
-    if (!$result)
-    {
-	die "$0: Error in option processing";
-    }
-
-    if (not exists $Heterarch::Test::Reporting::console_types->{$option_console_type})
-    {
-	die "$0: *** Error --console-type should specify one of " . (join ", ", sort keys %$Heterarch::Test::Reporting::console_types) . ".";
-    }
-
-    if (not defined $option_output)
-    {
-	if ($option_output_html)
-	{
-	    $global_test_report->{output_format} = 'yaml_exit';
-
-	    $option_output = "Heterarch::Test::Output::Formatter::HTMLTable";
-	}
-	elsif ($option_output_latex)
-	{
-	    $global_test_report->{output_format} = 'latex';
-
-	    $option_output = "Heterarch::Test::Output::Formatter::Latex";
-	}
-	elsif ($option_output_pdf)
-	{
-	    $global_test_report->{output_format} = 'pdf';
-
-	    $option_output = "Heterarch::Test::Output::Formatter::PDF";
-	}
-	elsif ($option_show)
-	{
-	    $global_test_report->{output_format} = 'yaml_exit';
-
-	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Summary";
-	}
-	elsif ($option_show_command_tests)
-	{
-	    $global_test_report->{output_format} = 'yaml_exit';
-
-	    $option_output = "Heterarch::Test::Output::Formatter::YAML::CommandTests";
-	}
-	else
-	{
-	    $global_test_report->{output_format} = 'executor';
-
-	    $option_output = "Heterarch::Test::Executor";
-	}
-    }
-    else
-    {
-	$global_test_report->{output_format} = 'not_executor';
-    }
-
-    if ($option_output ne "Heterarch::Test::Executor")
-    {
-	$option_console_type = 'linear';
-    }
-
-    if (not scalar @$option_output_levels)
-    {
-	use Clone 'clone';
-
-	$option_output_levels = clone($global_all_output_levels);
-    }
-
-    $global_test_report->{options}
-	= {
-	   check_test_names => $option_check_test_names,
-	   config_filename => $option_config_filename,
-	   console_type => $option_console_type,
-	   debugging => $option_debugging,
-	   dump_json => $option_dump_json,
-	   dump_perl => $option_dump_perl,
-	   dump_yaml => $option_dump_yaml,
-	   dump_file_structured_yaml => $option_dump_file_structured_yaml,
-	   email => $option_email,
-	   flattenout => $option_flattenout,
-	   harness_prune => $option_harness_prune,
-	   help => $option_help,
-	   input_commands => $option_input_commands,
-	   input_modules => $option_input_modules,
-	   input_command_tests => $option_input_command_tests,
-	   numerical_compare => $option_numerical_compare,
-	   output => $option_output,
-	   output_figures => $option_output_figures,
-	   output_html => $option_output_html,
-	   output_latex => $option_output_latex,
-	   output_levels => $option_output_levels,
-	   output_pdf => $option_output_pdf,
-	   random_order => $option_random_order,
-	   regex_selector => $option_regex_selector,
-	   report_disabled => $option_report_disabled,
-	   show => $option_show,
-	   show_command_tests => $option_show_command_tests,
-	   tags => $option_tags,
-	   timeout_multiplier => $option_timeout_multiplier,
-	   timings => $option_timings,
-	   trace => $option_trace,
-	   verbose => $option_verbose,
-	  };
-
-    my $option_result = '';
-
-    if ($option_help)
-    {
-	$option_result = 'help';
-    }
-
-    return $option_result;
+    $global_command_line_configuration->command_line_dispatch($harness_command, $arguments);
 }
 
 

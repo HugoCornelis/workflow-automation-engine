@@ -6,7 +6,7 @@ command_tests:
   - description: Is a help message given ?
     read: |2
       
-      bin/neurospaces_harness: test definition executor
+      bin/neurospaces_harness: test definition processor and executor
       
       synopsis:
       
@@ -40,7 +40,7 @@ command_tests:
           --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
           --input-modules              Merge the given file or directory as modules to be tested (can given several times).
           --numerical-compare          Attempt to compare numbers numerically when string differences are found (default enabled).
-          --output                     The class that should generate the output (default is 'Heterarch::Test::Executor').
+          --output                     The class that should generate the output.
           --output-content-line-limit  Maximum number of lines when generating content output (latex, html, pdf).
           --output-figures             Generate figures for test output with a figure clause.
           --output-html                Generate HTML output.
