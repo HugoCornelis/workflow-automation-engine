@@ -61,99 +61,101 @@ my $option_trace;
 our $option_verbose;
 
 
-my $global_options
-    = {
-       "check-test-names!" => \$option_check_test_names,
-       "config-filename=s" => \$option_config_filename,
-       "console-type=s" => \$option_console_type,
-       "debugging=s" => \$option_debugging,
-       "dump-json!" => \$option_dump_json,
-       "dump-perl!" => \$option_dump_perl,
-       "dump-yaml!" => \$option_dump_yaml,
-       "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
-       "email" => \$option_email,
-       "flattenout" => \$option_flattenout,
-       "harness-prune!" => \$option_harness_prune,
-       "help!" => \$option_help,
-       "input-command-tests=s" => $option_input_command_tests,
-       "input-commands=s" => $option_input_commands,
-       "input-modules=s" => $option_input_modules,
-       "numerical-compare!" => \$option_numerical_compare,
-       "output=s" => \$option_output,
-       "output-content-line-limit=s" => \$option_output_content_line_limit,
-       "output-figures" => \$option_output_figures,
-       "output-html" => \$option_output_html,
-       "output-latex" => \$option_output_latex,
-       "output-levels=s" => $option_output_levels,
-       "output-pdf" => \$option_output_pdf,
-       "randomize-order=s" => \$option_random_order,
-       "regex-selector=s" => \$option_regex_selector,
-       "report-disabled!" => \$option_report_disabled,
-       "show!" => \$option_show,
-       "show-command-tests!" => \$option_show_command_tests,
-       "tags=s" => $option_tags,
-       "timeout-multiplier=s" => \$option_timeout_multiplier,
-       "timings!" => \$option_timings,
-       "trace=s" => \$option_trace,
-       "v|verbose+" => \$option_verbose,
-      };
-
-
 our $global_config;
 
-my $global_harness_command_configuration
+my $global_command_line_configuration
     = {
-       default_command => "run-tests",
-       known_commands => {
-			  "configuration-create" => {
-						     description => "Create an initial test configuration with instructions how to expand it to a full test suite.",
-						     executor => "harness_command_configuration_create",
-						     options => {
-								 "help!" => do { my $option_help; \$option_help; },
-								},
-						     skip_configuration => 'a command that creates a configuration cannot require a configuration',
-						    },
-			  "help" => "Show the help page.",
-			  "module-create" => {
-					      description => "Create a new module with the given name.",
-					      executor => "harness_command_module_create",
-					      help => {
-						       synopsis => "$0 module-create <options> <module-name>",
-						       usage => "Options:
+       command_configuration => {
+				 default_command => "run-tests",
+				 known_commands => {
+						    "configuration-create" => {
+									       description => "Create an initial test configuration with instructions how to expand it to a full test suite.",
+									       executor => "harness_command_configuration_create",
+									       options => {
+											   "help!" => do { my $option_help; \$option_help; },
+											  },
+									       skip_configuration => 'a command that creates a configuration cannot require a configuration',
+									      },
+						    "help" => "Show the help page.",
+						    "module-create" => {
+									description => "Create a new module with the given name.",
+									executor => "harness_command_module_create",
+									help => {
+										 synopsis => "$0 module-create <options> <module-name>",
+										 usage => "Options:
     --help       Show this help message.
 ",
-						      },
-					      options => {
-							  "help!" => do { my $option_help; \$option_help; },
-							 },
-					     },
-			  "module-update" => {
-					      description => "Update the given module with the given arguments and directives.",
-					      executor => "harness_command_module_update",
-					      help => {
-						       synopsis => "$0 module-update <options> <module-name>",
-						       usage => "Options:
+										},
+									options => {
+										    "help!" => do { my $option_help; \$option_help; },
+										   },
+								       },
+						    "module-update" => {
+									description => "Update the given module with the given arguments and directives.",
+									executor => "harness_command_module_update",
+									help => {
+										 synopsis => "$0 module-update <options> <module-name>",
+										 usage => "Options:
     --help       Show this help message.
 ",
-						      },
-					      options => {
-							  "help!" => do { my $option_help; \$option_help; },
-							 },
-					      subcommands => [],
-					     },
-			  # "query" => "Query the tests, print the query result.",
-			  "run-tests" => {
-					  description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
-					  executor => "harness_command_run_tests",
-					  help => {
-						   usage => "Please use the 'help' command to see the help page of the 'run-tests' command.\n",
-						  },
-					  options => {
-						      "help!" => do { my $option_help; \$option_help; },
-						     },
-					 },
-			 },
+										},
+									options => {
+										    "help!" => do { my $option_help; \$option_help; },
+										   },
+									subcommands => [],
+								       },
+						    # "query" => "Query the tests, print the query result.",
+						    "run-tests" => {
+								    description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
+								    executor => "harness_command_run_tests",
+								    help => {
+									     usage => "Please use the 'help' command to see the help page of the 'run-tests' command.\n",
+									    },
+								    options => {
+										"help!" => do { my $option_help; \$option_help; },
+									       },
+								   },
+						   },
+				},
+       option_configuration => {
+				options => {
+					    "check-test-names!" => \$option_check_test_names,
+					    "config-filename=s" => \$option_config_filename,
+					    "console-type=s" => \$option_console_type,
+					    "debugging=s" => \$option_debugging,
+					    "dump-json!" => \$option_dump_json,
+					    "dump-perl!" => \$option_dump_perl,
+					    "dump-yaml!" => \$option_dump_yaml,
+					    "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
+					    "email" => \$option_email,
+					    "flattenout" => \$option_flattenout,
+					    "harness-prune!" => \$option_harness_prune,
+					    "help!" => \$option_help,
+					    "input-command-tests=s" => $option_input_command_tests,
+					    "input-commands=s" => $option_input_commands,
+					    "input-modules=s" => $option_input_modules,
+					    "numerical-compare!" => \$option_numerical_compare,
+					    "output=s" => \$option_output,
+					    "output-content-line-limit=s" => \$option_output_content_line_limit,
+					    "output-figures" => \$option_output_figures,
+					    "output-html" => \$option_output_html,
+					    "output-latex" => \$option_output_latex,
+					    "output-levels=s" => $option_output_levels,
+					    "output-pdf" => \$option_output_pdf,
+					    "randomize-order=s" => \$option_random_order,
+					    "regex-selector=s" => \$option_regex_selector,
+					    "report-disabled!" => \$option_report_disabled,
+					    "show!" => \$option_show,
+					    "show-command-tests!" => \$option_show_command_tests,
+					    "tags=s" => $option_tags,
+					    "timeout-multiplier=s" => \$option_timeout_multiplier,
+					    "timings!" => \$option_timings,
+					    "trace=s" => \$option_trace,
+					    "v|verbose+" => \$option_verbose,
+					   },
+			       },
       };
+
 
 my $global_reporter_classes
     = {
@@ -299,11 +301,15 @@ my $global_test_report;
 
 sub command_line_dispatch
 {
+    my $command_line_configuration = shift;
+
     my $harness_command = shift;
 
     my $arguments = shift || [];
 
-    my $known_commands = $global_harness_command_configuration->{known_commands};
+    my $command_configuration = $command_line_configuration->{command_configuration};
+
+    my $known_commands = $command_configuration->{known_commands};
 
     if (! exists $known_commands->{$harness_command})
     {
@@ -352,7 +358,7 @@ sub command_line_dispatch
 	exit 0;
     }
 
-    my $harness_command_executor = $global_harness_command_configuration->{known_commands}->{$harness_command}->{executor};
+    my $harness_command_executor = $command_configuration->{known_commands}->{$harness_command}->{executor};
 
     # obtain a copy of stdout for the reporters
 
@@ -899,9 +905,13 @@ sub harness_command_run_tests
 
 sub initialize
 {
+    my $command_line_configuration = shift;
+
     my $harness_command = shift;
 
-    my $harness_command_definition = $global_harness_command_configuration->{known_commands}->{$harness_command};
+    my $command_configuration = $command_line_configuration->{command_configuration};
+
+    my $harness_command_definition = $command_configuration->{known_commands}->{$harness_command};
 
     my $requires_configuration = (!exists $harness_command_definition->{skip_configuration}
 				  || !$harness_command_definition->{skip_configuration});
@@ -1129,19 +1139,27 @@ sub initialize_signal_handlers
 
 sub main
 {
-    my $harness_command = parse_command_line();
+    my $arguments = [ @ARGV, ];
 
-    initialize($harness_command);
+    my $harness_command = parse_command_line($global_command_line_configuration, $arguments);
 
-    command_line_dispatch($harness_command, \@ARGV);
+    initialize($global_command_line_configuration, $harness_command);
+
+    command_line_dispatch($global_command_line_configuration, $harness_command, $arguments);
 }
 
 
 sub parse_command
 {
-    my $command_result = shift @ARGV || $global_harness_command_configuration->{default_command};
+    my $command_line_configuration = shift;
 
-    my $known_commands = $global_harness_command_configuration->{known_commands};
+    my $arguments = shift;
+
+    my $command_configuration = $command_line_configuration->{command_configuration};
+
+    my $command_result = shift @$arguments || $command_configuration->{default_command};
+
+    my $known_commands = $command_configuration->{known_commands};
 
     if (not exists $known_commands->{$command_result})
     {
@@ -1154,19 +1172,25 @@ sub parse_command
 
 sub parse_command_line
 {
-    my $option_result = parse_options();
+    my $command_line_configuration = shift;
 
-    my $command_result = parse_command();
+    my $arguments = shift;
+
+    my $option_result = parse_options($command_line_configuration, $arguments);
+
+    my $command_result = parse_command($command_line_configuration, $arguments);
 
     if ($option_result eq 'help'
 	or $command_result eq 'help')
     {
-	my $command_descriptions = "The default command is '$global_harness_command_configuration->{default_command}'.
+	my $command_configuration = $command_line_configuration->{command_configuration};
+
+	my $command_descriptions = "The default command is '$command_configuration->{default_command}'.
 
 commands:
 ";
 
-	my $known_commands = $global_harness_command_configuration->{known_commands};
+	my $known_commands = $command_configuration->{known_commands};
 
 	foreach my $known_command (sort keys %$known_commands)
 	{
@@ -1238,9 +1262,13 @@ options:
 
 sub parse_options
 {
-    my $option_result = '';
+    my $command_line_configuration = shift;
 
-    my $result = GetOptionsFromArray(\@ARGV, %$global_options);
+    my $arguments = shift;
+
+    my $options = $command_line_configuration->{option_configuration}->{options};
+
+    my $result = GetOptionsFromArray($arguments, %$options);
 
     if (!$result)
     {
@@ -1343,6 +1371,8 @@ sub parse_options
 	   trace => $option_trace,
 	   verbose => $option_verbose,
 	  };
+
+    my $option_result = '';
 
     if ($option_help)
     {
