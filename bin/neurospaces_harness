@@ -107,23 +107,50 @@ my $global_harness_command_configuration
        known_commands => {
 			  "configuration-create" => {
 						     description => "Create an initial test configuration with instructions how to expand it to a full test suite.",
-						     skip_configuration => 'a command that creates a configuration cannot require a configuration',
 						     executor => "harness_command_configuration_create",
+						     options => {
+								 "help!" => do { my $option_help; \$option_help; },
+								},
+						     skip_configuration => 'a command that creates a configuration cannot require a configuration',
 						    },
 			  "help" => "Show the help page.",
 			  "module-create" => {
 					      description => "Create a new module with the given name.",
 					      executor => "harness_command_module_create",
+					      help => {
+						       synopsis => "$0 module-create <options> <module-name>",
+						       usage => "Options:
+    --help       Show this help message.
+",
+						      },
+					      options => {
+							  "help!" => do { my $option_help; \$option_help; },
+							 },
 					     },
 			  "module-update" => {
 					      description => "Update the given module with the given arguments and directives.",
 					      executor => "harness_command_module_update",
+					      help => {
+						       synopsis => "$0 module-update <options> <module-name>",
+						       usage => "Options:
+    --help       Show this help message.
+",
+						      },
+					      options => {
+							  "help!" => do { my $option_help; \$option_help; },
+							 },
 					      subcommands => [],
 					     },
 			  # "query" => "Query the tests, print the query result.",
 			  "run-tests" => {
 					  description => "Run the tests, possibly with an executor that converts the tests rather than running them.",
 					  executor => "harness_command_run_tests",
+					  help => {
+						   usage => "Please use the 'help' command to see the help page of the 'run-tests' command.\n",
+						  },
+					  options => {
+						      "help!" => do { my $option_help; \$option_help; },
+						     },
 					 },
 			 },
       };
@@ -274,13 +301,15 @@ sub harness_command_configuration_create
 {
     my $command = shift;
 
+    my $arguments = shift || [];
+
     my $reporter = shift;
 
-    my $package_name = shift @ARGV;
+    my $package_name = shift @$arguments;
 
-    my $package_version = shift @ARGV || 'alpha';
+    my $package_version = shift @$arguments || 'alpha';
 
-    my $test_module_name = shift @ARGV || '000_module_template';
+    my $test_module_name = shift @$arguments || '000_module_template';
 
     if (! defined $package_name)
     {
@@ -375,7 +404,7 @@ return \$config;
 
     if (!$error)
     {
-	$error = harness_command_module_create("harness_command_module_create", $reporter, $test_module_name);
+	$error = harness_command_module_create("harness_command_module_create", $arguments, $reporter, $test_module_name);
     }
 
     if ($error)
@@ -393,9 +422,11 @@ sub harness_command_module_create
 {
     my $command = shift;
 
+    my $arguments = shift || [];
+
     my $reporter = shift;
 
-    my $module_name = shift || shift @ARGV;
+    my $module_name = shift || shift @$arguments;
 
     if (! defined $module_name)
     {
@@ -551,9 +582,11 @@ sub harness_command_module_update
 {
     my $command = shift;
 
+    my $arguments = shift || [];
+
     my $reporter = shift;
 
-    my $module_name = shift @ARGV;
+    my $module_name = shift @$arguments;
 
     if (! defined $module_name)
     {
@@ -633,6 +666,57 @@ sub harness_command_run
 {
     my $harness_command = shift;
 
+    my $arguments = shift || [];
+
+    my $known_commands = $global_harness_command_configuration->{known_commands};
+
+    if (! exists $known_commands->{$harness_command})
+    {
+	print "\n$0: *** Error: The command '$harness_command' does not exist.\n";
+
+	exit 1;
+    }
+
+    if (!exists $known_commands->{$harness_command}->{options})
+    {
+	print "\n$0: *** Error: The command '$harness_command' does not have a '--help' option.\n";
+
+	exit 1;
+    }
+
+    my $options = $known_commands->{$harness_command}->{options};
+
+    my $option_result = GetOptionsFromArray($arguments, %$options);
+
+    if (! $option_result)
+    {
+	$options->{"help!"} = 'option processing error';
+    }
+
+    my $option_help = $options->{"help!"};
+
+    if ($$option_help)
+    {
+	if (! exists $known_commands->{$harness_command}->{help})
+	{
+	    print "\nNo help found for this command '$harness_command'\n";
+	}
+	else
+	{
+	    my $description = $known_commands->{$harness_command}->{description};
+
+	    my $help = $known_commands->{$harness_command}->{help};
+
+	    my $synopsis = $help->{synopsis} || "$0 $harness_command <options> <arguments>";
+
+	    my $usage = $help->{usage} || "No usage description found for this command '$harness_command'\n";;
+
+	    print "\n$synopsis\n\n$description\n\n$usage\n";
+	}
+
+	exit 0;
+    }
+
     my $harness_command_executor = $global_harness_command_configuration->{known_commands}->{$harness_command}->{executor};
 
     # obtain a copy of stdout for the reporters
@@ -654,7 +738,7 @@ sub harness_command_run
     {
 	no strict "refs";
 
-	my $error = &$harness_command_executor($harness_command, $default_reporter);
+	my $error = &$harness_command_executor($harness_command, $arguments, $default_reporter);
     }
 }
 
@@ -1049,7 +1133,7 @@ sub main
 
     initialize($harness_command);
 
-    harness_command_run($harness_command);
+    harness_command_run($harness_command, \@ARGV);
 }
 
 
