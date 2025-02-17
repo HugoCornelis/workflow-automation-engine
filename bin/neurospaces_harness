@@ -142,6 +142,19 @@ options:
 									       skip_configuration => 'a command that creates a configuration cannot require a configuration',
 									      },
 						    "help" => "Show the help page.",
+						    "command-create" => {
+									 description => "Create a new command with the given name under the given module.",
+									 executor => "main::harness_command_module_create",
+									 help => {
+										  synopsis => "$0 command-create <options> <module-name> <command-name>",
+										  usage => "Options:
+    --help       Show this help message.
+",
+										 },
+									 options => {
+										     "help!" => do { my $option_help; \$option_help; },
+										    },
+									},
 						    "module-create" => {
 									description => "Create a new module with the given name.",
 									executor => "main::harness_command_module_create",
