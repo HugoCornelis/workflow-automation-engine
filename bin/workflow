@@ -2381,9 +2381,7 @@ sub _install_script_symbolic_link_to_commands_configured
 
     # generate list of scripts
 
-    # my $command_filenames_configured = _init_command_filenames_configured('');
-
-    my $command_filenames_configured = $global_technical_project_configuration->{command_filenames};
+    my $command_filenames_configured = [ @{ _init_command_filenames_configured('full-paths') }, ];
 
     # install each script to the ~/bin directory
 
@@ -2405,102 +2403,6 @@ sub _install_script_symbolic_link_to_commands_configured
 
     # 2.b. from configured filenames to symbolic links.
 ", $commands_configured);
-}
-
-
-sub _install_script_symbolic_link_to_commands_in_commands_directory
-{
-    my $project_name = shift;
-
-    my $option_install_commands = shift;
-
-    my $option_install_report = shift;
-
-    if ($option_verbose)
-    {
-	print "$global_program_name: _install_script_symbolic_link_to_commands_in_commands_directory with (--install-commands == $option_install_commands, --install-report == $option_install_report)\n";
-    }
-
-    # 2. Install to ~/bin: symbolic links for commands
-
-    # 2.a. from files found in the commands directory to configuration.
-    # 2.b. from configured filenames to symbolic links.
-
-    # 2.a. from files found in the commands directory to configuration.
-
-    # my $command_filenames
-    # 	= [
-    # 	   `ls 2>/dev/null "$project_name"-commands-*[^~]`,
-    # 	  ];
-
-    # all the command files, including those not mentioned in the configuration
-
-    # my $command_filenames_found_2
-    # 	= {
-    # 	   map
-    # 	   {
-    # 	       $_ => 1,
-    # 	   }
-    # 	   @{ _init_command_filenames_found('full-paths') },
-    # 	  };
-
-    # only those command files mentioned in the configuration
-
-    my $command_filenames_configured_2
-	= {
-	   map
-	   {
-	       $_ => 1,
-	   }
-	   @{ _init_command_filenames_configured('full-paths') },
-	  };
-
-    # my $command_filenames_found_but_not_configured
-    # 	= {
-    # 	   map
-    # 	   {
-    # 	       $_ => 1,
-    # 	   }
-    # 	   grep
-    # 	   {
-    # 	       not $command_filenames_configured_2->{$_};
-    # 	   }
-    # 	   keys %$command_filenames_found_2,
-    # 	  };
-
-    if (defined $option_verbose
-	and $option_verbose > 2)
-    {
-	print "In: sub _install_script_symbolic_link_to_commands_in_commands_directory()\n";
-
-	print Dumper(
-		     {
-		      # command_filenames_found_2 => $command_filenames_found_2,
-		      command_filenames_configured_2 => $command_filenames_configured_2,
-		      # command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
-		     },
-		    );
-    }
-
-    my $commands_found = _init_filenames_2_symlink_commands( [ keys %$command_filenames_configured_2, ], );
-
-    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin: symbolic links for commands
-
-    # 2.a. from files found in the commands directory to configuration.
-", $commands_found);
-
-    if (defined $option_verbose
-	and $option_verbose > 2)
-    {
-	use Data::Dumper;
-
-	print Dumper( {
-		       # command_filenames_found_2 => $command_filenames_found_2,
-		       command_filenames_configured_2 => $command_filenames_configured_2,
-		       # command_filenames_found_but_not_configured => $command_filenames_found_but_not_configured,
-		       commands_found => $commands_found,
-		      }, );
-    }
 }
 
 
@@ -3669,7 +3571,7 @@ sub _init_command_filenames_configured
 
     # default to the directory with the main executable
 
-    my $command_filename_directory = $global_field_project_configuration->{search_path_workflow_executable_directory};
+    my $command_filename_directory = $global_field_project_configuration->{sources_configuration_directory};
 
     my $command_filenames = $global_technical_project_configuration->{command_filenames};
 
@@ -3859,7 +3761,11 @@ sub _init_filenames_2_symlink_commands
 
 	       my $source = Cwd::abs_path($command_filename);
 
-	       my $target = ($command_filename =~ m(^/) ) ? $command_filename : "$ENV{HOME}/bin/$command_filename";
+	       use File::Spec;
+
+	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
+
+	       my $target = "$ENV{HOME}/bin/$filename";
 
 	       my $result = "ln -sf $source $target";
 
@@ -3888,7 +3794,11 @@ sub _init_filenames_2_symlink_commands
 	   {
 	       my $command_filename = $_;
 
-	       my $target = ($command_filename =~ m(^/) ) ? $command_filename : "$ENV{HOME}/bin/$command_filename";
+	       use File::Spec;
+
+	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
+
+	       my $target = "$ENV{HOME}/bin/$filename";
 
 	       not -e $target;
 	   }

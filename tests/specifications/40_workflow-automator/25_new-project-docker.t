@@ -421,7 +421,7 @@ global_field_project_configuration:
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
 #
-# ln -sf /home/neurospaces/workflow-test/workflow-tests-configuration /home/neurospaces/bin/./workflow-tests-configuration
+# ln -sf /home/neurospaces/workflow-test/workflow-tests-configuration /home/neurospaces/bin/workflow-tests-configuration
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces/bin/workflow-tests-commands-perl_examples
 #
@@ -848,7 +848,7 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/./workflow-tests-configuration
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/workflow-tests-configuration
 #
 # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces2/bin/workflow-tests-commands-perl_examples
 #
@@ -868,9 +868,9 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/./workflow-tests-configuration
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/workflow-tests-configuration
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/./workflow-tests-commands
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/workflow-tests-commands
 #
 # bash -c "echo \'# workflow-tests-workflow
 

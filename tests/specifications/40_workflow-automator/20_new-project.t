@@ -160,9 +160,9 @@ global_field_project_configuration:
 #
 # ln -sf /usr/local/bin/workflow /home/hugo/bin/workflow-tests-workflow
 #
-# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration /home/hugo/bin/./workflow-tests-configuration
+# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration /home/hugo/bin/workflow-tests-configuration
 #
-# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands /home/hugo/bin/./workflow-tests-commands
+# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands /home/hugo/bin/workflow-tests-commands
 #
 # bash -c "echo \'# workflow-tests-workflow
 

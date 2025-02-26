@@ -58,7 +58,7 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/feature-testing-workflow
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration /home/neurospaces/bin/./feature-testing-configuration
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration /home/neurospaces/bin/feature-testing-configuration
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/bin/feature-testing-commands-features
 #
