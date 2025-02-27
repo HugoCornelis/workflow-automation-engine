@@ -137,8 +137,18 @@ options:
 						    "configuration-create" => {
 									       description => "Create an initial test configuration with instructions how to expand it to a full test suite.",
 									       executor => "main::harness_command_configuration_create",
+									       help => {
+											synopsis => "$0 configuration-create <options> <package-name> <package-version> [ <test-module-name> ]",
+											usage => "Options:
+    --help         Show this help message.
+    --output-json  Output the configuration in json format.
+    --output-yaml  Output the configuration in yaml format.
+",
+										       },
 									       options => {
 											   "help!" => do { my $option_help; \$option_help; },
+											   "output-json!" => do { my $option_output_json; \$option_output_json; },
+											   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
 											  },
 									       skip_configuration => 'a command that creates a configuration cannot require a configuration',
 									      },
@@ -149,11 +159,15 @@ options:
 									 help => {
 										  synopsis => "$0 command-create <options> <module-name> <command-name>",
 										  usage => "Options:
-    --help       Show this help message.
+    --help         Show this help message.
+    --output-json  Output in json format.
+    --output-yaml  Output in yaml format.
 ",
 										 },
 									 options => {
 										     "help!" => do { my $option_help; \$option_help; },
+										     "output-json!" => do { my $option_output_json; \$option_output_json; },
+										     "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
 										    },
 									},
 						    "module-create" => {
@@ -162,11 +176,15 @@ options:
 									help => {
 										 synopsis => "$0 module-create <options> <module-name>",
 										 usage => "Options:
-    --help       Show this help message.
+    --help         Show this help message.
+    --output-json  Output the new module in json format.
+    --output-yaml  Output the new module in yaml format.
 ",
 										},
 									options => {
 										    "help!" => do { my $option_help; \$option_help; },
+										    "output-json!" => do { my $option_output_json; \$option_output_json; },
+										    "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
 										   },
 								       },
 						    "module-update" => {
@@ -175,11 +193,15 @@ options:
 									help => {
 										 synopsis => "$0 module-update <options> <module-name>",
 										 usage => "Options:
-    --help       Show this help message.
+    --help         Show this help message.
+    --output-json  Update the new module in json format.
+    --output-yaml  Update the new module in yaml format.
 ",
 										},
 									options => {
 										    "help!" => do { my $option_help; \$option_help; },
+										    "output-json!" => do { my $option_output_json; \$option_output_json; },
+										    "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
 										   },
 									subcommands => [],
 								       },
