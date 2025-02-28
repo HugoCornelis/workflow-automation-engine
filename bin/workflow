@@ -3822,28 +3822,30 @@ package Command::Git;
 
 sub builtin_git_move_file_across_keep_history
 {
-    my $git_source_repo = $ARGV[0];
+    my $arguments = shift || [];
+
+    my $git_source_repo = $arguments->[0];
 
     if (!defined $git_source_repo)
     {
 	die "$0: *** Error: git_source_repo, ARGV[0] is not defined.";
     }
 
-    my $git_source_branch = $ARGV[1];
+    my $git_source_branch = $arguments->[1];
 
     if (!defined $git_source_branch)
     {
 	die "$0: *** Error: git_source_branch, ARGV[1] is not defined.";
     }
 
-    my $git_target_repo = $ARGV[2];
+    my $git_target_repo = $arguments->[2];
 
     if (!defined $git_target_repo)
     {
 	die "$0: *** Error: git_target_repo, ARGV[2] is not defined.";
     }
 
-    my $git_target_branch = $ARGV[3];
+    my $git_target_branch = $arguments->[3];
 
     if (!defined $git_target_branch)
     {
@@ -3852,14 +3854,14 @@ sub builtin_git_move_file_across_keep_history
 
     #! git supports muliple --path arguments, the filename could be a comma separated list of filenames
 
-    my $filename = $ARGV[4];
+    my $filename = $arguments->[4];
 
     if (!defined $filename)
     {
 	die "$0: *** Error: filename, ARGV[4] is not defined.";
     }
 
-    my $working_directory = $ARGV[5] || "/tmp/working-directory";
+    my $working_directory = $arguments->[5] || "/tmp/working-directory";
 
     if (!defined $working_directory)
     {
@@ -3870,11 +3872,11 @@ sub builtin_git_move_file_across_keep_history
 
     $git_source_repo =~ m(.*/(.*)$);
 
-    my $git_source_name = $1;
+    my $git_source_name = "$1_1";
 
     $git_target_repo =~ m(.*/(.*)$);
 
-    my $git_target_name = $1;
+    my $git_target_name = "$1_2";
 
     if (!defined $git_source_repo
 	|| !defined $git_source_branch
@@ -3916,8 +3918,8 @@ sub builtin_git_move_file_across_keep_history
 
 	   "mkdir -p '$working_directory'",
 	   "cd '$working_directory'",
-	   "git clone '$git_source_repo",
-	   "git clone '$git_target_repo'",
+	   "git clone '$git_source_repo' './$git_source_name'",
+	   "git clone '$git_target_repo' './$git_target_name'",
 
 	   ### In source repo
 
@@ -3933,14 +3935,38 @@ sub builtin_git_move_file_across_keep_history
 	   ## In target repo
 
 	   "cd '../$git_target_name'",
-	   "git checkout -b '$git_target_branch'",
-	   "git remote add repo-source '../git_source_name'",
+	   "git checkout -b 'working-target-branch'",
+	   "git remote add repo-source '../$git_source_name'",
 	   "git fetch repo-source",
 	   "git branch branch-source 'remotes/repo-source/$git_source_branch'",
 	   "git merge branch-source --allow-unrelated-histories",
 	  ];
 
-    execute_shell_command_array($commands);
+    Command::execute_shell_command_array($commands);
+
+    my $commands_echo
+	= [
+	   "echo",
+	   "echo ==========",
+	   "cd '$working_directory/$git_target_name'",
+	   "git log -1",
+	   "echo ==========",
+	   "echo",
+	   "echo The resulting repository can be found in '$working_directory/$git_target_name'",
+	   "echo",
+	   "echo 'Maybe you should now synchronize that repository with your remote:'",
+	   "echo",
+	   "echo 'git pull <your-remote> $git_source_branch'",
+	   "echo",
+	  ];
+
+    Command::execute_shell_command_array
+	    (
+	     $commands_echo,
+	     {
+	      quiet => 'give a meaningful end message to the user',
+	     },
+	    );
 }
 
 
@@ -3971,13 +3997,20 @@ you use:
 arguments:
 
     ARGV[0]: source_repo
-    ARGV[1]: source_branch
+    ARGV[1]: source_branch with the file
     ARGV[2]: target_repo
-    ARGV[3]: target_branch
+    ARGV[3]: target working branch
     ARGV[4]: filename
     ARGV[5]: working_directory, which defaults to /tmp/working-directory
-";
-}
+
+After the command has completed, you likely want to do:
+
+\$ git pull <your-remote> \$git_source_branch
+
+where <your-remote> repository is your base repository which may be
+the same as your source repository.
+
+"; }
 
 
 package Command::Git::RepositorySet;
