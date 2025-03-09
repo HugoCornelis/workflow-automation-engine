@@ -3854,19 +3854,25 @@ sub builtin_git_move_file_across_keep_history
 
     #! git supports muliple --path arguments, the filename could be a comma separated list of filenames
 
-    my $filename = $arguments->[4];
-
-    if (!defined $filename)
-    {
-	die "$0: *** Error: filename, ARGV[4] is not defined.";
-    }
-
-    my $working_directory = $arguments->[5] || "/tmp/working-directory";
+    my $working_directory = $arguments->[4] || "/tmp/working-directory";
 
     if (!defined $working_directory)
     {
-	die "$0: *** Error: working_directory, ARGV[5] is not defined.";
+	die "$0: *** Error: working_directory, ARGV[4] is not defined.";
     }
+
+    my $filename = $arguments->[5];
+
+    if (!defined $filename)
+    {
+	die "$0: *** Error: filename, ARGV[5] is not defined.";
+    }
+
+    # take the remainder of the arguments as path names for filter-repo
+
+    my $filenames = [ @$arguments[5 .. $#$arguments], ];
+
+    my $paths = join ' ', (map { "--path $_"; } @$filenames);
 
     # determine the source and target project names
 
@@ -3930,7 +3936,7 @@ sub builtin_git_move_file_across_keep_history
 
 	   #! note: requires 'sudo apt install git-filter-repo'
 
-	   "git filter-repo --path '$filename' --refs refs/heads/$git_source_branch --force",
+	   "git filter-repo $paths --refs refs/heads/$git_source_branch --force",
 
 	   ## In target repo
 
@@ -4000,8 +4006,8 @@ arguments:
     ARGV[1]: source_branch with the file
     ARGV[2]: target_repo
     ARGV[3]: target working branch
-    ARGV[4]: filename
-    ARGV[5]: working_directory, which defaults to /tmp/working-directory
+    ARGV[4]: working_directory, when '0' or an empty string, /tmp/working-directory is used
+    ARGV[5] ... : filenames
 
 After the command has completed, you likely want to do:
 
