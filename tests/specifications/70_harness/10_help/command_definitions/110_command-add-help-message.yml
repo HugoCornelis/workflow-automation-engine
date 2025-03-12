@@ -1,0 +1,16 @@
+---
+command: bin/neurospaces_harness command-add --help
+command_tests:
+  - description: Is a help message given (command-add) ?
+    read: |2
+      
+      bin/neurospaces_harness command-add <options> <module-name> <command-name>
+      
+      Add a new command with the given name under the given module and try to insert it current output as the expected output.
+      
+      Options:
+          --help         Show this help message.
+          --output-json  Output in json format.
+          --output-yaml  Output in yaml format.
+      
+description: help message
