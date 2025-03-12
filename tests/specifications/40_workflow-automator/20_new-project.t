@@ -208,8 +208,10 @@ conf.workflow-tests-configuration
 1_commmands:
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin print_configuration_directory
+  - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin start_project
   - workflow-tests-workflow builtin tmux_create_sessions
   - workflow-tests-workflow builtin tmux_kill_sessions

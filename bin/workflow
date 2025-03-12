@@ -2859,6 +2859,29 @@ arguments:
 }
 
 
+sub builtin_fetch_scripts
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands
+	= [
+	   "cd '$sources_configuration_directory'",
+	   "git fetch",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_fetch_scripts_help
+{
+    my $command = shift;
+
+    return "$command: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
+";
+}
+
+
 sub builtin_install_scripts
 {
 #     use Data::Dumper;
@@ -3043,6 +3066,29 @@ sub builtin_print_configuration_directory_help
 arguments:
 
     none.
+";
+}
+
+
+sub builtin_pull_scripts
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands
+	= [
+	   "cd '$sources_configuration_directory'",
+	   "git pull",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_pull_scripts_help
+{
+    my $command = shift;
+
+    return "$command: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
 ";
 }
 
