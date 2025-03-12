@@ -1006,7 +1006,7 @@ sub harness_command_module_update
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::read_module_yml($reporter, $module_path_name);
+    my $module_definition = Heterarch::Test::Library::read_module($reporter, $module_path_name);
 
     my $module_definitions = [ $module_definition, ];
 
@@ -6406,24 +6406,12 @@ sub expand
 	    next;
 	}
 
-	my $module_definition;
-
-	if ($test_module =~ /\.t$/)
-	{
-	    $module_definition = read_module_perl($reporter, $test_module);
-	}
-	elsif ($test_module =~ /summary\.yml$/)
-	{
-	    $module_definition = read_module_yml($reporter, $test_module);
-	}
+	my $module_definition = read_module($reporter, $test_module);
 
 	if ($module_definition)
 	{
 	    read_module_process_options($reporter, $module_definition, $test_module);
-	}
 
-	if ($module_definition)
-	{
 	    push @$test_modules, $module_definition;
 	}
     }
@@ -6793,6 +6781,39 @@ sub read_html
     }
 
     $self->{html_introduction} = $html_introduction;
+}
+
+
+sub read_module
+{
+    my $reporter = shift;
+
+    my $pathname = shift;
+
+    my $module_definition;
+
+    if ($pathname =~ /\.t$/)
+    {
+	$module_definition = read_module_perl($reporter, $pathname);
+    }
+    elsif ($pathname =~ /summary\.yml$/)
+    {
+	$module_definition = read_module_yml($reporter, $pathname);
+    }
+    else
+    {
+	$reporter->report_error_add
+	    (
+	     {
+	      context_path => 'read_module',
+	      description => 'invalid module definition pathname syntax',
+	      error => 'invalid module definition pathname syntax',
+	      module_name => $pathname,
+	     },
+	    );
+    }
+
+    return $module_definition;
 }
 
 
