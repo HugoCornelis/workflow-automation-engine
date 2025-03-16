@@ -154,17 +154,22 @@ options:
 									      },
 						    "help" => "Show the help page.",
 						    "command-add" => {
-								      description => "Add a new command with the given name under the given module and try to insert it current output as the expected output.",
+								      description => "Add a new command with the given name under the given module and try to insert its current output as the expected output.",
 								      executor => "main::harness_command_module_command_add",
 								      help => {
-									       synopsis => "$0 command-add <options> <module-name> <command-name>",
+									       synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 									       usage => "Options:
-    --help         Show this help message.
-    --output-json  Output in json format.
-    --output-yaml  Output in yaml format.
+    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used.
+    --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
+    --description    The description to insert.  The description is inserted both at command definition level and at command test level.
+    --help           Show this help message.
+    --output-json    Output in json format.
+    --output-yaml    Output in yaml format.
 ",
 									      },
 								      options => {
+										  "command-output=s" => do { my $option_command_output; \$option_command_output; },
+										  "comment=s" => do { my $option_comment; \$option_comment; },
 										  "help!" => do { my $option_help; \$option_help; },
 										  "output-json!" => do { my $option_output_json; \$option_output_json; },
 										  "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
@@ -449,7 +454,9 @@ sub command_line_dispatch
 	exit 0;
     }
 
-    my $harness_command_executor = $command_configuration->{known_commands}->{$harness_command}->{executor};
+    my $harness_command_definition = $command_configuration->{known_commands}->{$harness_command};
+
+    my $harness_command_executor = $harness_command_definition->{executor};
 
     # obtain a copy of stdout for the reporters
 
@@ -470,7 +477,7 @@ sub command_line_dispatch
     {
 	no strict "refs";
 
-	my $error = &$harness_command_executor($harness_command, $arguments, $default_reporter);
+	my $error = &$harness_command_executor($harness_command_definition, $harness_command, $arguments, $default_reporter);
     }
 }
 
@@ -700,6 +707,8 @@ package main;
 
 sub harness_command_configuration_create
 {
+    my $harness_command_definition = shift;
+
     my $command = shift;
 
     my $arguments = shift || [];
@@ -880,6 +889,8 @@ Note that more keywords have been defined, including for running C and perl code
 
 sub harness_command_module_command_add
 {
+    my $harness_command_definition = shift;
+
     my $command = shift;
 
     my $arguments = shift || [];
@@ -890,6 +901,8 @@ sub harness_command_module_command_add
 
     my $command_to_be_tested = shift || shift @$arguments;
 
+    my $description = shift || shift @$arguments;
+
     if (! defined $module_name)
     {
 	die "$0: *** Error: $command expects an argument for the name of the existing module to which the command to be tested should be added.";
@@ -898,6 +911,22 @@ sub harness_command_module_command_add
     if (! defined $command_to_be_tested)
     {
 	die "$0: *** Error: $command expects an argument for the command to be tested.";
+    }
+
+    if (! defined $description)
+    {
+	die "$0: *** Error: $command expects an argument for the description of the command to be tested.";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_comment = $options->{"comment=s"};
+
+    my $comment;
+
+    if (defined $$option_comment)
+    {
+	$comment = $$option_comment;
     }
 
     use Clone 'clone';
@@ -914,7 +943,7 @@ sub harness_command_module_command_add
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::module_read($reporter, $module_path_name);
+    my $module_definition = Heterarch::Test::Library::module_read($reporter, "$module_path_name/summary.yml");
 
     if (!$module_definition)
     {
@@ -925,6 +954,8 @@ sub harness_command_module_command_add
 
     $command_definition->{command} = $command_to_be_tested;
 
+    $command_definition->{description} = $description;
+
     my $output = `$command_to_be_tested`;
 
     $command_definition->{command_tests} = [];
@@ -933,22 +964,43 @@ sub harness_command_module_command_add
 
     my $command_test
 	= {
+	   defined $comment ? (comment => $comment) : (),
+	   description => $description,
 	   read => $output,
 	  };
 
     push @$command_tests, $command_test;
 
-    my $command_definitions = $module_definition->{command_definitions};
+    # my $command_definitions = $module_definition->{command_definitions};
 
-    push @$command_definitions, $command_definition;
+    # push @$command_definitions, $command_definition;
 
-    my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
+    my $directory = "$module_path_name/command_definitions";
+
+    my $prefix = Heterarch::Test::Library::directory_next_filename_prefix($directory);
 
     my $error;
 
-    if ($result =~ /error/i)
+    my $command_definition_filename;
+
+    if (defined $prefix)
     {
-	$error = "Error adding the command to the test module $module_name ($result).";
+	my $file_type = 'yaml';
+
+	$command_definition_filename = $prefix . "_" . Heterarch::Test::Library::sentence_summarize($description) . ($file_type eq 'yaml' ? ".yml" : ".json");
+
+	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml($command_definition, "$directory/$command_definition_filename", $file_type);
+
+	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
+
+	if ($result =~ /error/i)
+	{
+	    $error = "Error adding the command to the test module $module_name ($result).";
+	}
+    }
+    else
+    {
+	$error = "Error: directory_next_filename_prefix does not return a prefix (does the directory $directory exist?).";
     }
 
     if ($error)
@@ -957,7 +1009,7 @@ sub harness_command_module_command_add
     }
     else
     {
-	print "$0: Added the command to the test module $module_name.\n";
+	print "$0: Added a test with filename $command_definition_filename for this command to the test module $module_name.\n";
     }
 
     # return the error if there is one
@@ -968,6 +1020,8 @@ sub harness_command_module_command_add
 
 sub harness_command_module_create
 {
+    my $harness_command_definition = shift;
+
     my $command = shift;
 
     my $arguments = shift || [];
@@ -1074,6 +1128,8 @@ tag: An array of tags associated with this test module.  These are matched with 
 
 sub harness_command_module_update
 {
+    my $harness_command_definition = shift;
+
     my $command = shift;
 
     my $arguments = shift || [];
@@ -1158,6 +1214,8 @@ sub harness_command_module_update
 
 sub harness_command_run_tests
 {
+    my $harness_command_definition = shift;
+
     my $command = shift;
 
     my $default_reporter = shift;
@@ -7154,7 +7212,141 @@ sub JSON_DumpFile
 }
 
 
-sub read_module_dump_file_structured_yaml
+sub directory_filenames
+{
+    my $directory = shift;
+
+    my $matcher = shift;
+
+    #t use File::Find;
+    #
+    #t https://metacpan.org/dist/App-find2perl/view/script/find2perl
+
+    my $filenames;
+
+    if (-d $directory)
+    {
+	$filenames
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       sort
+	       `find "$directory" -iname "$matcher"`,
+	      ];
+    }
+    else
+    {
+	$filenames = "directory $directory does not exist";
+    }
+
+    return $filenames;
+}
+
+
+sub directory_next_filename_prefix
+{
+    my $directory = shift;
+
+    my $increment = shift || 10;
+
+    my $filenames = directory_filenames($directory, "*.yml");
+
+    if (not ref $filenames)
+    {
+	return undef;
+    }
+
+    my $result = 100;
+
+    foreach my $filename (sort @$filenames)
+    {
+	if ($filename =~ m(/${result}_)
+	    or $filename =~ m(^${result}_))
+	{
+	    $result += $increment;
+	}
+	else
+	{
+	    last;
+	}
+    }
+
+    return $result;
+}
+
+
+sub command_definition_dump_file_structured_yaml
+{
+    my $command_definition = shift;
+
+    my $command_definition_pathname = shift;
+
+    my $file_type = shift;
+
+    # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
+
+    # use Data::Structure::Util qw( unbless );
+
+    # unbless($command_definition);
+
+    my $unblessed_command_definition = { %$command_definition, };
+
+    #t I am not sure what the consequences are of unblessing all the command tests ...
+
+    my $command_tests = $command_definition->{command_tests};
+
+    my $command_tests_unblessed = [];
+
+    foreach my $command_test (@$command_tests)
+    {
+	$command_test = { %$command_test, };
+
+	push @$command_tests_unblessed, $command_test;
+    }
+
+    $command_definition->{command_tests} = $command_tests_unblessed;
+
+    if ($file_type eq 'yaml')
+    {
+	YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+    }
+    else
+    {
+	JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
+    }
+}
+
+
+sub module_definition_summary_dump_file_structured_yaml
+{
+    my $module_definition = shift;
+
+    my $module_summary_filename = shift;
+
+    my $file_type = shift;
+
+    # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
+
+    # use Data::Structure::Util qw( unbless );
+
+    # unbless($module_definition);
+
+    my $unblessed_module_definition = { %$module_definition, };
+
+    if ($file_type eq 'yaml')
+    {
+	YAML::DumpFile($module_summary_filename, $unblessed_module_definition);
+    }
+    else
+    {
+	JSON_DumpFile($module_summary_filename, $unblessed_module_definition);
+    }
+}
+
+
+sub module_definition_dump_file_structured_yaml
 {
     my $pathname = shift;
 
@@ -7197,75 +7389,37 @@ sub read_module_dump_file_structured_yaml
 
 	    $module_definition->{name} = "$module_name/summary" . ($file_type eq 'yaml' ? ".yml" : ".json");
 
+	    module_definition_summary_dump_file_structured_yaml($module_definition, $module_summary_filename, $file_type);
+
+	    my $directory = "$module_pathname/command_definitions";
+
+	    my $prefix = directory_next_filename_prefix($directory);
+
+	    if (defined $prefix)
 	    {
-		# https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
-
-		# use Data::Structure::Util qw( unbless );
-
-		# unbless($module_definition);
-
-		my $unblessed_module_definition = { %$module_definition, };
-
-		if ($file_type eq 'yaml')
+		foreach my $command_definition (@$command_definitions)
 		{
-		    YAML::DumpFile($module_summary_filename, $unblessed_module_definition);
-		}
-		else
-		{
-		    JSON_DumpFile($module_summary_filename, $unblessed_module_definition);
-		}
-	    }
+		    my $description = $command_definition->{description};
 
-	    my $prefix = 100;
+		    my $command_definition_filename = $prefix . "_" . sentence_summarize($description) . ($file_type eq 'yaml' ? ".yml" : ".json");
 
-	    foreach my $command_definition (@$command_definitions)
-	    {
-		my $description = $command_definition->{description};
+		    my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
 
-		my $command_definition_filename = $prefix . "_" . sentence_summarize($description) . ($file_type eq 'yaml' ? ".yml" : ".json");
-
-		my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
-
-		if (! -f $command_definition_pathname)
-		{
-		    # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
-
-		    # use Data::Structure::Util qw( unbless );
-
-		    # unbless($command_definition);
-
-		    my $unblessed_command_definition = { %$command_definition, };
-
-		    #t I am not sure what the consequences are of unblessing all the command tests ...
-
-		    my $command_tests = $command_definition->{command_tests};
-
-		    my $command_tests_unblessed = [];
-
-		    foreach my $command_test (@$command_tests)
+		    if (! -f $command_definition_pathname)
 		    {
-			$command_test = { %$command_test, };
-
-			push @$command_tests_unblessed, $command_test;
-		    }
-
-		    $command_definition->{command_tests} = $command_tests_unblessed;
-
-		    if ($file_type eq 'yaml')
-		    {
-			YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+			command_definition_dump_file_structured_yaml($command_definition, $command_definition_pathname, $file_type);
 		    }
 		    else
 		    {
-			JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
+			$result = "Error: $command_definition_pathname already exists";
 		    }
-		}
-		else
-		{
-		    $result = "Error: $command_definition_pathname already exists";
-		}
 
-		$prefix += 10;
+		    $prefix += 10;
+		}
+	    }
+	    else
+	    {
+		$result = "Error: directory_next_filename_prefix does not return a prefix (does the directory $directory exist?).";
 	    }
 	}
 	else
@@ -7331,36 +7485,35 @@ sub module_read_yml
 
 	my $directory = $1;
 
-	my $command_definition_filenames
-	    = [
-	       map
-	       {
-		   chomp; $_;
-	       }
-	       sort
-	       `find $directory/command_definitions/*.yml`,
-	      ];
+	my $command_definition_filenames = directory_filenames("$directory/command_definitions", "*.yml");
 
-	foreach my $command_definition_filename (@$command_definition_filenames)
+	if (ref $command_definition_filenames)
 	{
-	    my $command_definition
-		= eval
-	          {
-		      local $SIG{'__DIE__'};
-
-		      YAML::LoadFile($command_definition_filename);
-		  };
-
-	    if ($@)
+	    foreach my $command_definition_filename (@$command_definition_filenames)
 	    {
-		$error = $@;
+		my $command_definition
+		    = eval
+		      {
+			  local $SIG{'__DIE__'};
 
-		last;
+			  YAML::LoadFile($command_definition_filename);
+		      };
+
+		if ($@)
+		{
+		    $error = $@;
+
+		    last;
+		}
+		else
+		{
+		    push @$command_definitions, $command_definition;
+		}
 	    }
-	    else
-	    {
-		push @$command_definitions, $command_definition;
-	    }
+	}
+	else
+	{
+	    $error = "Error: $command_definition_filenames";
 	}
     }
 
