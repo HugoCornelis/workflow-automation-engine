@@ -914,7 +914,7 @@ sub harness_command_module_command_add
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::read_module($reporter, $module_path_name);
+    my $module_definition = Heterarch::Test::Library::module_read($reporter, $module_path_name);
 
     if (!$module_definition)
     {
@@ -1048,7 +1048,7 @@ tag: An array of tags associated with this test module.  These are matched with 
 
     my $path_prefix = $global_config->{tests_directory} || "tests/specifications";
 
-    my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_name, $summary, $path_prefix, $reporter, 'yaml');
+    my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_name, $summary, $path_prefix, $reporter, 'yaml');
 
     my $error;
 
@@ -1101,7 +1101,7 @@ sub harness_command_module_update
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::read_module($reporter, $module_path_name);
+    my $module_definition = Heterarch::Test::Library::module_read($reporter, $module_path_name);
 
     my $module_definitions = [ $module_definition, ];
 
@@ -6421,7 +6421,7 @@ sub ex_terminate
 
 		my $reporter = $execution_context->{reporter};
 
-		my $result = Heterarch::Test::Library::read_module_dump_file_structured_yaml($module_pathname, $module_definition, $global_config->{tests_directory}, $reporter, 'yaml');
+		my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_pathname, $module_definition, $global_config->{tests_directory}, $reporter, 'yaml');
 
 		if ($result =~ /error/i)
 		{
@@ -6501,11 +6501,11 @@ sub expand
 	    next;
 	}
 
-	my $module_definition = read_module($reporter, $test_module);
+	my $module_definition = module_read($reporter, $test_module);
 
 	if ($module_definition)
 	{
-	    read_module_process_options($reporter, $module_definition, $test_module);
+	    module_read_process_options($reporter, $module_definition, $test_module);
 
 	    push @$test_modules, $module_definition;
 	}
@@ -6879,7 +6879,7 @@ sub read_html
 }
 
 
-sub read_module
+sub module_read
 {
     my $reporter = shift;
 
@@ -6889,18 +6889,18 @@ sub read_module
 
     if ($pathname =~ /\.t$/)
     {
-	$module_definition = read_module_perl($reporter, $pathname);
+	$module_definition = module_read_perl($reporter, $pathname);
     }
     elsif ($pathname =~ /summary\.yml$/)
     {
-	$module_definition = read_module_yml($reporter, $pathname);
+	$module_definition = module_read_yml($reporter, $pathname);
     }
     else
     {
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'read_module',
+	      context_path => 'module_read',
 	      description => 'invalid module definition pathname syntax',
 	      error => 'invalid module definition pathname syntax',
 	      module_name => $pathname,
@@ -6912,7 +6912,7 @@ sub read_module
 }
 
 
-sub read_module_perl
+sub module_read_perl
 {
     my $reporter = shift;
 
@@ -6931,7 +6931,7 @@ sub read_module_perl
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'read_module_perl',
+		  context_path => 'module_read_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -6964,7 +6964,7 @@ sub read_module_perl
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'read_module_perl',
+		  context_path => 'module_read_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -6981,7 +6981,7 @@ sub read_module_perl
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'read_module_perl',
+		  context_path => 'module_read_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -7005,7 +7005,7 @@ sub read_module_perl
 # option_check_test_names
 #
 
-sub read_module_process_options
+sub module_read_process_options
 {
     my $reporter = shift;
 
@@ -7044,12 +7044,12 @@ sub read_module_process_options
 
     if ($option_dump_file_structured_json)
     {
-	read_module_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter, 'json');
+	module_definition_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter, 'json');
     }
 
     if ($option_dump_file_structured_yaml)
     {
-	read_module_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter, 'yaml');
+	module_definition_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter, 'yaml');
     }
 
     # check if the name of the test and the pathname match
@@ -7063,7 +7063,7 @@ sub read_module_process_options
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'read_module_process_options',
+		  context_path => 'module_read_process_options',
 		  description => "the pathname ($pathname) and the test name ($module_definition->{name}) are different",
 		  error => $error,
 		  module_name => $pathname,
@@ -7278,10 +7278,10 @@ sub read_module_dump_file_structured_yaml
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'read_module_dump_file_structured_yaml',
+	      context_path => 'module_definition_dump_file_structured_yaml',
 	      description => "error creating the output module_pathname ($created)",
 	      error => "error creating the output module_pathname",
-	      module_name => "read_module_dump_file_structured_yaml",
+	      module_name => "module_definition_dump_file_structured_yaml",
 	      subdescription => "error creating the module_pathname ($created)",
 	     },
 	    );
@@ -7293,7 +7293,7 @@ sub read_module_dump_file_structured_yaml
 }
 
 
-sub read_module_yml
+sub module_read_yml
 {
     my $reporter = shift;
 
@@ -7369,7 +7369,7 @@ sub read_module_yml
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'read_module_yml',
+	      context_path => 'module_read_yml',
 	      description => $error,
 	      error => $error,
 	      module_name => $summary_pathname,
