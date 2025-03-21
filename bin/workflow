@@ -2616,7 +2616,7 @@ sub builtin_add_target
 	{
 	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
-	    # print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
+	    print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
 	}
     }
 
