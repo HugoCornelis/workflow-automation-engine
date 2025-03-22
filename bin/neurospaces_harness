@@ -7549,7 +7549,7 @@ sub validate
 
     if (not scalar @$module_definitions)
     {
-	$error = "no module_definitions found";
+	$error = "no matching module_definitions found";
     }
 
     return $error;
