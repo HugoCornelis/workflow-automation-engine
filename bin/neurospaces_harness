@@ -6098,6 +6098,9 @@ sub new
 
     my $harnessing_identifier = shift;
 
+    my $name_image = $harnessing_class->{docker}->{name_image};
+    my $name_container = $harnessing_class->{docker}->{name_container};
+
     # prepare the docker image and container
 
     use Clone 'clone';
@@ -6106,7 +6109,7 @@ sub new
 	= {
 	   class => clone($harnessing_class),
 	   preparation => {
-			   description => "create the Docker image and start it as a container for running the tests",
+			   description => "create the Docker image ($name_image) and start it as a container ($name_container) with identifier ($harnessing_identifier) for running the tests",
 			  },
 	   reparation => {
 			  description => "leave the Docker container for running manual tests",
