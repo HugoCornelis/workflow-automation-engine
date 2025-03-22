@@ -20,7 +20,12 @@ my $test
 				description => "find an Ethernet compatible device",
 			       },
 			      ],
-       name => 'mid-level.t',
+       # The test configuration ensures that only this test module
+       # definition is found by pointing to only the directory that
+       # has this definition.  As a consequence the name of the module
+       # consists of the filename only.
+
+       name => '110_mid-level.t',
       };
 
 

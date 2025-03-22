@@ -21,7 +21,12 @@ my $test
 				description => "find a route to the Internet",
 			       },
 			      ],
-       name => 'low-level.t',
+       # The test configuration ensures that only this test module
+       # definition is found by pointing to only the directory that
+       # has this definition.  As a consequence the name of the module
+       # consists of the filename only.
+
+       name => '111_low-level.t',
       };
 
 

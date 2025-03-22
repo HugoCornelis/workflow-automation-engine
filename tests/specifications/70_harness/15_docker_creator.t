@@ -107,7 +107,7 @@ convert test specifications to documentation.
 ",
 			      purpose => "Docker test environment.",
 			     },
-	    name => '70_harness/40_output_formats.t',
+	    name => '70_harness/15_docker_creator.t',
 	   };
 
 return $test;

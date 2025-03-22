@@ -15,7 +15,7 @@ use POSIX qw( strftime );
 use YAML;
 
 
-my $option_check_test_names;
+my $option_check_test_names = 'by default';
 my $option_config_filename = './tests.config';
 my $option_console_type = 'status';
 our $option_debugging;
@@ -1218,15 +1218,17 @@ sub harness_command_run_tests
 
     my $command = shift;
 
-    my $default_reporter = shift;
+    my $arguments = shift;
+
+    my $reporter = shift;
 
     # find all the test module files
 
-    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $default_reporter, );
+    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter, );
 
     $test_library->construct();
 
-    $test_library->expand();
+    $test_library->expand($reporter);
 
     $test_library->read_html
 	(
@@ -1258,7 +1260,7 @@ sub harness_command_run_tests
 
 	my $random_seed;
 
-	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order, $default_reporter);
+	( $module_definitions, $random_seed ) = Heterarch::Test::Library::randomize_order($module_definitions, $option_random_order, $reporter);
 
 	$global_test_report->{random_seed} = $random_seed;
     }
@@ -1364,7 +1366,7 @@ sub harness_command_run_tests
 
     # final report
 
-    report_exit({ exit_code => 0, reporter => $default_reporter, }, );
+    report_exit({ exit_code => 0, reporter => $reporter, }, );
 }
 
 
@@ -6547,40 +6549,42 @@ sub expand
 {
     my $self = shift;
 
+    my $options = shift;
+
     my $reporter = $self->{reporter};
 
-    my $library = $self->{module_definition_filenames};
+    my $module_definition_filenames = $self->{module_definition_filenames};
 
-    my $test_modules = [];
+    my $module_definitions = [];
 
     # parse all modules
 
-    foreach my $test_module (@$library)
+    foreach my $module_definition_filename (@$module_definition_filenames)
     {
 	#! note that this matches against against the full pathname.
 	#! as a consequence 'specific' matches all the test specifications in the specifications/ directory.
 
-	if ($test_module !~ /$option_regex_selector/i)
+	if ($module_definition_filename !~ /$option_regex_selector/i)
 	{
 	    next;
 	}
 
-	my $module_definition = module_read($reporter, $test_module);
+	my $module_definition = module_read($reporter, $module_definition_filename);
 
 	if ($module_definition)
 	{
-	    module_read_process_options($reporter, $module_definition, $test_module);
+	    module_read_process_options($module_definition, $reporter, $module_definition_filename, $options);
 
-	    push @$test_modules, $module_definition;
+	    push @$module_definitions, $module_definition;
 	}
     }
 
     if ($option_flattenout)
     {
-	$test_modules = flatten_out($test_modules);
+	$module_definitions = flatten_out($module_definitions);
     }
 
-    $self->{test_modules} = $test_modules;
+    $self->{test_modules} = $module_definitions;
 }
 
 
@@ -6791,8 +6795,6 @@ sub merge_modules
 
     my $original_test_modules = $self->{test_modules};
 
-    use Data::Merger 'merger';
-
     # loop over all the input_module_directories
 
     foreach my $input_module_directory (@$input_module_directories)
@@ -6803,9 +6805,13 @@ sub merge_modules
 
 	$test_library->construct();
 
-	$test_library->expand();
+	$test_library->expand( { input_module_directory => $input_module_directory, } );
+
+	# we have to remap the module names to their pathnames, this is ugly.
 
 	my $new_test_modules = $test_library->{test_modules};
+
+	use Data::Merger 'merger';
 
 	merger($original_test_modules, $new_test_modules);
 
@@ -7071,11 +7077,13 @@ sub module_read_perl
 
 sub module_read_process_options
 {
-    my $reporter = shift;
-
     my $module_definition = shift;
 
+    my $reporter = shift;
+
     my $pathname = shift;
+
+    my $options = shift;
 
     my $error;
 
@@ -7120,9 +7128,16 @@ sub module_read_process_options
 
     if ($option_check_test_names)
     {
-	if ($pathname ne "$global_config->{tests_directory}/$module_definition->{name}")
+	my $expected_module_definition_name = "$global_config->{tests_directory}/$module_definition->{name}";
+
+	if (exists $options->{input_module_directory})
 	{
-	    $error = "the pathname ($pathname) and the test name ($module_definition->{name}) are different";
+	    $expected_module_definition_name = "$options->{input_module_directory}/$module_definition->{name}";
+	}
+
+	if ($pathname ne $expected_module_definition_name)
+	{
+	    $error = "for the test module ($module_definition->{name}), the pathname ($pathname) and the expected full path name ($expected_module_definition_name) are different.";
 
 	    $reporter->report_error_add
 		(
