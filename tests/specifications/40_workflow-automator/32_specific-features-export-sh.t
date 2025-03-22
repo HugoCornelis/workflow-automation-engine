@@ -385,7 +385,7 @@ The class properties can include IP network information and IP address of the co
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },
-       name => '40_workflow-automator/31_specific-features-export-sh.t',
+       name => '40_workflow-automator/32_specific-features-export-sh.t',
       };
 
 

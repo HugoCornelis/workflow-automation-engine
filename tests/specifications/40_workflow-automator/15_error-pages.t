@@ -77,7 +77,7 @@ project-specific workflows that use system shell commands.
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },
-       name => '40_workflow-automator/11_error-pages.t',
+       name => '40_workflow-automator/15_error-pages.t',
       };
 
 

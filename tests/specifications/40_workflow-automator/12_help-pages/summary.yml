@@ -9,4 +9,4 @@ documentation:
     project based on system shell commands.
 
   purpose: This module tests the help pages of the workflow automation engine.
-name: 40_workflow-automator/12_help-pages
+name: 40_workflow-automator/12_help-pages/summary.yml
