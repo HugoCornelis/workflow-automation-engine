@@ -5999,13 +5999,16 @@ sub hs_preparer
 	      module_name => $module_name,
 	     },
 	    );
-    }
-    else
-    {
-	my $variable_actions = exists $preparation_result->{variable_actions} ? $preparation_result->{variable_actions} : {};
 
-	$execution_context->ec_variable_actions_push($variable_actions);
+	$preparation_result
+	    = {
+	       docker_preparer_result => "Error ($$preparation_result)",
+	      };
     }
+
+    my $variable_actions = exists $preparation_result->{variable_actions} ? $preparation_result->{variable_actions} : {};
+
+    $execution_context->ec_variable_actions_push($variable_actions);
 
     # make the docker harness available by pushing it
 
