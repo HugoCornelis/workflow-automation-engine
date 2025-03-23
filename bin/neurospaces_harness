@@ -5677,7 +5677,7 @@ sub _docker_preparer
 
 	if ($?)
 	{
-	    return \ '_docker_preparer build and tag failed';
+	    return \ "_docker_preparer ($docker_command_selected) build and tag ($name_image), based on dockerfile ($dockerfile), failed";
 	}
     }
     else
