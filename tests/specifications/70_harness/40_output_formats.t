@@ -46,7 +46,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "cpan installation of Data::Utilities",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && ./configure && make && sudo make install',
+				     command => 'cd ~/projects/developer/source/snapshots/master && ./autogen.sh && ./configure && make && sudo make install',
 				     command_tests => [
 						       {
 							description => "Can we install the developer package in the Docker container ?",

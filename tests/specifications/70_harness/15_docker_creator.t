@@ -46,12 +46,13 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "cpan installation of Data::Utilities",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && ./configure && make && sudo make install',
+				     command => 'cd ~/projects/developer/source/snapshots/master && ./autogen.sh && ./configure && make && sudo make install',
 				     command_tests => [
 						       {
+							comment => "The timeout value of this test is a guess, it could be off by a large amount.",
 							description => "Can we install the developer package in the Docker container ?",
 							read => 'Developer package installation finished',
-							timeout => 5,
+							timeout => 50,
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
 						      ],
