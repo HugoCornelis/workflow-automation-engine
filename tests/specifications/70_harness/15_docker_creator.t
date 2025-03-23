@@ -31,6 +31,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 						       },
 						      ],
 				     description => "cpan installation of Mo",
+				     disabled => 'The Mo module is already installed and installation of cpan modules should not be tested.',
 				    },
 				    {
 				     command => 'cd ~/projects/developer/source/snapshots/master && tar xfz cpan/13-Data-Utilities-0.04.tar.gz && cd Data-Utilities-0.04 && perl Makefile.PL && make && sudo make install',
