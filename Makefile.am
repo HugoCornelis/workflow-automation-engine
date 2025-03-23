@@ -14,10 +14,18 @@
 ##############################################################################
 
 
-SUBDIRS =
+SUBDIRS = perl
 
 dist_bin_SCRIPTS = \
+	bin/neurospaces_harness \
+	bin/neurospaces_harness_2_html \
 	bin/workflow
+
+workflowautomationtestdir=$(prefix)/neurospaces/workflow-automation
+nobase_dist_workflowautomationtest_DATA=@TEST_SPECIFICATION_FILES@
+
+workflowautomationimagesdir=$(prefix)/neurospaces/images
+nobase_dist_workflowautomationimages_DATA = images/ns-main-logo-dark2.jpg
 
 # the tests are copied overhere.
 #
@@ -31,6 +39,7 @@ EXTRA_DIST = \
 	cpan \
 	docs \
 	tests \
+	test_templates \
 	license.txt
 
 am__tar = ${AMTAR} chf - --format=posix "$$tardir"
@@ -50,9 +59,12 @@ clean-local:
 dist-hook:
 	$(srcdir)/install-sh -d $(distdir)/tests
 	$(srcdir)/install-sh -d $(distdir)/tests/html
-	( cd $(distdir)/tests && chmod -R u+w . && neurospaces_harness_2_html --introduction introduction.html )
+	( cd $(distdir)/tests && chmod -R u+w . && ../bin/neurospaces_harness_2_html --introduction introduction.html )
 
 install-data-local: neurospaces_cpan_modules
+
+install-data-hook:
+	@echo "Developer package installation finished"
 
 neurospaces_cpan_modules:
 	@echo "======================== Installing CPAN modules"
@@ -100,6 +112,9 @@ docs-level7:
 
 docs: docs-level1 docs-level2 docs-level3 docs-level4 docs-level5 docs-level6 docs-level7
 
+APP_NAME=workflow
+
+# the pkg-src target must create pkg/$(APP_NAME)-$(VERSION).tar.gz
 pkg-src: dist
 	mkdir -p pkg
 	cp $(PACKAGE)-$(VERSION).tar.gz pkg/$(PACKAGE)-$(VERSION).tar.gz

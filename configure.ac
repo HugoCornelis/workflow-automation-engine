@@ -227,7 +227,8 @@ TEST_SPECIFICATION_FILES=`/bin/echo -n "tests/introduction.html " && find tests/
 AC_SUBST(TEST_SPECIFICATION_FILES)
 
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+		perl/Makefile])
 
 AC_OUTPUT
 

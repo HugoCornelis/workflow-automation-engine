@@ -64,8 +64,6 @@ checking OS specifics...... Host is running .
 checking for perl5... no
 checking for perl... perl
 checking Checking the perl module installation path...  ${prefix}/share/perl/5.36.0 
-./configure: line 2663: cd: perl: No such file or directory
-./configure: line 2666: cd: perl: No such file or directory
 checking for mtn... no
 checking for monotone... no
 checking for dpkg-buildpackage... dpkg-buildpackage
@@ -85,6 +83,7 @@ find: \'tests/data\': No such file or directory
 checking that generated files are newer than configure... done
 : creating ./config.status
 config.status: creating Makefile
+config.status: creating perl/Makefile
 ',
 						   tags => [ 'manual' ],
 						   timeout => 5,
