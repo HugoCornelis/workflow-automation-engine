@@ -10625,7 +10625,7 @@ sub message
 }
 
 
-sub _differences_process
+sub _differences_report
 {
     my $fd_output = shift;
 
@@ -10769,6 +10769,12 @@ sub _report_error_add
 
     my $arguments = shift;
 
+	      # context_path => 'module_definition_dump_file_structured_yaml',
+	      # description => "error creating the output module_pathname ($created)",
+	      # error => "error creating the output module_pathname",
+	      # module_name => "module_definition_dump_file_structured_yaml",
+	      # subdescription => "error creating the module_pathname ($created)",
+
     use Clone 'clone';
 
     my $error_report = clone($arguments);
@@ -10785,9 +10791,9 @@ sub _report_error_add
 
     my $fd_output = $self->{fd_output};
 
-    my $differences_report = _differences_process($fd_output, $error_report);
+    my $summary_report = _summary_report($fd_output, $error_report);
 
-    $error_report->{differences_report} = $differences_report;
+    $error_report->{differences_report} = $summary_report->{differences_report};
 
     _global_error_add($error_report);
 
@@ -10798,6 +10804,51 @@ sub _report_error_add
 sub start
 {
     my $self = shift;
+}
+
+
+sub _summary_report
+{
+    my $fd_output = shift;
+
+    my $error_report = shift;
+
+    my $summary_report
+	= {
+	   context_path => $error_report->{context_path},
+	   description => $error_report->{description},
+	   error => $error_report->{error},
+	   module_name => $error_report->{module_name},
+	   subdescription => $error_report->{subdescription},
+	  };
+
+    {
+	my $summary_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count-summary.yml";
+
+	$summary_report->{summary_filename} = $summary_filename;
+
+	# my $summary_file = IO::File->new(">$summary_filename");
+
+	# if ($summary_file)
+
+	eval
+	{
+	    use YAML;
+
+	    YAML::DumpFile($summary_filename, $summary_report);
+	};
+
+	if ($@)
+	{
+	    print $fd_output "*** Warning: cannot create $summary_filename\n";
+	}
+    }
+
+    my $differences_report = _differences_report($fd_output, $error_report);
+
+    $summary_report->{differences_report} = $differences_report;
+
+    return $summary_report;
 }
 
 
