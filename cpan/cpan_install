@@ -15,18 +15,9 @@ print Dumper($module_filenames);
 
 foreach my $module_filename (@$module_filenames)
 {
-    # skip inline python
-
-    #t why?
-
     $module_filename =~ /^...(.*)\.tar\.gz$/i;
 
     my $module_name = $1;
-
-    if ($module_name =~ /inline-python/i)
-    {
-	next;
-    }
 
     # is this module already installed?
 
