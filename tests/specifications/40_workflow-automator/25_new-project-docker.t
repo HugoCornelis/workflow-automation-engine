@@ -115,24 +115,52 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation engine?",
-						   read => "make[1]: Entering directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
-make[2]: Entering directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
- /usr/bin/mkdir -p '/usr/local/bin'
- /usr/bin/install -c bin/workflow '/usr/local/bin'
-make[2]: Nothing to be done for 'install-data-am'.
-make[2]: Leaving directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
-make[1]: Leaving directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
+						   read => "touch ./neurospaces_cpan_modules
+make  install-data-hook
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+Developer package installation finished
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ",
 						   read_old => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
  /usr/bin/mkdir -p \'/usr/local/bin\'
- /usr/bin/install -c bin/workflow \'/usr/local/bin\'
+ /usr/bin/install -c bin/neurospaces_harness bin/neurospaces_harness_2_html bin/workflow \'/usr/local/bin\'
 ======================== Installing CPAN modules
 ( cd cpan ; ./cpan_install [0-9][0-9]*.gz )
 Installing CPAN modules
 $VAR1 = [
-          \'13-Data-Utilities-0.04.tar.gz\'
+          \'04-Array-Utils-0.5.tar.gz\',
+          \'13-Data-Utilities-0.04.tar.gz\',
+          \'40-XML-Dumper-0.81.tar.gz\'
         ];
+checking for perl -e \'use Array::Utils 0.5\'
+Can\'t locate Array/Utils.pm in @INC (you may need to install the Array::Utils module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at -e line 1.
+BEGIN failed--compilation aborted at -e line 1.
+Installing Array-Utils-0.5 (04-Array-Utils-0.5.tar.gz)
+/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan
+/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Array-Utils-0.5
+Checking if your kit is complete...
+Looks good
+Generating a Unix-style Makefile
+Writing Makefile for Array::Utils
+Writing MYMETA.yml and MYMETA.json
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Array-Utils-0.5\'
+cp Utils.pm blib/lib/Array/Utils.pm
+Manifying 1 pod document
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Array-Utils-0.5\'
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Array-Utils-0.5\'
+PERL_DL_NONLAZY=1 "/usr/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, \'blib/lib\', \'blib/arch\')" t/*.t
+t/array-utils.t .. t/array-utils.t .. 1/?                          t/array-utils.t .. ok
+All tests successful.
+Files=1, Tests=17,  1 wallclock secs ( 0.01 usr  0.00 sys +  0.03 cusr  0.00 csys =  0.04 CPU)
+Result: PASS
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Array-Utils-0.5\'
+Manifying 1 pod document
+Installing /usr/local/share/perl/5.36.0/Array/Utils.pm
+Installing /usr/local/man/man3/Array::Utils.3pm
+Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perllocal.pod
 checking for perl -e \'use Data::Utilities 0.04\'
 Can\'t locate Data/Utilities.pm in @INC (you may need to install the Data::Utilities module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at -e line 1.
 BEGIN failed--compilation aborted at -e line 1.
@@ -145,44 +173,91 @@ Generating a Unix-style Makefile
 Writing Makefile for Data::Utilities
 Writing MYMETA.yml and MYMETA.json
 make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+cp lib/Data/Comparator.pm blib/lib/Data/Comparator.pm
+cp lib/Data/Merger.pm blib/lib/Data/Merger.pm
+cp lib/Data/Transformator.pm blib/lib/Data/Transformator.pm
+cp lib/Data/Differences.pm blib/lib/Data/Differences.pm
+cp lib/Data/Utilities.pm blib/lib/Data/Utilities.pm
+Manifying 4 pod documents
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+PERL_DL_NONLAZY=1 "/usr/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, \'blib/lib\', \'blib/arch\')" t/*.t
+t/0.t ............ t/0.t ............ 1/2                         t/0.t ............ ok
+t/001_load.t ..... t/001_load.t ..... 1/1                         t/001_load.t ..... ok
+t/1.t ............ t/1.t ............ 1/?                          t/1.t ............ ok
+t/array1.t ....... t/array1.t ....... 1/6                         t/array1.t ....... ok
+t/comparator1.t .. t/comparator1.t .. 1/9                         t/comparator1.t .. ok
+t/merger1.t ...... t/merger1.t ...... 1/9                         t/merger1.t ...... ok
+t/merger2.t ...... t/merger2.t ...... 1/10                           t/merger2.t ...... ok
+All tests successful.
+Files=7, Tests=55,  0 wallclock secs ( 0.02 usr  0.00 sys +  0.25 cusr  0.03 csys =  0.30 CPU)
+Result: PASS
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
+Manifying 4 pod documents
+Installing /usr/local/share/perl/5.36.0/Data/Merger.pm
+Installing /usr/local/share/perl/5.36.0/Data/Differences.pm
+Installing /usr/local/share/perl/5.36.0/Data/Comparator.pm
+Installing /usr/local/share/perl/5.36.0/Data/Utilities.pm
+Installing /usr/local/share/perl/5.36.0/Data/Transformator.pm
+Installing /usr/local/man/man3/Data::Comparator.3pm
+Installing /usr/local/man/man3/Data::Merger.3pm
+Installing /usr/local/man/man3/Data::Transformator.3pm
+Installing /usr/local/man/man3/Data::Utilities.3pm
+Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perllocal.pod
+checking for perl -e \'use XML::Dumper 0.81\'
+Can\'t locate XML/Dumper.pm in @INC (you may need to install the XML::Dumper module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.36.0 /usr/local/share/perl/5.36.0 /usr/lib/x86_64-linux-gnu/perl5/5.36 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.36 /usr/share/perl/5.36 /usr/local/lib/site_perl) at -e line 1.
+BEGIN failed--compilation aborted at -e line 1.
+Installing XML-Dumper-0.81 (40-XML-Dumper-0.81.tar.gz)
+/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan
+/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/XML-Dumper-0.81
+Checking if your kit is complete...
+Looks good
+Generating a Unix-style Makefile
+Writing Makefile for XML::Dumper
+Writing MYMETA.yml and MYMETA.json
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/XML-Dumper-0.81\'
+cp Dumper.pm blib/lib/XML/Dumper.pm
+Manifying 1 pod document
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/XML-Dumper-0.81\'
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/XML-Dumper-0.81\'
+PERL_DL_NONLAZY=1 "/usr/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, \'blib/lib\', \'blib/arch\')" t/*.t
+t/00_syntax.t ................ t/00_syntax.t ................ 1/2                                     t/00_syntax.t ................ ok
+t/01_simple_datatypes.t ...... t/01_simple_datatypes.t ...... 1/5                                     t/01_simple_datatypes.t ...... ok
+t/02_circular_references.t ... t/02_circular_references.t ... 1/1                                     t/02_circular_references.t ... ok
+t/03_objects.t ............... t/03_objects.t ............... 1/3                                     t/03_objects.t ............... ok
+t/04_callbacks.t ............. t/04_callbacks.t ............. 1/1                                     t/04_callbacks.t ............. ok
+t/05_file_io.t ............... t/05_file_io.t ............... 1/1                                     t/05_file_io.t ............... ok
+t/06_compression.t ........... t/06_compression.t ........... 1/1                                     t/06_compression.t ........... ok
+t/07_dtd.t ................... t/07_dtd.t ................... 1/1                                     t/07_dtd.t ................... ok
+t/08_utf8.t .................. t/08_utf8.t .................. 1/4                                     t/08_utf8.t .................. ok
+t/09_repeated_references.t ... t/09_repeated_references.t ... 1/1                                     t/09_repeated_references.t ... ok
+t/10_backwards_compatible.t .. t/10_backwards_compatible.t .. 1/1                                     t/10_backwards_compatible.t .. ok
+t/11_control_characters.t .... t/11_control_characters.t .... 1/1                                     t/11_control_characters.t .... ok
+t/12_class_loading.t ......... t/12_class_loading.t ......... 1/3                                     t/12_class_loading.t ......... ok
+t/13_untaint_classnames.t .... t/13_untaint_classnames.t .... 1/16                                       t/13_untaint_classnames.t .... ok
+t/14_overloading.t ........... t/14_overloading.t ........... 1/2                                     t/14_overloading.t ........... ok
+t/15_oo_cmp_ident.t .......... t/15_oo_cmp_ident.t .......... 1/5                                     t/15_oo_cmp_ident.t .......... ok
+t/handle_undef.t ............. t/handle_undef.t ............. 1/3                                     t/handle_undef.t ............. ok
+t/oo_style.t ................. t/oo_style.t ................. 1/1                                     t/oo_style.t ................. ok
+t/scalar_literals.t .......... t/scalar_literals.t .......... 1/1                                     t/scalar_literals.t .......... ok
+All tests successful.
+Files=19, Tests=53,  0 wallclock secs ( 0.04 usr  0.02 sys +  0.58 cusr  0.09 csys =  0.73 CPU)
+Result: PASS
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/XML-Dumper-0.81\'
+Manifying 1 pod document
+Installing /usr/local/share/perl/5.36.0/XML/Dumper.pm
+Installing /usr/local/man/man3/XML::Dumper.3pm
+Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perllocal.pod
+touch ./neurospaces_cpan_modules
+make  install-data-hook
+make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+Developer package installation finished
+make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
+make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ',
-# cp lib/Data/.*
-# cp lib/Data/.*
-# cp lib/Data/.*
-# cp lib/Data/.*
-# cp lib/Data/.*
-# Manifying 4 pod documents
-# make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
-# make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
-# PERL_DL_NONLAZY=1 "/usr/bin/perl" "-MExtUtils::Command::MM" "-MTest::Harness" "-e" "undef *Test::Harness::Switches; test_harness(0, \'blib/lib\', \'blib/arch\')" t/*.t
-# t/0.t ............ t/0.t ............ 1/2                         t/0.t ............ ok
-# t/001_load.t ..... t/001_load.t ..... 1/1                         t/001_load.t ..... ok
-# t/1.t ............ t/1.t ............ 1/?                          t/1.t ............ ok
-# t/array1.t ....... t/array1.t ....... 1/6                         t/array1.t ....... ok
-# t/comparator1.t .. t/comparator1.t .. 1/9                         t/comparator1.t .. ok
-# t/merger1.t ...... t/merger1.t ...... 1/9                         t/merger1.t ...... ok
-# t/merger2.t ...... t/merger2.t ...... 1/10                           t/merger2.t ...... ok
-# All tests successful.
-# Files=.*
-# Result: PASS
-# make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/cpan/Data-Utilities-0.04\'
-# Manifying 4 pod documents
-# Installing /usr/local/share/perl/5.36.0/Data/Merger.pm
-# Installing /usr/local/share/perl/5.36.0/Data/Differences.pm
-# Installing /usr/local/share/perl/5.36.0/Data/Comparator.pm
-# Installing /usr/local/share/perl/5.36.0/Data/Utilities.pm
-# Installing /usr/local/share/perl/5.36.0/Data/Transformator.pm
-# Installing /usr/local/man/man3/Data::Comparator.3pm
-# Installing /usr/local/man/man3/Data::Merger.3pm
-# Installing /usr/local/man/man3/Data::Transformator.3pm
-# Installing /usr/local/man/man3/Data::Utilities.3pm
-# Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perllocal.pod
-# touch ./neurospaces_cpan_modules
-# make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-# make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-# ',
 						   tags => [ 'manual' ],
-						   wait => 5,
+						   wait => 25,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
