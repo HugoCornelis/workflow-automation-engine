@@ -55,11 +55,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     zstd
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    libyaml-perl \
-    libipc-system-simple-perl \
+    libexpect-perl \
     libfile-chdir-perl \
+    libfile-find-rule-perl-perl \
     libinline-perl \
     libinline-python-perl \
+    libipc-system-simple-perl \
+    libjson-perl \
+    libnet-ip-perl \
+    libyaml-perl \
     grc
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
