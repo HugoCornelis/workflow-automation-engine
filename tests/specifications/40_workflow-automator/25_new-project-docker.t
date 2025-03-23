@@ -257,7 +257,7 @@ make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 ',
 						   tags => [ 'manual' ],
-						   wait => 25,
+						   timeout => 25,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
