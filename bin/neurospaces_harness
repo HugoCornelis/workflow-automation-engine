@@ -10629,7 +10629,11 @@ sub _differences_report
 {
     my $fd_output = shift;
 
+    my $summary_report = shift;
+
     my $arguments = shift;
+
+    my $report_error_directory = $summary_report->{report_error_directory};
 
     my $expected = $arguments->{expected};
     my $seen = $arguments->{seen};
@@ -10645,7 +10649,7 @@ sub _differences_report
     {
 	use IO::File;
 
-	my $expected_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.expected";
+	my $expected_filename = "$report_error_directory/expected.txt";
 
 	$differences_report->{expected_filename} = $expected_filename;
 
@@ -10662,13 +10666,13 @@ sub _differences_report
 	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
-	my $seen_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.seen";
+	my $seen_filename = "$report_error_directory/seen.txt";
 
 	$differences_report->{seen_filename} = $seen_filename;
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
-	if ($seen_filename)
+	if ($seen_file)
 	{
 	    print $seen_file $seen;
 
@@ -10683,7 +10687,7 @@ sub _differences_report
 
 	$differences_report->{diff} = $diff;
 
-	my $diff_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count.diff";
+	my $diff_filename = "$report_error_directory/expected-minus-seen.diff";
 
 	$differences_report->{diff_filename} = $diff_filename;
 
@@ -10791,7 +10795,7 @@ sub _report_error_add
 
     my $fd_output = $self->{fd_output};
 
-    my $summary_report = _summary_report($fd_output, $error_report);
+    my $summary_report = _report_error_summary($fd_output, $error_report);
 
     $error_report->{differences_report} = $summary_report->{differences_report};
 
@@ -10801,17 +10805,37 @@ sub _report_error_add
 }
 
 
-sub start
+sub _report_error_directory_create
 {
-    my $self = shift;
+    my $fd_output = shift;
+
+    my $summary_report = shift;
+
+    my $error;
+
+    use File::Path qw( make_path );
+
+    my $report_error_directory = $summary_report->{report_error_directory};
+
+    if (!-d $report_error_directory)
+    {
+	if (!make_path($report_error_directory))
+	{
+	    $error = "*** Warning: Failed to create path: $report_error_directory";
+	}
+    }
+
+    return $error;
 }
 
 
-sub _summary_report
+sub _report_error_summary
 {
     my $fd_output = shift;
 
     my $error_report = shift;
+
+    my $error_count = sprintf("%03s", $global_error_count);
 
     my $summary_report
 	= {
@@ -10819,17 +10843,19 @@ sub _summary_report
 	   description => $error_report->{description},
 	   error => $error_report->{error},
 	   module_name => $error_report->{module_name},
+	   report_error_directory => "/tmp/error_report_$global_config->{package}->{name}/$error_count",
 	   subdescription => $error_report->{subdescription},
 	  };
 
+    my $report_error_directory = $summary_report->{report_error_directory};
+
+    my $error = _report_error_directory_create($fd_output, $summary_report);
+
+    if (!$error)
     {
-	my $summary_filename = "/tmp/text_$global_config->{package}->{name}_$global_error_count-summary.yml";
+	my $summary_filename = "$report_error_directory/summary.yml";
 
 	$summary_report->{summary_filename} = $summary_filename;
-
-	# my $summary_file = IO::File->new(">$summary_filename");
-
-	# if ($summary_file)
 
 	eval
 	{
@@ -10842,13 +10868,23 @@ sub _summary_report
 	{
 	    print $fd_output "*** Warning: cannot create $summary_filename\n";
 	}
+
+	my $differences_report = _differences_report($fd_output, $summary_report, $error_report);
+
+	$summary_report->{differences_report} = $differences_report;
+    }
+    else
+    {
+	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting\n";
     }
 
-    my $differences_report = _differences_report($fd_output, $error_report);
-
-    $summary_report->{differences_report} = $differences_report;
-
     return $summary_report;
+}
+
+
+sub start
+{
+    my $self = shift;
 }
 
 
