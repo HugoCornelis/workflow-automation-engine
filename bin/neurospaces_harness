@@ -987,7 +987,7 @@ sub harness_command_module_command_add
     {
 	my $file_type = 'yaml';
 
-	$command_definition_filename = $prefix . "_" . Heterarch::Test::Library::sentence_summarize($description) . ($file_type eq 'yaml' ? ".yml" : ".json");
+	$command_definition_filename = $prefix . "_" . Heterarch::Test::Library::sentence_summarize($description, 80) . ($file_type eq 'yaml' ? ".yml" : ".json");
 
 	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml($command_definition, "$directory/$command_definition_filename", $file_type);
 
@@ -7168,16 +7168,27 @@ sub strings_remove
     {
 	foreach my $string (@$strings)
 	{
-	    $sentence =~ s(-$string-)(-)g;
-	    $sentence =~ s(^$string-)()g;
-	    $sentence =~ s($string$)()g;
+	    $sentence =~ s(-$string-)(-)ig;
+	    $sentence =~ s(^$string-)()ig;
+	    $sentence =~ s($string$)()ig;
 	}
     }
     elsif ($options eq 'without-dash')
     {
 	foreach my $string (@$strings)
 	{
-	    $sentence =~ s($string)()g;
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)()ig;
+	}
+    }
+    elsif ($options eq 'replace-with-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)(-)ig;
 	}
     }
     else
@@ -7193,17 +7204,27 @@ sub sentence_summarize
 {
     my $sentence = shift;
 
+    my $maximum_length = shift || 80;
+
     my $result = "$sentence";
 
-    $result =~ s( )(-)g;
+    $result =~ s(\s+)(-)g;
 
-    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', ];
+    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+
+    $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
+
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
 
     $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
 
-    my $remove_these_chars = [ '<', '>', ];
+    my $remove_these_chars = [ '<', '>', '\'' ];
 
     $result = strings_remove($remove_these_chars, 'without-dash', $result);
+
+    $result = substr($result, 0, $maximum_length);
+
+    $result =~ s(-$)();
 
     return $result;
 }
@@ -10795,9 +10816,33 @@ sub _report_error_add
 
     my $fd_output = $self->{fd_output};
 
-    my $summary_report = _report_error_summary($fd_output, $error_report);
+    my $error_count = sprintf("%03s", $global_error_count);
 
-    $error_report->{differences_report} = $summary_report->{differences_report};
+    my $report_error_directory_suffix = "$error_count-" . Heterarch::Test::Library::sentence_summarize($error_report->{description}, 80);
+
+    my $error_directory = "/tmp/error_report_$global_config->{package}->{name}";
+
+    # just a best shot at removing the previous error directory
+
+    if ($global_error_count == 0)
+    {
+	`rm -fr '$error_directory'`;
+    }
+
+    my $report_error_directory = "$error_directory/$report_error_directory_suffix";
+
+    my $error = _report_error_directory_create($fd_output, $report_error_directory);
+
+    if (!$error)
+    {
+	my $summary_report = _report_error_summary($fd_output, $report_error_directory, $error_report);
+
+	$error_report->{differences_report} = $summary_report->{differences_report};
+    }
+    else
+    {
+	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting\n";
+    }
 
     _global_error_add($error_report);
 
@@ -10809,13 +10854,11 @@ sub _report_error_directory_create
 {
     my $fd_output = shift;
 
-    my $summary_report = shift;
+    my $report_error_directory = shift;
 
     my $error;
 
     use File::Path qw( make_path );
-
-    my $report_error_directory = $summary_report->{report_error_directory};
 
     if (!-d $report_error_directory)
     {
@@ -10833,9 +10876,9 @@ sub _report_error_summary
 {
     my $fd_output = shift;
 
-    my $error_report = shift;
+    my $report_error_directory = shift;
 
-    my $error_count = sprintf("%03s", $global_error_count);
+    my $error_report = shift;
 
     my $summary_report
 	= {
@@ -10843,40 +10886,29 @@ sub _report_error_summary
 	   description => $error_report->{description},
 	   error => $error_report->{error},
 	   module_name => $error_report->{module_name},
-	   report_error_directory => "/tmp/error_report_$global_config->{package}->{name}/$error_count",
+	   report_error_directory => $report_error_directory,
 	   subdescription => $error_report->{subdescription},
 	  };
 
-    my $report_error_directory = $summary_report->{report_error_directory};
+    my $summary_filename = "$report_error_directory/summary.yml";
 
-    my $error = _report_error_directory_create($fd_output, $summary_report);
+    $summary_report->{summary_filename} = $summary_filename;
 
-    if (!$error)
+    eval
     {
-	my $summary_filename = "$report_error_directory/summary.yml";
+	use YAML;
 
-	$summary_report->{summary_filename} = $summary_filename;
+	YAML::DumpFile($summary_filename, $summary_report);
+    };
 
-	eval
-	{
-	    use YAML;
-
-	    YAML::DumpFile($summary_filename, $summary_report);
-	};
-
-	if ($@)
-	{
-	    print $fd_output "*** Warning: cannot create $summary_filename\n";
-	}
-
-	my $differences_report = _differences_report($fd_output, $summary_report, $error_report);
-
-	$summary_report->{differences_report} = $differences_report;
-    }
-    else
+    if ($@)
     {
-	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting\n";
+	print $fd_output "*** Warning: cannot create $summary_filename\n";
     }
+
+    my $differences_report = _differences_report($fd_output, $summary_report, $error_report);
+
+    $summary_report->{differences_report} = $differences_report;
 
     return $summary_report;
 }
