@@ -264,22 +264,22 @@ $ docker inspect --format=\'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{e
 				command_tests => [
 						  {
 						   description => "Do we see correct changes in directory during a workflow execution in an ssh session that uses the 'cd' command?",
-						   read => '# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    pwd
+						   read => '# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd
 #
 /root
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
 #
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'
 #
 /bin
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && cd ..\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && cd ..\'
 #
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin/.. && pwd\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin/.. && pwd\'
 #
 /
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin/.. && cd /\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin/.. && cd /\'
 #
-# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd / && pwd\'
+# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd / && pwd\'
 #
 /
 ',

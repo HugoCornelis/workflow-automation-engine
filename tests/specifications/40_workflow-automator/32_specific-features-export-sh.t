@@ -162,9 +162,9 @@ pwd
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'cd /bin\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    pwd\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    cd /bin\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    cd /bin\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-keys -t cd    \'pwd\' ENTER\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-keys -t cd    \'cd /bin\' ENTER\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-keys -t cd    \'pwd\' ENTER\'
@@ -192,9 +192,9 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 pwd
 cd /bin
 pwd
-sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    pwd
-sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
-sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'
+sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd
+sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
+sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'
 tmux send-keys -t cd    \'pwd\' ENTER
 tmux send-keys -t cd    \'cd /bin\' ENTER
 tmux send-keys -t cd    \'pwd\' ENTER
@@ -212,9 +212,9 @@ tmux send-keys -t cd    \'pwd\' ENTER
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'cd /bin\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : pwd>\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at tmux send-keys -t cd : \'pwd\' ENTER>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at tmux send-keys -t cd : \'cd /bin\' ENTER>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at tmux send-keys -t cd : \'pwd\' ENTER>\'
@@ -242,9 +242,9 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 pwd
 cd /bin
 pwd
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
+# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
+# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
+# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
 # <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
 # <remote command at tmux send-keys -t cd : \'cd /bin\' ENTER>
 # <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
@@ -312,9 +312,9 @@ cd /bin && pwd
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: pwd>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: cd /bin>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: pwd>\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : pwd>\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>\'
-feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>\'
+feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'cd /bin\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
@@ -342,9 +342,9 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 # <local command: pwd>
 # <local command: cd /bin>
 # <local command: pwd>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
+# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
+# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
+# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
 pwd
 cd /bin
 pwd

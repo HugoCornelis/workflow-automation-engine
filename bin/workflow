@@ -4899,7 +4899,7 @@ sub compute_remote_and_interaction_role
 {
     my $command = shift;
 
-    my $option_remote = shift;
+    my $options_remote = shift;
 
     my $remote_policy = shift;
 
@@ -4922,7 +4922,7 @@ sub compute_remote_and_interaction_role
 	     {
 	      compute_remote_and_interaction_role => {
 						      command => $command,
-						      option_remote => $option_remote,
+						      options_remote => $options_remote,
 						      remote_policy => $remote_policy,
 						     },
 	     },
@@ -4943,12 +4943,12 @@ sub compute_remote_and_interaction_role
 	# remote_policy is 'scp'
     }
 
-    if ($option_remote)
+    if ($options_remote)
     {
 	# if we need to skip remoting for this command?
 
-	if (exists $option_remote->{skip}
-	    and $command =~ /$option_remote->{skip}/)
+	if (exists $options_remote->{skip}
+	    and $command =~ /$options_remote->{skip}/)
 	{
 	    # use the localuser interaction role to prevent remoting
 
@@ -4957,8 +4957,8 @@ sub compute_remote_and_interaction_role
 
 	# if this is the local account
 
-	elsif (exists $option_remote->{localuser}
-	       and $option_remote->{localuser} eq 'yes')
+	elsif (exists $options_remote->{localuser}
+	       and $options_remote->{localuser} eq 'yes')
 	{
 	    # use the localuser interaction role to prevent remoting
 
@@ -4972,13 +4972,13 @@ sub compute_remote_and_interaction_role
 	    # a hardcoded remote policy in the configuration options
 	    # overrides any configuration options for ssh or scp
 
-	    if (exists $option_remote->{remote_policy})
+	    if (exists $options_remote->{remote_policy})
 	    {
-		$remote_policy = $option_remote->{remote_policy};
+		$remote_policy = $options_remote->{remote_policy};
 
-		$remote_prefix = $option_remote->{remote_policy};
+		$remote_prefix = $options_remote->{remote_policy};
 
-		$interaction_role = $option_remote->{name};
+		$interaction_role = $options_remote->{name};
 
 	    }
 
@@ -4986,33 +4986,38 @@ sub compute_remote_and_interaction_role
 
 	    else
 	    {
-		if (exists $option_remote->{ssh_password})
+		if (exists $options_remote->{ssh_password})
 		{
-		    my $ssh_password = $option_remote->{ssh_password};
+		    my $ssh_password = $options_remote->{ssh_password};
 
 		    $remote_prefix .= "sshpass -p $ssh_password ";
 		}
 
-		if (exists $option_remote->{ssh_options})
+		if (exists $options_remote->{ssh_options})
 		{
-		    $ssh_options = "$option_remote->{ssh_options} ";
+		    $ssh_options = "$options_remote->{ssh_options} ";
 		}
 		else
 		{
 		    $ssh_options = '';
 		}
 
-		if (exists $option_remote->{ssh_server})
+		if (exists $options_remote->{ssh_port})
+		{
+		    $ssh_options .= "-p $options_remote->{ssh_port} ";
+		}
+
+		if (exists $options_remote->{ssh_server})
 		{
 		    $interaction_role = "";
 
-		    my $ssh_server = $option_remote->{ssh_server};
+		    my $ssh_server = $options_remote->{ssh_server};
 
-		    my $remote_role = exists $option_remote->{name} ? $option_remote->{name} : $ssh_server;
+		    my $remote_role = exists $options_remote->{name} ? $options_remote->{name} : $ssh_server;
 
-		    if (exists $option_remote->{ssh_user})
+		    if (exists $options_remote->{ssh_user})
 		    {
-			my $ssh_user = $option_remote->{ssh_user};
+			my $ssh_user = $options_remote->{ssh_user};
 
 			$interaction_role = "$ssh_user\@$remote_role";
 
