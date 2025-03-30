@@ -19,7 +19,7 @@ my $test = {
 				     description => "showing that the container works: working directory",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && tar xfz cpan/02-Mo-0.40.tar.gz && cd Mo-0.40 && perl Makefile.PL && make && sudo make install',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && tar xfz cpan/02-Mo-0.40.tar.gz && cd Mo-0.40 && perl Makefile.PL && make && sudo make install',
 				     command_tests => [
 						       {
 							comment => 'perl installation seems to be non-deterministic, only checking a part of the output',
@@ -31,9 +31,10 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 						       },
 						      ],
 				     description => "cpan installation of Mo",
+				     disabled => 'The Mo module is already installed and installation of cpan modules should not be tested.',
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && tar xfz cpan/13-Data-Utilities-0.04.tar.gz && cd Data-Utilities-0.04 && perl Makefile.PL && make && sudo make install',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && tar xfz cpan/13-Data-Utilities-0.04.tar.gz && cd Data-Utilities-0.04 && perl Makefile.PL && make && sudo make install',
 				     command_tests => [
 						       {
 							comment => 'perl installation seems to be non-deterministic, only checking a part of the output',
@@ -46,7 +47,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "cpan installation of Data::Utilities",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && ./autogen.sh && ./configure && make && sudo make install',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && ./autogen.sh && ./configure && make && sudo make install',
 				     command_tests => [
 						       {
 							description => "Can we install the developer package in the Docker container ?",
@@ -68,7 +69,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "convert the container to an image",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --report-disabled --show',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --report-disabled --show',
 				     command_tests => [
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",
@@ -78,8 +79,8 @@ description:
   command: /usr/local/bin/neurospaces_harness
   name: Test report
   package:
-    name: developer
-    version: alpha
+    name: workflow-automation-engine
+    version: beta
 disabled: ~
 selected:
   70_harness/30_docker.t:
@@ -93,7 +94,7 @@ selected:
       tests:
         - Can we list the root directory in the Docker container ?
 
-*** Info: See '>/tmp/report_developer.yml' for the detailed report
+*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",
@@ -103,7 +104,7 @@ No email sent.
 				     description => "inspecting the commands that are tested",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --show-command-tests --report-disabled',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --show-command-tests --report-disabled',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the regular options ?",
@@ -113,8 +114,8 @@ description:
   command: /usr/local/bin/neurospaces_harness
   name: Test report
   package:
-    name: developer
-    version: alpha
+    name: workflow-automation-engine
+    version: beta
 disabled: ~
 selected:
   70_harness/30_docker.t:
@@ -122,7 +123,7 @@ selected:
     - command: 'ls '
     - command: ls -1 /
 
-*** Info: See '>/tmp/report_developer.yml' for the detailed report
+*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",
@@ -132,7 +133,7 @@ No email sent.
 				     description => "inspecting the commands used for the tests using the regular options",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the YAML output formatter ?",
@@ -142,15 +143,15 @@ description:
   command: /usr/local/bin/neurospaces_harness
   name: Test report
   package:
-    name: developer
-    version: alpha
+    name: workflow-automation-engine
+    version: beta
 selected:
   70_harness/30_docker.t:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
 
-*** Info: See '>/tmp/report_developer.yml' for the detailed report
+*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",
@@ -160,7 +161,7 @@ No email sent.
 				     description => "inspecting the commands used for the tests using the YAML output formatter",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a YAML formatted summary ?",
@@ -170,8 +171,8 @@ description:
   command: /usr/local/bin/neurospaces_harness
   name: Test report
   package:
-    name: developer
-    version: alpha
+    name: workflow-automation-engine
+    version: beta
 selected:
   70_harness/30_docker.t:
     - description: 'showing that the container works: working directory'
@@ -184,7 +185,7 @@ selected:
       tests:
         - Can we list the root directory in the Docker container ?
 
-*** Info: See '>/tmp/report_developer.yml' for the detailed report
+*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",
@@ -194,7 +195,7 @@ No email sent.
 				     description => "converting the test specifications to a YAML formatted summary",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::List',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::List',
 				     command_tests => [
 						       {
 							comment => "It is not entirely clear what exactly Heterarch::Test::Output::List should do and how it can be useful.",
@@ -205,8 +206,8 @@ description:
   command: /usr/local/bin/neurospaces_harness
   name: Test report
   package:
-    name: developer
-    version: alpha
+    name: workflow-automation-engine
+    version: beta
 selected:
   70_harness/30_docker.t:
     - description: 'showing that the container works: working directory'
@@ -216,7 +217,7 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests: []
 
-*** Info: See '>/tmp/report_developer.yml' for the detailed report
+*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",
@@ -226,11 +227,11 @@ No email sent.
 				     description => "inspecting the constructs used in the test specifications",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::Latex',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::Latex',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a latex file ?",
-							read => "*** Info: See '>/tmp/report_developer.yml' for the detailed report
+							read => "*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",
@@ -240,14 +241,14 @@ No email sent.
 				     description => "conversion of the test specifications to latex",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::HTMLTable',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::HTMLTable',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to an HTML website ?",
 							disabled => "Heterarch::Test::Output::Formatter::HTMLTable is not fully implemented.",
 							read => '*** die: Can\'t locate object method "process" via package "Heterarch::Test::Output::Formatter::HTMLTable" at /usr/local/bin/neurospaces_harness line 5165.
 
-*** Info: See \'>/tmp/report_developer.yml\' for the detailed report
+*** Info: See \'>/tmp/report_workflow-automation-engine.yml\' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ',
@@ -257,12 +258,12 @@ No email sent.
 				     description => "conversion of the test specifications to an HTML website",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::PDF',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::PDF',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to pdf ?",
 							read => "sh: 1: pdflatex: not found
-*** Info: See '>/tmp/report_developer.yml' for the detailed report
+*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
 /usr/local/bin/neurospaces_harness: 0 error(s)
 ",

@@ -19,7 +19,7 @@ my $test = {
 				     description => "showing that the container works: working directory",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && tar xfz cpan/02-Mo-0.40.tar.gz && cd Mo-0.40 && perl Makefile.PL && make && sudo make install',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && tar xfz cpan/02-Mo-0.40.tar.gz && cd Mo-0.40 && perl Makefile.PL && make && sudo make install',
 				     command_tests => [
 						       {
 							comment => 'perl installation seems to be non-deterministic, only checking a part of the output',
@@ -34,7 +34,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     disabled => 'The Mo module is already installed and installation of cpan modules should not be tested.',
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && tar xfz cpan/13-Data-Utilities-0.04.tar.gz && cd Data-Utilities-0.04 && perl Makefile.PL && make && sudo make install',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && tar xfz cpan/13-Data-Utilities-0.04.tar.gz && cd Data-Utilities-0.04 && perl Makefile.PL && make && sudo make install',
 				     command_tests => [
 						       {
 							comment => 'perl installation seems to be non-deterministic, only checking a part of the output',
@@ -47,7 +47,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "cpan installation of Data::Utilities",
 				    },
 				    {
-				     command => 'cd ~/projects/developer/source/snapshots/master && ./autogen.sh && ./configure && make && sudo make install',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && ./autogen.sh && ./configure && make && sudo make install',
 				     command_tests => [
 						       {
 							comment => "The timeout value of this test is a guess, it could be off by a large amount.",

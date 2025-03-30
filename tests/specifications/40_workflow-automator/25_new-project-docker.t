@@ -115,10 +115,7 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation engine?",
-						   read => "touch ./neurospaces_cpan_modules
-make  install-data-hook
-make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-Developer package installation finished
+						   read => "Developer package installation finished
 make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'

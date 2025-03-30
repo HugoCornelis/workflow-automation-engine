@@ -128,9 +128,9 @@ Then check if they work by inspecting the examples they provide (with various op
 				command_tests => [
 						  {
 						   description => "Has the project been correctly initialized ?",
-						   disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+						   disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 								? ''
-								: "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+								: "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 						   read => '
 global_field_project_configuration:
   field_project_configuration_filename: workflow-project.pl
@@ -138,10 +138,10 @@ global_field_project_configuration:
   from_directory: .
   from_executable: workflow on the command line
   technical_project_configuration_directory: .
-  true_technical_project_configuration_directory: /home/hugo/projects/developer/source/snapshots/master/tmp
-  true_technical_project_configuration_filename: /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-project.pl
-  true_technical_project_data_commands_directory: /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data
-  true_technical_project_data_configuration_directory: /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration-data
+  true_technical_project_configuration_directory: /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp
+  true_technical_project_configuration_filename: /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-project.pl
+  true_technical_project_data_commands_directory: /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-commands-data
+  true_technical_project_data_configuration_directory: /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-configuration-data
 ',
 						  },
 						 ],
@@ -153,16 +153,16 @@ global_field_project_configuration:
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required as a work around between the test engine and the workflow engine under test.",
 						   description => "Have the project files been correctly installed ?",
-						   disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+						   disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 								? ''
-								: "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+								: "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 						   read => '# mkdir --parents /home/hugo/bin
 #
 # ln -sf /usr/local/bin/workflow /home/hugo/bin/workflow-tests-workflow
 #
-# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration /home/hugo/bin/workflow-tests-configuration
+# ln -sf /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-configuration /home/hugo/bin/workflow-tests-configuration
 #
-# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands /home/hugo/bin/workflow-tests-commands
+# ln -sf /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-commands /home/hugo/bin/workflow-tests-commands
 #
 # bash -c "echo \'# workflow-tests-workflow
 
@@ -170,7 +170,7 @@ alias workflow-tests-workflow=\"grc workflow-tests-workflow\"
 alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 \' | cat >>/home/hugo/.bashrc"
 #
-# bash -c "echo \'. /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-bash-completion.sh
+# bash -c "echo \'. /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-bash-completion.sh
 \' | cat >>/home/hugo/.bashrc"
 #
 # sudo     bash -c "echo \'
@@ -184,9 +184,9 @@ conf.workflow-tests-configuration
 
 \' | cat >>/etc/grc.conf"
 #
-# sudo     ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/conf.workflow-tests-configuration /usr/share/grc/conf.workflow-tests-configuration
+# sudo     ln -sf /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/conf.workflow-tests-configuration /usr/share/grc/conf.workflow-tests-configuration
 #
-# sudo     ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/conf.workflow-tests-workflow /usr/share/grc/conf.workflow-tests-workflow
+# sudo     ln -sf /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/conf.workflow-tests-workflow /usr/share/grc/conf.workflow-tests-workflow
 #
 ',
 						   wait => 0.1,
@@ -226,39 +226,39 @@ conf.workflow-tests-configuration
 						  },
 						 ],
 				description => "correct installation of the new project commands",
-				disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+				disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 					     ? ''
-					     : "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+					     : "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 			       },
 			       {
 				command => 'workflow-tests-workflow examples_sh sh_single_command --dry-run',
 				command_tests => [
 						  {
 						   description => "Have the project specific commands been correctly installed ?",
-						   read => '/home/hugo/bin/workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
+						   read => '/home/hugo/bin/workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
 ',
 						  },
 						 ],
 				description => 'are the shell command templates installed and executed, --dry-run ?',
-				disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+				disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 					     ? ''
-					     : "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+					     : "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 			       },
 			       {
 				command => 'workflow-tests-workflow examples_sh sh_single_command',
 				command_tests => [
 						  {
 						   description => "Have the project specific commands been correctly installed ?",
-						   read => '# /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+						   read => '# /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 #
 an example of the invocation of a single command
 ',
 						  },
 						 ],
 				description => 'are the shell command templates installed and executed ?',
-				disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+				disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 					     ? ''
-					     : "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+					     : "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 			       },
 			       {
 				arguments => [
@@ -270,16 +270,16 @@ an example of the invocation of a single command
 						  {
 						   comment => "This test is the same as the previous one except for the cd command.",
 						   description => "Have the project specific commands been correctly installed and are they executed when invoked from a different directory ?",
-						   read => '# /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+						   read => '# /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh
 #
 an example of the invocation of a single command
 ',
 						  },
 						 ],
 				description => 'are the shell command templates installed and executed from a different directory?',
-				disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+				disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 					     ? ''
-					     : "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+					     : "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 			       },
 			       {
 				arguments => [
@@ -295,14 +295,14 @@ an example of the invocation of a single command
 						  {
 						   description => "Can we add a new target and a template for new shell commands for this target?",
 						   wait => 1,
-						   read => 'workflow-tests-workflow: added target new_target to /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration-data/targets.yml
+						   read => 'workflow-tests-workflow: added target new_target to /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-configuration-data/targets.yml
 workflow-tests-workflow: created the shell command file for target new_target',
 						  },
 						 ],
 				description => 'can we add new targets with a shell template file for their commands ?',
-				disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+				disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 					     ? ''
-					     : "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+					     : "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 			       },
 			       {
 				arguments => [
@@ -323,14 +323,14 @@ workflow-tests-workflow: created the shell command file for target new_target',
 							    comment => "note that the '../' is required because the preparation clause switches to the './tmp' directory",
 							    expected_output_file => "../$::global_config->{tests_directory}/strings/two-targets-added.txt",
 							   },
-						   read_not_used => 'workflow-tests-workflow: added target new_target2 to /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration-data/targets.yml
+						   read_not_used => 'workflow-tests-workflow: added target new_target2 to /home/hugo/projects/workflow-automation-engine/source/snapshots/master/tmp/workflow-tests-configuration-data/targets.yml
 workflow-tests-workflow: created the shell command file for target new_target2',
 						  },
 						 ],
 				description => 'can we add new targets2 with a shell template file for their commands ?',
-				disabled => ($ENV{PWD} eq '/home/hugo/projects/developer/source/snapshots/master'
+				disabled => ($ENV{PWD} eq '/home/hugo/projects/workflow-automation-engine/source/snapshots/master'
 					     ? ''
-					     : "the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test"),
+					     : "the currenct directory must be '/home/hugo/projects/workflow-automation-engine/source/snapshots/master' to enable this test"),
 			       },
 			      ],
        description => "testing of the workflow automation engine",
