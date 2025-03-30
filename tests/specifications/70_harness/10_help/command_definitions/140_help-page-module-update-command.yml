@@ -1,0 +1,36 @@
+---
+command: bin/neurospaces_harness module-update --help
+command_tests:
+  - description: help page of the module-update command
+    read: |+2
+      
+      bin/neurospaces_harness module-update <options> <module-name>
+      
+      Update the given module with the given arguments and directives.
+      
+      This command reads the (existing) test module with the given name and the reproduces it as file-structured yaml.
+      
+      Options:
+          --help         Show this help message.
+          --output-json  Update the new module in json format.
+          --output-yaml  Update the new module in yaml format.
+
+comment: |+
+  This type of comment element can be inserted at any level in the YAML files that define tests.
+  
+  For a concise example, see the second command definition that was generated with this one.
+  
+  The tests are defined with arrays of command definitions that each can have an array of command tests.
+  
+  Recognized key words at the level of the command definitions are (in alphabetical order):
+  
+  class: The name of a perl class that will execute the tests.
+  command: The command the must be tested, with space seperated arguments and options.
+  command_tests: An array of the tests executed against the command.
+  disable: Gives the reason why this test command is disabled.
+  description: A single line description of all the tests for the given command.
+  error: Gives the reason why this test command will always fail.
+  numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+  tag: An array of tags associated with this command.  These are matched with the tags given on the command line.
+
+description: help page of the module-update command

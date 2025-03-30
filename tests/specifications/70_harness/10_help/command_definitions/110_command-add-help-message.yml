@@ -1,0 +1,19 @@
+---
+command: bin/neurospaces_harness command-add --help
+command_tests:
+  - description: Is a help message given (command-add) ?
+    read: |2
+      
+      bin/neurospaces_harness command-add <options> <module-name> <command-name> <'command-test-description'>
+      
+      Add a new command with the given name under the given module and try to insert its current output as the expected output.
+      
+      Options:
+          --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used.
+          --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
+          --description    The description to insert.  The description is inserted both at command definition level and at command test level.
+          --help           Show this help message.
+          --output-json    Output in json format.
+          --output-yaml    Output in yaml format.
+      
+description: help message

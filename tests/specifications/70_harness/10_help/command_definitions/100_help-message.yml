@@ -1,0 +1,61 @@
+---
+arguments:
+  - --help
+command: bin/neurospaces_harness
+command_tests:
+  - description: Is a help message given ?
+    read: |2
+      
+      bin/neurospaces_harness: test definition processor and executor
+      
+      synopsis:
+      
+      bin/neurospaces_harness <command> <options>
+      
+      The default command is 'run-tests'.
+      
+      commands:
+          command-add          Add a new command with the given name under the given module and try to insert its current output as the expected output.
+          configuration-create Create an initial test configuration with instructions how to expand it to a full test suite.
+          help                 Show the help page. 
+          module-create        Create a new module with the given name.
+          module-update        Update the given module with the given arguments and directives.
+          run-tests            Run the tests, possibly with an executor that converts the tests rather than running them.
+      
+      options:
+          --check-test-names           Check the pathnames of the specification files against the names of the tests.
+          --config-filename            The name of the file with the configuration (default is: ./tests.config).
+          --console-type               The type of the console output (one of linear, status).
+          --debugging                  Enable specific debugging options.
+          --dump-json                  Dump test specifications to json files in /tmp/.
+          --dump-perl                  Dump test specifications to perl files in /tmp/.
+          --dump-yaml                  Dump test specifications to yaml files in /tmp/.
+          --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
+          --email                      Allow to send emails, the default is taken from $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
+          --flattenout                 Flattenout the test definitions before testing,
+                                       this experimental feature might increase test performance,
+                                       by recycling test definitions.
+          --harness-prune              Remove all the docker containers.
+          --help                       Print usage information.
+          --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
+          --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
+          --input-modules              Merge the given file or directory as modules to be tested (can given several times).
+          --numerical-compare          Attempt to compare numbers numerically when string differences are found (default enabled).
+          --output                     The class that should generate the output.
+          --output-content-line-limit  Maximum number of lines when generating content output (latex, html, pdf).
+          --output-figures             Generate figures for test output with a figure clause.
+          --output-html                Generate HTML output.
+          --output-latex               Generate Latex output.
+          --output-levels              Generate output for these levels (default is 'meta, module, command_definition, command_test'.
+          --output-pdf                 Generate PDF output.
+          --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
+          --regex-selector             Defines a regex to run specific tests.
+          --report-disabled            Include information of disabled tests in the test report.
+          --show                       Show tests that would be run using the current configuration.
+          --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
+          --tags                       Only test test modules that have been tagged with these tags (default: all tags).
+          --timeout-multiplier         Multiply all timeout values with this constant.
+          --timings                    Add timing information about the tests to the report.
+          --trace                      Enable tracing using the given unix shell command (eg. 'strace -f', 'retsnoop', 'RRLOG=/tmp/rr.log rr record' or syzbot/syzkaller, https://hackerbikepacker.com/syzbot).
+          --verbose                    Set verbosity level.
+description: help message
