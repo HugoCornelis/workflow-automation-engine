@@ -27,7 +27,7 @@ sub _documentation_build
     my $commands
 	= [
 	   "cd $workflow_project_directory",
-	   "neurospaces_harness --output-pdf --output-figures --verbose --output-content-line-limit 3000 $command_line_tags",
+	   "vigilia --output-pdf --output-figures --verbose --output-content-line-limit 3000 $command_line_tags",
 	  ];
 
     execute_shell_command_array($commands);

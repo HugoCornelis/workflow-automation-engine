@@ -51,31 +51,31 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     command_tests => [
 						       {
 							comment => "The timeout value of this test is a guess, it could be off by a large amount.",
-							description => "Can we install the developer package in the Docker container ?",
+							description => "Can we install the workflow engine package in the Docker container ?",
 							read => 'Developer package installation finished',
 							timeout => 50,
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
 						      ],
-				     description => "showing that the container works: installing the Developer package in the Docker container",
+				     description => "showing that the container works: installing the workflow engine package in the Docker container",
 				    },
 				    {
-				     comment => 'Start a container from this image with "docker run -it neurospaces-developer-image bash"',
-				     command => 'docker-snapshot --snapshot-image-name neurospaces-developer-image',
+				     comment => 'Start a container from this image with "docker run -it vigilia-image bash"',
+				     command => 'docker-snapshot --snapshot-image-name vigilia-image',
 				     command_tests => [
 						       {
-							description => "Can we take a snapshot of the current Docker container and convert it to an image that has the developer package installed ?",
+							description => "Can we take a snapshot of the current Docker container and convert it to an image that has the workflow engine package installed ?",
 							read => '',
 						       },
 						      ],
-				     description => "convert the container to an image that has the developer package installed",
+				     description => "convert the container to an image that has the workflow engine package installed",
 				    },
 				   ],
 	    comment => "docker harness creator module",
 	    description => "docker harness create test module",
 	    harnessing => {
 			   class => {
-				     comment => 'Enter this container with "docker exec -it neurospaces_harness_test_container bash"',
+				     comment => 'Enter this container with "docker exec -it vigilia_test_container bash"',
 				     description => '
 This class instantiates a docker image based on the given docker file, then runs a container based on that image.
 
@@ -86,10 +86,10 @@ The class properties can include IP network information and IP address of the co
 				     docker => {
 						default_user => 'neurospaces',
 						dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
-						name_container => 'neurospaces_harness_test_container',
-						name_image => 'neurospaces_harness_test_image',
+						name_container => 'vigilia_test_container',
+						name_image => 'vigilia_test_image',
 					       },
-				     identifier => 'docker_based_harness',
+				     identifier => 'docker_harness_2',
 				     type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 				    },
 			  },
@@ -109,7 +109,7 @@ convert test specifications to documentation.
 ",
 			      purpose => "Docker test environment.",
 			     },
-	    name => '70_harness/15_docker_creator.t',
+	    name => '20_vigilia/15_docker_creator.t',
 	   };
 
 return $test;

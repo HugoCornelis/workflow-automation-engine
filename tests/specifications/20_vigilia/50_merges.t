@@ -8,14 +8,14 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --config-filename ./tests-merge.config --input-modules ./tests/to-be-merged/110_mid-level --input-modules ./tests/to-be-merged/111_low-level --show-command-tests',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --config-filename ./tests-merge.config --input-modules ./tests/to-be-merged/110_mid-level --input-modules ./tests/to-be-merged/111_low-level --show-command-tests',
 				command_tests => [
 						  {
 						   description => "Can we merge several partial test specifications and then run these merged tests?",
 						   read => "
 ---
 description:
-  command: /usr/local/bin/neurospaces_harness
+  command: /usr/local/bin/vigilia
   name: Test report
   package:
     name: developer-test-merge
@@ -27,7 +27,7 @@ selected:
 
 *** Info: See '>/tmp/report_developer-test-merge.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 						   timeout => 10,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -39,11 +39,11 @@ No email sent.
        description => "incomplete test specifications and merge of test modules",
        harnessing => {
 		      class => {
-				comment => 'Enter this container with "docker exec -it neurospaces_developer_package_test_container bash"',
+				comment => 'Enter this container with "docker exec -it vigilia_container bash"',
 				docker => {
 					   default_user => 'neurospaces',
-					   name_container => 'neurospaces_developer_package_test_container',
-					   name_image => 'neurospaces-developer-image',
+					   name_container => 'vigilia_container',
+					   name_image => 'vigilia-image',
 					  },
 				identifier => 'docker_container_based_harness',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker::Image',
@@ -66,7 +66,7 @@ Harness.
 ",
 			 purpose => "Merging incomplete test specifications",
 			},
-       name => '70_harness/50_merges.t',
+       name => '20_vigilia/50_merges.t',
       };
 
 return $test;

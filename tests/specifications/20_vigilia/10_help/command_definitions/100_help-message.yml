@@ -1,16 +1,16 @@
 ---
 arguments:
   - --help
-command: bin/neurospaces_harness
+command: bin/vigilia
 command_tests:
   - description: Is a help message given ?
     read: |2
       
-      bin/neurospaces_harness: test definition processor and executor
+      bin/vigilia: test definition processor and executor
       
       synopsis:
       
-      bin/neurospaces_harness <command> <options>
+      bin/vigilia <command> <options>
       
       The default command is 'run-tests'.
       

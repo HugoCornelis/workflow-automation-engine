@@ -1759,7 +1759,7 @@ sub report_send_by_email
 
 		my $message
 		    = (
-		       "neurospaces_harness test report\n"
+		       "vigilia test report\n"
 		       . "Generated on " . strftime("%Y-%m-%d %H:%M:%S", localtime(time())) . "\n"
 		       . "\n========\n"
 		       . Dump($global_test_report)
@@ -1770,7 +1770,7 @@ sub report_send_by_email
 		    (
 		     {
 		      to => 'cornelis@uthscsa.edu',
-		      subject => '[neurospaces_harness] test report',
+		      subject => '[vigilia] test report',
 		      msg => $message,
 		     },
 		    );
@@ -1910,7 +1910,7 @@ sub cd_construct_command_line
 	    $argument_array = $command_definition->{arguments};
 	}
 
-	#t when no command entry is present: Use of uninitialized value in concatenation (.) or string at /usr/local/bin/neurospaces_harness line 1566.
+	#t when no command entry is present: Use of uninitialized value in concatenation (.) or string at /usr/local/bin/vigilia line 1566.
 
 	my $command_line = $command_definition->{command} . " " . (join ' ', @$argument_array);
 
@@ -4848,7 +4848,7 @@ sub _preparation
 
 	foreach my $preparation_harness (@$all_preparation_harnesses)
 	{
-	    #t when no command entry is present: Use of uninitialized value in concatenation (.) or string at /usr/local/bin/neurospaces_harness line 4435.
+	    #t when no command entry is present: Use of uninitialized value in concatenation (.) or string at /usr/local/bin/vigilia line 4435.
 
 	    my $preparation_name
 		= ($command_definition
@@ -5923,7 +5923,7 @@ sub hs_construct_command_line
 
     # if this is a command specific to this harness
 
-    #t when no command entry is present: Use of uninitialized value in pattern match (m//) at /usr/local/bin/neurospaces_harness line 5343.
+    #t when no command entry is present: Use of uninitialized value in pattern match (m//) at /usr/local/bin/vigilia line 5343.
 
     if ($command_definition->{command} =~ m'^docker-snapshot')
     {
@@ -6408,8 +6408,8 @@ sub ex_terminate
 
 	    if ($decorated_context_path)
 	    {
-		# context_path: 1___/___./tests/specifications/70_harness/10_help/summary.yml___/___1___/___bin/neurospaces_harness___/___1___/___NONE
-		# context_path: 2___/___90_yaml/70_harness/10_help.t___/___1___/___bin/neurospaces_harness___/___1___/___NONE
+		# context_path: 1___/___./tests/specifications/70_harness/10_help/summary.yml___/___1___/___bin/vigilia___/___1___/___NONE
+		# context_path: 2___/___90_yaml/70_harness/10_help.t___/___1___/___bin/vigilia___/___1___/___NONE
 
 		my $number_matcher = "([0-9]+)";
 

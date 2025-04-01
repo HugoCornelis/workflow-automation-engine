@@ -123,7 +123,7 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 						   read_old => 'make[1]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
  /usr/bin/mkdir -p \'/usr/local/bin\'
- /usr/bin/install -c bin/neurospaces_harness bin/neurospaces_harness_2_html bin/workflow \'/usr/local/bin\'
+ /usr/bin/install -c bin/vigilia bin/vigilia_2_html bin/workflow \'/usr/local/bin\'
 ======================== Installing CPAN modules
 ( cd cpan ; ./cpan_install [0-9][0-9]*.gz )
 Installing CPAN modules
@@ -1047,7 +1047,7 @@ project-specific workflows consisting of shell commands.
 					   name_container => 'workflow_automation_test_container',
 					   name_image => 'workflow_automation_image',
 					  },
-				identifier => 'docker_based_harness',
+				identifier => 'docker_harness',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },

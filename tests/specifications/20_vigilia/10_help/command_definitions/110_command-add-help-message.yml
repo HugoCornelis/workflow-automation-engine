@@ -1,10 +1,10 @@
 ---
-command: bin/neurospaces_harness command-add --help
+command: bin/vigilia command-add --help
 command_tests:
   - description: Is a help message given (command-add) ?
     read: |2
       
-      bin/neurospaces_harness command-add <options> <module-name> <command-name> <'command-test-description'>
+      bin/vigilia command-add <options> <module-name> <command-name> <'command-test-description'>
       
       Add a new command with the given name under the given module and try to insert its current output as the expected output.
       

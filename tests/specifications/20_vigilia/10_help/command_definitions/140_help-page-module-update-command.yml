@@ -1,10 +1,10 @@
 ---
-command: bin/neurospaces_harness module-update --help
+command: bin/vigilia module-update --help
 command_tests:
   - description: help page of the module-update command
     read: |+2
       
-      bin/neurospaces_harness module-update <options> <module-name>
+      bin/vigilia module-update <options> <module-name>
       
       Update the given module with the given arguments and directives.
       

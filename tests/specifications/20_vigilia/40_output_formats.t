@@ -69,21 +69,21 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "convert the container to an image",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --report-disabled --show',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled --show',
 				     command_tests => [
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",
 							read => "
 ---
 description:
-  command: /usr/local/bin/neurospaces_harness
+  command: /usr/local/bin/vigilia
   name: Test report
   package:
     name: workflow-automation-engine
     version: beta
 disabled: ~
 selected:
-  70_harness/30_docker.t:
+  20_vigilia/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
         - Are we in the correct working directory in the Docker container ?
@@ -96,7 +96,7 @@ selected:
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -104,28 +104,28 @@ No email sent.
 				     description => "inspecting the commands that are tested",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --show-command-tests --report-disabled',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --show-command-tests --report-disabled',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the regular options ?",
 							read => "
 ---
 description:
-  command: /usr/local/bin/neurospaces_harness
+  command: /usr/local/bin/vigilia
   name: Test report
   package:
     name: workflow-automation-engine
     version: beta
 disabled: ~
 selected:
-  70_harness/30_docker.t:
+  20_vigilia/30_docker.t:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -133,27 +133,27 @@ No email sent.
 				     description => "inspecting the commands used for the tests using the regular options",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::CommandTests',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the YAML output formatter ?",
 							read => "
 ---
 description:
-  command: /usr/local/bin/neurospaces_harness
+  command: /usr/local/bin/vigilia
   name: Test report
   package:
     name: workflow-automation-engine
     version: beta
 selected:
-  70_harness/30_docker.t:
+  20_vigilia/30_docker.t:
     - command: 'pwd '
     - command: 'ls '
     - command: ls -1 /
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -161,20 +161,20 @@ No email sent.
 				     description => "inspecting the commands used for the tests using the YAML output formatter",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --output Heterarch::Test::Output::Formatter::YAML::Summary',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a YAML formatted summary ?",
 							read => "
 ---
 description:
-  command: /usr/local/bin/neurospaces_harness
+  command: /usr/local/bin/vigilia
   name: Test report
   package:
     name: workflow-automation-engine
     version: beta
 selected:
-  70_harness/30_docker.t:
+  20_vigilia/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
         - Are we in the correct working directory in the Docker container ?
@@ -187,7 +187,7 @@ selected:
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -195,7 +195,7 @@ No email sent.
 				     description => "converting the test specifications to a YAML formatted summary",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::List',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --output Heterarch::Test::Output::List',
 				     command_tests => [
 						       {
 							comment => "It is not entirely clear what exactly Heterarch::Test::Output::List should do and how it can be useful.",
@@ -203,13 +203,13 @@ No email sent.
 							read => "
 ---
 description:
-  command: /usr/local/bin/neurospaces_harness
+  command: /usr/local/bin/vigilia
   name: Test report
   package:
     name: workflow-automation-engine
     version: beta
 selected:
-  70_harness/30_docker.t:
+  20_vigilia/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests: []
     - description: 'showing that the container works: working directory contents'
@@ -219,7 +219,7 @@ selected:
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -227,13 +227,13 @@ No email sent.
 				     description => "inspecting the constructs used in the test specifications",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::Latex',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --output Heterarch::Test::Output::Formatter::Latex',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a latex file ?",
 							read => "*** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -241,16 +241,16 @@ No email sent.
 				     description => "conversion of the test specifications to latex",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::HTMLTable',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --output Heterarch::Test::Output::Formatter::HTMLTable',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to an HTML website ?",
 							disabled => "Heterarch::Test::Output::Formatter::HTMLTable is not fully implemented.",
-							read => '*** die: Can\'t locate object method "process" via package "Heterarch::Test::Output::Formatter::HTMLTable" at /usr/local/bin/neurospaces_harness line 5165.
+							read => '*** die: Can\'t locate object method "process" via package "Heterarch::Test::Output::Formatter::HTMLTable" at /usr/local/bin/vigilia line 5165.
 
 *** Info: See \'>/tmp/report_workflow-automation-engine.yml\' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ',
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -258,14 +258,14 @@ No email sent.
 				     description => "conversion of the test specifications to an HTML website",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && neurospaces_harness --regex 30_docker --output Heterarch::Test::Output::Formatter::PDF',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --output Heterarch::Test::Output::Formatter::PDF',
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to pdf ?",
 							read => "sh: 1: pdflatex: not found
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
-/usr/local/bin/neurospaces_harness: 0 error(s)
+/usr/local/bin/vigilia: 0 error(s)
 ",
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
@@ -276,14 +276,14 @@ No email sent.
 	    description => "output formats test module",
 	    harnessing => {
 			   class => {
-				     comment => 'Enter this container with "docker exec -it neurospaces_harness_test_container bash"',
+				     comment => 'Enter this container with "docker exec -it vigilia_test_container bash"',
 				     docker => {
 						default_user => 'neurospaces',
 						dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
-						name_container => 'neurospaces_harness_test_container',
-						name_image => 'neurospaces_harness_test_image',
+						name_container => 'vigilia_test_container',
+						name_image => 'vigilia_test_image',
 					       },
-				     identifier => 'docker_based_harness',
+				     identifier => 'docker_harness_1',
 				     type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 				    },
 			  },
@@ -303,7 +303,7 @@ convert test specifications to documentation.
 ",
 			      purpose => "Tests for the different output formats.",
 			     },
-	    name => '70_harness/40_output_formats.t',
+	    name => '20_vigilia/40_output_formats.t',
 	   };
 
 return $test;

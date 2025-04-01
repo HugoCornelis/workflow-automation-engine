@@ -73,7 +73,7 @@ project-specific workflows that use system shell commands.
 					   name_container => 'workflow_automation_test_container_errors',
 					   name_image => 'workflow_automation_image_errors',
 					  },
-				identifier => 'docker_based_harness_errors',
+				identifier => 'docker_harness_errors',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },

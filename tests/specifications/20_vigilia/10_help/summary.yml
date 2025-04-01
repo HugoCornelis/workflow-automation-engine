@@ -1,5 +1,5 @@
 ---
-description: neurospaces_harness tester help and usage information
+description: vigilia tester help and usage information
 documentation:
   explanation: |+2
     
@@ -18,4 +18,4 @@ documentation:
     that guarantee correct application behaviour.
 
   purpose: Help page.
-name: 70_harness/10_help/summary.yml
+name: 20_vigilia/10_help/summary.yml

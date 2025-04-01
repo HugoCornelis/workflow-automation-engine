@@ -1,17 +1,17 @@
 ---
-command: bin/neurospaces_harness configuration-create --help
+command: bin/vigilia module-create --help
 command_tests:
-  - description: help page of the configuration command
+  - description: help page of the module-create command
     read: |+2
       
-      bin/neurospaces_harness configuration-create <options> <package-name> <package-version> [ <test-module-name> ]
+      bin/vigilia module-create <options> <module-name>
       
-      Create an initial test configuration with instructions how to expand it to a full test suite.
+      Create a new module with the given name.
       
       Options:
           --help         Show this help message.
-          --output-json  Output the configuration in json format.
-          --output-yaml  Output the configuration in yaml format.
+          --output-json  Output the new module in json format.
+          --output-yaml  Output the new module in yaml format.
 
 comment: |+
   This type of comment element can be inserted at any level in the YAML files that define tests.
@@ -31,4 +31,4 @@ comment: |+
   numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
   tag: An array of tags associated with this command.  These are matched with the tags given on the command line.
 
-description: help page of the configuration command
+description: help page of the module-create command

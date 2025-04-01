@@ -381,7 +381,7 @@ The class properties can include IP network information and IP address of the co
 					   name_container => 'workflow_feature_testing_container',
 					   name_image => 'workflow_feature_testing_image',
 					  },
-				identifier => 'docker_based_harness_feature_testing',
+				identifier => 'docker_harness_feature_testing',
 				type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 			       },
 		     },

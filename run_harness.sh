@@ -1,4 +1,4 @@
 #!/bin/sh
 
-neurospaces_harness
+vigilia
 

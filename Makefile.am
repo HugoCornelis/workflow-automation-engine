@@ -17,8 +17,8 @@
 SUBDIRS = perl
 
 dist_bin_SCRIPTS = \
-	bin/neurospaces_harness \
-	bin/neurospaces_harness_2_html \
+	bin/vigilia \
+	bin/vigilia_2_html \
 	bin/workflow
 
 workflowautomationtestdir=$(prefix)/neurospaces/workflow-automation
@@ -59,7 +59,7 @@ clean-local:
 dist-hook:
 	$(srcdir)/install-sh -d $(distdir)/tests
 	$(srcdir)/install-sh -d $(distdir)/tests/html
-	( cd $(distdir)/tests && chmod -R u+w . && ../bin/neurospaces_harness_2_html --introduction introduction.html )
+	( cd $(distdir)/tests && chmod -R u+w . && ../bin/vigilia_2_html --introduction introduction.html )
 
 install-data-local: neurospaces_cpan_modules
 
@@ -78,8 +78,8 @@ TESTS = run_harness.sh
 html-upload-prepare:
 	rm -fr html/htdocs/neurospaces_project/$(PACKAGE)
 	mkdir -p html/htdocs/neurospaces_project/$(PACKAGE)
-# $Format: "	( cd tests && neurospaces_harness_2_html --header '<img src=\"ns-main-logo-dark2-notext-32x32.jpg\" alt=\"Main Neurospaces logo\"> ${package}, ${label}, ${email} <hr>' --introduction introduction.html )" $
-	( cd tests && neurospaces_harness_2_html --header '<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr>' --introduction introduction.html )
+# $Format: "	( cd tests && vigilia_2_html --header '<img src=\"ns-main-logo-dark2-notext-32x32.jpg\" alt=\"Main Neurospaces logo\"> ${package}, ${label}, ${email} <hr>' --introduction introduction.html )" $
+	( cd tests && vigilia_2_html --header '<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr>' --introduction introduction.html )
 
 #t perhaps also add a target to check the syntax of all the html ?
 

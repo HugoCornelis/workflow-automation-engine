@@ -65,14 +65,14 @@ var
 	    description => "docker harness test module",
 	    harnessing => {
 			   class => {
-				     comment => 'Enter this container with "docker exec -it neurospaces_harness_test_container bash"',
+				     comment => 'Enter this container with "docker exec -it vigilia_test_container bash"',
 				     docker => {
 						default_user => 'neurospaces',
 						dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
-						name_container => 'neurospaces_harness_test_container',
-						name_image => 'neurospaces_harness_test_image',
+						name_container => 'vigilia_test_container',
+						name_image => 'vigilia_test_image',
 					       },
-				     identifier => 'docker_based_harness',
+				     identifier => 'docker_harness_3',
 				     type => 'Heterarch::Test::ExecutionContext::Harness::Docker',
 				    },
 			  },
@@ -92,7 +92,7 @@ separate the test environment from the developer's environment.
 ",
 			      purpose => "Docker test environment.",
 			     },
-	    name => '70_harness/30_docker.t',
+	    name => '20_vigilia/30_docker.t',
 	   };
 
 return $test;

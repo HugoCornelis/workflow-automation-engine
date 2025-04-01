@@ -7926,6 +7926,9 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     #! they should do their own checking for a valid
     #! field_configuration, project_name as required.
 
+    #t this may give an 'Use of uninitialized value in exists at /home/neurospaces/bin/workflow-tests-workflow line 7929.'
+    #t *** Executing docker workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa 12" 5
+
     if ($option_target eq 'builtin'
 	and (defined $option_commands->[0]
 	     and exists $global_builtin_commands->{$option_commands->[0]})
