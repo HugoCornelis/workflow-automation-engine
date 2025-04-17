@@ -3519,9 +3519,13 @@ sub _file_contains_regex
 }
 
 
-# initialize the command module
+#
+# Initialize the command module.
+#
+# This sub reads and parses the workflows written in perl.
+#
 
-sub _c_init
+sub _workflow_commands_initialize
 {
     my $commands_seen;
 
@@ -6178,9 +6182,97 @@ package FieldProject;
 our $status;
 
 
-# initiallize field project related global configuration
+sub _configuration_export
+{
+    my $field_project_configuration = shift;
 
-sub _f_init
+    my $technical_project_configuration = shift;
+
+    my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
+
+    my $configuration
+	= {
+	   # assume a simple integer incremental version number
+
+	   configuration_version => 1,
+	   field_project_configuration => $field_project_configuration,
+	   technical_project_configuration => $technical_project_configuration,
+	  };
+
+    if (0)
+    {
+	use Data::Dumper;
+
+	print Dumper( { configuration => $configuration } );
+    }
+
+    {
+	use YAML;
+
+	my $yaml_export_filename = "$sources_configuration_directory/configuration.yaml";
+
+	# errors such as permission errors are silently discarded to allow execution to continue
+
+	eval
+	{
+	    local $SIG{'__DIE__'};
+
+	    YAML::DumpFile($yaml_export_filename, $configuration);
+	};
+    }
+
+    eval
+    {
+	local $SIG{'__DIE__'};
+
+	require JSON;
+
+	my $json_export_filename = "$sources_configuration_directory/configuration.json";
+
+	my $json = JSON->new();
+
+	#! allow code refs, they are converted to nulls
+
+	$json->allow_unknown(1);
+
+	$json->canonical(1);
+
+	my $file = IO::File->new(">$json_export_filename");
+
+	print $file $json->pretty->encode($configuration);
+
+	$file->close();
+    };
+
+    eval
+    {
+	local $SIG{'__DIE__'};
+
+	# sudo apt install libtoml-perl
+
+	require TOML;
+
+	my $toml_export_filename = "$sources_configuration_directory/configuration.toml";
+
+	my $file = IO::File->new(">$toml_export_filename");
+
+	print $file TOML::to_toml($configuration);
+
+	$file->close();
+    };
+}
+
+
+#
+# Initiallize field project related global configuration.
+#
+# This function reads the field project configuration with the project
+# name, then reads the technical configuration.
+#
+# This function does not read the workflows.
+#
+
+sub _configuration_initialize
 {
     # default result: empty
 
@@ -7157,14 +7249,18 @@ sub main
 
     # initiallize field project related global configuration
 
-    ($global_field_project_configuration, $global_technical_project_configuration) = FieldProject::_f_init();
+    ($global_field_project_configuration, $global_technical_project_configuration) = FieldProject::_configuration_initialize();
+
+    # make the configuration available to external programs
+
+    FieldProject::_configuration_export($global_field_project_configuration, $global_technical_project_configuration);
 
     if ($global_field_project_configuration
 	and $global_technical_project_configuration)
     {
 	# initialize the command module
 
-	Command::_c_init();
+	Command::_workflow_commands_initialize();
 
 	# parse the local.mk packages to update the dynamically generated help pages
 
