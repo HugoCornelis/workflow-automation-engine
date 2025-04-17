@@ -807,7 +807,9 @@ arguments:
 
 sub ${target_name}_array_of_commands
 {
-    my \$force = \$ARGV[0] || \"\";
+    my \$arguments = shift || [];
+
+    my \$force = \$arguments->[0] || \"\";
 
     my \$local_commands
 	= [
@@ -867,7 +869,9 @@ our \$target_servers = \$::global_technical_project_configuration->{target_serve
 
 sub ${target_name}_array_of_commands_remote_execution
 {
-    my \$force = \$ARGV[0] || \"\";
+    my \$arguments = shift || [];
+
+    my \$force = \$arguments->[0] || \"\";
 
     my \$remote = \$target_servers->{build};
 
@@ -951,7 +955,9 @@ arguments:
 
 sub ${target_name}_sequencing_and_composition
 {
-    my \$force = \$ARGV[0] || \"\";
+    my \$arguments = shift || [];
+
+    my \$force = \$arguments->[0] || \"\";
 
     my \$local_commands
 	= [
@@ -1575,6 +1581,11 @@ my \$configuration = {
 	$error = "cannot open $project_name-configuration";
     }
 
+    if (not $error)
+    {
+	$error = _builtin_create_directories("$configuration_data_directory/cache");
+    }
+
     return $error;
 }
 
@@ -2182,6 +2193,9 @@ sub _install_script_git_repository
 
     my $commands
 	= [
+	   "echo >.gitignore '*~'",
+	   "echo >>.gitignore '_Inline'",
+	   "echo >>.gitignore '$project_name-configuration-data/cache'",
 	   "git add --all",
 	   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
 	  ];
@@ -3268,8 +3282,8 @@ sub builtin_start_project_help
 
     return "$command: start a new project with a given name in the current directory.
 
-This will install a project descriptor, a configuration file and an
-empty command file.
+This will create a project descriptor, a configuration file and an
+empty command file in the current working directory.
 
 arguments:
 
@@ -3280,7 +3294,9 @@ arguments:
 
 sub builtin_tmux_create_sessions
 {
-    my $force = $ARGV[0];
+    my $arguments = shift || [];
+
+    my $force = $arguments->[0] || '';
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
@@ -3312,7 +3328,9 @@ sub builtin_tmux_create_sessions
 
 sub builtin_tmux_kill_sessions
 {
-    my $force = $ARGV[0];
+    my $arguments = shift || [];
+
+    my $force = $arguments->[0] || '';
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
@@ -6188,8 +6206,6 @@ sub _configuration_export
 
     my $technical_project_configuration = shift;
 
-    my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
-
     my $configuration
 	= {
 	   # assume a simple integer incremental version number
@@ -6206,60 +6222,77 @@ sub _configuration_export
 	print Dumper( { configuration => $configuration } );
     }
 
+    # When starting a new project, the field_project_configuration
+    # does not have the sources_configuration_directory yet.
+    #
+    # It is ok not to create cache files in that scenario.
+    #
+
+    if (defined $global_field_project_configuration
+	and exists $global_field_project_configuration->{sources_configuration_directory}
+        and exists $field_project_configuration->{field_project_name})
     {
 	use YAML;
 
-	my $yaml_export_filename = "$sources_configuration_directory/configuration.yaml";
+	my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+	my $field_project_name = $field_project_configuration->{field_project_name};
+
+	my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+	my $cache_diroctory = "$configuration_data_directory/cache";
+
+	my $yaml_export_filename = "$cache_diroctory/configuration.yaml";
 
 	# errors such as permission errors are silently discarded to allow execution to continue
 
 	eval
 	{
-	    local $SIG{'__DIE__'};
+	    # local $SIG{'__DIE__'};
 
 	    YAML::DumpFile($yaml_export_filename, $configuration);
 	};
+
+	eval
+	{
+	    local $SIG{'__DIE__'};
+
+	    require JSON;
+
+	    my $json_export_filename = "$cache_diroctory/configuration.json";
+
+	    my $json = JSON->new();
+
+	    #! allow code refs, they are converted to nulls
+
+	    $json->allow_unknown(1);
+
+	    $json->canonical(1);
+
+	    my $file = IO::File->new(">$json_export_filename");
+
+	    print $file $json->pretty->encode($configuration);
+
+	    $file->close();
+	};
+
+	eval
+	{
+	    local $SIG{'__DIE__'};
+
+	    # sudo apt install libtoml-perl
+
+	    require TOML;
+
+	    my $toml_export_filename = "$cache_diroctory/configuration.toml";
+
+	    my $file = IO::File->new(">$toml_export_filename");
+
+	    print $file TOML::to_toml($configuration);
+
+	    $file->close();
+	};
     }
-
-    eval
-    {
-	local $SIG{'__DIE__'};
-
-	require JSON;
-
-	my $json_export_filename = "$sources_configuration_directory/configuration.json";
-
-	my $json = JSON->new();
-
-	#! allow code refs, they are converted to nulls
-
-	$json->allow_unknown(1);
-
-	$json->canonical(1);
-
-	my $file = IO::File->new(">$json_export_filename");
-
-	print $file $json->pretty->encode($configuration);
-
-	$file->close();
-    };
-
-    eval
-    {
-	local $SIG{'__DIE__'};
-
-	# sudo apt install libtoml-perl
-
-	require TOML;
-
-	my $toml_export_filename = "$sources_configuration_directory/configuration.toml";
-
-	my $file = IO::File->new(">$toml_export_filename");
-
-	print $file TOML::to_toml($configuration);
-
-	$file->close();
-    };
 }
 
 
@@ -7056,6 +7089,12 @@ sub generate_command_hash_data_directory
     my $with_feature_subs = shift;
 
     my $result = {};
+
+    # use Carp;
+
+    # carp "HERE";
+
+    # use Data::Dumper; print Dumper( { global_field_project_configuration => $global_field_project_configuration, } );
 
     if (defined $global_field_project_configuration)
     {

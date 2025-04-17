@@ -12,6 +12,10 @@ neurospaces_cpan_modules
 tests/html/
 try-graph.pl
 
+configured-workflows/configuration.json
+configured-workflows/configuration.toml
+configured-workflows/configuration.yaml
+
 # http://www.gnu.org/software/automake
 
 Makefile.in
