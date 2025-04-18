@@ -412,6 +412,7 @@ Then check if they work by inspecting the examples they provide (with various op
 ./workflow-tests-configuration
 ./workflow-tests-configuration-data
 ./workflow-tests-configuration-data/build_servers.yml
+./workflow-tests-configuration-data/cache
 ./workflow-tests-configuration-data/command_filenames.yml
 ./workflow-tests-configuration-data/node_configuration.yml
 ./workflow-tests-configuration-data/target_servers.yml
@@ -817,6 +818,9 @@ scripts:
   - workflow-test/workflow-tests-commands-python_examples
   - workflow-test/workflow-tests-configuration
   - workflow-test/workflow-tests-configuration-data/build_servers.yml
+  - workflow-test/workflow-tests-configuration-data/cache/configuration.json
+  - workflow-test/workflow-tests-configuration-data/cache/configuration.toml
+  - workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
   - workflow-test/workflow-tests-configuration-data/command_filenames.yml
   - workflow-test/workflow-tests-configuration-data/node_configuration.yml
   - workflow-test/workflow-tests-configuration-data/target_servers.yml
@@ -850,6 +854,9 @@ workflow-test/workflow-tests-commands-perl_examples
 workflow-test/workflow-tests-commands-python_examples
 workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/build_servers.yml
+workflow-test/workflow-tests-configuration-data/cache/configuration.json
+workflow-test/workflow-tests-configuration-data/cache/configuration.toml
+workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
 workflow-test/workflow-tests-configuration-data/command_filenames.yml
 workflow-test/workflow-tests-configuration-data/node_configuration.yml
 workflow-test/workflow-tests-configuration-data/target_servers.yml
@@ -894,6 +901,9 @@ workflow-test/workflow-tests-commands-perl_examples
 workflow-test/workflow-tests-commands-python_examples
 workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/build_servers.yml
+workflow-test/workflow-tests-configuration-data/cache/configuration.json
+workflow-test/workflow-tests-configuration-data/cache/configuration.toml
+workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
 workflow-test/workflow-tests-configuration-data/command_filenames.yml
 workflow-test/workflow-tests-configuration-data/node_configuration.yml
 workflow-test/workflow-tests-configuration-data/target_servers.yml

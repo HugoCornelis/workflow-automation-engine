@@ -5,8 +5,8 @@ command_tests:
     read: |
       workflow builtin start_project: start a new project with a given name in the current directory.
       
-      This will install a project descriptor, a configuration file and an
-      empty command file.
+      This will create a project descriptor, a configuration file and an
+      empty command file in the current working directory.
       
       arguments:
       

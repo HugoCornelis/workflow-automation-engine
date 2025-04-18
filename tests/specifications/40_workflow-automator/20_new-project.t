@@ -69,6 +69,7 @@ Then check if they work by inspecting the examples they provide (with various op
 ./workflow-tests-configuration-data/command_filenames.yml
 ./workflow-tests-configuration-data/target_servers.yml
 ./workflow-tests-configuration-data/build_servers.yml
+./workflow-tests-configuration-data/cache
 ./workflow-tests-configuration-data/node_configuration.yml
 ./conf.workflow-tests-workflow
 ./conf.workflow-tests-configuration
@@ -116,7 +117,7 @@ Then check if they work by inspecting the examples they provide (with various op
 				command => 'mv --verbose workflow-project-template.pl workflow-project.pl',
 				command_tests => [
 						  {
-						   description => "Have the project files been created ?",
+						   description => "Has the project descriptor been renamed ?",
 						   read => 'renamed \'workflow-project-template.pl\' -> \'workflow-project.pl\'
 ',
 						  },

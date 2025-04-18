@@ -63,6 +63,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libipc-system-simple-perl \
     libjson-perl \
     libnet-ip-perl \
+    libtoml-perl \
     libyaml-perl \
     grc
 
