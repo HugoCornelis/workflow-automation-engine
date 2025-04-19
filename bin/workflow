@@ -3538,7 +3538,7 @@ sub _file_contains_regex
 #
 # Initialize the command module.
 #
-# This sub reads and parses the workflows written in perl.
+# This sub reads and parses the workflows written in perl or python.
 #
 
 sub _workflow_commands_initialize
@@ -6348,7 +6348,7 @@ sub _init_do_eval_perl_file
 
     if (not -r "$filename")
     {
-	$status = "$global_program_name: *** Error: file '$filename' not found (because the file does not exist)\n";
+	$status = "$global_program_name: *** Error: file '$filename' not found (because the file cannot be read)\n";
 
 	return undef;
     }
@@ -7198,7 +7198,12 @@ sub generate_command_hash_subs
     {
 	use Data::Dumper;
 
-	print STDERR Dumper( { global_technical_project_configuration_targets => $targets, }, );
+	print STDERR Dumper(
+			    {
+			     defined_found_subroutines => $subroutines,
+			     global_technical_project_configuration_targets => $targets,
+			    },
+			   );
     }
 
     my $commands = {
@@ -7313,13 +7318,13 @@ sub main
     {
 	use Data::Dumper;
 
-	print Dumper(
-		     {
-		      global_field_project_configuration => $global_field_project_configuration,
-#		      global_overriden_packages => $global_overriden_packages,
-		      global_technical_project_configuration => $global_technical_project_configuration,
-		     },
-		    );
+	print STDERR Dumper(
+			    {
+			     global_field_project_configuration => $global_field_project_configuration,
+# 			     global_overriden_packages => $global_overriden_packages,
+			     global_technical_project_configuration => $global_technical_project_configuration,
+			    },
+			   );
     }
 
     # perform bash completion logic, this will exit the script
