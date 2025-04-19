@@ -8067,7 +8067,8 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     if ($option_target eq 'builtin'
 	and (defined $option_commands->[0]
 	     and exists $global_builtin_commands->{$option_commands->[0]})
-	or exists $global_known_command_packages_builtin->{$option_commands->[0]})
+	or (defined $option_commands->[0]
+	    and exists $global_known_command_packages_builtin->{$option_commands->[0]}))
     {
     }
     else
