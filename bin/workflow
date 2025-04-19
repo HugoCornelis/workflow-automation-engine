@@ -7528,7 +7528,7 @@ sub main
 		    {
 			no strict "refs";
 
-			&$command_implementation();
+			&$command_implementation([]);
 		    }
 
 		    # end the command in the schedule / diagram
