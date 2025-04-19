@@ -576,45 +576,6 @@ else
 }
 
 
-sub _builtin_create_directories
-{
-    my $directory = shift;
-
-    my $result;
-
-    use File::Path qw/make_path/;
-
-    my $error;
-
-    make_path($directory, { error => \$error, }, );
-
-    if ($error && @$error)
-    {
-	for my $diagnosis (@$error)
-	{
-	    my ($path, $message) = %$diagnosis;
-
-	    $result = "error creating $path: $message";
-
-	    if ($path eq '')
-	    {
-		# print "general error: $message\n";
-	    }
-	    else
-	    {
-		# print "problem unlinking $file: $message\n";
-	    }
-	}
-    }
-    else
-    {
-	# print "No error encountered\n";
-    }
-
-    return $result;
-}
-
-
 sub _builtin_project_bash_completion_create
 {
     my $field_project_configuration = shift;
@@ -1200,7 +1161,7 @@ sub _builtin_project_commands_sh_create
 
     my $directory = "$sources_configuration_data_directory/$target_name";
 
-    $error = _builtin_create_directories($directory);
+    $error = Utilities::create_directories($directory);
 
     if (not $error)
     {
@@ -1312,7 +1273,7 @@ sub _builtin_project_commands_yml_create
 
     my $directory = "$sources_configuration_data_directory/$target_name";
 
-    $error = _builtin_create_directories($directory);
+    $error = Utilities::create_directories($directory);
 
     if (not $error)
     {
@@ -1532,7 +1493,7 @@ my \$configuration = {
 
     if (not $error)
     {
-	$error = _builtin_create_directories($configuration_data_directory);
+	$error = Utilities::create_directories($configuration_data_directory);
     }
 
     if (not $error)
@@ -1583,7 +1544,7 @@ my \$configuration = {
 
     if (not $error)
     {
-	$error = _builtin_create_directories("$configuration_data_directory/cache");
+	$error = Utilities::create_directories("$configuration_data_directory/cache");
     }
 
     return $error;
@@ -6230,8 +6191,6 @@ sub _configuration_export
 	and exists $global_field_project_configuration->{sources_configuration_directory}
         and exists $field_project_configuration->{field_project_name})
     {
-	use YAML;
-
 	my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
 	my $field_project_name = $field_project_configuration->{field_project_name};
@@ -6240,56 +6199,63 @@ sub _configuration_export
 
 	my $cache_diroctory = "$configuration_data_directory/cache";
 
-	my $yaml_export_filename = "$cache_diroctory/configuration.yaml";
+	my $error = Utilities::create_directories($cache_diroctory);
 
-	# errors such as permission errors are silently discarded to allow execution to continue
-
-	eval
+	if (not $error)
 	{
-	    # local $SIG{'__DIE__'};
+	    my $yaml_export_filename = "$cache_diroctory/configuration.yaml";
 
-	    YAML::DumpFile($yaml_export_filename, $configuration);
-	};
+	    # errors such as permission errors are silently discarded to allow execution to continue
 
-	eval
-	{
-	    local $SIG{'__DIE__'};
+	    eval
+	    {
+		use YAML;
 
-	    require JSON;
+		# local $SIG{'__DIE__'};
 
-	    my $json_export_filename = "$cache_diroctory/configuration.json";
+		YAML::DumpFile($yaml_export_filename, $configuration);
+	    };
 
-	    my $json = JSON->new();
+	    eval
+	    {
+		local $SIG{'__DIE__'};
 
-	    #! allow code refs, they are converted to nulls
+		require JSON;
 
-	    $json->allow_unknown(1);
+		my $json_export_filename = "$cache_diroctory/configuration.json";
 
-	    $json->canonical(1);
+		my $json = JSON->new();
 
-	    my $file = IO::File->new(">$json_export_filename");
+		#! allow code refs, they are converted to nulls
 
-	    print $file $json->pretty->encode($configuration);
+		$json->allow_unknown(1);
 
-	    $file->close();
-	};
+		$json->canonical(1);
 
-	eval
-	{
-	    local $SIG{'__DIE__'};
+		my $file = IO::File->new(">$json_export_filename");
 
-	    # sudo apt install libtoml-perl
+		print $file $json->pretty->encode($configuration);
 
-	    require TOML;
+		$file->close();
+	    };
 
-	    my $toml_export_filename = "$cache_diroctory/configuration.toml";
+	    eval
+	    {
+		local $SIG{'__DIE__'};
 
-	    my $file = IO::File->new(">$toml_export_filename");
+		# sudo apt install libtoml-perl
 
-	    print $file TOML::to_toml($configuration);
+		require TOML;
 
-	    $file->close();
-	};
+		my $toml_export_filename = "$cache_diroctory/configuration.toml";
+
+		my $file = IO::File->new(">$toml_export_filename");
+
+		print $file TOML::to_toml($configuration);
+
+		$file->close();
+	    };
+	}
     }
 }
 
@@ -6635,6 +6601,48 @@ sub _init_get_technical_configuration
 
 
 our $global_main_project_name = "ssp";
+
+
+package Utilities;
+
+
+sub create_directories
+{
+    my $directory = shift;
+
+    my $result;
+
+    use File::Path qw/make_path/;
+
+    my $error;
+
+    make_path($directory, { error => \$error, }, );
+
+    if ($error && @$error)
+    {
+	for my $diagnosis (@$error)
+	{
+	    my ($path, $message) = %$diagnosis;
+
+	    $result = "error creating $path: $message";
+
+	    if ($path eq '')
+	    {
+		# print "general error: $message\n";
+	    }
+	    else
+	    {
+		# print "problem unlinking $file: $message\n";
+	    }
+	}
+    }
+    else
+    {
+	# print "No error encountered\n";
+    }
+
+    return $result;
+}
 
 
 package main;
