@@ -10670,7 +10670,7 @@ sub _differences_report
     {
 	use IO::File;
 
-	my $expected_filename = "$report_error_directory/expected.txt";
+	my $expected_filename = "$report_error_directory/010_expected.txt";
 
 	$differences_report->{expected_filename} = $expected_filename;
 
@@ -10687,7 +10687,7 @@ sub _differences_report
 	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
-	my $seen_filename = "$report_error_directory/seen.txt";
+	my $seen_filename = "$report_error_directory/020_seen.txt";
 
 	$differences_report->{seen_filename} = $seen_filename;
 
@@ -10708,7 +10708,7 @@ sub _differences_report
 
 	$differences_report->{diff} = $diff;
 
-	my $diff_filename = "$report_error_directory/expected-minus-seen.diff";
+	my $diff_filename = "$report_error_directory/030_expected-minus-seen.diff";
 
 	$differences_report->{diff_filename} = $diff_filename;
 
@@ -10882,15 +10882,17 @@ sub _report_error_summary
 
     my $summary_report
 	= {
-	   context_path => $error_report->{context_path},
-	   description => $error_report->{description},
+	   path => {
+		    "000_context_path" => $error_report->{context_path},
+		    "010_module_name" => $error_report->{module_name},
+		    "020_description" => $error_report->{description},
+		    "030_subdescription" => $error_report->{subdescription},
+		   },
 	   error => $error_report->{error},
-	   module_name => $error_report->{module_name},
 	   report_error_directory => $report_error_directory,
-	   subdescription => $error_report->{subdescription},
 	  };
 
-    my $summary_filename = "$report_error_directory/summary.yml";
+    my $summary_filename = "$report_error_directory/000_summary.yml";
 
     $summary_report->{summary_filename} = $summary_filename;
 
