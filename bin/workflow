@@ -6205,19 +6205,13 @@ sub _configuration_export
 	and exists $global_field_project_configuration->{sources_configuration_directory}
         and exists $field_project_configuration->{field_project_name})
     {
-	my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+	my $cache_directory = Utilities::configuration_cache_directory();
 
-	my $field_project_name = $field_project_configuration->{field_project_name};
-
-	my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
-
-	my $cache_diroctory = "$configuration_data_directory/cache";
-
-	my $error = Utilities::create_directories($cache_diroctory);
+	my $error = Utilities::create_directories($cache_directory);
 
 	if (not $error)
 	{
-	    my $yaml_export_filename = "$cache_diroctory/configuration.yaml";
+	    my $yaml_export_filename = "$cache_directory/configuration.yaml";
 
 	    # errors such as permission errors are silently discarded to allow execution to continue
 
@@ -6236,7 +6230,7 @@ sub _configuration_export
 
 		require JSON;
 
-		my $json_export_filename = "$cache_diroctory/configuration.json";
+		my $json_export_filename = "$cache_directory/configuration.json";
 
 		my $json = JSON->new();
 
@@ -6261,7 +6255,7 @@ sub _configuration_export
 
 		require TOML;
 
-		my $toml_export_filename = "$cache_diroctory/configuration.toml";
+		my $toml_export_filename = "$cache_directory/configuration.toml";
 
 		my $file = IO::File->new(">$toml_export_filename");
 
@@ -6618,6 +6612,20 @@ our $global_main_project_name = "ssp";
 
 
 package Utilities;
+
+
+sub configuration_cache_directory
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+    my $cache_directory = "$configuration_data_directory/cache";
+
+    return $cache_directory;
+}
 
 
 sub create_directories
