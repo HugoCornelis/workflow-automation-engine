@@ -1043,12 +1043,18 @@ BEGIN
 
 use Inline Python => <<'PYTHON';
 
-# sys.path.append('/path/to/search')
-
+import io
 import os
 import sys
 
-# sys.stdout = os.fdopen(sys.stdout.fileno(), 'a')
+execute_command = None
+execute_command_array = None
+
+def assign_functions(exe_command, exe_command_array):
+    global execute_command
+    global execute_command_array
+    execute_command = exe_command
+    execute_command_array = exe_command_array
 
 def add(x,y):
    return x + y
@@ -1060,16 +1066,24 @@ def python_stdout(argv):
     with os.fdopen(1, 'a') as file:
         file.write(\"Hello from Python\")
 
-def python_python_command(argv):
-    print(f\"python_python_command\")
+def python_examples_python_command(argv):
+    command = \"echo 'python_command from bash (1)'\"
+    execute_command(command)
+    command_array = [
+        \"echo 'python_command from bash (2)'\",
+        \"echo 'python_command from bash (3)'\"
+    ]
+    execute_command_array(command_array)
 
-def python_python_command_help(command, perl_argv):
+def python_examples_command_help(command, perl_argv):
     return f\"python_python_command {command} help page\"
 
 PYTHON
 
 
-sub python_single_command
+assign_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array);
+
+sub python_examples_single_command
 {
 	# print \"9 + 16 = \", add(9, 16), \"\\n\";
 	# print \"9 - 16 = \", subtract(9, 16), \"\\n\";
