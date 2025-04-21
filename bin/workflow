@@ -3555,12 +3555,25 @@ sub _workflow_commands_initialize
 	{
 	    $file_type = 'yaml';
 	}
+	elsif ($command_filename =~ m(\.py$))
+	{
+	    $file_type = 'python';
+	}
 	else
 	{
 	    $file_type = 'perl';
 	}
 
-	if ($file_type eq 'perl')
+	if ($file_type eq 'python')
+	{
+	    my ($commands, $eval_status) = FieldProject::_init_do_eval_python_file($command_filename);
+
+	    if ($eval_status)
+	    {
+		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+	    }
+	}
+	elsif ($file_type eq 'perl')
 	{
 	    my ($commands, $eval_status) = FieldProject::_init_do_eval_perl_file($command_filename);
 
@@ -6354,6 +6367,47 @@ sub _init_do_eval_perl_file
     }
 
     # return configuration and status
+
+    return ($result, $status);
+}
+
+
+sub _init_do_eval_python_file
+{
+    my $filename = shift;
+
+    my $status;
+
+    # check if the file exists
+
+    if (not -r "$filename")
+    {
+	$status = "$global_program_name: *** Error: file '$filename' not found (because the file cannot be read)\n";
+
+	return undef;
+    }
+
+    my $commands_cache_directory = Utilities::commands_cache_directory();
+
+    # read the python file
+
+    my $python_code
+	= do {
+	    open my $fh, '<', $filename;
+	    local $/;
+	    <$fh>;
+	};
+
+    #t insert the code into a perl command file in the cache directory that binds it to the workflow core.
+
+    #t makes the execute_command and execute_command_array functions available from python.
+    #t reads the configuration in json into a global variable to make it available from python.
+
+    #t read the perl command file
+
+    # return configuration and status
+
+    my $result;
 
     return ($result, $status);
 }
