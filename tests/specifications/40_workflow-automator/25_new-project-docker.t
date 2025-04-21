@@ -469,10 +469,10 @@ Then check if they work by inspecting the examples they provide (with various op
 						   description => "Has the project been correctly initialized?",
 						   read => '
 global_field_project_configuration:
+  configuration_origin: workflow on the command line
   field_project_configuration_filename: workflow-project.pl
   field_project_name: workflow-tests
   from_directory: .
-  from_executable: workflow on the command line
   search_path_workflow_executable_directory: .
   sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
   sources_configuration_directory: /home/neurospaces/workflow-test
@@ -794,8 +794,8 @@ available_workflow automation projects (copy-paste the one you would like to get
 						   read => 'Invoking (Command::builtin_archive_configuration)
 ---
 global_field_project_configuration:
+  configuration_origin: dynamically_generated from the executable script name
   field_project_name: workflow-tests
-  from_executable: dynamically_generated from the executable script name
   search_path_workflow_executable_directory: /home/neurospaces/bin
   sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
   sources_configuration_directory: /home/neurospaces/workflow-test
@@ -983,8 +983,8 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 						   description => "Is the installed workflow configuration found and correct?",
 						   read => '
 global_field_project_configuration:
+  configuration_origin: dynamically_generated from the executable script name
   field_project_name: workflow-tests
-  from_executable: dynamically_generated from the executable script name
   search_path_workflow_executable_directory: /home/neurospaces2/bin
   sources_configuration_data_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
   sources_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test
