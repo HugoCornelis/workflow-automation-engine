@@ -6614,6 +6614,35 @@ our $global_main_project_name = "ssp";
 package Utilities;
 
 
+#
+# The commands_cache_directory is a directory where the workflow
+# engine caches dynamically generated scripts before their execution.
+# Each run of the workflow engine, the commands cache is
+# refreshed.
+#
+
+sub commands_cache_directory
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    my $commands_data_directory = "$sources_configuration_directory/$field_project_name-commands-data";
+
+    my $cache_directory = "$commands_data_directory/cache";
+
+    return $cache_directory;
+}
+
+
+#
+# The configuration_cache_directory is a directory where the workflow
+# engine caches a read-only copy of the configuration in yaml, json
+# and toml formats.  This configuration cache is used by client
+# scripts.  Each run of the workflow engine, the configuration cache
+# is refreshed.
+#
+
 sub configuration_cache_directory
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
