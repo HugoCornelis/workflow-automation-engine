@@ -5678,6 +5678,12 @@ sub _docker_preparer
 	if ($?)
 	{
 	    return \ "_docker_preparer ($docker_command_selected) build and tag ($name_image), based on dockerfile ($dockerfile), failed";
+
+	    #t *** Preparing the Docker Container module '20_vigilia/15_docker_creator.t' (create the Docker image (vigilia_test_image) and start it as a container (vigilia_test_container) with identifier (docker_harness_2) for running the tests)
+
+	    #t docker container prune
+	    #t docker image prune
+	    #t docker image rm workflow_feature_testing_image workflow_automation_image_errors workflow_automation_image testing-developer-package neurospaces-developer-image neurospaces_harness_test_image buildroot-latex debian:bookworm
 	}
     }
     else
