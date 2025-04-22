@@ -116,6 +116,17 @@ our $global_options
        "target=s" => \$option_target,
        "tftp-directory=s" => \$option_tftp_directory,
        "v|verbose+" => \$option_verbose,
+
+       # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
+
+       "vv" => sub { $option_verbose += 2 },
+       "vvv" => sub { $option_verbose += 3 },
+       "vvvv" => sub { $option_verbose += 4 },
+       "vvvvv" => sub { $option_verbose += 5 },
+       "vvvvvv" => sub { $option_verbose += 6 },
+       "vvvvvvv" => sub { $option_verbose += 7 },
+       "vvvvvvvv" => sub { $option_verbose += 8 },
+       "vvvvvvvvv" => sub { $option_verbose += 9 },
       };
 
 our $global_command_line = join " ", $0, @ARGV;
