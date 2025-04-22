@@ -4141,7 +4141,7 @@ our $project_name = 'example_project';
 
 our $source_code_directory_prefix = "$ENV{HOME}/projects/$project_name/source";
 
-my $all_repository_descriptors
+our $all_repository_descriptors
     = {
        simple_repository1 => {
 			      name => 'simple_repository1',
@@ -4163,13 +4163,37 @@ sub _repository_2_directory
 {
     my $repository = shift;
 
-    $repository =~ m(:(([0-9]+)/)?(.*?)/([^/]*\.git)$);
+    my $directory;
+    my $port;
+    my $repository_name;
+    my $server;
 
-    my $port = $2;
+    if ($repository =~ m(^https?://))
+    {
+	$repository =~ m(^https?://([^/:]+(:([0-9]+))?)/(.*?)/([^/]*)$);
 
-    my $directory = $3;
+	$directory = $4;
+	$port = $3;
+	$repository_name = $5;
+	$server = $1;
+    }
+    else
+    {
+	$repository =~ m(:(([0-9]+)/)?(.*?)/([^/]*)$);
 
-    my $repository_name = $4;
+	$directory = $3;
+	$port = $2;
+	$repository_name = $4;
+    }
+
+    if ((not defined $source_code_directory_prefix)
+	or (not defined $directory)
+	or (not defined $repository_name))
+    {
+	die "$0: *** Error: _repository_2_directory() does not find a suitable directory for the '$repository' repository (directory: directory, repository_name: $repository_name).";
+    }
+
+    my $result = "$source_code_directory_prefix/$directory/$repository_name";
 
     if (defined $option_verbose
 	and $option_verbose > 3)
@@ -4183,13 +4207,14 @@ sub _repository_2_directory
 						  directory => $directory,
 						  repository_name => $repository_name,
 						  repository => $repository,
+						  result => $result,
 						  source_code_directory_prefix => $source_code_directory_prefix,
 						 },
 		     },
 		    );
     }
 
-    return "$source_code_directory_prefix/$directory/$repository_name";
+    return $result;
 }
 
 
@@ -4206,8 +4231,10 @@ sub _populate_directories
 }
 
 
-sub _commands_create
+sub _commands_branches
 {
+    my $repository = shift || '.*';
+
     my $commands
 	= [
 	   map
@@ -4216,9 +4243,34 @@ sub _commands_create
 
 	       my $directory = $repository_descriptor->{directory};
 
+	       ("cd '$directory'",
+		"git branch -a");
+	   }
+	   sort
+	   grep
+	   {
+	       # only those that match with the given repository name
+
+	       $_ =~ m(^$repository$);
+	   }
+	   keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _commands_create
+{
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
+
 	       my $name = $repository_descriptor->{name};
 
 	       my $repository = $repository_descriptor->{repository};
+
+	       my $directory = _repository_2_directory($repository);
 
 	       my $recurse = $repository_descriptor->{recurse};
 
@@ -4252,9 +4304,9 @@ sub _commands_echo_directories
 	   {
 	       my $repository_descriptor = $all_repository_descriptors->{$_};
 
-	       my $directory = $repository_descriptor->{directory};
-
 	       my $repository = $repository_descriptor->{repository};
+
+	       my $directory = _repository_2_directory($repository);
 
 	       ("echo '---\n$directory'",
 		"echo '    --> $repository'");
@@ -4270,17 +4322,80 @@ sub _flags_echo_directories
 }
 
 
-sub _commands_pull
+sub _commands_checkout
 {
+    my $branch = shift || '';
+
+    use Data::Dumper; print STDERR Dumper($all_repository_descriptors);
+
     my $commands
 	= [
 	   map
 	   {
 	       my $repository_descriptor = $all_repository_descriptors->{$_};
 
-	       my $directory = $repository_descriptor->{directory};
+	       my $repository = $repository_descriptor->{repository};
+
+	       my $directory = _repository_2_directory($repository);
+
+	       my $recurse = $repository_descriptor->{recurse};
+
+	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
+
+	       ("cd '$directory'",
+		"git checkout $recurse_option $branch");
+	   }
+	   sort keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _commands_fetch
+{
+    my $repository = shift || '.*';
+
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
 
 	       my $repository = $repository_descriptor->{repository};
+
+	       my $directory = _repository_2_directory($repository);
+
+	       my $recurse = $repository_descriptor->{recurse};
+
+	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
+
+	       ("cd '$directory'",
+		"git fetch $recurse_option");
+	   }
+	   sort
+	   grep
+	   {
+	       # only those that match with the given repository name
+
+	       $_ =~ m(^$repository$);
+	   }
+	   keys %$all_repository_descriptors,
+	  ];
+}
+
+
+sub _commands_pull
+{
+    my $repository = shift || '.*';
+
+    my $commands
+	= [
+	   map
+	   {
+	       my $repository_descriptor = $all_repository_descriptors->{$_};
+
+	       my $repository = $repository_descriptor->{repository};
+
+	       my $directory = _repository_2_directory($repository);
 
 	       my $recurse = $repository_descriptor->{recurse};
 
@@ -4289,7 +4404,14 @@ sub _commands_pull
 	       ("cd '$directory'",
 		"git pull $recurse_option");
 	   }
-	   sort keys %$all_repository_descriptors,
+	   sort
+	   grep
+	   {
+	       # only those that match with the given repository name
+
+	       $_ =~ m(^$repository$);
+	   }
+	   keys %$all_repository_descriptors,
 	  ];
 }
 
@@ -4309,9 +4431,9 @@ sub _commands_status
 	   {
 	       my $repository_descriptor = $all_repository_descriptors->{$_};
 
-	       my $directory = $repository_descriptor->{directory};
-
 	       my $repository = $repository_descriptor->{repository};
+
+	       my $directory = _repository_2_directory($repository);
 
 	       my $recurse = $repository_descriptor->{recurse};
 
@@ -4326,6 +4448,40 @@ sub _commands_status
 sub _flags_status
 {
     return ();
+}
+
+
+sub _repository_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $completions_hash
+	= {
+	   "1.type-one-of-the-following-repositories" => '',
+	   map
+	   {
+	       $_ => '',
+	   }
+	   keys %$all_repository_descriptors,
+	  };
+
+    my $debug_completion = 0;
+
+    if ($debug_completion > 2)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => \@_,
+			     complete_arguments_array => $complete_arguments_array,
+			     complete_command_string => $complete_command_string,
+			     completions_hash => $completions_hash,
+			    },
+			   );
+    }
+
+    return $completions_hash;
 }
 
 
