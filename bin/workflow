@@ -6337,7 +6337,7 @@ sub _init_do_eval_perl_file
     {
 	$status = "$global_program_name: *** Error: file '$filename' not found (because the file cannot be read)\n";
 
-	return undef;
+	return (undef, undef);
     }
 
     # make sure perl does not complain about '.' not in the INC path
@@ -6374,26 +6374,28 @@ sub _init_do_eval_perl_file
 
 sub _init_do_eval_python_file
 {
-    my $filename = shift;
+    my $input_filename = shift;
 
     my $status;
 
     # check if the file exists
 
-    if (not -r "$filename")
+    if (not -r "$input_filename")
     {
-	$status = "$global_program_name: *** Error: file '$filename' not found (because the file cannot be read)\n";
+	$status = "$global_program_name: *** Error: file '$input_filename' not found (because the file cannot be read)\n";
 
-	return undef;
+	return (undef, undef);
     }
 
     my $commands_cache_directory = Utilities::commands_cache_directory();
+
+    my $configuration_cache_directory = Utilities::configuration_cache_directory();
 
     # read the python file
 
     my $python_code
 	= do {
-	    open my $fh, '<', $filename;
+	    open my $fh, '<', $input_filename;
 	    local $/;
 	    <$fh>;
 	};
@@ -6405,11 +6407,77 @@ sub _init_do_eval_python_file
 
     #t read the perl command file
 
+    my $commands_template_code
+	= "#!/usr/bin/perl -w
+
+package Command;
+
+use strict;
+
+use warnings;
+
+# set your PYTHONPATH to include the appropriate directories if this is needed
+#
+# export PYTHONPATH=\$HOME/projects/my-python-modules-directory
+
+BEGIN
+{
+	if (not exists \$ENV{PYTHONPATH})
+	{
+		\$ENV{PYTHONPATH} = \"$commands_cache_directory\";
+	}
+}
+
+use Inline Python => <<'PYTHON';
+
+import io
+import os
+import sys
+
+execute_command = None
+execute_command_array = None
+
+def assign_functions(exe_command, exe_command_array):
+    global execute_command
+    global execute_command_array
+    execute_command = exe_command
+    execute_command_array = exe_command_array
+
+___YOUR_PYTHON_CODE_HERE___
+PYTHON
+
+
+assign_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array);
+
+# return success
+
+1;
+
+
+";
+
+    $commands_template_code =~ s(___YOUR_PYTHON_CODE_HERE___)($python_code);
+
+    my $output_filename = "$commands_cache_directory/$input_filename";
+
+    if (1)
+    {
+	print STDERR "$0: Creating $output_filename\n";
+    }
+
+    {
+	open my $fh, '>', $output_filename;
+
+	print $fh $commands_template_code;
+
+	close $fh;
+    }
+
     # return configuration and status
 
-    my $result;
+    my ($result, $eval_status) = FieldProject::_init_do_eval_perl_file($output_filename);
 
-    return ($result, $status);
+    return ($result, $eval_status);
 }
 
 
