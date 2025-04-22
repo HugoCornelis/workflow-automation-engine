@@ -989,9 +989,9 @@ arguments:
 
     my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
 
-    my $pathnamer = "$sources_configuration_directory/$filename";
+    my $pathname = "$sources_configuration_directory/$filename";
 
-    my $file = IO::File->new("> $pathnamer");
+    my $file = IO::File->new("> $pathname");
 
     if (defined $file)
     {
@@ -999,18 +999,18 @@ arguments:
 
 	$file->close();
 
-	chmod 0700, "$pathnamer";
+	chmod 0700, "$pathname";
     }
     else
     {
-	$error = "cannot open $pathnamer";
+	$error = "cannot open $pathname";
     }
 
     return $error;
 }
 
 
-sub _builtin_project_commands_template_create_python
+sub _builtin_project_commands_template_create_inline_python
 {
     my $field_project_configuration = shift;
 
@@ -1132,9 +1132,9 @@ These examples define a target with name 'python_examples' and with these comman
 
     my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
 
-    my $pathnamer = "$sources_configuration_directory/$filename";
+    my $pathname = "$sources_configuration_directory/$filename";
 
-    my $file = IO::File->new("> $pathnamer");
+    my $file = IO::File->new("> $pathname");
 
     if (defined $file)
     {
@@ -1142,11 +1142,65 @@ These examples define a target with name 'python_examples' and with these comman
 
 	$file->close();
 
-	chmod 0700, "$pathnamer";
+	chmod 0700, "$pathname";
     }
     else
     {
-	$error = "cannot open $pathnamer";
+	$error = "cannot open $pathname";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_commands_template_create_python
+{
+    my $field_project_configuration = shift;
+
+    my $project_name = shift;
+
+    my $target_name = shift;
+
+    my $filename = shift;
+
+    my $commands_template_code
+	= "#!/usr/bin/python3
+
+def python_examples_python_command(argv):
+    command = \"echo 'python_command from bash (1)'\"
+    execute_command(command)
+    command_array = [
+        \"echo 'python_command from bash (2)'\",
+        \"echo 'python_command from bash (3)'\"
+    ]
+    execute_command_array(command_array)
+
+def python_examples_command_help(command, perl_argv):
+    return f\"python_python_command {command} help page\"
+
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
+
+    my $pathname = "$sources_configuration_directory/$filename";
+
+    my $file = IO::File->new("> $pathname");
+
+    if (defined $file)
+    {
+	print $file $commands_template_code;
+
+	$file->close();
+
+	chmod 0700, "$pathname";
+    }
+    else
+    {
+	$error = "cannot open $pathname";
     }
 
     return $error;
@@ -2456,6 +2510,8 @@ sub _install_script_symbolic_link_to_engine
 
 sub builtin_add_target
 {
+    my $arguments = shift || [];
+
     my $option_install_command_pl;
     my $option_install_command_python;
     my $option_install_command_sh;
@@ -2471,18 +2527,12 @@ sub builtin_add_target
 
     use Getopt::Long qw(GetOptionsFromArray);;
 
-    my $result = GetOptionsFromArray(\@ARGV, %$install_options);
+    my $result = GetOptionsFromArray($arguments, %$install_options);
 
     if (!$result)
     {
         die "$global_program_name: *** error in option processing, try --help";
     }
-
-    # if ($option_install_command_pl
-    # 	and $option_install_command_python)
-    # {
-    #     die "$global_program_name: *** error: you cannot install both perl and python command files for the same target, please choose at most one of these.";
-    # }
 
     if ($option_verbose)
     {
@@ -2495,7 +2545,7 @@ sub builtin_add_target
 
     my $error = '';
 
-    my $target_name = $ARGV[0];
+    my $target_name = $arguments->[0];
 
     if (not $error)
     {
@@ -2505,7 +2555,7 @@ sub builtin_add_target
 	}
     }
 
-    my $target_description = $ARGV[1];
+    my $target_description = $arguments->[1];
 
     if (not $error)
     {
@@ -2593,7 +2643,7 @@ sub builtin_add_target
 
     if ($option_install_command_python)
     {
-	my $new_command_filename = "$field_project_name-commands-$target_name";
+	my $new_command_filename = "$field_project_name-commands-$target_name.py";
 
 	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
 
@@ -3142,7 +3192,7 @@ sub builtin_start_project
 	{
 	    my $target_name = "python_examples";
 
-	    my $command_filename = "$project_name-commands-$target_name";
+	    my $command_filename = "$project_name-commands-$target_name.py";
 
 	    $error = _builtin_add_command_filename($field_project_configuration, 'python', $target_name, $command_filename);
 
@@ -6429,10 +6479,6 @@ BEGIN
 }
 
 use Inline Python => <<'PYTHON';
-
-import io
-import os
-import sys
 
 execute_command = None
 execute_command_array = None
