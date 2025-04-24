@@ -7590,6 +7590,8 @@ sub generate_command_hash_subs
     # generate a list of the available command subroutines
 
     my $subroutines = [
+		       sort
+
 		       # select only code references
 
 		       grep
