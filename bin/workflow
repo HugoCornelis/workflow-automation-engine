@@ -6495,6 +6495,10 @@ sub _configuration_export
 		$file->close();
 	    };
 	}
+	else
+	{
+	    die "$0: Error: cannot create cache directory $cache_directory";
+	}
     }
 }
 
