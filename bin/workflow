@@ -1077,7 +1077,7 @@ def python_stdout(argv):
     with os.fdopen(1, 'a') as file:
         file.write(\"Hello from Python\")
 
-def python_examples_python_command(argv):
+def ${target_name}_python_command(argv):
     command = \"echo 'python_command from bash (1)'\"
     execute_command(command)
     command_array = [
@@ -1086,7 +1086,7 @@ def python_examples_python_command(argv):
     ]
     execute_command_array(command_array)
 
-def python_examples_command_help(command, perl_argv):
+def ${target_name}_command_help(command, perl_argv):
     return f\"python_python_command {command} help page\"
 
 PYTHON
@@ -1177,7 +1177,7 @@ sub _builtin_project_commands_template_create_python
     my $commands_template_code
 	= "#!/usr/bin/python3
 
-def python_examples_python_command(argv):
+def ${target_name}_python_command(argv):
     command = \"echo 'python_command from bash (1)'\"
     execute_command(command)
     command_array = [
@@ -1186,7 +1186,7 @@ def python_examples_python_command(argv):
     ]
     execute_command_array(command_array)
 
-def python_examples_command_help(command, perl_argv):
+def ${target_name}_command_help(command, perl_argv):
     return f\"python_python_command {command} help page\"
 
 ";
