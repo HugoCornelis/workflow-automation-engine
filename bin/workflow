@@ -2752,6 +2752,7 @@ arguments:
 options:
 
     --install-commands-pl: install a perl command file template.
+    --install-commands-py: install a python command file template.
     --install-commands-sh: install a shell command file template.
 ";
 }
@@ -3707,7 +3708,7 @@ sub _init_command_filenames_configured
 	   {
 	       # select filenames with the correct project name prefix
 
-	       /$field_project_name-commands[-_a-z0-9]*$/;
+	       /$field_project_name-commands[-\._a-z0-9]*$/;
 	   }
 	   grep
 	   {
@@ -6591,41 +6592,45 @@ sub _init_do_eval_perl_file
 
 sub _init_do_eval_python_file
 {
-    my $input_filename = shift;
+    my $input_pathname = shift;
 
     my $status;
 
     # check if the file exists
 
-    if (not -r "$input_filename")
+    if (not -r "$input_pathname")
     {
-	$status = "$global_program_name: *** Error: file '$input_filename' not found (because the file cannot be read)\n";
+	$status = "$global_program_name: *** Error: file '$input_pathname' not found (because the file cannot be read)\n";
 
 	return (undef, undef);
     }
 
-    my $commands_cache_directory = Utilities::commands_cache_directory();
+    my $cache_directory = Utilities::commands_cache_directory();
 
-    my $configuration_cache_directory = Utilities::configuration_cache_directory();
+    my $error = Utilities::create_directories($cache_directory);
 
-    # read the python file
+    my ($result, $eval_status);
 
-    my $python_code
-	= do {
-	    open my $fh, '<', $input_filename;
-	    local $/;
-	    <$fh>;
-	};
+    if (not $error)
+    {
+	# read the python file
 
-    #t insert the code into a perl command file in the cache directory that binds it to the workflow core.
+	my $python_code
+	    = do {
+		open my $fh, '<', $input_pathname;
+		local $/;
+		<$fh>;
+	    };
 
-    #t makes the execute_command and execute_command_array functions available from python.
-    #t reads the configuration in json into a global variable to make it available from python.
+	#t insert the code into a perl command file in the cache directory that binds it to the workflow core.
 
-    #t read the perl command file
+	#t makes the execute_command and execute_command_array functions available from python.
+	#t reads the configuration in json into a global variable to make it available from python.
 
-    my $commands_template_code
-	= "#!/usr/bin/perl -w
+	#t read the perl command file
+
+	my $commands_template_code
+	    = "#!/usr/bin/perl -w
 
 package Command;
 
@@ -6641,7 +6646,7 @@ BEGIN
 {
 	if (not exists \$ENV{PYTHONPATH})
 	{
-		\$ENV{PYTHONPATH} = \"$commands_cache_directory\";
+		\$ENV{PYTHONPATH} = \"$cache_directory\";
 	}
 }
 
@@ -6669,26 +6674,35 @@ assign_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_co
 
 ";
 
-    $commands_template_code =~ s(___YOUR_PYTHON_CODE_HERE___)($python_code);
+	$commands_template_code =~ s(___YOUR_PYTHON_CODE_HERE___)($python_code);
 
-    my $output_filename = "$commands_cache_directory/$input_filename";
+	$input_pathname =~ m(.*/(.*));
 
-    if (1)
-    {
-	print STDERR "$0: Creating $output_filename\n";
+	my $input_filename = $1;
+
+	my $output_filename = "$cache_directory/$input_filename";
+
+	if (1)
+	{
+	    print STDERR "$0: For $input_pathname: creating cache file $output_filename\n";
+	}
+
+	{
+	    open my $fh, '>', $output_filename;
+
+	    print $fh $commands_template_code;
+
+	    close $fh;
+	}
+
+	# return configuration and status
+
+	($result, $eval_status) = FieldProject::_init_do_eval_perl_file($output_filename);
     }
-
+    else
     {
-	open my $fh, '>', $output_filename;
-
-	print $fh $commands_template_code;
-
-	close $fh;
+	die "$0: Error: cannot create cache directory $cache_directory";
     }
-
-    # return configuration and status
-
-    my ($result, $eval_status) = FieldProject::_init_do_eval_perl_file($output_filename);
 
     return ($result, $eval_status);
 }
