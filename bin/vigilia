@@ -10766,7 +10766,7 @@ sub _differences_report
 	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
 	}
 
-	my $diff = `diff "$expected_filename" "$seen_filename"`;
+	my $diff = `diff -Nur "$expected_filename" "$seen_filename"`;
 
 	$differences_report->{diff} = $diff;
 
