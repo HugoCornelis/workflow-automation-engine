@@ -51,6 +51,7 @@ my $option_output_title_page = '';
 my $option_random_order;
 my $option_regex_selector = ".*";
 my $option_report_disabled;
+my $option_select_context_path = '.*';
 my $option_show;
 my $option_show_command_tests;
 my $option_tags = [];
@@ -122,6 +123,7 @@ options:
     --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector             Defines a regex to run specific tests.
     --report-disabled            Include information of disabled tests in the test report.
+    --select-context-path        Select only the matching context paths (default is '$option_select_context_path').
     --show                       Show tests that would be run using the current configuration.
     --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
     --tags                       Only test test modules that have been tagged with these tags (default: all tags).
@@ -254,6 +256,7 @@ Options:
 					    "randomize-order=s" => \$option_random_order,
 					    "regex-selector=s" => \$option_regex_selector,
 					    "report-disabled!" => \$option_report_disabled,
+					    "select-context-path=s" => \$option_select_context_path,
 					    "show!" => \$option_show,
 					    "show-command-tests!" => \$option_show_command_tests,
 					    "tags=s" => $option_tags,
@@ -682,6 +685,7 @@ sub parse_options
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
 	   report_disabled => $option_report_disabled,
+	   select_context_path => $option_select_context_path,
 	   show => $option_show,
 	   show_command_tests => $option_show_command_tests,
 	   tags => $option_tags,
@@ -3805,7 +3809,12 @@ sub is_selected
 
     # implement a logical and of the different selection criteria
 
-    my $result = $self->is_selected_by_output_level_options($reporter);
+    my $result = 'by default';
+
+    if ($result)
+    {
+	$result = $self->is_selected_by_output_level_options($reporter);
+    }
 
     if ($result)
     {
@@ -3813,14 +3822,10 @@ sub is_selected
     }
 
     return $result;
-
-    # my $self = shift;
-
-    # my $reporter = shift;
-
-    # return $self->is_selected_by_output_level_options($reporter);
 }
 
+
+# return true if the output level of this element type is enabled
 
 sub is_selected_by_output_level_options
 {
@@ -4367,7 +4372,7 @@ sub get_context_path
 
     # add module counter and identifier
 
-    my $context_path_separator = "___/___";
+    my $context_path_separator = "/_";
 
     my $result;
 
@@ -4691,8 +4696,6 @@ sub ec_is_selected
 
     my $reporter = $self->{reporter};
 
-    my $module_name = $module_definition->{name};
-
     my $active_element
 	= (defined $command_test
 	   ? $command_test
@@ -4700,9 +4703,56 @@ sub ec_is_selected
 	      ? $command_definition
 	      : $module_definition));
 
-    my $result = $active_element->is_selected($reporter);
+    my $result = 'by default';
+
+    if ($result)
+    {
+	$result = $self->ec_is_selected_by_context_path($reporter);
+    }
+
+    if ($result)
+    {
+	$result = $active_element->is_selected($reporter);
+    }
 
     return $result;
+}
+
+
+sub ec_is_selected_by_context_path
+{
+    my $self = shift;
+
+    my $active_element = shift;
+
+    my $reporter = $self->{reporter};
+
+    my $element_name = $active_element->{name};
+
+    if (defined $option_debugging
+	and $option_debugging eq 'context_path')
+    {
+	use YAML;
+
+	print Dump(
+		   {
+		    option_debugging => {
+					 selected_by_context_path => $element_name,
+					},
+		   },
+		  );
+    }
+
+    my $selected = 'by default';
+
+    my $context_path = $self->get_context_path();
+
+    if ($selected)
+    {
+	$selected = ($context_path =~ m($option_select_context_path)) ? 'by option context_path' : '';
+    }
+
+    return $selected;
 }
 
 
@@ -10260,6 +10310,8 @@ sub ex_ct_run
 
     my $module_definition = $execution_context->get_module_definition();
 
+    my $context_path = $execution_context->get_context_path();
+
     my $module_name = $module_definition->{name};
 
     # get the current module summary
@@ -10272,7 +10324,7 @@ sub ex_ct_run
 
     # add the current test description to the summary
 
-    push @$selected_command_definitions, $command_test->{description};
+    push @$selected_command_definitions, "$context_path: $command_test->{description}";
 
     # always succeeds
 
@@ -10411,7 +10463,9 @@ sub ex_ct_run
 
 	# add the current test write clause to the summary
 
-	push @$selected_command_definitions, $command_test->{write};
+	my $context_path = $execution_context->get_context_path();
+
+	push @$selected_command_definitions, "$context_path: $command_test->{write}";
     }
 
     # always succeeds
@@ -10469,7 +10523,9 @@ sub ex_cd_start
 
 	my $command_string = $command . ' ' . join ' ', @ { $arguments || [] };
 
-	push @$selected_module, { command => $command_string, };
+	my $context_path = $execution_context->get_context_path();
+
+	push @$selected_module, { "$context_path command" => "$command_string", };
     }
 }
 
