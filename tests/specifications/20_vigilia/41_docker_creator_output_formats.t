@@ -37,13 +37,13 @@ selected:
   20_vigilia/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
-        - Are we in the correct working directory in the Docker container ?
+        - '1/_1/_1: Are we in the correct working directory in the Docker container ?'
     - description: 'showing that the container works: working directory contents'
       tests:
-        - Can we list the working directory in the Docker container ?
+        - '1/_2/_1: Can we list the working directory in the Docker container ?'
     - description: 'showing that the container works: root directory contents'
       tests:
-        - Can we list the root directory in the Docker container ?
+        - '1/_3/_1: Can we list the root directory in the Docker container ?'
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
@@ -70,9 +70,9 @@ description:
 disabled: ~
 selected:
   20_vigilia/30_docker.t:
-    - command: 'pwd '
-    - command: 'ls '
-    - command: ls -1 /
+    - 1/_1/_-1 command: 'pwd '
+    - 1/_2/_-1 command: 'ls '
+    - 1/_3/_-1 command: ls -1 /
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
@@ -98,9 +98,9 @@ description:
     version: beta
 selected:
   20_vigilia/30_docker.t:
-    - command: 'pwd '
-    - command: 'ls '
-    - command: ls -1 /
+    - 1/_1/_-1 command: 'pwd '
+    - 1/_2/_-1 command: 'ls '
+    - 1/_3/_-1 command: ls -1 /
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.
@@ -128,13 +128,13 @@ selected:
   20_vigilia/30_docker.t:
     - description: 'showing that the container works: working directory'
       tests:
-        - Are we in the correct working directory in the Docker container ?
+        - '1/_1/_1: Are we in the correct working directory in the Docker container ?'
     - description: 'showing that the container works: working directory contents'
       tests:
-        - Can we list the working directory in the Docker container ?
+        - '1/_2/_1: Can we list the working directory in the Docker container ?'
     - description: 'showing that the container works: root directory contents'
       tests:
-        - Can we list the root directory in the Docker container ?
+        - '1/_3/_1: Can we list the root directory in the Docker container ?'
 
 *** Info: See '>/tmp/report_workflow-automation-engine.yml' for the detailed report
 No email sent.

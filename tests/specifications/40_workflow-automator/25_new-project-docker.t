@@ -344,7 +344,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 						   description => "Can we start a new project?",
 						   read => 'Using \'workflow-tests\' as name for your project.
 workflow: registered the perl command file name workflow-tests-commands-perl_examples for target perl_examples
-workflow: registered the python command file name workflow-tests-commands-python_examples for target python_examples
+workflow: registered the python command file name workflow-tests-commands-python_examples.py for target python_examples
 Created a template configuration file for project \'workflow-tests\'
 Created a template workflow-project in \'workflow-project-template.pl\' with contents:
 ---
@@ -383,6 +383,15 @@ Then check if they work by inspecting the examples they provide (with various op
   workflow-tests-workflow examples single_command --dry-run
 
   workflow-tests-workflow examples array_of_commands --help
+
+To enable bash completion after installation of the scripts, either execute:
+
+  . ~/.bashrc
+
+Or:
+
+  . workflow-tests-bash-completion.sh
+
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -408,7 +417,7 @@ Then check if they work by inspecting the examples they provide (with various op
 ./workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 ./workflow-tests-commands-data/examples_sh/sh_single_command.sh
 ./workflow-tests-commands-perl_examples
-./workflow-tests-commands-python_examples
+./workflow-tests-commands-python_examples.py
 ./workflow-tests-configuration
 ./workflow-tests-configuration-data
 ./workflow-tests-configuration-data/build_servers.yml
@@ -489,7 +498,8 @@ global_field_project_configuration:
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
 						   description => "Can we install the project files?",
-						   read => '# mkdir --parents /home/neurospaces/bin
+						   read => '/usr/local/bin/workflow: For /home/neurospaces/workflow-test/workflow-tests-commands-python_examples.py: creating cache file /home/neurospaces/workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
+# mkdir --parents /home/neurospaces/bin
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
 #
@@ -497,7 +507,7 @@ global_field_project_configuration:
 #
 # ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces/bin/workflow-tests-commands-perl_examples
 #
-# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-python_examples /home/neurospaces/bin/workflow-tests-commands-python_examples
+# ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-python_examples.py /home/neurospaces/bin/workflow-tests-commands-python_examples.py
 #
 # bash -c "echo \'. /home/neurospaces/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
@@ -791,7 +801,8 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate an archive of the created configuration?",
-						   read => 'Invoking (Command::builtin_archive_configuration)
+						   read => '/home/neurospaces/bin/workflow-tests-workflow: For /home/neurospaces/workflow-test/workflow-tests-commands-python_examples.py: creating cache file /home/neurospaces/workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
+Invoking (Command::builtin_archive_configuration)
 ---
 global_field_project_configuration:
   configuration_origin: dynamically_generated from the executable script name
@@ -808,6 +819,7 @@ scripts:
   - workflow-test/conf.workflow-tests-workflow
   - workflow-test/workflow-project.pl
   - workflow-test/workflow-tests-bash-completion.sh
+  - workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
@@ -815,7 +827,7 @@ scripts:
   - workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
   - workflow-test/workflow-tests-commands-perl_examples
-  - workflow-test/workflow-tests-commands-python_examples
+  - workflow-test/workflow-tests-commands-python_examples.py
   - workflow-test/workflow-tests-configuration
   - workflow-test/workflow-tests-configuration-data/build_servers.yml
   - workflow-test/workflow-tests-configuration-data/cache/configuration.json
@@ -844,6 +856,7 @@ workflow-test/conf.workflow-tests-workflow
 workflow-test/README.md
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
+workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
@@ -851,7 +864,7 @@ workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
 workflow-test/workflow-tests-commands-perl_examples
-workflow-test/workflow-tests-commands-python_examples
+workflow-test/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/build_servers.yml
 workflow-test/workflow-tests-configuration-data/cache/configuration.json
@@ -891,6 +904,7 @@ workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
+workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
@@ -898,7 +912,7 @@ workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
 workflow-test/workflow-tests-commands-perl_examples
-workflow-test/workflow-tests-commands-python_examples
+workflow-test/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/build_servers.yml
 workflow-test/workflow-tests-configuration-data/cache/configuration.json
@@ -923,7 +937,8 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
 						   description => "Can we install an unpacked workflow configuration?",
-						   read => '# bash -c "echo \'# necessary for $project_name-workflow
+						   read => '/usr/local/bin/workflow: For /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples.py: creating cache file /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
+# bash -c "echo \'# necessary for $project_name-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
 
@@ -937,7 +952,7 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces2/bin/workflow-tests-commands-perl_examples
 #
-# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples /home/neurospaces2/bin/workflow-tests-commands-python_examples
+# ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples.py /home/neurospaces2/bin/workflow-tests-commands-python_examples.py
 #
 # bash -c "echo \'. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
 \' | cat >>/home/neurospaces2/.bashrc"

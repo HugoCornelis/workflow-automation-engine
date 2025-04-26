@@ -17,6 +17,7 @@ command_tests:
       options:
       
           --install-commands-pl: install a perl command file template.
+          --install-commands-py: install a python command file template.
           --install-commands-sh: install a shell command file template.
 
 description: 'default builtin targets: adding a new target'

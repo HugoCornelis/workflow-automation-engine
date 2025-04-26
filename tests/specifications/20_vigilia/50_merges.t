@@ -22,8 +22,8 @@ description:
     version: alpha
 selected:
   111_low-level.t:
-    - command: 'ifconfig '
-    - command: netstat -rn
+    - 1/_1/_-1 command: 'ifconfig '
+    - 1/_2/_-1 command: netstat -rn
 
 *** Info: See '>/tmp/report_developer-test-merge.yml' for the detailed report
 No email sent.
