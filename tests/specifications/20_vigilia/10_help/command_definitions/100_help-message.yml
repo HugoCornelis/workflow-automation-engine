@@ -27,10 +27,10 @@ command_tests:
           --config-filename            The name of the file with the configuration (default is: ./tests.config).
           --console-type               The type of the console output (one of linear, status).
           --debugging                  Enable specific debugging options.
-          --dump-json                  Dump test specifications to json files in /tmp/.
-          --dump-perl                  Dump test specifications to perl files in /tmp/.
-          --dump-yaml                  Dump test specifications to yaml files in /tmp/.
-          --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
+          --dump-json                  Dump test specifications to json files (by default in '/tmp').
+          --dump-perl                  Dump test specifications to perl files (by default in '/tmp').
+          --dump-yaml                  Dump test specifications to yaml files (by default in '/tmp').
+          --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories (by default in '/tmp').
           --email                      Allow to send emails, the default is taken from $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
           --flattenout                 Flattenout the test definitions before testing,
                                        this experimental feature might increase test performance,

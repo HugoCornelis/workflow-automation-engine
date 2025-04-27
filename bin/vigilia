@@ -81,6 +81,8 @@ my $global_reporter_classes
 		   },
       };
 
+my $default_specification_dump_directory = "/tmp";
+
 my $global_command_line_configuration
     = {
        application => {
@@ -99,10 +101,10 @@ options:
     --config-filename            The name of the file with the configuration (default is: $option_config_filename).
     --console-type               The type of the console output (one of " . (join ", ", sort keys %$global_reporter_classes) . ").
     --debugging                  Enable specific debugging options.
-    --dump-json                  Dump test specifications to json files in /tmp/.
-    --dump-perl                  Dump test specifications to perl files in /tmp/.
-    --dump-yaml                  Dump test specifications to yaml files in /tmp/.
-    --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories in /tmp/.
+    --dump-json                  Dump test specifications to json files (by default in '$default_specification_dump_directory').
+    --dump-perl                  Dump test specifications to perl files (by default in '$default_specification_dump_directory').
+    --dump-yaml                  Dump test specifications to yaml files (by default in '$default_specification_dump_directory').
+    --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories (by default in '$default_specification_dump_directory').
     --email                      Allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
     --flattenout                 Flattenout the test definitions before testing,
                                  this experimental feature might increase test performance,
@@ -993,9 +995,9 @@ sub harness_command_module_command_add
 
 	$command_definition_filename = $prefix . "_" . Heterarch::Test::Library::sentence_summarize($description, 80) . ($file_type eq 'yaml' ? ".yml" : ".json");
 
-	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml($command_definition, "$directory/$command_definition_filename", $file_type);
+	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
 
-	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
+	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
 
 	if ($result =~ /error/i)
 	{
@@ -1106,7 +1108,7 @@ tag: An array of tags associated with this test module.  These are matched with 
 
     my $path_prefix = $global_config->{tests_directory};
 
-    my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_name, $summary, $path_prefix, $reporter, 'yaml');
+    my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $summary, $path_prefix, $reporter, 'yaml');
 
     my $error;
 
@@ -1407,6 +1409,11 @@ sub initialize_config
 	$global_config->{tests_directory} = "./tests/specifications";
 
 	$global_config->{introduction_filename} = "tests/introduction.html";
+    }
+
+    if (not exists $global_config->{specification_dump_directory})
+    {
+	$global_config->{specification_dump_directory} = "/tmp";
     }
 
     # correct numerical_compare mode for this configuration
@@ -6538,7 +6545,7 @@ sub ex_terminate
 
 		my $reporter = $execution_context->{reporter};
 
-		my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_pathname, $module_definition, $global_config->{tests_directory}, $reporter, 'yaml');
+		my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_pathname, $module_definition, $global_config->{tests_directory}, $reporter, 'yaml');
 
 		if ($result =~ /error/i)
 		{
@@ -7138,13 +7145,15 @@ sub module_read_process_options
 
     my $error;
 
+    my $specification_dump_directory = $global_config->{specification_dump_directory};
+
     $pathname =~ m((.*)/(.*));
 
     my $filename = $2;
 
     if ($option_dump_json)
     {
-	my $filename = ">/tmp/$filename.js";
+	my $filename = ">$specification_dump_directory/$filename.js";
 
 	JSON_DumpFile($filename, $module_definition);
     }
@@ -7153,7 +7162,7 @@ sub module_read_process_options
     {
 	use Data::Dumper;
 
-	my $file = IO::File->new(">/tmp/$filename.pl");
+	my $file = IO::File->new(">$specification_dump_directory/$filename.pl");
 
 	print $file Dumper($module_definition);
 
@@ -7162,17 +7171,17 @@ sub module_read_process_options
 
     if ($option_dump_yaml)
     {
-	YAML::DumpFile("/tmp/$filename.yml", $module_definition);
+	YAML::DumpFile("$specification_dump_directory/$filename.yml", $module_definition);
     }
 
     if ($option_dump_file_structured_json)
     {
-	module_definition_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter, 'json');
+	module_definition_dump_file_structured_yaml_or_json($pathname, $module_definition, $specification_dump_directory, $reporter, 'json');
     }
 
     if ($option_dump_file_structured_yaml)
     {
-	module_definition_dump_file_structured_yaml($pathname, $module_definition, "/tmp", $reporter, 'yaml');
+	module_definition_dump_file_structured_yaml_or_json($pathname, $module_definition, $specification_dump_directory, $reporter, 'yaml');
     }
 
     # check if the name of the test and the pathname match
@@ -7370,7 +7379,7 @@ sub directory_next_filename_prefix
 }
 
 
-sub command_definition_dump_file_structured_yaml
+sub command_definition_dump_file_structured_yaml_or_json
 {
     my $command_definition = shift;
 
@@ -7439,7 +7448,7 @@ sub module_definition_summary_dump_file_structured_yaml
 }
 
 
-sub module_definition_dump_file_structured_yaml
+sub module_definition_dump_file_structured_yaml_or_json
 {
     my $pathname = shift;
 
@@ -7500,7 +7509,7 @@ sub module_definition_dump_file_structured_yaml
 
 		    if (! -f $command_definition_pathname)
 		    {
-			command_definition_dump_file_structured_yaml($command_definition, $command_definition_pathname, $file_type);
+			command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_pathname, $file_type);
 		    }
 		    else
 		    {
@@ -7525,10 +7534,10 @@ sub module_definition_dump_file_structured_yaml
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'module_definition_dump_file_structured_yaml',
+	      context_path => 'module_definition_dump_file_structured_yaml_or_json',
 	      description => "error creating the output module_pathname ($created)",
 	      error => "error creating the output module_pathname",
-	      module_name => "module_definition_dump_file_structured_yaml",
+	      module_name => "module_definition_dump_file_structured_yaml_or_json",
 	      subdescription => "error creating the module_pathname ($created)",
 	     },
 	    );
@@ -10851,10 +10860,10 @@ sub _report_error_add
 
     my $arguments = shift;
 
-	      # context_path => 'module_definition_dump_file_structured_yaml',
+	      # context_path => 'module_definition_dump_file_structured_yaml_or_json',
 	      # description => "error creating the output module_pathname ($created)",
 	      # error => "error creating the output module_pathname",
-	      # module_name => "module_definition_dump_file_structured_yaml",
+	      # module_name => "module_definition_dump_file_structured_yaml_or_json",
 	      # subdescription => "error creating the module_pathname ($created)",
 
     use Clone 'clone';
