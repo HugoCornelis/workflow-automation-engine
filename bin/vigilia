@@ -1416,6 +1416,11 @@ sub initialize_config
 	$global_config->{specification_dump_directory} = "/tmp";
     }
 
+    if (not exists $global_config->{reporting_directory})
+    {
+	$global_config->{reporting_directory} = "/tmp/report_$global_config->{package}->{name}";
+    }
+
     # correct numerical_compare mode for this configuration
 
     if (not $option_numerical_compare)
@@ -1680,7 +1685,16 @@ sub report_file_dump
 
     # write the full report to a file
 
-    my $report_filename = ">/tmp/report_$global_config->{package}->{name}.yml";
+    my $report_directory = "$global_config->{reporting_directory}";
+
+    my $error = Utilities::create_directories($report_directory);
+
+    if ($error)
+    {
+	print $global_fd_output "*** Warning: cannot create directory $report_directory for reporting ($error).\n";
+    }
+
+    my $report_filename = ">$report_directory/report.yml";
 
     eval
     {
@@ -1689,7 +1703,7 @@ sub report_file_dump
 
     if ($@)
     {
-	print STDERR "*** Error: Failed to write output report to $report_filename\n";
+	print STDERR "*** Error: Failed to write output report to $report_filename ($@).\n";
     }
     else
     {
@@ -1699,7 +1713,7 @@ sub report_file_dump
 	# }
 	# else
 	{
-	    print $global_fd_output "*** Info: See '$report_filename' for the detailed report\n";
+	    print $global_fd_output "*** Info: See '$report_filename' for the detailed report.\n";
 	}
     }
 }
@@ -8087,6 +8101,8 @@ sub ex_terminate
 
     my $extension = join '-', sort keys %$selected_output_levels;
 
+    # generate an output directory where processors can store the generated output
+
     my $output_directory = "/tmp/test_report_$global_config->{package}->{name}";
 
     my $created;
@@ -10886,7 +10902,7 @@ sub _report_error_add
 
     my $report_error_directory_suffix = "$error_count-" . Heterarch::Test::Library::sentence_summarize($error_report->{description}, 80);
 
-    my $error_directory = "/tmp/error_report_$global_config->{package}->{name}";
+    my $error_directory = "$global_config->{reporting_directory}";
 
     # just a best shot at removing the previous error directory
 
@@ -10907,7 +10923,7 @@ sub _report_error_add
     }
     else
     {
-	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting\n";
+	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting ($error).\n";
     }
 
     _global_error_add($error_report);
@@ -11603,6 +11619,48 @@ sub start
     my $iteration = 0;
 
     $self->message('progress_bar', { iteration => $iteration, }, );
+}
+
+
+package Utilities;
+
+
+sub create_directories
+{
+    my $directory = shift;
+
+    my $result;
+
+    use File::Path qw/make_path/;
+
+    my $error;
+
+    make_path($directory, { error => \$error, }, );
+
+    if ($error && @$error)
+    {
+	for my $diagnosis (@$error)
+	{
+	    my ($path, $message) = %$diagnosis;
+
+	    $result = "error creating $path: $message";
+
+	    if ($path eq '')
+	    {
+		# print "general error: $message\n";
+	    }
+	    else
+	    {
+		# print "problem unlinking $file: $message\n";
+	    }
+	}
+    }
+    else
+    {
+	# print "No error encountered\n";
+    }
+
+    return $result;
 }
 
 

@@ -25,7 +25,7 @@ selected:
     - 1/_1/_-1 command: 'ifconfig '
     - 1/_2/_-1 command: netstat -rn
 
-*** Info: See '>/tmp/report_developer-test-merge.yml' for the detailed report
+*** Info: See '>/tmp/report_developer-test-merge/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
