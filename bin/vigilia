@@ -1104,7 +1104,7 @@ tag: An array of tags associated with this test module.  These are matched with 
 
     $summary->{command_definitions} = [ $command_definition1, $command_definition2, ];
 
-    my $path_prefix = $global_config->{tests_directory} || "tests/specifications";
+    my $path_prefix = $global_config->{tests_directory};
 
     my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml($module_name, $summary, $path_prefix, $reporter, 'yaml');
 
@@ -1170,11 +1170,6 @@ sub harness_command_module_update
     # we don't care about a possible model library
 
     my $model_library_shas = {};
-
-    # if (defined ($global_config->{external_model_libraries}))
-    # {
-    # 	$model_library_shas = ModelLibrary::shas($global_config->{external_model_libraries});
-    # }
 
     # create an execution context for running the tests
 
