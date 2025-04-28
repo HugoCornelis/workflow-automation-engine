@@ -5547,7 +5547,7 @@ sub hs_reparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_harnessing", "*** Reparing ($reparation_description)");
+    $reporter->report_message("message_harnessing", "*** Repairing ($reparation_description)");
 
     # execute the reparation clause
 
@@ -6114,7 +6114,7 @@ sub hs_reparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_harnessing", "*** Reparing the Docker Container ($reparation_description)");
+    $reporter->report_message("message_harnessing", "*** Repairing the Docker Container ($reparation_description)");
 
     # execute the reparation clause
 
@@ -6147,7 +6147,7 @@ sub hs_reparer
 
     my $container_name = $self->{class}->{docker}->{name_container};
 
-    $reporter->report_message("message_harnessing", "*** Reparing (The Docker container is still running, you can enter it by executing '$docker_command_no_redirect exec -it $container_name bash'.)");
+    $reporter->report_message("message_harnessing", "*** Repairing (The Docker container is still running, you can enter it by executing '$docker_command_no_redirect exec -it $container_name bash'.)");
 
     # remove the docker harness identifier from the active harnesses
 
