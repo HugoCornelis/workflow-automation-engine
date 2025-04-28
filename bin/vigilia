@@ -2227,7 +2227,7 @@ sub spawn_new
 
 		$global_running_command_definition = $command_line;
 
-		$reporter->report_message("message_command", "*** Executing $command $command_line->{original_command}");
+		$reporter->report_message("message_command", "Executing $command $command_line->{original_command}");
 
 		# remember to do startup testing
 
@@ -2239,7 +2239,7 @@ sub spawn_new
 	    }
 	    else
 	    {
-		$reporter->report_message("message_command", "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments));
+		$reporter->report_message("message_command", "Recycling $command " . (join ' ', map { "'$_'" } @$arguments));
 
 		$test_startup = 0;
 	    }
@@ -3169,7 +3169,7 @@ sub _prepare_run
 
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message("message_details", "*** Shell: timeout $timeout $shell\n");
+	$reporter->report_message("message_details", "Shell: timeout $timeout $shell\n");
 
 	system "timeout $timeout $shell";
 
@@ -3218,7 +3218,7 @@ sub _process_write
     {
 	my $reporter = $execution_context->{reporter};
 
-	$reporter->report_message("message_details", "*** Write: $write\n");
+	$reporter->report_message("message_details", "Write: $write\n");
 
 	$executor->{expect_object}->send("$write\n");
     }
@@ -3393,19 +3393,19 @@ sub ct_run_command
 
 	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
 	{
-	    $reporter->report_message("message_details", "*** Converting seen \\x0a to \\x0d \\x0a newlines\n");
+	    $reporter->report_message("message_details", "Converting seen \\x0a to \\x0d \\x0a newlines\n");
 
 	    $read =~ s(\x0a)(\x0d\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    $reporter->report_message("message_details", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
+	    $reporter->report_message("message_details", "Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
 	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
 	{
-	    $reporter->report_message("message_details", "*** Converting seen \\x0d \\x0a to \\x0a newlines\n");
+	    $reporter->report_message("message_details", "Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
@@ -3612,7 +3612,7 @@ sub ct_run_command
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_details", "*** Application output file: $application_output_file (in $pwd)\n");
+    $reporter->report_message("message_details", "Application output file: $application_output_file (in $pwd)\n");
 
     # and compare it with the expected output file
 
@@ -3626,7 +3626,7 @@ sub ct_run_command
 
     if ($expected_output_file)
     {
-	$reporter->report_message("message_details", "*** Expected output file: $expected_output_file\n");
+	$reporter->report_message("message_details", "Expected output file: $expected_output_file\n");
 
 	$expected_output = $self->file_content_read($execution_context, "command_test $self->{description}", $expected_output_file);
     }
@@ -4284,7 +4284,7 @@ sub ec_end
 	{
 	    $message_level = "message_test";
 
-	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Warning: no description of this command_test when ending the execution context)";
+	    $description = $command_test->{description} ? "Test: $command_test->{description}" : "(Warning: no description of this command_test when ending the execution context)";
 
 	    $name = "";
 	}
@@ -5187,7 +5187,7 @@ sub ec_examine
 
 	    $comment = $command_test->{comment};
 
-	    $description = $command_test->{description} ? "*** Test: $command_test->{description}" : "(Warning: no description of this command_test when examining the execution context)";
+	    $description = $command_test->{description} ? "Test: $command_test->{description}" : "(Warning: no description of this command_test when examining the execution context)";
 
 	    $name = "";
 	}
@@ -5225,7 +5225,7 @@ sub ec_examine
 
 	if ($comment)
 	{
-	    $reporter->report_message("message_details", "*** Comment: $comment");
+	    $reporter->report_message("message_details", "Comment: $comment");
 	}
     }
 
@@ -5297,7 +5297,7 @@ sub wait
     {
 	my $reporter = $self->{reporter};
 
-	$reporter->report_message("message_details", "*** Wait: $wait seconds\n");
+	$reporter->report_message("message_details", "Wait: $wait seconds\n");
 
 	select(undef, undef, undef, $wait);
     }
@@ -5507,7 +5507,7 @@ sub hs_preparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_harnessing", "*** Preparing $preparation_name ($preparation->{description})");
+    $reporter->report_message("message_harnessing", "Preparing $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -5547,7 +5547,7 @@ sub hs_reparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_harnessing", "*** Repairing ($reparation_description)");
+    $reporter->report_message("message_harnessing", "Repairing ($reparation_description)");
 
     # execute the reparation clause
 
@@ -6048,7 +6048,7 @@ sub hs_preparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_harnessing", "*** Preparing the Docker Container $preparation_name ($preparation->{description})");
+    $reporter->report_message("message_harnessing", "Preparing the Docker Container $preparation_name ($preparation->{description})");
 
     # execute the preparation clause
 
@@ -6114,7 +6114,7 @@ sub hs_reparer
 
     my $reporter = $execution_context->{reporter};
 
-    $reporter->report_message("message_harnessing", "*** Repairing the Docker Container ($reparation_description)");
+    $reporter->report_message("message_harnessing", "Repairing the Docker Container ($reparation_description)");
 
     # execute the reparation clause
 
@@ -6147,7 +6147,7 @@ sub hs_reparer
 
     my $container_name = $self->{class}->{docker}->{name_container};
 
-    $reporter->report_message("message_harnessing", "*** Repairing (The Docker container is still running, you can enter it by executing '$docker_command_no_redirect exec -it $container_name bash'.)");
+    $reporter->report_message("message_harnessing", "Repairing (The Docker container is still running, you can enter it by executing '$docker_command_no_redirect exec -it $container_name bash'.)");
 
     # remove the docker harness identifier from the active harnesses
 
@@ -11004,9 +11004,10 @@ sub start
 }
 
 
-# A console window implementation to display diagnostic messages.
-
 package Heterarch::Test::Reporting::ConsoleWindow;
+
+# A console window implementation that provides a library with
+# functions to display diagnostic messages.
 
 
 my $cursor_up = "\033[A";
@@ -11300,6 +11301,8 @@ sub progress
 
 package Heterarch::Test::Reporting::Linear;
 
+# A reporter that linearly prints the given messages to the terminal
+# window.
 
 our @ISA = ("Heterarch::Test::Reporting");
 
@@ -11376,7 +11379,7 @@ sub report_message
 
     my $fd_output = $self->{fd_output};
 
-    print $fd_output "$message\n";
+    print $fd_output "*** $message\n";
 }
 
 
@@ -11390,7 +11393,7 @@ sub report_message_end
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 2, $message);
+    return _report_message_with_rulers($fd_output, 1, 2, "*** $message");
 }
 
 
@@ -11404,7 +11407,7 @@ sub report_message_info
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 1, $message);
+    return _report_message_with_rulers($fd_output, 1, 1, "*** $message");
 }
 
 
@@ -11418,7 +11421,7 @@ sub report_message_info_no_rulers
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, -1, -1, $message);
+    return _report_message_with_rulers($fd_output, -1, -1, "*** $message");
 }
 
 
@@ -11432,7 +11435,7 @@ sub report_message_start
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 2, 1, $message);
+    return _report_message_with_rulers($fd_output, 2, 1, "*** $message");
 }
 
 
@@ -11487,6 +11490,7 @@ sub _report_message_with_rulers
 
 package Heterarch::Test::Reporting::Status;
 
+# A reporter that decorates the given messages with a progress bar.
 
 our @ISA = ("Heterarch::Test::Reporting");
 
@@ -11527,7 +11531,7 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    my $message = "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
+    my $message = "Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
 
     $self->message("message_error", { message => $message, }, );
 
