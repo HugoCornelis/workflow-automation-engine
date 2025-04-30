@@ -6584,22 +6584,49 @@ sub _init_do_eval_perl_file
 
     # read and execute the perl file
 
-    my $result = do $filename;
+    my $result;
 
-    # do error processing: perl problems
+    # I removed the creation and use of the cache directory because
+    # the field project initialization calls this sub which (for some
+    # reason) breaks the code.
 
-    if ($@)
+    # my $cache_directory = Utilities::commands_cache_directory();
+
+    # my $error = Utilities::create_directories($cache_directory);
+
+    # if (not $error)
     {
-	$status = "$global_program_name: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
-    }
+	# Inline::Python creates an _Inline directory in the current
+	# directory.
+	#
+	# Make sure these _Inline directories are created in the cache
+	# directory rather than in a user working directory.
 
-    # do error processing: file problems.
+	# use File::chdir;
 
-    if (not defined $result
-	and $!)
-    {
-	$status = "$global_program_name: *** Error: no configuration file '$filename' ($!)\n";
+	# local $CWD = "/tmp"; # $cache_directory;
+
+	$result = do $filename;
+
+	# do error processing: perl problems
+
+	if ($@)
+	{
+	    $status = "$global_program_name: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
+	}
+
+	# do error processing: file problems.
+
+	if (not defined $result
+	    and $!)
+	{
+	    $status = "$global_program_name: *** Error: no configuration file '$filename' ($!)\n";
+	}
     }
+    # else
+    # {
+    # 	die "$0: Error: cannot create cache directory $cache_directory";
+    # }
 
     # return configuration and status
 
@@ -6717,6 +6744,23 @@ assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shel
 
 	    close $fh;
 	}
+
+	# Inline::Python creates an _Inline directory in the current
+	# directory.
+	#
+	# Make sure these _Inline directories are created in the cache
+	# directory rather than in a user working directory.
+	#
+	# But the cache directory may not be available during program
+	# startup, so we use a hopefully unique directory in /tmp.
+
+	my $python_inline_directory = "/tmp/$$";
+
+	`mkdir -p $python_inline_directory`;
+
+	use File::chdir;
+
+	local $CWD = $python_inline_directory; # $cache_directory;
 
 	# return configuration and status
 
