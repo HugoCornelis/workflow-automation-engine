@@ -5,6 +5,10 @@
 /.emacs.desktop.lock
 *.elc
 
+# git, patch and others
+
+*.orig
+
 _MTN/
 bin/cscope.files
 bin/vigilia.trs
