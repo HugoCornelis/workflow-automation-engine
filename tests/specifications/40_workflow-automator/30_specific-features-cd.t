@@ -47,7 +47,7 @@ my $test
 				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
-						   description => "Can we install the workflow automation configuration for the feature tests?",
+						   description => "Can we install the workflow automation configuration for the cd feature tests?",
 						   read => '# bash -c "echo \'# necessary for $project_name-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
@@ -89,20 +89,20 @@ conf.feature-testing-configuration
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "installing the workflow automation configuration for the feature tests",
+				description => "installing the workflow automation configuration for the cd feature tests",
 			       },
 			       {
 				command => 'workflow --help-projects',
 				command_tests => [
 						  {
-						   description => "Can we find the workflow project for the feature tests?",
+						   description => "Can we find the workflow project for the cd feature tests?",
 						   read => 'available_workflow automation projects (copy-paste the one you would like to get help for):
   - feature-testing-workflow --help-commands
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "find the workflow project for the feature tests",
+				description => "find the workflow project for the cd feature tests",
 			       },
 			       {
 				command => 'feature-testing-workflow',

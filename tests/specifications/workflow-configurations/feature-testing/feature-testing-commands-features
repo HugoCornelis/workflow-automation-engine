@@ -105,6 +105,25 @@ sub features_cd_tests_ssh
 }
 
 
+sub features_annotations
+{
+    my $remote_commands
+	= [
+	   'pwd',
+	   'cd /bin',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  annotation => "Three commands, one changes the current working directory.",
+	 },
+	);
+}
+
+
 sub features_export_sh
 {
     my $remote_tmux = $target_servers->{tmux_cd};

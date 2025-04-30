@@ -4981,6 +4981,15 @@ sub display_commented_command
 
     if (not $options->{quiet})
     {
+	if ($options->{annotation})
+	{
+	    my $annotation = "\n$options->{annotation}";
+
+	    $annotation =~ s(\n(.))(\n### $1)g;
+
+	    print "$annotation\n";
+	}
+
 	# print "# $command (length: $command_length)\n#\n";
 
 	print "# $command\n#\n";
@@ -6306,9 +6315,20 @@ sub execute_shell_command_array
 	return 0;
     }
 
+    my $first = 'true';
+
     foreach my $command (@$commands)
     {
-	execute_shell_command($command, $options);
+	my $individual_options = { %$options, };
+
+	if (not $first)
+	{
+	    delete $individual_options->{annotation};
+	}
+
+	execute_shell_command($command, $individual_options);
+
+	$first = '';
     }
 
     return '';
@@ -6330,10 +6350,7 @@ sub execute_shell_command_schedule
 
     foreach my $options (@$option_array)
     {
-	foreach my $command (@$command_array)
-	{
-	    execute_shell_command($command, $options);
-	}
+	execute_shell_command_array($command_array, $options);
     }
 
     return '';
