@@ -6654,18 +6654,24 @@ use Inline Python => <<'PYTHON';
 
 execute_command = None
 execute_command_array = None
+execute_command_schedule = None
+execute_command_schedule_array = None
 
-def assign_functions(exe_command, exe_command_array):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array):
     global execute_command
     global execute_command_array
+    global execute_command_schedule
+    global execute_command_schedule_array
     execute_command = exe_command
     execute_command_array = exe_command_array
+    execute_command_schedule = exe_command_schedule
+    execute_command_schedule_array = exe_command_schedule_array
 
 ___YOUR_PYTHON_CODE_HERE___
 PYTHON
 
 
-assign_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
 
 # return success
 
