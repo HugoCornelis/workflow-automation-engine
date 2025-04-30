@@ -829,7 +829,7 @@ Note that more keywords have been defined, including for running C and perl code
 
 $global_command_line_configuration->{command_configuration}->{known_commands}->{"command-add"}
     = {
-       description => "Add a new command with the given name under the given module and try to insert its current output as the expected output.",
+       description => "Add a new command with the given name under the given module and insert its current output as the expected output.",
        executor => "main::harness_command_module_command_add",
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
@@ -866,6 +866,163 @@ sub harness_command_module_command_add
     my $command_to_be_tested = shift || shift @$arguments;
 
     my $description = shift || shift @$arguments;
+
+    if (! defined $module_name)
+    {
+	die "$0: *** Error: $command expects an argument for the name of the existing module to which the command to be tested should be added.";
+    }
+
+    if (! defined $command_to_be_tested)
+    {
+	die "$0: *** Error: $command expects an argument for the command to be tested.";
+    }
+
+    if (! defined $description)
+    {
+	die "$0: *** Error: $command expects an argument for the description of the command to be tested.";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_comment = $options->{"comment=s"};
+
+    my $comment;
+
+    if (defined $$option_comment)
+    {
+	$comment = $$option_comment;
+    }
+
+    use Clone 'clone';
+
+    my $tests_directory = $global_config->{tests_directory};
+
+    my $module_path_name = "$tests_directory/$module_name";
+
+    if (-r $module_path_name)
+    {
+    }
+    else
+    {
+	die "$0: *** Error: $module_path_name not found.";
+    }
+
+    my $module_definition = Heterarch::Test::Library::module_read($reporter, "$module_path_name/summary.yml");
+
+    if (!$module_definition)
+    {
+	die "$0: *** Error: $module_path_name does not have a valid test module definition..";
+    }
+
+    my $command_definition = clone($global_command_definition_template);
+
+    $command_definition->{command} = $command_to_be_tested;
+
+    $command_definition->{description} = $description;
+
+    my $output = `$command_to_be_tested`;
+
+    $command_definition->{command_tests} = [];
+
+    my $command_tests = $command_definition->{command_tests};
+
+    my $command_test
+	= {
+	   defined $comment ? (comment => $comment) : (),
+	   description => $description,
+	   read => $output,
+	  };
+
+    push @$command_tests, $command_test;
+
+    # my $command_definitions = $module_definition->{command_definitions};
+
+    # push @$command_definitions, $command_definition;
+
+    my $directory = "$module_path_name/command_definitions";
+
+    my $prefix = Heterarch::Test::Library::directory_next_filename_prefix($directory);
+
+    my $error;
+
+    my $command_definition_filename;
+
+    if (defined $prefix)
+    {
+	my $file_type = 'yaml';
+
+	$command_definition_filename = $prefix . "_" . Heterarch::Test::Library::sentence_summarize($description, 80) . ($file_type eq 'yaml' ? ".yml" : ".json");
+
+	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
+
+	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
+
+	if ($result =~ /error/i)
+	{
+	    $error = "Error adding the command to the test module $module_name ($result).";
+	}
+    }
+    else
+    {
+	$error = "Error: directory_next_filename_prefix does not return a prefix (does the directory $directory exist?).";
+    }
+
+    if ($error)
+    {
+	print "$0: *** Error: $error\n";
+    }
+    else
+    {
+	print "$0: Added a test with filename $command_definition_filename for this command to the test module $module_name.\n";
+    }
+
+    # return the error if there is one
+
+    return $error;
+}
+
+
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"command-update"}
+    = {
+       description => "Update the given command under the given module by inserting its current output as the expected output.",
+       executor => "main::harness_command_module_command_update",
+       help => {
+		synopsis => "$0 command-update <options> <module-name> <command-name> <'command-test-description'>",
+		usage => "Options:
+    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used.
+    --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
+    --description    The description to insert.  The description is inserted both at command definition level and at command test level.
+    --help           Show this help message.
+    --output-json    Output in json format.
+    --output-yaml    Output in yaml format.
+",
+	       },
+       options => {
+		   "command-output=s" => do { my $option_command_output; \$option_command_output; },
+		   "comment=s" => do { my $option_comment; \$option_comment; },
+		   "help!" => do { my $option_help; \$option_help; },
+		   "output-json!" => do { my $option_output_json; \$option_output_json; },
+		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
+		  },
+      };
+
+sub harness_command_module_command_update
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift || [];
+
+    my $reporter = shift;
+
+    my $module_name = shift || shift @$arguments;
+
+    my $command_to_be_tested = shift || shift @$arguments;
+
+    my $description = shift || shift @$arguments;
+
+    die "$0: *** Error: This is not yet implemented.";
 
     if (! defined $module_name)
     {
