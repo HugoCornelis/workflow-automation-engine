@@ -20,6 +20,8 @@ configured-workflows/configuration.json
 configured-workflows/configuration.toml
 configured-workflows/configuration.yaml
 
+tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
+
 # http://www.gnu.org/software/automake
 
 Makefile.in
