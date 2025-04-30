@@ -1,0 +1,16 @@
+$files = {
+           '_<bin/vigilia' => [
+                                {
+                                  'value' => '1',
+                                  'line' => '10446',
+                                  'fname' => 'bin/vigilia',
+                                  'type' => 'user',
+                                  'expr' => undef,
+                                  'text' => '    my $module_name = $module_definition->{name};
+'
+                                }
+                              ]
+         };
+$expr_list = [];
+$eval_saved_text = undef;
+$main_win_geometry = '1920x1001+0+0';
