@@ -6,7 +6,7 @@ command_tests:
       
       bin/vigilia command-add <options> <module-name> <command-name> <'command-test-description'>
       
-      Add a new command with the given name under the given module and try to insert its current output as the expected output.
+      Add a new command with the given name under the given module and insert its current output as the expected output.
       
       Options:
           --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used.
