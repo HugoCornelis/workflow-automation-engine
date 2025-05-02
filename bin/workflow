@@ -2717,11 +2717,12 @@ sub builtin_add_target_completions
 
     my $completions_hash
 	= {
-	   "1.<target_name>" => {
-				 "<target_description>" => 'abc',
-				 "_target_description_" => 'abc',
-				},
-	   "2.<target_description>" => 'abc',
+	   "1.<target_name>" => '',
+	   "2.<target_description>" => '',
+	   "'3.[--_<options>_]'" => '',
+	   "--install-commands-pl" => '',
+	   "--install-commands-py" => '',
+	   "--install-commands-sh" => '',
 	  };
 
     if (scalar @$complete_arguments_array > 2)
