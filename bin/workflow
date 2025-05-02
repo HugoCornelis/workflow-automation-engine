@@ -2233,6 +2233,7 @@ sub _install_script_git_repository
 	= [
 	   "echo >.gitignore '*~'",
 	   "echo >>.gitignore '_Inline'",
+	   "echo >>.gitignore '$project_name-commands-data/cache'",
 	   "echo >>.gitignore '$project_name-configuration-data/cache'",
 	   "git add --all",
 	   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
