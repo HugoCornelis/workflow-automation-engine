@@ -6648,14 +6648,12 @@ sub _init_do_eval_python_file
     {
 	$status = "$global_program_name: *** Error: file '$input_pathname' not found (because the file cannot be read)\n";
 
-	return (undef, undef);
+	return (undef, $status);
     }
 
     my $cache_directory = Utilities::commands_cache_directory();
 
     my $error = Utilities::create_directories($cache_directory);
-
-    my ($result, $eval_status);
 
     if (not $error)
     {
