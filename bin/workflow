@@ -727,7 +727,7 @@ sub ${target_name}_single_command_completions
 	   \"4._Look_at_the_completion_function_of_${target_name}_single_command_completions_to_understand_how_it_works\" => \"further_explanation\",
 	  };
 
-    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # the following logic uses bash completion as a help message when there are no arguments to complete
     # allows to dynamically insert other completions when there are arguments to complete.
 
     if (scalar \@\$complete_arguments_array > 2)
@@ -805,7 +805,7 @@ sub ${target_name}_array_of_commands_completions
 	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
 	  };
 
-    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # the following logic uses bash completion as a help message when there are no arguments to complete
     # allows to dynamically insert other completions when there are arguments to complete.
 
     if (scalar \@\$complete_arguments_array > 2)
@@ -893,7 +893,7 @@ sub ${target_name}_array_of_commands_remote_execution_completions
 	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
 	  };
 
-    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # the following logic uses bash completion as a help message when there are no arguments to complete
     # allows to dynamically insert other completions when there are arguments to complete.
 
     if (scalar \@\$complete_arguments_array > 2)
@@ -955,7 +955,7 @@ sub ${target_name}_sequencing_and_composition_completions
 	   \"2.<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
 	  };
 
-    # the follow logic uses bash completion as a help message when there are no arguments to complete
+    # the following logic uses bash completion as a help message when there are no arguments to complete
     # allows to dynamically insert other completions when there are arguments to complete.
 
     if (scalar \@\$complete_arguments_array > 2)
