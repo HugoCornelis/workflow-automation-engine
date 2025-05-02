@@ -6648,11 +6648,30 @@ sub _init_do_eval_perl_file
 }
 
 
+my $global_read_python_files = {};
+
+my $global_api_bound = '';
+
+
 sub _init_do_eval_python_file
 {
     my $input_pathname = shift;
 
-    my $status;
+    my ($result, $status);
+
+    my $debug_python_inlining = ''; # 'yes';
+
+    if ($debug_python_inlining)
+    {
+	print STDERR "_init_do_eval_python_file: Reading $input_pathname\n";
+    }
+
+    if (exists $global_read_python_files->{$input_pathname})
+    {
+	my $result_and_status = $global_read_python_files->{$input_pathname};
+
+	return ($result_and_status->{result}, $result_and_status->{status});
+    }
 
     # check if the file exists
 
@@ -6685,6 +6704,28 @@ sub _init_do_eval_python_file
 
 	#t read the perl command file
 
+	my $api_bind_code = "
+execute_command = None
+execute_command_array = None
+execute_command_schedule = None
+execute_command_schedule_array = None
+
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array):
+    global execute_command
+    global execute_command_array
+    global execute_command_schedule
+    global execute_command_schedule_array
+    execute_command = exe_command
+    execute_command_array = exe_command_array
+    execute_command_schedule = exe_command_schedule
+    execute_command_schedule_array = exe_command_schedule_array
+
+";
+
+	my $api_bind_call_code = "
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
+
+";
 	my $commands_template_code
 	    = "#!/usr/bin/perl -w
 
@@ -6708,26 +6749,13 @@ BEGIN
 
 use Inline Python => <<'PYTHON';
 
-execute_command = None
-execute_command_array = None
-execute_command_schedule = None
-execute_command_schedule_array = None
-
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array):
-    global execute_command
-    global execute_command_array
-    global execute_command_schedule
-    global execute_command_schedule_array
-    execute_command = exe_command
-    execute_command_array = exe_command_array
-    execute_command_schedule = exe_command_schedule
-    execute_command_schedule_array = exe_command_schedule_array
+___API_BIND_CODE___
 
 ___YOUR_PYTHON_CODE_HERE___
 PYTHON
 
 
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
+___API_BIND_CALL_CODE___
 
 # return success
 
@@ -6735,6 +6763,31 @@ assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shel
 
 
 ";
+
+	if (not $global_api_bound)
+	{
+	    if ($debug_python_inlining)
+	    {
+		print STDERR "_init_do_eval_python_file: Binding APIs\n";
+	    }
+
+	    $commands_template_code =~ s(___API_BIND_CODE___)($api_bind_code);
+
+	    $commands_template_code =~ s(___API_BIND_CALL_CODE___)($api_bind_call_code);
+
+	    $global_api_bound = 'yes';
+	}
+	else
+	{
+	    if ($debug_python_inlining)
+	    {
+		print STDERR "_init_do_eval_python_file: Removing APIs\n";
+	    }
+
+	    $commands_template_code =~ s(___API_BIND_CODE___)();
+
+	    $commands_template_code =~ s(___API_BIND_CALL_CODE___)();
+	}
 
 	$commands_template_code =~ s(___YOUR_PYTHON_CODE_HERE___)($python_code);
 
@@ -6744,7 +6797,7 @@ assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shel
 
 	my $output_filename = "$cache_directory/$input_filename";
 
-	if (1)
+	if (0)
 	{
 	    print STDERR "$0: For $input_pathname: creating cache file $output_filename\n";
 	}
@@ -6776,14 +6829,20 @@ assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shel
 
 	# return configuration and status
 
-	($result, $eval_status) = FieldProject::_init_do_eval_perl_file($output_filename);
+	($result, $status) = FieldProject::_init_do_eval_perl_file($output_filename);
     }
     else
     {
 	die "$0: Error: cannot create cache directory $cache_directory";
     }
 
-    return ($result, $eval_status);
+    $global_read_python_files->{$input_pathname}
+	= {
+	   result => $result,
+	   status => $status,
+	  };
+
+    return ($result, $status);
 }
 
 
