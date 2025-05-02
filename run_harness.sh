@@ -1,4 +1,4 @@
 #!/bin/sh
 
-vigilia
+bin/vigilia
 
