@@ -498,8 +498,7 @@ global_field_project_configuration:
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
 						   description => "Can we install the project files?",
-						   read => '/usr/local/bin/workflow: For /home/neurospaces/workflow-test/workflow-tests-commands-python_examples.py: creating cache file /home/neurospaces/workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
-# mkdir --parents /home/neurospaces/bin
+						   read => '# mkdir --parents /home/neurospaces/bin
 #
 # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
 #
@@ -801,8 +800,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate an archive of the created configuration?",
-						   read => '/home/neurospaces/bin/workflow-tests-workflow: For /home/neurospaces/workflow-test/workflow-tests-commands-python_examples.py: creating cache file /home/neurospaces/workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
-Invoking (Command::builtin_archive_configuration)
+						   read => 'Invoking (Command::builtin_archive_configuration)
 ---
 global_field_project_configuration:
   configuration_origin: dynamically_generated from the executable script name
@@ -937,8 +935,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
 						   description => "Can we install an unpacked workflow configuration?",
-						   read => '/usr/local/bin/workflow: For /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples.py: creating cache file /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
-# bash -c "echo \'# necessary for $project_name-workflow
+						   read => '# bash -c "echo \'# necessary for $project_name-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
 
