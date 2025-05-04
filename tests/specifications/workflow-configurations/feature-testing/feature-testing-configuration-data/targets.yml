@@ -9,6 +9,8 @@ targets:
     description: testing of workflow features
   perl_examples:
     description: these are perl examples that explain how to use the APIs
+  pure-python:
+    description: Pure python examples.
   python_examples:
     description: these are python examples that explain how to use the APIs
   source_code:
