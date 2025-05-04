@@ -3642,7 +3642,8 @@ sub _workflow_commands_initialize
 
 	if ($file_type eq 'python')
 	{
-	    my ($commands, $eval_status) = FieldProject::_init_do_eval_python_file($command_filename);
+	    # my ($commands, $eval_status) = FieldProject::_init_do_eval_python_file($command_filename);
+	    my ($commands, $eval_status) = Command::_init_do_eval_python_file($command_filename);
 
 	    if ($eval_status)
 	    {
@@ -6737,6 +6738,61 @@ sub _init_do_eval_perl_file
 }
 
 
+my $python_inline_directory = "/tmp/workflow-automation";
+
+my $global_debug_python_api = 1;
+
+package Command;
+
+BEGIN
+{
+    # Inline::Python creates an _Inline directory in the current
+    # directory.
+    #
+    # Make sure these _Inline directories are created in the cache
+    # directory rather than in a user working directory.
+    #
+    # But the cache directory may not be available during program
+    # startup, so we use a hopefully unique directory in /tmp.
+
+    $python_inline_directory = "/tmp/workflow-automation/$<";
+
+    `mkdir -p $python_inline_directory`;
+}
+
+
+use Inline Python => <<'END_PYTHON', directory => $python_inline_directory;
+execute_command = None
+execute_command_array = None
+execute_command_schedule = None
+execute_command_schedule_array = None
+
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array):
+    global execute_command
+    global execute_command_array
+    global execute_command_schedule
+    global execute_command_schedule_array
+    execute_command = exe_command
+    execute_command_array = exe_command_array
+    execute_command_schedule = exe_command_schedule
+    execute_command_schedule_array = exe_command_schedule_array
+
+def run_python_code(code_str, filename):
+    import traceback
+    import ast
+
+    try:
+        print(f"Compiling for {filename}")
+        compiled = compile(code_str, filename, 'exec')
+        exec(compiled, {'__file__': filename})
+    except Exception:
+        traceback.print_exc()
+
+END_PYTHON
+
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
+
+
 my $global_read_python_files = {};
 
 my $global_api_bound = '';
@@ -6763,6 +6819,58 @@ sub _python_print_to_stderr
 package FieldProject;
 
 sub _init_do_eval_python_file
+{
+    my $input_pathname = shift;
+
+    my ($result, $status);
+
+    my $debug_inline_python = 1;
+
+    if (exists $global_read_python_files->{$input_pathname})
+    {
+	my $result_and_status = $global_read_python_files->{$input_pathname};
+
+	return ($result_and_status->{result}, $result_and_status->{status});
+    }
+
+    # check if the file exists
+
+    if (not -r "$input_pathname")
+    {
+	$status = "$global_program_name: *** Error: file '$input_pathname' not found (because the file cannot be read)\n";
+
+	return (undef, $status);
+    }
+
+    if ($debug_inline_python)
+    {
+	print STDERR "_init_do_eval_python_file($input_pathname)\n";
+    }
+
+    # read the python file
+
+    my $python_code
+	= do {
+	    open my $fh, '<', $input_pathname;
+	    local $/;
+	    <$fh>;
+	};
+
+    $result = Command::run_python_code($python_code, $input_pathname);
+
+    $global_read_python_files->{$input_pathname}
+	= {
+	   result => $result,
+	   status => $status,
+	  };
+
+    return ($result, $status);
+}
+
+
+package FieldProject;
+
+sub _init_do_eval_python_file_old
 {
     my $input_pathname = shift;
 
