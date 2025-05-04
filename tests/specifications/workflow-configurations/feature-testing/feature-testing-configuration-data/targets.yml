@@ -13,6 +13,8 @@ targets:
     description: these are perl examples that explain how to use the APIs
   python:
     description: Python testing
+  pure-python:
+    description: Pure python examples.
   python_examples:
     description: these are python examples that explain how to use the APIs
   source_code:
