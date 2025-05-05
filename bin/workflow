@@ -6787,6 +6787,15 @@ def run_python_code(code_str, filename):
     except Exception:
         traceback.print_exc()
 
+def pure_python_python_command_hard_coded(argv):
+    command = "echo 'python_command from bash (1)'"
+    execute_command(command)
+    command_array = [
+        "echo 'python_command from bash (2)'",
+        "echo 'python_command from bash (3)'"
+    ]
+    execute_command_array(command_array)
+
 END_PYTHON
 
 assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
