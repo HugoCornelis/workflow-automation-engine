@@ -1,0 +1,11 @@
+---
+command: '# <the command with its single space seperated arguments to be tested>'
+command_tests:
+  - description: '<a single line description of the specific test, it can be a question that asks what is tested>'
+    read: '<the output that is expected from running the test>'
+  - description: '<a single line description of the specific test, it can be a question that asks what is tested>'
+    read: "<a string that is expected from running the test after writing to STDOUT what is specified with the 'write' keyword>"
+    timeout: '<the number of seconds to wait before failing the test>'
+    wait: '<the number of seconds to wait before attempting to read from STDIN>'
+    write: '<a string that must be written to STDIN>'
+description: '<a single line description of the command being tested>'
