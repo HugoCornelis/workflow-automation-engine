@@ -17,6 +17,8 @@ targets:
     description: Pure python examples.
   python_examples:
     description: these are python examples that explain how to use the APIs
+  shell_scripts:
+    description: Testing of shell script customizations.
   source_code:
     description: operations on the source code that is used for testing
   wiki_gitlab:

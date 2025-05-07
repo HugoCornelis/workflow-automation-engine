@@ -1,0 +1,38 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our $option_verbose;
+
+our $global_technical_project_configuration;
+
+our $global_field_project_configuration;
+
+
+package Command;
+
+
+sub shell_scripts_invoke_script
+{
+    # arguments on the command line and to this sub are unified in the $arguments array
+
+    my $arguments = shift || [];
+
+    # a fictitious force argument can be fetched from the (possibly empty) $arguments array
+
+    my $force = $arguments->[0] || "";
+
+    execute_shell_script_command("examples_sh/sh_single_command.sh");
+}
+
+
+# return success
+
+1;
+
+
