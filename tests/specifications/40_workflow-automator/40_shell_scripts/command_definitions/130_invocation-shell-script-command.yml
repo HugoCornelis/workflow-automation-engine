@@ -1,0 +1,7 @@
+---
+command: feature-testing-workflow shell_scripts invoke_script
+command_tests:
+  - description: invocation of a shell script command
+    read: |
+      an example of the invocation of a single command
+description: invocation of a shell script command
