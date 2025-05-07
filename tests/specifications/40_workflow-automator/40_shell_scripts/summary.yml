@@ -1,0 +1,39 @@
+---
+comment: |+
+  This type of comment element can be inserted at any level in the YAML files that define tests.
+  
+  The top level summary file of a test module gives general information about the module without specifying any tests.
+  
+  Recognized key words are (in alphabetical order):
+  
+  description: Gives a general description of the test module.
+  disable: Gives the reason why this test module is disabled.
+  documentation: Has keywords with information for inclusion in documents.  They are not considered druing tests.
+  error: Gives the reason why this test module will always fail.
+  harnessing: A harnessing key word defines the container that is used to run the commands to be tested.
+  
+  In most cases the harnessing keyword has one subkeyword 'class' that defines:
+  
+      docker: Properties of the Docker image and container.
+      identifier: An internal Docker container identifier.
+      type: The internal type of the code that is used to manage the container, most commonly 'Heterarch::Test::ExecutionContext::Harness::Docker'.
+  
+  The 'docker' keyword defines:
+  
+      default_user: The name of the user inside the container running the tests.
+      dockerfile: A relative pathname to the Dockerfile that defines the docker image.
+      name_container: The public name of the Docker container.
+      name_image: The public name of the Docker image that is used to instantiate the container.
+  
+  name: The name of the module, this must match with the pathname of the module.  It is used for error reporting.
+  numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+  tag: An array of tags associated with this test module.  These are matched with the tags given on the command line.
+
+description: shell scripts
+documentation:
+  explanation: |+2
+    
+    Shell scripts provide for another type of customization of the workflow engine.
+
+  purpose: This module tests customizations of the workflow engine consisting of shell scripts.
+name: 40_workflow-automator/40_shell_scripts/summary.yml
