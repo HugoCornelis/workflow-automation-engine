@@ -3471,7 +3471,7 @@ sub execute_shell_script_command
 
     my $arguments = join ' ', $script_command, map { "'$_'" } @_ ;
 
-    return Engine::execute_shell_command("cd '$commands_data_directory' && $script_command $arguments");
+    return Engine::execute_shell_command("cd $commands_data_directory && $arguments");
 }
 
 
