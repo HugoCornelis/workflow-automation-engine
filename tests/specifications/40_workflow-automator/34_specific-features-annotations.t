@@ -28,7 +28,9 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/bin/feature-testing-commands-perl_examples
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-python_examples /home/neurospaces/bin/feature-testing-commands-python_examples
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-pure-python.py /home/neurospaces/bin/feature-testing-commands-pure-python.py
+#
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-shell_scripts /home/neurospaces/bin/feature-testing-commands-shell_scripts
 #
 # bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
