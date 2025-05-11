@@ -6754,7 +6754,7 @@ BEGIN
     # But the cache directory may not be available during program
     # startup, so we use a hopefully unique directory in /tmp.
 
-    $python_inline_directory = "/tmp/workflow-automation/$<";
+    $python_inline_directory = "$ENV{HOME}/.workflow-automation/.inline-cache";
 
     `mkdir -p $python_inline_directory`;
 }
