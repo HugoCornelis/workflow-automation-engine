@@ -801,7 +801,6 @@ scripts:
   - workflow-test/conf.workflow-tests-workflow
   - workflow-test/workflow-project.pl
   - workflow-test/workflow-tests-bash-completion.sh
-  - workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
   - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
@@ -838,7 +837,6 @@ workflow-test/conf.workflow-tests-workflow
 workflow-test/README.md
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
-workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
@@ -886,7 +884,6 @@ workflow-test/conf.workflow-tests-configuration
 workflow-test/conf.workflow-tests-workflow
 workflow-test/workflow-project.pl
 workflow-test/workflow-tests-bash-completion.sh
-workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
 workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
