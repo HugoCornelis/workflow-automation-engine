@@ -3471,7 +3471,15 @@ sub execute_shell_script_command
 
     my $arguments = join ' ', $script_command, map { "'$_'" } @_ ;
 
-    return Engine::execute_shell_command("cd $commands_data_directory && $arguments");
+    my $commands
+	= [
+	   "cd $commands_data_directory",
+	   "$arguments",
+	  ];
+
+    return Engine::execute_shell_command_array($commands);
+
+#     return Engine::execute_shell_command("cd $commands_data_directory && $arguments");
 }
 
 
@@ -4813,15 +4821,13 @@ sub working_directory_for_interaction_role_parse
 
     # if this is a chdir executable_command
 
-    if ($executable_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/
-	or $executable_command =~ /^\s*cd\s*$/
-	or $executable_command =~ /^\s*cd\s+(.*?)\s*(.*)$/)
+    my $cd_command = _process_cd_command($executable_command);
+
+    if ($cd_command)
     {
 	# process its arguments
 
-	my $cd_argument = $1 || "";
-
-	my $rest_of_command_line = $2;
+	my $cd_argument = $cd_command->{argument};
 
 	# remove quotes, they are invalid in directory names for the purpose of this script
 
@@ -4835,6 +4841,8 @@ sub working_directory_for_interaction_role_parse
 	{
 	    $cd_argument = $ENV{HOME};
 	}
+
+	my $rest_of_command_line = $cd_command->{rest_of_command_line};
 
 	$executable_command = "cd $cd_argument $rest_of_command_line";
 
@@ -5492,11 +5500,11 @@ sub execute_scheduled_command_option_dry_run
 	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
     }
 
-    if ($executable_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/
-	or $executable_command =~ /^\s*cd\s*$/
-	or $executable_command =~ /^\s*cd\s+(.*?)\s*(.*)$/)
+    my $cd_command = _process_cd_command($executable_command);
+
+    if ($cd_command)
     {
-	my $cd_argument = $1;
+	my $cd_argument = $cd_command->{argument};
 
 	my $exit_status = not chdir $cd_argument;
     }
@@ -5754,6 +5762,43 @@ sub _print_interaction_header
 }
 
 
+sub _process_cd_command
+{
+    my $command = shift;
+
+    my $result;
+
+    if ($command =~ /^\s*chdir\s+(.*?)\s*(.*)$/)
+    {
+	$result
+	    = {
+	       type => 'chdir',
+	       argument => $1,
+	       rest_of_command_line => $2,
+	      };
+    }
+    elsif ($command =~ /^\s*cd\s*$/)
+    {
+	$result
+	    = {
+	       type => 'cd',
+	       argument => $1,
+	      };
+    }
+    elsif ($command =~ /^\s*cd\s+([^\s]*)\s*(.*)$/)
+    {
+	$result
+	    = {
+	       type => 'cd',
+	       argument => $1,
+	       rest_of_command_line => $2,
+	      };
+    }
+
+    return $result;
+}
+
+
 sub execute_option_export_sh
 {
     my $interaction_roles = shift;
@@ -5826,11 +5871,11 @@ sub execute_option_export_sh
 
     # 'cd' commands must both be exported and executed
 
-    if ($export_sh_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/
-	or $export_sh_command =~ /^\s*cd\s*$/
-	or $export_sh_command =~ /^\s*cd\s+(.*?)\s*(.*)$/)
+    my $cd_command = _process_cd_command($export_sh_command);
+
+    if ($cd_command)
     {
-	my $cd_argument = $1;
+	my $cd_argument = $cd_command->{argument};
 
 	my $exit_status = not chdir $cd_argument;
     }
@@ -5893,16 +5938,14 @@ sub execute_scheduled_command
 
     my $exit_status;
 
-    #! note that the \s+ is a bug: it forces the use of white-space when no arguments are given
-
     #! note the difference in processing and exit status for a local cd vs a remote cd
 
+    my $cd_command = _process_cd_command($executable_command);
+
     if ($interaction_role eq 'localuser@localhost'
-	and ($executable_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/
-	     or $executable_command =~ /^\s*cd\s*$/
-	     or $executable_command =~ /^\s*cd\s+(.*?)\s*(.*)$/))
+	and ($cd_command))
     {
-	my $cd_argument = $1;
+	my $cd_argument = $cd_command->{argument};
 
 	display_commented_command($command, $options);
 
