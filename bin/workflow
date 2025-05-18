@@ -6955,7 +6955,7 @@ sub _init_do_eval_yaml_command_file
 
     if (not -r "$filename")
     {
-	$status = "$global_program_name: *** Error: file '$filename' not found (because the file does not exist)\n";
+	$status = "$global_program_name: *** Error: file '$filename' cannot be read\n";
 
 	return undef;
     }
