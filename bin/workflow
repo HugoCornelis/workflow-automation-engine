@@ -147,12 +147,16 @@ my $global_builtin_commands
 
 my $global_known_command_packages_builtin
     = {
+       'Command::Buildroot' => {
+				description => 'workflows for working with Buildroot',
+				documentation => 'These workflows implement convenience interactions with Buildroot.',
+			       },
        'Command::Git' => {
-			  description => 'workflows for working with git',
-			  documentation => 'These workflows implement convenience interactions with git.',
+			  description => 'workflows for working with Git',
+			  documentation => 'These workflows implement convenience interactions with Git.',
 			 },
        'Command::Git::RepositorySet' => {
-					 description => 'workflows for working with git repositories',
+					 description => 'workflows for working with Git repositories',
 					 documentation => 'These workflows implement convenience interactions with a set of Git repositories..',
 					},
        'Command::GitLab' => {
@@ -3946,6 +3950,48 @@ sub _init_filenames_2_symlink_commands
     }
 
     return $commands;
+}
+
+
+package Command::Buildroot;
+
+# add op-target-dependencies of op-power
+
+sub builtin_packages
+{
+}
+
+
+sub builtin_packages_help
+{
+    my $command = shift;
+
+    return "$command: List all the packages that Buildroot can build in a given configuration.
+
+This skips host-* (uninteresting) and target-* (buildroot special) packages.
+";
+}
+
+
+sub builtin_package_dependencies
+{
+    my $arguments = shift || [];
+
+    my $package_name = $arguments->[0];
+
+    if (not defined $package_name)
+    {
+	die "$0: *** Error: No package given but it is required for finding its dependencies.";
+    }
+}
+
+
+sub builtin_package_dependencies_help
+{
+    my $command = shift;
+
+    return "$command: List the dependencies of a given package.
+";
 }
 
 
