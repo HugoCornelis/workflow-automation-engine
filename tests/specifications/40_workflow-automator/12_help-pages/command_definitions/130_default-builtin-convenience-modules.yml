@@ -7,13 +7,16 @@ command_tests:
       
       help_module_all:
         Command:
-          description: "a library of workflows (try these ones: 'workflow Command::Git --help-module' or 'workflow Command::Git::RepositorySet --help-module' or 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module')"
+          description: "a library of workflows (try these ones: 'workflow Command::Buildroot --help-module' or 'workflow Command::Git --help-module' or 'workflow Command::Git::RepositorySet --help-module' or 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module')"
           documentation: each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects
+        Command::Buildroot:
+          description: workflows for working with Buildroot
+          documentation: These workflows implement convenience interactions with Buildroot.
         Command::Git:
-          description: workflows for working with git
-          documentation: These workflows implement convenience interactions with git.
+          description: workflows for working with Git
+          documentation: These workflows implement convenience interactions with Git.
         Command::Git::RepositorySet:
-          description: workflows for working with git repositories
+          description: workflows for working with Git repositories
           documentation: These workflows implement convenience interactions with a set of Git repositories..
         Command::GitLab:
           description: workflows for working with GitLab
