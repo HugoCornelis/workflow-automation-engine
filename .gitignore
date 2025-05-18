@@ -11,6 +11,7 @@
 
 _MTN/
 bin/cscope.files
+run_harness.sh.trs
 bin/vigilia.trs
 neurospaces_cpan_modules
 tests/html/
