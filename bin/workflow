@@ -4345,7 +4345,7 @@ sub _commands_checkout
 {
     my $branch = shift || '';
 
-    use Data::Dumper; print STDERR Dumper($all_repository_descriptors);
+#     use Data::Dumper; print STDERR Dumper($all_repository_descriptors);
 
     my $commands
 	= [
