@@ -2955,6 +2955,8 @@ sub builtin_install_scripts
 
 #     print Dumper(\@_);
 
+    my $arguments = shift || [];
+
     my $option_install_aliasses = 'by default';
     my $option_install_bash_completion = 'by default';
     my $option_install_commands;
@@ -2980,11 +2982,11 @@ sub builtin_install_scripts
 
     use Getopt::Long qw(GetOptionsFromArray);;
 
-    my $result = GetOptionsFromArray(\@ARGV, %$install_options);
+    my $result = GetOptionsFromArray($arguments, %$install_options);
 
     if (!$result)
     {
-        die "$global_program_name: *** error in option processing, try --help";
+        die "$global_program_name: *** Error in option processing, try --help";
     }
 
     # need to take these actions:
