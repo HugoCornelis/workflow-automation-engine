@@ -7,6 +7,8 @@ targets:
     description: interaction with the docker build container
   features:
     description: testing of workflow features
+  more-python:
+    description: One more Python target
   perl_examples:
     description: these are perl examples that explain how to use the APIs
   pure-python:
