@@ -342,27 +342,12 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 				command_tests => [
 						  {
 						   description => "Can we start a new project?",
-						   read => 'Using \'workflow-tests\' as name for your project.
+						   read => 'Using \'workflow-tests\' for the name of your project.
 workflow: registered the perl command file name workflow-tests-commands-perl_examples for target perl_examples
 workflow: registered the python command file name workflow-tests-commands-python_examples.py for target python_examples
 Created a template configuration file for project \'workflow-tests\'
-Created a template workflow-project in \'workflow-project-template.pl\' with contents:
 ---
-#!/usr/bin/perl -w
-
-use strict;
-
-use warnings;
-
-my $configuration
-    = {
-       field_project_name => \'workflow-tests\',
-      };
-
-return $configuration;
-
----
-If this looks good, please rename it to \'workflow-project.pl\' using the command:
+If this looks good, please rename the template configuration to a real configuration using the command:
 
   mv \'workflow-project-template.pl\' \'workflow-project.pl\'
 
@@ -391,7 +376,6 @@ To enable bash completion after installation of the scripts, either execute:
 Or:
 
   . workflow-tests-bash-completion.sh
-
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
