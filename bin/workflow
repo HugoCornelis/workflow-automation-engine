@@ -3095,24 +3095,63 @@ sub builtin_install_scripts_completions
 
     my $complete_arguments_array = shift;
 
-    my $completions_hash
-	= {
-	   'There-are-no-arguments-possible-but-options-are-available-after-a-double-dash.' => '',
-	   '--' => {
-		    '0.Available_options:' => 'help message',
-		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
-		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-		    '--commands' => "install or upgrade the command configuration to ~/bin.",
-		    '--engine' => "create a symbolic link to the workflow engine in ~/bin.",
-		    '--force' => "don't use this.",
-		    '--git' => "create a git repository for the workflow configuration.",
-		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-		    '--path-in-bashrc' => "update .bashrc to include ~/bin in PATH.",
-		    '--report' => "report on what is being done.",
-		   },
-	  };
+    if (scalar @$complete_arguments_array > 2)
+    {
+	# insert all your completions here when there are arguments to complete,
+	# bash will select those that apply to the current argument to be completed.
 
-    return $completions_hash;
+	my $options_completions_hash
+	    = {
+	       '--' => {
+			'--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
+			'--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
+			'--commands' => "install or upgrade the command configuration to ~/bin.",
+			'--engine' => "create a symbolic link to the workflow engine in ~/bin.",
+			'--force' => "don't use this.",
+			'--git' => "create a git repository for the workflow configuration.",
+			'--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
+			'--path-in-bashrc' => "update .bashrc to include ~/bin in PATH.",
+			'--report' => "report on what is being done.",
+		       },
+	      };
+
+	foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
+	{
+	    $options_completions_hash->{'--'}->{$options_completion}
+		= {
+		   map
+		   {
+		       $_ => '';
+		   }
+		   keys %{$options_completions_hash->{'--'}}
+		  };
+	}
+
+	# use Data::Dumper; print STDERR Dumper($options_completions_hash);
+
+	return $options_completions_hash;
+    }
+    else
+    {
+	my $arguments_completions_hash
+	    = {
+	       'There-are-no-arguments-possible-but-options-are-available-after-a-double-dash.' => '',
+	       '--' => {
+			'0.Available_options:' => '',
+			'--aliasses' => '',
+			'--bash-completion' => '',
+			'--commands' => '',
+			'--engine' => '',
+			'--force' => '',
+			'--git' => '',
+			'--grc-configuration' => '',
+			'--path-in-bashrc' => '',
+			'--report' => '',
+		       },
+	      };
+
+	return $arguments_completions_hash;
+    }
 }
 
 
