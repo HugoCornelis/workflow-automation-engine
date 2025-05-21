@@ -3207,7 +3207,7 @@ sub builtin_start_project
 
 	$project_name =~ s((.*)-commands*)($1);
 
-	print "Using '$project_name' as name for your project.\n";
+	print "Using '$project_name' for the name of your project.\n";
 
 	my $error;
 
@@ -3296,11 +3296,11 @@ sub builtin_start_project
 	{
 	    print "Created a template configuration file for project '$project_name'\n";
 
-	    print "Created a template workflow-project in 'workflow-project-template.pl' with contents:\n---\n";
+	    # print "Created a template workflow-project in 'workflow-project-template.pl' with contents:\n---\n";
 
-	    print `cat 'workflow-project-template.pl'`;
+	    # print `cat 'workflow-project-template.pl'`;
 
-	    print "---\nIf this looks good, please rename it to 'workflow-project.pl' using the command:\n\n";
+	    print "---\nIf this looks good, please rename the template configuration to a real configuration using the command:\n\n";
 	    print "  mv 'workflow-project-template.pl' 'workflow-project.pl'\n\n";
 	    print "And test it with the command:\n\n";
 	    print "  workflow --help-field-project-name\n\n";
