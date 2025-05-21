@@ -6823,6 +6823,14 @@ my $global_read_python_files = {};
 my $global_api_bound = '';
 
 
+sub _pp_print_to_stdout
+{
+    my $argument = shift;
+
+    print $argument;
+}
+
+
 sub _init_do_eval_python_file
 {
     my $input_pathname = shift;
@@ -6852,9 +6860,11 @@ sub _init_do_eval_python_file
 	return (undef, $status);
     }
 
-    my $cache_directory = Utilities::commands_cache_directory();
+    my $commands_cache_directory = Utilities::commands_cache_directory();
 
-    my $error = Utilities::create_directories($cache_directory);
+    my $configuration_cache_directory = Utilities::configuration_cache_directory();
+
+    my $error = Utilities::create_directories($commands_cache_directory);
 
     if (not $error)
     {
@@ -6867,6 +6877,7 @@ sub _init_do_eval_python_file
 		<$fh>;
 	    };
 
+	my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 	#t insert the code into a perl command file in the cache directory that binds it to the workflow core.
 
 	#t makes the execute_command and execute_command_array functions available from python.
@@ -6875,25 +6886,44 @@ sub _init_do_eval_python_file
 	#t read the perl command file
 
 	my $api_bind_code = "
+
+import json
+
+global_technical_project_configuration_path = '$configuration_cache_directory/configuration.json'
+
+global_technical_project_configuration = None
+
+def _load_json_configuration_file(filepath):
+    global global_technical_project_configuration
+    with open(filepath, 'r', encoding='utf-8') as f:
+        global_technical_project_configuration = json.load(f)
+    # pp_print_to_stdout('Configuration loaded')
+
+_load_json_configuration_file(global_technical_project_configuration_path)
+
+
 execute_command = None
 execute_command_array = None
 execute_command_schedule = None
 execute_command_schedule_array = None
+pp_print_to_stdout = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_pp_print_to_stdout):
     global execute_command
     global execute_command_array
     global execute_command_schedule
     global execute_command_schedule_array
+    global pp_print_to_stdout
     execute_command = exe_command
     execute_command_array = exe_command_array
     execute_command_schedule = exe_command_schedule
     execute_command_schedule_array = exe_command_schedule_array
+    pp_print_to_stdout = exe_pp_print_to_stdout
 
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&_pp_print_to_stdout);
 
 ";
 	my $commands_template_code
@@ -6913,7 +6943,7 @@ BEGIN
 {
 	if (not exists \$ENV{PYTHONPATH})
 	{
-		\$ENV{PYTHONPATH} = \"$cache_directory\";
+		\$ENV{PYTHONPATH} = \"$commands_cache_directory\";
 	}
 }
 
@@ -6965,7 +6995,7 @@ ___API_BIND_CALL_CODE___
 
 	my $input_filename = $1;
 
-	my $output_filename = "$cache_directory/$input_filename";
+	my $output_filename = "$commands_cache_directory/$input_filename";
 
 	if (0)
 	{
@@ -6995,7 +7025,7 @@ ___API_BIND_CALL_CODE___
 
 	use File::chdir;
 
-	local $CWD = $python_inline_directory; # $cache_directory;
+	local $CWD = $python_inline_directory; # $commands_cache_directory;
 
 	# return configuration and status
 
@@ -7003,7 +7033,7 @@ ___API_BIND_CALL_CODE___
     }
     else
     {
-	die "$0: Error: cannot create cache directory $cache_directory";
+	die "$0: Error: cannot create the commands cache directory $commands_cache_directory";
     }
 
     $global_read_python_files->{$input_pathname}
