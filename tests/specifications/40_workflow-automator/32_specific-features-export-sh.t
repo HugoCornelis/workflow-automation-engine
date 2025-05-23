@@ -62,6 +62,8 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/bin/feature-testing-commands-features
 #
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-more-python.py /home/neurospaces/bin/feature-testing-commands-more-python.py
+#
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/bin/feature-testing-commands-perl_examples
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-pure-python.py /home/neurospaces/bin/feature-testing-commands-pure-python.py
