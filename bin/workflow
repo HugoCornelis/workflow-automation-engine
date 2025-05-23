@@ -7112,30 +7112,39 @@ sub _init_get_field_project_configuration
 
 	my $search_path_workflow_executable_filename = "$1/$2-configuration";
 
-	# resolve the symbolic link from ~/bin/* to its absolute path it refers to
+	if (-r $search_path_workflow_executable_filename)
+	{
+	    # resolve the symbolic link from ~/bin/* to its absolute path it refers to
 
-	use Cwd 'abs_path';
+	    use Cwd 'abs_path';
 
-	my $sources_configuration_filename = abs_path($search_path_workflow_executable_filename);
+	    my $sources_configuration_filename = abs_path($search_path_workflow_executable_filename);
 
-	$sources_configuration_filename =~ m((.*)/(.*)-configuration);
+	    $sources_configuration_filename =~ m((.*)/(.*)-configuration);
 
-	my $sources_configuration_directory = $1;
+	    my $sources_configuration_directory = $1;
 
-	my $sources_configuration_data_directory = "$sources_configuration_directory/$field_project_name-commands-data";
+	    my $sources_configuration_data_directory = "$sources_configuration_directory/$field_project_name-commands-data";
 
-	# set result
+	    # set result
 
-	$result
-	    = {
-	       configuration_origin => "dynamically_generated from the executable script name",
-	       field_project_name => $field_project_name,
-	       search_path_workflow_executable_directory => $search_path_workflow_executable_directory,
-	       # search_path_workflow_executable_filename => $search_path_workflow_executable_filename,
-	       sources_configuration_directory => $sources_configuration_directory,
-	       sources_configuration_filename => $sources_configuration_filename,
-	       sources_configuration_data_directory => $sources_configuration_data_directory,
-	      };
+	    $result
+		= {
+		   configuration_origin => "dynamically_generated from the executable script name",
+		   field_project_name => $field_project_name,
+		   search_path_workflow_executable_directory => $search_path_workflow_executable_directory,
+		   # search_path_workflow_executable_filename => $search_path_workflow_executable_filename,
+		   sources_configuration_directory => $sources_configuration_directory,
+		   sources_configuration_filename => $sources_configuration_filename,
+		   sources_configuration_data_directory => $sources_configuration_data_directory,
+		  };
+	}
+	else
+	{
+	    $status = "$global_program_name: *** Error: '$search_path_workflow_executable_filename cannot be read\n";
+
+	    return undef;
+	}
     }
 
     # else we don't have an installed executable filename or prefix directory
