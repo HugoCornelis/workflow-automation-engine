@@ -345,13 +345,9 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 						   read => 'Using \'workflow-tests\' for the name of your project.
 workflow: registered the perl command file name workflow-tests-commands-perl_examples for target perl_examples
 workflow: registered the python command file name workflow-tests-commands-python_examples.py for target python_examples
-Created a template configuration file for project \'workflow-tests\'
+Created a configuration file for project \'workflow-tests\'
 ---
-If this looks good, please rename the template configuration to a real configuration using the command:
-
-  mv \'workflow-project-template.pl\' \'workflow-project.pl\'
-
-And test it with the command:
+Test it with the command:
 
   workflow --help-field-project-name
 
@@ -393,7 +389,7 @@ Or:
 ./conf.workflow-tests-configuration
 ./conf.workflow-tests-workflow
 ./README.md
-./workflow-project-template.pl
+./workflow-project.pl
 ./workflow-tests-bash-completion.sh
 ./workflow-tests-commands-data
 ./workflow-tests-commands-data/examples_sh
@@ -441,20 +437,6 @@ Or:
 			       # 		     },
 			       # 	description => "check the execute bit of the generated shell scripts",
 			       # },
-			       {
-				command => 'cd workflow-test && mv --verbose workflow-project-template.pl workflow-project.pl',
-				command_tests => [
-						  {
-						   description => "Can we rename the project configuration files to activate the project?",
-						   read => 'renamed \'workflow-project-template.pl\' -> \'workflow-project.pl\'
-',
-						   tags => [ 'manual' ],
-						   white_space => 'convert seen 0a to 0d 0a newlines',
-						  },
-						 ],
-				description => "rename the field project file to its final name",
-				tags => [ 'manual' ],
-			       },
 			       {
 				command => 'cd workflow-test && workflow --help-field-project-name',
 				command_tests => [

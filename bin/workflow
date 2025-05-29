@@ -2129,7 +2129,7 @@ return \$configuration;
 
     use IO::File;
 
-    my $file = IO::File->new("> workflow-project-template.pl");
+    my $file = IO::File->new("> workflow-project.pl");
 
     if (defined $file)
     {
@@ -2139,7 +2139,7 @@ return \$configuration;
     }
     else
     {
-	$error = "cannot open workflow-project-template.pl";
+	$error = "cannot open workflow-project.pl";
     }
 
     return $error;
@@ -3333,15 +3333,9 @@ sub builtin_start_project
 
 	if (not $error)
 	{
-	    print "Created a template configuration file for project '$project_name'\n";
+	    print "Created a configuration file for project '$project_name'\n";
 
-	    # print "Created a template workflow-project in 'workflow-project-template.pl' with contents:\n---\n";
-
-	    # print `cat 'workflow-project-template.pl'`;
-
-	    print "---\nIf this looks good, please rename the template configuration to a real configuration using the command:\n\n";
-	    print "  mv 'workflow-project-template.pl' 'workflow-project.pl'\n\n";
-	    print "And test it with the command:\n\n";
+	    print "---\nTest it with the command:\n\n";
 	    print "  workflow --help-field-project-name\n\n";
 	    print "Afterwards install the scripts on your system using the command:\n\n";
 	    print "  workflow builtin install_scripts -- --engine --commands --git\n\n";
@@ -3366,7 +3360,7 @@ sub builtin_start_project
     {
 	# schedule one shell command such that it is visible in diagrams for this command
 
-	my $commands = [ "cat 'workflow-project-template.pl'", ];
+	my $commands = [ "cat 'workflow-project.pl'", ];
 
 	execute_shell_command_array($commands);
     }
