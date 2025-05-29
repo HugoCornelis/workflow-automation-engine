@@ -6817,11 +6817,19 @@ my $global_read_python_files = {};
 my $global_api_bound = '';
 
 
-sub _pp_print_to_stdout
+sub _python_print_to_stdout
 {
     my $argument = shift;
 
     print $argument;
+}
+
+
+sub _python_print_to_stderr
+{
+    my $argument = shift;
+
+    print STDERR $argument;
 }
 
 
@@ -6891,7 +6899,8 @@ def _load_json_configuration_file(filepath):
     global global_technical_project_configuration
     with open(filepath, 'r', encoding='utf-8') as f:
         global_technical_project_configuration = json.load(f)
-    # pp_print_to_stdout('Configuration loaded')
+    # print_to_stdout('Configuration loaded')
+    # print_to_stderr('Configuration loaded')
 
 _load_json_configuration_file(global_technical_project_configuration_path)
 
@@ -6900,24 +6909,27 @@ execute_command = None
 execute_command_array = None
 execute_command_schedule = None
 execute_command_schedule_array = None
-pp_print_to_stdout = None
+print_to_stdout = None
+print_to_stderr = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_pp_print_to_stdout):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, ref_print_to_stdout, ref_print_to_stderr):
     global execute_command
     global execute_command_array
     global execute_command_schedule
     global execute_command_schedule_array
-    global pp_print_to_stdout
+    global print_to_stdout
+    global print_to_stderr
     execute_command = exe_command
     execute_command_array = exe_command_array
     execute_command_schedule = exe_command_schedule
     execute_command_schedule_array = exe_command_schedule_array
-    pp_print_to_stdout = exe_pp_print_to_stdout
+    print_to_stdout = ref_print_to_stdout
+    print_to_stderr = ref_print_to_stderr
 
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&_pp_print_to_stdout);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&_python_print_to_stdout, \\&_python_print_to_stderr);
 
 ";
 	my $commands_template_code
