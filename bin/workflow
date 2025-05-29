@@ -3066,19 +3066,19 @@ sub builtin_install_scripts
 	       "echo",
 	       "echo Maybe now is the time to enable bash completion using:",
 	       "echo",
-	       "echo   . fr-cli-bash-completion.sh",
+	       "echo   . ./$project_name-bash-completion.sh",
 	       "echo",
 	       "echo Then maybe followed with commands removing existing commands:",
 	       "echo",
-	       "echo   $project_name-workflow builtin remove_commands fr-cli-commands-perl_examples fr-cli-commands-python_examples.py examples_sh/*",
+	       "echo   $project_name-workflow builtin remove_commands $project_name-commands-perl_examples $project_name-commands-python_examples.py examples_sh/*",
 	       "echo",
 	       "echo Or / and maybe followed with commands removing existing targets:",
 	       "echo",
-	       "echo   $project_name-workflow builtin remove_target perl_examples fr-cli-commands-python_examples.py examples_sh/*",
+	       "echo   $project_name-workflow builtin remove_target perl_examples $project_name-commands-python_examples.py examples_sh/*",
 	       "echo   $project_name-workflow builtin remove_target python_examples",
 	       "echo   $project_name-workflow builtin remove_target examples_sh\n",
 	       "echo",
-	       "echo Or / and maybe followed with a command to add or modify a first target (here, for the target named 'source_code'):",
+	       "echo Or / and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
 	       "echo",
 	       "echo   $project_name-workflow builtin add_target source_code 'Operations on the source code, such as git checkout, build and installation.' -- --install-commands-py",
 	       "echo",
@@ -3353,7 +3353,7 @@ sub builtin_start_project
 	    print "To enable bash completion after installation of the scripts, either execute:\n\n";
 	    print "  . ~/.bashrc\n\n";
 	    print "Or:\n\n";
-	    print "  . $project_name-bash-completion.sh\n\n";
+	    print "  . ./$project_name-bash-completion.sh\n\n";
 	}
 	else
 	{

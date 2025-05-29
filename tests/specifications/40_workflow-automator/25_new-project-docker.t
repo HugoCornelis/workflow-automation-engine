@@ -375,7 +375,7 @@ To enable bash completion after installation of the scripts, either execute:
 
 Or:
 
-  . workflow-tests-bash-completion.sh
+  . ./workflow-tests-bash-completion.sh
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',
