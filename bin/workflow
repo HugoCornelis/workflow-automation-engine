@@ -6700,7 +6700,10 @@ sub _init_do_eval_python_file
 
     if ($debug_python_inlining)
     {
-	print STDERR "_init_do_eval_python_file: Reading $input_pathname\n";
+	require Carp;
+
+	print STDERR "\n$0: _init_do_eval_python_file($input_pathname)\n\n";
+	print STDERR Carp::longmess(@_);
     }
 
     if (exists $global_read_python_files->{$input_pathname})
@@ -6725,6 +6728,14 @@ sub _init_do_eval_python_file
 
     my $error = Utilities::create_directories($commands_cache_directory);
 
+    #t Using py_bind_func() may resolve these warnings:
+    #t
+    #t Subroutine Command::_load_json_configuration_file redefined at (eval 44) line 1.
+    #t Subroutine Command::assign_api_functions redefined at (eval 45) line 1.
+    #t Subroutine Command::more_python_python_command redefined at (eval 46) line 1.
+    #t Subroutine Command::more_python_python_command_completions redefined at (eval 47) line 1.
+    #t Subroutine Command::more_python_python_command_help redefined at (eval 48) line 1.
+
     if (not $error)
     {
 	# read the python file
@@ -6737,12 +6748,10 @@ sub _init_do_eval_python_file
 	    };
 
 	my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-	#t insert the code into a perl command file in the cache directory that binds it to the workflow core.
+	# insert the code into a perl command file in the cache directory that binds it to the workflow core.
 
-	#t makes the execute_command and execute_command_array functions available from python.
-	#t reads the configuration in json into a global variable to make it available from python.
-
-	#t read the perl command file
+	# makes the execute_command and execute_command_array functions available from python.
+	# reads the configuration in json into a global variable to make it available from python.
 
 	my $api_bind_code = "
 
@@ -6844,7 +6853,7 @@ ___API_BIND_CALL_CODE___
 	{
 	    if ($debug_python_inlining)
 	    {
-		print STDERR "_init_do_eval_python_file: Removing APIs\n";
+		print STDERR "_init_do_eval_python_file: Removing API markerss\n";
 	    }
 
 	    $commands_template_code =~ s(___API_BIND_CODE___)();
@@ -6882,15 +6891,17 @@ ___API_BIND_CALL_CODE___
 	# But the cache directory may not be available during program
 	# startup, so we use a hopefully unique directory in /tmp.
 
-	my $python_inline_directory = "/tmp/$$";
+	# my $python_inline_directory = "/tmp/workflow-python-inline/$$";
 
-	`mkdir -p $python_inline_directory`;
+	# `mkdir -p $python_inline_directory`;
+
+	my $python_inline_directory = $commands_cache_directory;
 
 	use File::chdir;
 
 	local $CWD = $python_inline_directory; # $commands_cache_directory;
 
-	# return configuration and status
+	# read the perl command file
 
 	($result, $status) = FieldProject::_init_do_eval_perl_file($output_filename);
     }
@@ -6898,6 +6909,8 @@ ___API_BIND_CALL_CODE___
     {
 	die "$0: Error: cannot create the commands cache directory $commands_cache_directory";
     }
+
+    # return configuration and status
 
     $global_read_python_files->{$input_pathname}
 	= {
