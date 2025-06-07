@@ -9,13 +9,13 @@ targets:
     description: testing of workflow features
   more_python:
     description: More python testing
-  more-python:
-    description: One more Python target
   perl_examples:
     description: these are perl examples that explain how to use the APIs
   python:
     description: Python testing
   pure-python:
+    description: One more Python target
+  pure_python:
     description: Pure python examples.
   python_examples:
     description: these are python examples that explain how to use the APIs
