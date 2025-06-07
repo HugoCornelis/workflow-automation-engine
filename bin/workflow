@@ -6766,28 +6766,39 @@ execute_command_array = None
 execute_command_schedule = None
 execute_command_schedule_array = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array):
+print_to_stdout = None
+print_to_stderr = None
+
+# print(f"Compiling Python APIs")
+
+def assign_api_functions(ref_exe_command, ref_exe_command_array, ref_exe_command_schedule, ref_exe_command_schedule_array, ref_print_to_stdout, ref_print_to_stderr):
     global execute_command
     global execute_command_array
     global execute_command_schedule
     global execute_command_schedule_array
-    execute_command = exe_command
-    execute_command_array = exe_command_array
-    execute_command_schedule = exe_command_schedule
-    execute_command_schedule_array = exe_command_schedule_array
+    global print_to_stdout
+    global print_to_stderr
+    execute_command = ref_exe_command
+    execute_command_array = ref_exe_command_array
+    execute_command_schedule = ref_exe_command_schedule
+    execute_command_schedule_array = ref_exe_command_schedule_array
+    print_to_stdout = ref_print_to_stdout
+    # print_to_stdout(f"assign_api_functions done.\n")
+    print_to_stderr = ref_print_to_stderr
 
 def run_python_code(code_str, filename):
     import traceback
     import ast
 
     try:
-        print(f"Compiling for {filename}")
+        # print_to_stdout(f"Compiling for {filename}")
         compiled = compile(code_str, filename, 'exec')
         exec(compiled, {'__file__': filename})
     except Exception:
         traceback.print_exc()
 
 def pure_python_python_command_hard_coded(argv):
+    print_to_stdout(f"pure_python_python_command_hard_coded\n")
     command = "echo 'python_command from bash (1)'"
     execute_command(command)
     command_array = [
@@ -6798,7 +6809,7 @@ def pure_python_python_command_hard_coded(argv):
 
 END_PYTHON
 
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array);
+assign_api_functions(\&Command::execute_shell_command, \&Command::execute_shell_command_array, \&Command::execute_command_schedule, \&Command::execute_command_schedule_array, \&Command::_python_print_to_stdout, \&Command::_python_print_to_stderr);
 
 
 my $global_read_python_files = {};
@@ -6832,8 +6843,6 @@ sub _init_do_eval_python_file
 
     my ($result, $status);
 
-    my $debug_inline_python = 0;
-
     if (exists $global_read_python_files->{$input_pathname})
     {
 	my $result_and_status = $global_read_python_files->{$input_pathname};
@@ -6850,8 +6859,12 @@ sub _init_do_eval_python_file
 	return (undef, $status);
     }
 
+    my $debug_inline_python = 0;
+
     if ($debug_inline_python)
     {
+	print STDERR Carp::longmess(@_);
+
 	print STDERR "_init_do_eval_python_file($input_pathname)\n";
     }
 
@@ -6864,7 +6877,7 @@ sub _init_do_eval_python_file
 	    <$fh>;
 	};
 
-    $result = Command::run_python_code($python_code, $input_pathname);
+    $result = run_python_code($python_code, $input_pathname);
 
     $global_read_python_files->{$input_pathname}
 	= {
