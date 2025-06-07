@@ -22,7 +22,9 @@ configured-workflows/configuration.toml
 configured-workflows/configuration.yaml
 
 tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/
+tests/specifications/workflow-configurations/feature-testing/_Inline/
 tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
+tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/
 
 # http://www.gnu.org/software/automake
 
