@@ -6769,7 +6769,6 @@ execute_command_schedule_array = None
 print_to_stdout = None
 print_to_stderr = None
 
-# print(f"Compiling Python APIs")
 
 def assign_api_functions(ref_exe_command, ref_exe_command_array, ref_exe_command_schedule, ref_exe_command_schedule_array, ref_print_to_stdout, ref_print_to_stderr):
     global execute_command
@@ -6786,19 +6785,24 @@ def assign_api_functions(ref_exe_command, ref_exe_command_array, ref_exe_command
     # print_to_stdout(f"assign_api_functions done.\n")
     print_to_stderr = ref_print_to_stderr
 
-def run_python_code(code_str, filename):
+
+def run_python_code(code_str, filename, debug):
     import traceback
     import ast
 
     try:
-        # print_to_stdout(f"Compiling for {filename}")
+        if debug is not None:
+            package_name = __name__
+            print_to_stderr(f"COMPILING in {package_name} for {filename}\n")
         compiled = compile(code_str, filename, 'exec')
         exec(compiled, {'__file__': filename})
+        return None
     except Exception:
         traceback.print_exc()
 
-def pure_python_python_command_hard_coded(argv):
-    print_to_stdout(f"pure_python_python_command_hard_coded\n")
+
+def pure_python_python_command_hard_coded_for_testing(argv):
+    print_to_stdout(f"pure_python_python_command_hard_coded_for_testing\n")
     command = "echo 'python_command from bash (1)'"
     execute_command(command)
     command_array = [
@@ -6837,6 +6841,8 @@ sub _python_print_to_stderr
 
 package FieldProject;
 
+my $debug_inline_python = 1;
+
 sub _init_do_eval_python_file
 {
     my $input_pathname = shift;
@@ -6859,13 +6865,11 @@ sub _init_do_eval_python_file
 	return (undef, $status);
     }
 
-    my $debug_inline_python = 0;
-
     if ($debug_inline_python)
     {
-	print STDERR Carp::longmess(@_);
+	# print STDERR Carp::longmess(@_);
 
-	print STDERR "_init_do_eval_python_file($input_pathname)\n";
+	print STDERR "\n---\n_init_do_eval_python_file($input_pathname)\n";
     }
 
     # read the python file
@@ -6877,7 +6881,14 @@ sub _init_do_eval_python_file
 	    <$fh>;
 	};
 
-    $result = run_python_code($python_code, $input_pathname);
+    #t need to look into what $result is here
+
+    $result = run_python_code($python_code, $input_pathname, $debug_inline_python);
+
+    if (! $result)
+    {
+	_import_python_functions($python_code, $input_pathname);
+    }
 
     $global_read_python_files->{$input_pathname}
 	= {
@@ -6886,6 +6897,79 @@ sub _init_do_eval_python_file
 	  };
 
     return ($result, $status);
+}
+
+
+sub _import_python_functions
+{
+    my $python_code = shift;
+
+    my $input_pathname = shift;
+
+    if ($debug_inline_python)
+    {
+	# print STDERR "_import_python_functions($input_pathname):\n$python_code\n\n";
+	print STDERR "_import_python_functions($input_pathname)\n";
+    }
+
+    my $python_function_names = {};
+
+    foreach my $line (split /\n/, $python_code)
+    {
+	if ($line =~ /^def\s+([a-zA-Z_]\w*)\s*\(/)
+	{
+	    my $function_name = $1;
+
+	    if ($debug_inline_python)
+	    {
+		print STDERR "_import_python_functions($input_pathname): 'def $function_name'\n";
+	    }
+
+	    $python_function_names->{$function_name} = 1;
+	}
+    }
+
+    if (0)
+    {
+	# loop over source text
+
+	#! assertion allows '"' to be escaped with a backslash
+
+	# while ($python_code =~ m/\G.*?\def\s+([a-zA-Z0-9_]+)([^\n]*)\$/gs)
+	while ($python_code =~ m/\G.*?\def\s+([a-zA-Z0-9_]+)/gs)
+	{
+	    my $position = pos($python_code);
+
+	    # get matched string
+
+	    my $function_name = $1;
+
+	    if ($debug_inline_python)
+	    {
+		print STDERR "_import_python_functions($input_pathname): 'def $function_name'\n";
+	    }
+
+	    $python_function_names->{$function_name} = 1;
+
+	    # pos($python_code) = $position;
+	}
+    }
+
+    foreach my $python_function_name (keys %$python_function_names)
+    {
+	use Inline::Python qw(py_eval py_bind_func);
+
+	py_bind_func("Command::$python_function_name", "__main__", $python_function_name);
+    }
+
+    if ($debug_inline_python)
+    {
+	use Data::Dumper; print STDERR Dumper( { sub => \&Command::more_python_python_command_completions } );
+
+	my $completions = Command::more_python_python_command_completions();
+
+	# use Data::Dumper; print STDERR Dumper( { completions => $completions, sub => \&Command::more_python_python_command_completions } );
+    }
 }
 
 
