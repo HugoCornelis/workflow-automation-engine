@@ -29,7 +29,9 @@ The workflow automation engine offers the following functions:
 The workflow automation engine uses `grc` for colorification of the
 output and relies on [YAML](https://yaml.org/) for configuration
 files.  It also has a dependency on the `File::chdir` perl module and
-installation itself is done with `make`.
+installation itself is done with `make`. The 'inline' perl module (and
+its related python module) is also needed to be able to inline python
+code.
 
 As an example, for an Ubuntu 22.04.3 LTS jammy, install these prerequisites:
 
@@ -39,6 +41,8 @@ sudo apt install libyaml-perl
 sudo apt install libfile-chdir-perl
 sudo apt install automake
 sudo apt install make
+sudo apt install libinline-perl
+sudo apt install libinline-python-perl
 ```
 
 The installation is then done through the provided tarball (see
