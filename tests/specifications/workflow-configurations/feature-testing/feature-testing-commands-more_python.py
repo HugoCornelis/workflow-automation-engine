@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+def _return_some_string():
+    return "\n\nSOME STRING HERE\n\n"
+
+
 def more_python_python_command(argv):
     command = "echo 'python_command from bash (1)'"
     execute_command(command)
