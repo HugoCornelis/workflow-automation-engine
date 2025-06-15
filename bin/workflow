@@ -6769,6 +6769,11 @@ execute_command_schedule_array = None
 print_to_stdout = None
 print_to_stderr = None
 
+import types
+
+package_name = "Command"
+# package_name = __name__
+command_module = types.ModuleType("Command")
 
 def assign_api_functions(ref_exe_command, ref_exe_command_array, ref_exe_command_schedule, ref_exe_command_schedule_array, ref_print_to_stdout, ref_print_to_stderr):
     global execute_command
@@ -6782,20 +6787,30 @@ def assign_api_functions(ref_exe_command, ref_exe_command_array, ref_exe_command
     execute_command_schedule = ref_exe_command_schedule
     execute_command_schedule_array = ref_exe_command_schedule_array
     print_to_stdout = ref_print_to_stdout
-    # print_to_stdout(f"assign_api_functions done.\n")
     print_to_stderr = ref_print_to_stderr
+    # print_to_stdout(f"assign_api_functions done.\n")
 
 
 def run_python_code(code_str, filename, debug):
-    import traceback
     import ast
+    import traceback
 
     try:
         if debug is not None:
             package_name = __name__
             print_to_stderr(f"COMPILING in {package_name} for {filename}\n")
-        compiled = compile(code_str, filename, 'exec')
-        exec(compiled, {'__file__': filename})
+        # compiled = compile(code_str, filename, 'exec')
+        exec(code_str)
+        # exec(compiled, globals(), locals())
+        # exec(code_str, globals(), locals())
+        # {'__file__': filename})
+        if debug is not None:
+            function_names = dir(__name__)
+            function_list_string = "\n".join(function_names)
+            print_to_stderr(f"package ({package_name})\nlook for \nmore_python_python_command\n" + "\n\nBEGIN HERE\n" + function_list_string + "\nEND HERE\n\n")
+        some_string = command_module._return_some_string()
+        # some_string = _return_some_string()
+        print_to_stderr(some_string)
         return None
     except Exception:
         traceback.print_exc()
@@ -6860,7 +6875,7 @@ sub _init_do_eval_python_file
 
     if (not -r "$input_pathname")
     {
-	$status = "$global_program_name: *** Error: file '$input_pathname' not found (because the file cannot be read)\n";
+	$status = "$global_program_name: *** Error: file '$input_pathname' not found (because the file cannot be read)";
 
 	return (undef, $status);
     }
@@ -6883,11 +6898,17 @@ sub _init_do_eval_python_file
 
     #t need to look into what $result is here
 
-    $result = run_python_code($python_code, $input_pathname, $debug_inline_python);
+    my $error = run_python_code($python_code, $input_pathname, $debug_inline_python);
 
-    if (! $result)
+    if (not $error)
     {
 	_import_python_functions($python_code, $input_pathname);
+    }
+    else
+    {
+	$result = "Python import error: $error";
+
+    	$status = "$global_program_name: *** Error: $result";
     }
 
     $global_read_python_files->{$input_pathname}
@@ -6911,6 +6932,8 @@ sub _import_python_functions
 	# print STDERR "_import_python_functions($input_pathname):\n$python_code\n\n";
 	print STDERR "_import_python_functions($input_pathname)\n";
     }
+
+    # construct a list of function names found in the python_code
 
     my $python_function_names = {};
 
@@ -6955,16 +6978,25 @@ sub _import_python_functions
 	}
     }
 
+    # loop over the found function names
+
     foreach my $python_function_name (keys %$python_function_names)
     {
+	# bind the function to a Perl function in the Command package
+
 	use Inline::Python qw(py_eval py_bind_func);
 
 	py_bind_func("Command::$python_function_name", "__main__", $python_function_name);
+	# py_bind_func("Command::$python_function_name", "Command", $python_function_name);
     }
 
     if ($debug_inline_python)
     {
-	use Data::Dumper; print STDERR Dumper( { sub => \&Command::more_python_python_command_completions } );
+	# use Data::Dumper; print STDERR Dumper( { sub => \&Command::more_python_python_command_completions } );
+
+	use B::Deparse; my $deparser = B::Deparse->new("-p", "-sC");
+
+	print STDERR $deparser->coderef2text(\&Command::more_python_python_command_completions);
 
 	my $completions = Command::more_python_python_command_completions();
 
