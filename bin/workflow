@@ -3094,17 +3094,31 @@ sub builtin_pull_scripts_help
 
 sub builtin_start_project
 {
+    my $arguments = shift || [];
+
     my $command_files = [ split '\n', `ls -1 2>/dev/null *-commands*`, ];
 
     my $result;
 
     if (not $::option_dry_run)
     {
-	my $project_name = $ARGV[0] || $command_files->[0];
+	my $project_name = $arguments->[0] || $command_files->[0];
 
 	if (not defined $project_name)
 	{
-	    die "$global_program_name: *** Error: no suitable project name could be determined, please give one as argument";
+	    die "$global_program_name: *** Error: No suitable project name could be determined, please give one on the command line.";
+	}
+
+	my $directory = Utilities::read_directory(".");
+
+	if (ref $directory eq 'SCALAR')
+	{
+	    die "$global_program_name: *** Error: The current directory cannot be accessed.";
+	}
+
+	if (scalar @$directory)
+	{
+	    die "$global_program_name: *** Error: The current directory must be empty such that the workflow configuration are isolated from other files.";
 	}
 
 	$project_name =~ s((.*)-commands*)($1);
@@ -7288,6 +7302,36 @@ sub create_directories
     else
     {
 	# print "No error encountered\n";
+    }
+
+    return $result;
+}
+
+
+sub read_directory
+{
+    my $directory = shift;
+
+    my $result;
+
+    if (opendir(my $dh, $directory))
+    {
+	$result
+	    = [
+	       grep
+	       {
+		   # skip . and ..
+
+		   $_ ne '.' && $_ ne '..'
+	       }
+	       readdir($dh),
+	      ];
+
+	closedir($dh);
+    }
+    else
+    {
+	$result = \ "error opening directory ($directory)";
     }
 
     return $result;
