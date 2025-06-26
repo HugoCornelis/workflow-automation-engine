@@ -3287,11 +3287,25 @@ arguments:
 
 sub builtin_tmux_create_sessions
 {
-    my $arguments = shift || [];
+    my $arguments = shift || [ '_all' ];
 
-    my $force = $arguments->[0] || '';
+    # my $force = $arguments->[0] || '';
 
-    my $tmux_sessions = _builtin_tmux_sessions();
+    if (not scalar @$arguments)
+    {
+	$arguments = [ '_all' ];
+    }
+
+    my $selection = { map { $_ => 1 } @$arguments };
+
+    my $tmux_sessions
+	= [
+	   grep
+	   {
+	       $selection->{'_all'} || $selection->{$_}
+	   }
+	   @{_builtin_tmux_sessions()}
+	  ];
 
     my $tmux_session_commands
 	= [
@@ -3311,11 +3325,45 @@ sub builtin_tmux_create_sessions
 	    (
 	     [ @$tmux_session_commands, @$tmux_session_attach_commands, ],
 	     {
-	      quiet => (! $force),
-	      allow_fail => $force,
+	      # quiet => (! $force),
+	      # allow_fail => $force,
 	     },
 	    );
     }
+}
+
+
+sub builtin_tmux_create_sessions_completions
+{
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    return
+    {
+     "1.Type-the-name-of-a-known-tmux-session:" => '',
+     "_all" => '',
+     # '--force' => '',
+     map
+     {
+	 $_ => ''
+     }
+     @$tmux_sessions,
+    };
+}
+
+
+sub builtin_tmux_create_sessions_help
+{
+    my $command = shift;
+
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    return "$command: Create one or more configured tmux session(s).
+
+    ARGV[0]: Optional name of a configured tmux session (the default is all configured sessions).
+
+Configured tmux sessions are:
+    " . (join ", ", @$tmux_sessions) . "
+";
 }
 
 
