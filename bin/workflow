@@ -6742,6 +6742,8 @@ my $global_read_python_files = {};
 my $global_api_bound = '';
 
 
+package Command;
+
 sub _python_print_to_stdout
 {
     my $argument = shift;
@@ -6757,6 +6759,8 @@ sub _python_print_to_stderr
     print STDERR $argument;
 }
 
+
+package FieldProject;
 
 sub _init_do_eval_python_file
 {
