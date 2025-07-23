@@ -397,6 +397,8 @@ sub command_line_dispatch
 	no strict "refs";
 
 	my $error = &$harness_command_executor($harness_command_definition, $harness_command, $arguments, $default_reporter);
+
+	return $error;
     }
 }
 
@@ -1783,7 +1785,7 @@ sub main
 
     $global_command_line_configuration->command_line_application_initialize($harness_command, $arguments);
 
-    $global_command_line_configuration->command_line_dispatch($harness_command, $arguments);
+    my $error = $global_command_line_configuration->command_line_dispatch($harness_command, $arguments);
 }
 
 
