@@ -2405,31 +2405,52 @@ sub spawn_new
 
 		# 		    $exp->slave->stty(qw(raw -echo));
 
-		$global_exp->spawn
-		    (
-		     (
-		      $option_trace
-		      ? ($option_trace)
-		      : ()
-		     ),
-		     $command,
-		     @$arguments
-		    )
-		    or die "$0: cannot spawn $command: $!\n";
+		my $spawned
+		    = $global_exp->spawn
+		      (
+		       (
+			$option_trace
+			? ($option_trace)
+			: ()
+		       ),
+		       $command,
+		       @$arguments
+		      );
 
-		# set the running_command_definition
+		if ($spawned)
+		{
+		    # set the running_command_definition
 
-		$global_running_command_definition = $command_line;
+		    $global_running_command_definition = $command_line;
 
-		$reporter->report_message("message_command", "Executing $command $command_line->{original_command}");
+		    $reporter->report_message("message_command", "Executing $command $command_line->{original_command}");
 
-		# remember to do startup testing
+		    # remember to do startup testing
 
-		$test_startup = 1;
+		    $test_startup = 1;
 
-		# there were no side effects yet
+		    # there were no side effects yet
 
-		$global_previous_command_side_effects = 0;
+		    $global_previous_command_side_effects = 0;
+		}
+		else
+		{
+		    my $module_definition = $execution_context->get_module_definition();
+
+		    my $module_name = $module_definition->{name};
+
+		    my $reporter = $execution_context->{reporter};
+
+		    $reporter->report_error_add
+			(
+			 {
+			  context_path => $execution_context->get_context_path(),
+			  description => "command_definition $command_definition->{description}",
+			  error => "cannot execute $command (error: $spawned)",
+			  module_name => $module_name,
+			 },
+			);
+		}
 	    }
 	    else
 	    {
