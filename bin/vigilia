@@ -1227,6 +1227,8 @@ tag: An array of tags associated with this test module.  These are matched with 
 
     my $command_definition1 = clone($global_command_definition_template);
 
+    $command_definition1->{disabled} = 'This is only a template';
+
     my $command_definition2
 	= {
 	   command => "# <the command with its single space seperated arguments to be tested>",
@@ -1244,6 +1246,7 @@ tag: An array of tags associated with this test module.  These are matched with 
 			     },
 			    ],
 	   description => "<a single line description of the command being tested>",
+	   disabled => 'This is only a template',
 	  };
 
     $summary->{command_definitions} = [ $command_definition1, $command_definition2, ];
