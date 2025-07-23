@@ -756,7 +756,13 @@ return \$config;
 
     if (!$error)
     {
-	$error = harness_command_module_create("harness_command_module_create", $arguments, $reporter, $test_module_name);
+	my $module_harness_command = "module-create";
+
+	my $module_arguments = [ $test_module_name, ];
+
+	$global_command_line_configuration->command_line_application_initialize($module_harness_command, $module_arguments);
+
+	$error = $global_command_line_configuration->command_line_dispatch($module_harness_command, $module_arguments);
     }
 
     if ($error)
