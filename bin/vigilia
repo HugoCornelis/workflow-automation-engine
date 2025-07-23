@@ -16,7 +16,7 @@ use YAML;
 
 
 my $option_check_test_names = 'by default';
-my $option_config_filename = './tests.config';
+my $option_config_filename = './vigilia.config';
 my $option_console_type = 'status';
 our $option_debugging;
 my $option_dump_json;
@@ -691,7 +691,7 @@ my \$config
        environment_settings => {
 				MY_PROJECT_SPECIFIC_VARIABLE => 'MY_PROJECT_SPECIFIC_VARIABLE_VALUE',
 			       },
-       html_output_directory => './tests/html',
+       html_output_directory => './vigilia/html',
        package => {
 		   name => \$package_name,
 		   version => \$package_version,
@@ -706,13 +706,13 @@ return \$config;
 
     my $error = '';
 
-    if (!-e 'tests.config')
+    if (!-e $option_config_filename)
     {
 	# create the test configuration
 
 	use IO::File;
 
-	my $file = IO::File->new("> tests.config");
+	my $file = IO::File->new("> $option_config_filename");
 
 	if (defined $file)
 	{
@@ -720,35 +720,35 @@ return \$config;
 
 	    $file->close();
 
-	    chmod 0700, "tests.config";
+	    chmod 0700, $option_config_filename;
 
-	    print "$0: Created a template test configuration in ./tests.config.\n";
+	    print "$0: Created a template test configuration in $option_config_filename.\n";
 	}
 	else
 	{
-	    $error = "Cannot create a template test configuration in ./tests.config.";
+	    $error = "Cannot create a template test configuration in $option_config_filename.";
 	}
     }
     else
     {
-	$error = "There is a test configuration in ./tests.config, aborting.";
+	$error = "There is a test configuration in $option_config_filename, aborting.";
     }
 
     # create the folders for the test specifications
 
     if (!$error)
     {
-	if (!mkdir 'tests')
+	if (!mkdir 'vigilia')
 	{
-	    $error = "Cannot create the 'tests' directory (error number $!).";
+	    $error = "Cannot create the 'vigilia' directory (error $!).";
 	}
     }
 
     if (!$error)
     {
-	if (!mkdir 'tests/specifications')
+	if (!mkdir 'vigilia/specifications')
 	{
-	    $error = "Cannot create the 'tests/specifications' directory (error number $!).";
+	    $error = "Cannot create the 'vigilia/specifications' directory (error $!).";
 	}
     }
 
@@ -1567,18 +1567,36 @@ sub initialize_config
 
     $global_config = do $option_config_filename;
 
+    my $old_format = 0;
+
+    if (not defined $global_config)
+    {
+	$option_config_filename = './tests.config';
+
+	$old_format = 1;
+
+	$global_config = do $option_config_filename;
+    }
+
     if (not defined $global_config)
     {
 	die "No test configuration found";
     }
 
-    # add to tests directory to include paths
-
     if (not exists $global_config->{tests_directory})
     {
-	$global_config->{tests_directory} = "./tests/specifications";
+	if ($old_format)
+	{
+	    $global_config->{tests_directory} = "./tests/specifications";
 
-	$global_config->{introduction_filename} = "tests/introduction.html";
+	    $global_config->{introduction_filename} = "tests/introduction.html";
+	}
+	else
+	{
+	    $global_config->{tests_directory} = "./vigilia/specifications";
+
+	    $global_config->{introduction_filename} = "vigilia/introduction.html";
+	}
     }
 
     if (not exists $global_config->{specification_dump_directory})
@@ -6650,7 +6668,7 @@ sub ex_terminate
 
 	    if ($decorated_context_path)
 	    {
-		# context_path: 1___/___./tests/specifications/70_harness/10_help/summary.yml___/___1___/___bin/vigilia___/___1___/___NONE
+		# context_path: 1___/___./vigilia/specifications/70_harness/10_help/summary.yml___/___1___/___bin/vigilia___/___1___/___NONE
 		# context_path: 2___/___90_yaml/70_harness/10_help.t___/___1___/___bin/vigilia___/___1___/___NONE
 
 		my $number_matcher = "([0-9]+)";
