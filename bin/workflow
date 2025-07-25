@@ -4867,26 +4867,33 @@ sub working_directory_for_interaction_role_parse
 
 	my $cd_argument = $cd_command->{argument};
 
-	# remove quotes, they are invalid in directory names for the purpose of this script
-
-	$cd_argument =~ s/^'//g;
-	$cd_argument =~ s/'$//g;
-
-	# some forms of chdir require an argument,
-	# some forms of cd don't and use a default of $HOME
-
-	if ($cd_argument =~ /^\s*$/)
+	if (defined $cd_argument)
 	{
-	    $cd_argument = $ENV{HOME};
+	    # remove quotes, they are invalid in directory names for the purpose of this script
+
+	    $cd_argument =~ s/^'//g;
+	    $cd_argument =~ s/'$//g;
+
+	    # some forms of chdir require an argument,
+	    # some forms of cd don't and use a default of $HOME
+
+	    if ($cd_argument =~ /^\s*$/)
+	    {
+		$cd_argument = $ENV{HOME};
+	    }
+
+	    my $rest_of_command_line = $cd_command->{rest_of_command_line};
+
+	    $executable_command = "cd $cd_argument $rest_of_command_line";
+
+	    # keep track of the possibly remote working directory
+
+	    _working_directory_for_interaction_role_change($interaction_role, $cd_argument);
 	}
-
-	my $rest_of_command_line = $cd_command->{rest_of_command_line};
-
-	$executable_command = "cd $cd_argument $rest_of_command_line";
-
-	# keep track of the possibly remote working directory
-
-	_working_directory_for_interaction_role_change($interaction_role, $cd_argument);
+	else
+	{
+	    die "*** Error: $global_program_name: As a safety measure the 'cd' argument must be used with an argument."
+	}
     }
     else
     {
