@@ -62,9 +62,11 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/bin/feature-testing-commands-features
 #
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/bin/feature-testing-commands-more_python.py
+#
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/bin/feature-testing-commands-perl_examples
 #
-# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-python_examples /home/neurospaces/bin/feature-testing-commands-python_examples
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-python.py /home/neurospaces/bin/feature-testing-commands-python.py
 #
 # bash -c "echo \'. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-bash-completion.sh
 \' | cat >>/home/neurospaces/.bashrc"
@@ -84,6 +86,15 @@ conf.feature-testing-configuration
 #
 # sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/conf.feature-testing-workflow /usr/share/grc/conf.feature-testing-workflow
 #
+
+Bash completion can be enabled using:
+
+. ./feature-testing-bash-completion.sh
+
+Or / and maybe followed with a command to add or modify a first target, here, for the target named source_code:
+
+feature-testing-workflow builtin add_target source_code Operations on the source code, such as git checkout, build and installation. -- --install-commands-py
+
 ',
 						   wait => 2,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
