@@ -5990,6 +5990,11 @@ sub _execute_option_export_sh_variables_export
 
 	    $export_sh_variable_value =~ s(')(\\')g;
 
+	    if ($export_sh_variable_name =~ m(password)i)
+	    {
+		$export_sh_variable_value = '';
+	    }
+
 	    print $exported_sh_file "$export_sh_variable_name=\${$export_sh_variable_name:=$export_sh_variable_value}\n";
 	}
     }
