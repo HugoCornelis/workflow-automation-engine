@@ -33,11 +33,13 @@ my $option_input_commands= [];
 my $option_input_modules = [];
 my $option_numerical_compare;
 my $option_output;
+my $option_output_concise = 'manual'; # possible are: 'manual', 'extended'
 my $option_output_content_line_limit = 10;
 my $option_output_figures;
 my $option_output_html;
 my $option_output_latex;
 my $option_output_levels = [];
+my $option_output_logo = "/usr/local/neurospaces/images/images/ns-main-logo-dark2.jpg";
 my $option_output_pdf;
 
 # the following option is not yet available from the command line interface
@@ -116,11 +118,13 @@ options:
     --input-modules              Merge the given file or directory as modules to be tested (can given several times).
     --numerical-compare          Attempt to compare numbers numerically when string differences are found (default enabled).
     --output                     The class that should generate the output.
+    --output-concise             The conciseness output level.
     --output-content-line-limit  Maximum number of lines when generating content output (latex, html, pdf).
     --output-figures             Generate figures for test output with a figure clause.
     --output-html                Generate HTML output.
     --output-latex               Generate Latex output.
     --output-levels              Generate output for these levels (default is '" . ( join ', ', @$global_all_output_levels ) . "'.
+    --output-logo                The logo to use in PDF output.
     --output-pdf                 Generate PDF output.
     --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector             Defines a regex to run specific tests.
@@ -163,11 +167,13 @@ options:
 					    "input-modules=s" => $option_input_modules,
 					    "numerical-compare!" => \$option_numerical_compare,
 					    "output=s" => \$option_output,
+					    "output-concise=s" => \$option_output_concise,
 					    "output-content-line-limit=s" => \$option_output_content_line_limit,
 					    "output-figures" => \$option_output_figures,
 					    "output-html" => \$option_output_html,
 					    "output-latex" => \$option_output_latex,
 					    "output-levels=s" => $option_output_levels,
+					    "output-logo=s" => \$option_output_logo,
 					    "output-pdf" => \$option_output_pdf,
 					    "randomize-order=s" => \$option_random_order,
 					    "regex-selector=s" => \$option_regex_selector,
@@ -595,10 +601,12 @@ sub parse_options
 	   input_command_tests => $option_input_command_tests,
 	   numerical_compare => $option_numerical_compare,
 	   output => $option_output,
+	   output_concise => $option_output_concise,
 	   output_figures => $option_output_figures,
 	   output_html => $option_output_html,
 	   output_latex => $option_output_latex,
 	   output_levels => $option_output_levels,
+	   output_logo => $option_output_logo,
 	   output_pdf => $option_output_pdf,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
@@ -8822,36 +8830,39 @@ sub _output_latex_module_filename_insert
 
     my $cd_1 = $ss->{cd_1};
 
-    if ($cd_0)
+    if ($option_output_concise ne 'manual')
     {
-	_output_latex($output_file, 'File ');
-
-	_output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
-
-	if ($module_definition_documentation)
+	if ($cd_0)
 	{
-	    _output_latex($output_file, ':  ');
+	    _output_latex($output_file, 'File ');
+
+	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	    if ($module_definition_documentation)
+	    {
+		_output_latex($output_file, ':  ');
+	    }
+	    else
+	    {
+		_output_latex($output_file, '.');
+	    }
+	}
+	elsif ($cd_1)
+	{
+	    _output_latex($output_file, 'The file ');
+
+	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	    _output_latex($output_file, " defines the test that is explained in this section.\n\n");
 	}
 	else
 	{
-	    _output_latex($output_file, '.');
+	    _output_latex($output_file, 'The file ');
+
+	    _output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
+
+	    _output_latex($output_file, " defines the tests that are explained in this section.\n\n");
 	}
-    }
-    elsif ($cd_1)
-    {
-	_output_latex($output_file, 'The file ');
-
-	_output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
-
-	_output_latex($output_file, " defines the test that is explained in this section.\n\n");
-    }
-    else
-    {
-	_output_latex($output_file, 'The file ');
-
-	_output_latex_prompt($output_file, "textit", $module_definition->{name}, "", "");
-
-	_output_latex($output_file, " defines the tests that are explained in this section.\n\n");
     }
 }
 
@@ -8920,9 +8931,9 @@ sub _output_latex_preamble
 
 	use File::Copy;
 
-	my $logo_source_filename = "/usr/local/neurospaces/images/images/ns-main-logo-dark2.jpg";
+	my $logo_source_filename = $option_output_logo;
 
-	copy($logo_source_filename, "$main_figures_directory")
+	copy($logo_source_filename, "$main_figures_directory/main-page-logo.jpg")
 	    or die "Copy of $logo_source_filename failed: $!";
     }
 
@@ -8996,7 +9007,7 @@ sub _output_latex_preamble
     $preamble2
 	.= '
 \begin{center}
-   \includegraphics[scale=0.5]{' . $main_figures_directory . '/ns-main-logo-dark2.jpg}
+   \includegraphics[scale=0.5]{' . $main_figures_directory . '/main-page-logo.jpg}
 %   \caption{{\bf A Dummy Figure:} Example of \LaTeX\,\,\,code to incorporate a figure into documentation.}
   \label{fig:logo}
 \end{center}
@@ -9210,13 +9221,27 @@ sub _output_latex_command_definition_command_arguments
 	print $output_file '\item [$\bullet$]';
     }
 
-    if ($ct_1)
+    if ($option_output_concise eq 'manual')
     {
-	_output_latex($output_file, 'The test is started with the system shell command: ');
+	if ($ct_1)
+	{
+	    _output_latex($output_file, 'Executed system shell command: ');
+	}
+	else
+	{
+	    _output_latex($output_file, 'Executed  system shell command: ');
+	}
     }
     else
     {
-	_output_latex($output_file, 'The tests are started with the system shell command: ');
+	if ($ct_1)
+	{
+	    _output_latex($output_file, 'The test is started with the system shell command: ');
+	}
+	else
+	{
+	    _output_latex($output_file, 'The tests are started with the system shell command: ');
+	}
     }
 
     _output_latex_prompt($output_file, "textbf", $command_string, "", "\n\n");
@@ -9266,22 +9291,45 @@ sub _output_latex_command_definition_description
 
     my $command_tests = $command_definition->{command_tests};
 
-    if ($cd_1)
+    if ($option_output_concise eq 'manual')
     {
-	print $output_file '\item [$\bullet$]';
+	if ($cd_1)
+	{
+	    print $output_file '\item [$\bullet$]';
 
-	_output_latex($output_file, "The following test is described as: $description\n");
+	    _output_latex($output_file, "$description\n");
+	}
+	else
+	{
+	    if ($ct_1)
+	    {
+		my $subdescription = $command_tests->[0]->{description};
+
+		$description .= ": $subdescription";
+	    }
+
+	    _output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
+	}
     }
     else
     {
-	if ($ct_1)
+	if ($cd_1)
 	{
-	    my $subdescription = $command_tests->[0]->{description};
+	    print $output_file '\item [$\bullet$]';
 
-	    $description .= ": $subdescription";
+	    _output_latex($output_file, "The following test is described as: $description\n");
 	}
+	else
+	{
+	    if ($ct_1)
+	    {
+		my $subdescription = $command_tests->[0]->{description};
 
-	_output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
+		$description .= ": $subdescription";
+	    }
+
+	    _output_latex($output_file, '\subsection{' . ucfirst $description . "}\n\n");
+	}
     }
 }
 
@@ -9443,6 +9491,17 @@ sub _output_latex_command_test_read
 	    print $output_file '\item [$\bullet$]';
 	}
 
+	my $prompt = "Expected application output:\n";
+
+	if ($option_output_concise eq 'manual')
+	{
+	    $prompt = "Output: \n";
+	}
+	else
+	{
+	    $prompt = "Expected application output:\n";
+	}
+
 	_output_latex_environment_prompt
 	    (
 	     $output_file,
@@ -9451,7 +9510,7 @@ sub _output_latex_command_test_read
 	      content_line_limit => $option_output_content_line_limit,,
 	      content_type => "Verbatim",
 	      content_type_options => '[fontsize=\relsize{-2}]',
-	      prompt => "Expected application output:\n",
+	      prompt => $prompt,
 	      suffix => "\n\n",
 	     },
 	    );
@@ -9556,9 +9615,15 @@ sub _output_latex_process
 
 	    $ss->ss_command_tests($command_tests);
 
-	    if ($ss->{cd_1})
+	    # if ($option_output_concise eq 'manual')
+	    # {
+	    # }
+	    # else
 	    {
-		print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
+		if ($ss->{cd_1})
+		{
+		    print $output_file '\begin{enumerate}[noitemsep,nolistsep]' . "\n";
+		}
 	    }
 
 	    # output the disabled clause
@@ -9631,9 +9696,15 @@ sub _output_latex_process
 		_output_latex_command_test_comments($command_test, $ss);
 	    }
 
-	    if ($ss->{cd_1})
+	    # if ($option_output_concise eq 'manual')
+	    # {
+	    # }
+	    # else
 	    {
-		print $output_file '\end{enumerate}' . "\n";
+		if ($ss->{cd_1})
+		{
+		    print $output_file '\end{enumerate}' . "\n";
+		}
 	    }
 	}
     }
