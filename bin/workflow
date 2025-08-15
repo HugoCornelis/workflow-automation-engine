@@ -4300,7 +4300,7 @@ sub _commands_branches
 
 	       my $directory = $repository_descriptor->{directory};
 
-	       ("cd '$directory'",
+	       ("cd \"$directory\"",
 		"git branch -a");
 	   }
 	   sort
@@ -4333,10 +4333,10 @@ sub _commands_create
 
 	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
 
-	       ("mkdir -p '$directory'",
-		"cd '$directory'",
-		"echo '---\n$name'",
-		"git clone $recurse_option '$repository' .");
+	       ("mkdir -p \"$directory\"",
+		"cd \"$directory\"",
+		"echo \"---  $name\"",
+		"git clone $recurse_option \"$repository\" .");
 	   }
 	   sort keys %$all_repository_descriptors,
 	  ];
@@ -4365,8 +4365,8 @@ sub _commands_echo_directories
 
 	       my $directory = _repository_2_directory($repository);
 
-	       ("echo '---\n$directory'",
-		"echo '    --> $repository'");
+	       ("echo \"---\n$directory\"",
+		"echo \"    --- $repository\"");
 	   }
 	   sort keys %$all_repository_descriptors,
 	  ];
@@ -4399,7 +4399,7 @@ sub _commands_checkout
 
 	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
 
-	       ("cd '$directory'",
+	       ("cd \"$directory\"",
 		"git checkout $recurse_option $branch");
 	   }
 	   sort keys %$all_repository_descriptors,
@@ -4425,7 +4425,7 @@ sub _commands_fetch
 
 	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
 
-	       ("cd '$directory'",
+	       ("cd \"$directory\"",
 		"git fetch $recurse_option");
 	   }
 	   sort
@@ -4458,7 +4458,7 @@ sub _commands_pull
 
 	       my $recurse_option = $recurse ? "--recurse-submodules" : "";
 
-	       ("cd '$directory'",
+	       ("cd \"$directory\"",
 		"git pull $recurse_option");
 	   }
 	   sort
@@ -4494,7 +4494,7 @@ sub _commands_status
 
 	       my $recurse = $repository_descriptor->{recurse};
 
-	       ("cd '$directory'",
+	       ("cd \"$directory\"",
 		"git status");
 	   }
 	   sort keys %$all_repository_descriptors,
