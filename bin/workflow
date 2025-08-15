@@ -5911,6 +5911,13 @@ sub execute_option_export_sh
 	    print $global_exported_sh_file "#\n";
 	}
 
+	if (exists $global_technical_project_configuration->{export_sh_variables})
+	{
+	    _execute_option_export_sh_variables_export($global_exported_sh_file, $global_technical_project_configuration->{export_sh_variables});
+	}
+
+	print $global_exported_sh_file "\n";
+
 	chmod 0755, $global_exported_sh_filename;
     }
 
@@ -5925,11 +5932,18 @@ sub execute_option_export_sh
 	my $exit_status = not chdir $cd_argument;
     }
 
+    #! some interaction roles add single quotes, we remove them here.
+
     if ($export_sh_command =~ /^'/
 	and $export_sh_command =~ /'$/)
     {
 	$export_sh_command =~ s/^'//;
 	$export_sh_command =~ s/'$//;
+    }
+
+    if (exists $global_technical_project_configuration->{export_sh_variables})
+    {
+	$export_sh_command = _execute_option_export_sh_variables_substitute($global_technical_project_configuration->{export_sh_variables}, $export_sh_command);
     }
 
     print "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
@@ -5954,6 +5968,56 @@ sub execute_option_export_sh
     {
 	print $global_exported_sh_file "$export_sh_command\n";
     }
+}
+
+
+sub _execute_option_export_sh_variables_export
+{
+    my $exported_sh_file = shift;
+
+    my $export_sh_variables = shift;
+
+    print $exported_sh_file "#\n";
+    print $exported_sh_file "# begin export_sh_variables\n";
+    print $exported_sh_file "#\n";
+    print $exported_sh_file "\n";
+
+    foreach my $export_sh_variable_hash (@$export_sh_variables)
+    {
+	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
+	{
+	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+
+	    $export_sh_variable_value =~ s(')(\\')g;
+
+	    print $exported_sh_file "$export_sh_variable_name=\${$export_sh_variable_name:=$export_sh_variable_value}\n";
+	}
+    }
+
+    print $exported_sh_file "\n";
+    print $exported_sh_file "#\n";
+    print $exported_sh_file "# end export_sh_variables\n";
+    print $exported_sh_file "#\n";
+}
+
+
+sub _execute_option_export_sh_variables_substitute
+{
+    my $export_sh_variables = shift;
+
+    my $export_sh_command = shift;
+
+    foreach my $export_sh_variable_hash (@$export_sh_variables)
+    {
+	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
+	{
+	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+
+	    $export_sh_command =~ s($export_sh_variable_value)(\$$export_sh_variable_name)g;
+	}
+    }
+
+    return $export_sh_command;
 }
 
 
