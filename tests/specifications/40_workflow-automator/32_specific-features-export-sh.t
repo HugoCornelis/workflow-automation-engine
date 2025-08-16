@@ -150,6 +150,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # --export-remote is not set, exporting all roles without a remote prefix
 #
+
 pwd
 cd /bin
 pwd
@@ -200,6 +201,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 #
 # --export-remote is 0, exporting all roles with the appriopriate remote prefix
 #
+
 pwd
 cd /bin
 pwd
@@ -250,6 +252,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # --export-remote is 1, role: localuser@localhost
 #
+
 pwd
 cd /bin
 pwd
@@ -300,6 +303,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # --export-remote is 2, role: root@ssh_cd
 #
+
 # <local command: pwd>
 # <local command: cd /bin>
 # <local command: pwd>
@@ -350,6 +354,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # --export-remote is 3, role: tmux_cd
 #
+
 # <local command: pwd>
 # <local command: cd /bin>
 # <local command: pwd>
