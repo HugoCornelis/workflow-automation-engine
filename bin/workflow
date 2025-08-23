@@ -269,18 +269,16 @@ sub _builtin_add_command_filename
 
     # read the commands configuration file
 
-    my $command_filenames;
-
-    my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
-
-    if (not $error)
-    {
-	$command_filenames = YAML::LoadFile($command_filenames_configuration_filename);
-    }
+    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
 
     # add the commands filename corresponding to the new target name
 
-    my $command_filenames_array = $command_filenames->{command_filenames};
+    my $command_filenames_array = [];
+
+    if (not $error)
+    {
+	$command_filenames_array = $command_filenames->{command_filenames};
+    }
 
     if (not $error)
     {
@@ -306,6 +304,8 @@ sub _builtin_add_command_filename
 
     if (not $error)
     {
+	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+
 	YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
 
 	print "$global_program_name: registered the $type command file name $new_command_filename for target $target_name\n";
@@ -2641,9 +2641,11 @@ options:
 
 sub builtin_archive_configuration
 {
-    my $scripts_directory = $global_field_project_configuration->{sources_configuration_directory};
+    my $arguments = shift || [];
 
-    my $tar_filename = $ARGV[0];
+    my $tar_filename = $arguments->[0];
+
+    my $scripts_directory = $global_field_project_configuration->{sources_configuration_directory};
 
     # make sure the --interactions family of options works
 
@@ -2808,6 +2810,128 @@ sub builtin_fetch_scripts_help
     my $command = shift;
 
     return "$command: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
+";
+}
+
+
+sub builtin_grep
+{
+    my $arguments = shift || [];
+
+    my $regex_search = $arguments->[0];
+
+    if (not defined $regex_search)
+    {
+	die "$0: builtin_grep: *** Error: a regex must be given on the command line.";
+    }
+
+    my $debug_builtin_grep = 0;
+
+    if ($debug_builtin_grep > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => $arguments,
+			    },
+			   );
+    }
+
+    my $project_selectors;
+
+    if (scalar @$arguments == 1)
+    {
+	$project_selectors = [ '.*'];
+    }
+    else
+    {
+	$project_selectors
+	    = [
+	       @$arguments > 1 ? @$arguments[1 .. $#$arguments] : ()
+	      ];
+    }
+
+    if ($debug_builtin_grep > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     project_selectors => $project_selectors,
+			    },
+			   );
+    }
+
+    # my $project_selectors = [ @{$arguments->[1 .. $#$arguments]} ];
+
+    # create the list of selected projects
+
+    my $selected_projects = [];
+
+    foreach my $project_selector (@$project_selectors)
+    {
+	my $projects = main::workflow_project_list_generate($project_selector);
+
+	$selected_projects = [ @$selected_projects, @$projects, ];
+    }
+
+    if ($debug_builtin_grep > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     selected_projects => $selected_projects,
+			    },
+			   );
+    }
+
+    # collect the command_filenames for each selected_project
+
+    my $selected_command_files = [];
+
+    foreach my $selected_project (sort @$selected_projects)
+    {
+	# get the configuration_data_directory
+
+	my ($sources_configuration_directory, $configuration_data_directory)
+	    = main::project_name_2_configuration_data_directory($selected_project);
+
+	# generate the list of command filenames
+
+	my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
+
+	$command_filenames = $command_filenames->{command_filenames};
+
+	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
+    }
+
+    if ($debug_builtin_grep)
+    {
+	print STDERR Dumper( { selected_command_files => $selected_command_files, } );
+    }
+
+    if (@$selected_command_files)
+    {
+	my $command_filenames_string = join ' ', @$selected_command_files;
+
+	my $command = "grep -n '$regex_search' $command_filenames_string";
+
+	execute_shell_command($command);
+    }
+}
+
+
+sub builtin_grep_help
+{
+    my $command = shift;
+
+    return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
+
+synopsis:
+
+$command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+
+arguments:
+
+    ARGV[0]: A regular expression to search for.
+    ARGV[1] and following: Regular expressions to match with project names.  The default is all project names.
+
 ";
 }
 
@@ -6018,16 +6142,6 @@ sub _execute_option_export_sh_variables_substitute
 	{
 	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
 
-	    # make sure we don't process empty variables
-
-	    if (not defined $export_sh_variable_value
-		or $export_sh_variable_value eq '')
-	    {
-		next;
-	    }
-
-	    # substitute the variable value with its name in the command
-
 	    $export_sh_command =~ s($export_sh_variable_value)(\$$export_sh_variable_name)g;
 	}
     }
@@ -7623,7 +7737,7 @@ sub bash_completion
 
 	    if ($internal_completion)
 	    {
-		my $internal_commands = generate_command_hash_with_structure();
+		my $internal_commands = command_hash_with_structure_generate();
 
 		$result = bash_completion_generate($command, $arguments, $internal_commands, $comp_cword);
 
@@ -7662,7 +7776,7 @@ sub bash_completion
 
 		my $completion_sub = "Command::$target_command->[0]_$target_command->[1]_completions";
 
-		my $command_hash = generate_command_hash_typed('with completion subs');
+		my $command_hash = command_hash_typed_generate('with completion subs');
 
 		# have the command generate the data structure that lists the completions
 
@@ -7838,13 +7952,63 @@ sub bash_completion_generate_options
 }
 
 
+sub command_filenames_file_read
+{
+    my $sources_configuration_directory = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $full_paths = shift;
+
+    my $verbose = shift;
+
+    my $result;
+
+    my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+
+    $result
+	= eval {
+
+	    local $SIG{'__DIE__'};
+
+	    YAML::LoadFile($command_filenames_configuration_filename);
+	};
+
+    if ($@)
+    {
+	if ($verbose)
+	{
+	    warn "$0: command_filenames_file not found ($@)";
+	}
+
+	$result = { command_filenames => [], };
+    }
+
+    if ($full_paths)
+    {
+	my $command_filenames = $result->{command_filenames};
+
+	$result->{command_filenames}
+	    = [
+	       map
+	       {
+		   "$sources_configuration_directory/$_";
+	       }
+	       @$command_filenames,
+	      ]
+    }
+
+    return $result;
+}
+
+
 # generate a hash mapping targets and subroutine names to their full names.
 
-sub generate_command_hash_with_structure
+sub command_hash_with_structure_generate
 {
     my $with_feature_subs = shift;
 
-    my $commands = generate_command_list($with_feature_subs);
+    my $commands = command_list_generate($with_feature_subs);
 
     # set default result
 
@@ -7873,13 +8037,13 @@ sub generate_command_hash_with_structure
 }
 
 
-sub generate_command_hash_typed
+sub command_hash_typed_generate
 {
     my $with_feature_subs = shift;
 
     my $result = {};
 
-    my $commands_subs = generate_command_hash_subs("Command::", $with_feature_subs);
+    my $commands_subs = command_hash_subs_generate("Command::", $with_feature_subs);
 
     $result
 	= {
@@ -7887,7 +8051,7 @@ sub generate_command_hash_typed
 	   %$commands_subs,
 	  };
 
-    my $commands_shell = generate_command_hash_shell($with_feature_subs);
+    my $commands_shell = command_hash_shell_generate($with_feature_subs);
 
     $result
 	= {
@@ -7895,7 +8059,7 @@ sub generate_command_hash_typed
 	   %$commands_shell,
 	  };
 
-    my $commands_yaml = generate_command_hash_yaml($with_feature_subs);
+    my $commands_yaml = command_hash_yaml_generate($with_feature_subs);
 
     $result
 	= {
@@ -7907,11 +8071,11 @@ sub generate_command_hash_typed
 }
 
 
-sub generate_command_list
+sub command_list_generate
 {
     my $with_feature_subs = shift;
 
-    my $command_hash = generate_command_hash_typed($with_feature_subs);
+    my $command_hash = command_hash_typed_generate($with_feature_subs);
 
     my $result = [ keys %$command_hash, ];
 
@@ -7919,7 +8083,7 @@ sub generate_command_list
 }
 
 
-sub generate_command_hash_data_directory
+sub command_hash_data_directory_generate
 {
     my $type = shift;
 
@@ -7964,21 +8128,21 @@ sub generate_command_hash_data_directory
 }
 
 
-sub generate_command_hash_shell
+sub command_hash_shell_generate
 {
     my $with_feature_subs = shift;
 
-    my $result = generate_command_hash_data_directory('sh', $with_feature_subs);
+    my $result = command_hash_data_directory_generate('sh', $with_feature_subs);
 
     return $result;
 }
 
 
-sub generate_command_hash_yaml
+sub command_hash_yaml_generate
 {
     my $with_feature_subs = shift;
 
-    my $result = generate_command_hash_data_directory('yml', $with_feature_subs);
+    my $result = command_hash_data_directory_generate('yml', $with_feature_subs);
 
     return $result;
 }
@@ -7992,7 +8156,7 @@ sub generate_command_hash_yaml
 # subs".
 #
 
-sub generate_command_hash_subs
+sub command_hash_subs_generate
 {
     my $package_name = shift;
 
@@ -8300,7 +8464,7 @@ sub main
 	{
 	    # generate the list of all commands
 
-	    my $all_commands = generate_command_hash_with_structure('with help subs');
+	    my $all_commands = command_hash_with_structure_generate('with help subs');
 
 	    # loop over all the matching targets
 
@@ -8437,7 +8601,7 @@ sub main
 
 	    # if this command exists ...
 
-	    my $command_hash = generate_command_hash_typed('with help subs');
+	    my $command_hash = command_hash_typed_generate('with help subs');
 
 	    if (defined $option_verbose
 		and $option_verbose > 2)
@@ -8717,7 +8881,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     {
 	use YAML;
 
-	my $commands = generate_command_list();
+	my $commands = command_list_generate();
 
 	if ($option_target)
 	{
@@ -8779,7 +8943,7 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	    = [
 	       map
 	       {
-		   generate_command_hash_subs($_, "with help subs");
+		   command_hash_subs_generate($_, "with help subs");
 	       }
 	       keys %$known_command_packages,
 	      ];
@@ -8857,6 +9021,8 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
     {
 	use YAML;
 
+	my $all_workflow_projects = workflow_project_list_generate();
+
 	my $workflow_projects
 	    = [
 	       map
@@ -8865,9 +9031,9 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	       }
 	       map
 	       {
-		   chomp; "$_ --help-commands";
+		   "$_ --help-commands";
 	       }
-	       `ls -1 ~/bin/*workflow`,
+	       @$all_workflow_projects,
 	      ];
 
 # 	my $projects = $global_technical_project_configuration->{projects};
@@ -8922,6 +9088,47 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	    die $status;
 	}
     }
+}
+
+
+sub project_name_2_configuration_data_directory
+{
+    my $project_name = shift;
+
+    my $output_yaml = `$project_name builtin print_configuration_directory`;
+
+    use YAML;
+
+    my $field_project_configuration = YAML::Load($output_yaml);
+
+    $field_project_configuration = $field_project_configuration->{global_field_project_configuration};
+
+    my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$field_project_configuration->{sources_configuration_filename}-data";
+
+    return ($sources_configuration_directory, $configuration_data_directory);
+}
+
+
+sub workflow_project_list_generate
+{
+    my $selector = shift || '.*';
+
+    my $result
+	= [
+	   grep
+	   {
+	       /$selector/;
+	   }
+	   map
+	   {
+	       chomp; $_;
+	   }
+	   `ls -1 ~/bin/*workflow`,
+	  ];
+
+    return $result;
 }
 
 
