@@ -6018,6 +6018,16 @@ sub _execute_option_export_sh_variables_substitute
 	{
 	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
 
+	    # make sure we don't process empty variables
+
+	    if (not defined $export_sh_variable_value
+		or $export_sh_variable_value eq '')
+	    {
+		next;
+	    }
+
+	    # substitute the variable value with its name in the command
+
 	    $export_sh_command =~ s($export_sh_variable_value)(\$$export_sh_variable_name)g;
 	}
     }
