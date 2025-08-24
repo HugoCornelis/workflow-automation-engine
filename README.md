@@ -62,6 +62,17 @@ The workflow automation engine offers the following functions:
 - Support for different _roles_ e.g. for remote execution, in a Docker
   container or a `tmux` session.
 
+## The `vigilia` tester
+
+The `vigilia` tester starts from a declarative database of test
+specifications to:
+
+- Isolate a test environment through virtualization.
+- Separate layers of test specfications.
+- Generate documentation of user-visible functions.
+- Run the tests and report about software application behaviour.
+
+
 ## Installation
 
 ### Prerequisites
