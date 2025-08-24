@@ -1,16 +1,56 @@
-# The Workflow Automation Engine
+# Workflow and Vigilia
+
+Software documentation management systems face three long-standing
+challenges: (1) Consistent software documentation synchronization with
+system function, (2) Satisfy industry certification schemes, (3)
+Document workflows required for project execution, collaboration
+between software developers and reduce on-boarding time of new
+developers.
+
+Two complimentary software applications are introduced: Workflow and
+Vigilia.  Together, they elaborate a multipolar view of the
+implementation of a software documentation project while allowing
+refinement during project development.
+
+`workflow` automates the technical workflows required for project
+development.  Its descriptions are based on system shell commands
+through a set of configuration files.
+
+Separation of project specific workflow configurations supports
+collaboration between software developers through a shared git
+repository.
+
+The configuration files implement, automate, track and document the
+execution of a series of system shell commands across machines used
+for multi-role compilations, builds, tests and deployment.
+
+A tester tool, `vigilia` isolates declarative test descriptions from
+their execution.
+
+These descriptions facilitate layering of the documentation levels
+required for industry compliance and certification.
+
+Specific features of test descriptions can be tagged for inclusion in
+documents derived from the tests.
+
+Combining these features guarantees a single “source of truth”
+ensuring software system tests, documents and software functions
+remain coherently synchronized.
+
+
+## The Workflow Automation Engine
 
 The workflow automation engine helps automating complicated system
 shell tasks during the development of a software project.
 
-Typical examples of workflow automation are shell commands with
-arguments and options that are hard to remember, to compile source
-code on a build server, to convert documentation to a web page, to
-flash a binary image such as the Linux kernel to a small or embedded
-device, or start the execution of command sequences in synchrony on
-different virtual machines.
+Typical examples of workflow automation are running local and remote
+shell commands with arguments and options that are hard to remember,
+to compile source code on a build server, to convert documentation to
+a web page, to flash a binary software image such as the Linux kernel
+to a small or embedded device, or orchestrate the execution of command
+sequences on different local, remote and virtual machines.
 
-## Overview
+### Overview
 
 The workflow automation engine offers the following functions:
 
@@ -19,8 +59,8 @@ The workflow automation engine offers the following functions:
   _targets_, project specific _commands_ and project specific
   _configuration_.
 - Integration with `grc` for project specific _keyword highlighting_.
-- Support for different _roles_ that allows remote execution, in a
-  Docker container or a `tmux` session.
+- Support for different _roles_ e.g. for remote execution, in a Docker
+  container or a `tmux` session.
 
 ## Installation
 
@@ -37,53 +77,22 @@ As an example, for an Ubuntu 22.04.3 LTS jammy, install these
 prerequisites:
 
 ```
+sudo apt install automake
 sudo apt install grc
 sudo apt install libyaml-perl
 sudo apt install libfile-chdir-perl
 sudo apt install libinline-python-perl
-sudo apt install automake
 sudo apt install make
 ```
 
-The installation is then done through the provided tarball (see
-below).
-
-If you prefer to install directly from the `github` repository, you
-also need `automake` as a prerequisite:
-
-```
-sudo apt install automake
-```
-
-
-### Installation from a Tarball
-
-Installation from a tarball installs the latest available release that
-was considered 'stable' by the developer team.  The tarball can be
-downloaded from:
-
-https://github.com/HugoCornelis/workflow-automation-engine/raw/master/workflow-automation-0.1.0-alpha.tar.gz
-
-Use `tar` to unpack followed with `configure` and `make` to install:
-
-```
-tar xf workflow-automation-0.1.0-alpha.tar.gz
-./configure
-make
-sudo make install
-```
-
-### Installation from the `github` Repository
-
-First clone the repository into a local directory:
+Then clone the repository into a local directory:
 
 ```
 git clone https://github.com/HugoCornelis/workflow-automation-engine.git
 cd workflow-automation-engine
 ```
 
-The `configure` script is not available from the `github` repository.
-To generate it, issue the command:
+To generate a `configure` script, issue the command:
 
 ```
 ./autogen.sh
@@ -97,19 +106,16 @@ make
 sudo make install
 ```
 
-After installation, it is useful to know a few things about the
-automated configuration of projects before starting one.
+`workflow` and `vigilia` are now installed on your system.
 
 
 ### Configuration
 
-After installation new projects can be created.
-
-Each project has separate configuration for `grc` and `bash`
-(completion).  The configuration of `grc` is found in its regular
-configuration directory (see the man page of `grc` for more
-information) and shell aliases make sure `grc` is invoked
-appropriately.
+After installation new projects can be created.  Each project has its
+own configuration for `grc` and `bash` (completion).  The
+configuration of `grc` is found in its regular configuration directory
+(see the man page of `grc` for more information) and shell aliases
+make sure `grc` is invoked appropriately.
 
 `bash` completion is dynamically generated by the workflow automation
 engine when it is needed (when the user hits the <tab> key).
@@ -131,7 +137,7 @@ alias neurospaces-configuration="grc neurospaces-configuration"
 Note that this configuration is automatically generated.
 
 
-## Starting a new project
+## Starting a new `workflow` project
 
 Starting a new workflow project with name *abcd* consists of these
 steps:
@@ -167,4 +173,9 @@ steps:
 
 	Adds the target *xyz* and creates a directory with a few template
     examples for you to adapt to your project.
+
+
+## Starting a new `vigilia` project
+
+<to be completed>
 
