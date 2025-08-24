@@ -3166,6 +3166,44 @@ Note that grc configuration files will also be installed and configured.
 }
 
 
+sub builtin_known_command_filenames
+{
+    my $arguments = shift || [ 'relative-paths' ];
+
+    my $debug_builtin_known_command_filenames = 0;
+
+    # get the configuration_data_directory
+
+    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    # generate the list of command filenames
+
+    my $full_paths = $arguments->[0] eq 'full-paths' ? 'full_paths' : 'relative_paths';
+
+    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
+
+    $command_filenames = $command_filenames->{command_filenames};
+
+    use YAML;
+
+    print Dump( { known_command_filenames => $command_filenames } );
+
+    return 0;
+}
+
+
+sub builtin_known_command_filenames_completions
+{
+    return
+    {
+     "full-paths" => '',
+     "relative-paths" => '',
+    };
+}
+
+
 sub builtin_print_configuration_directory
 {
     my $project_name = shift;
@@ -7992,7 +8030,7 @@ sub command_filenames_file_read
 	    = [
 	       map
 	       {
-		   "$sources_configuration_directory/$_";
+		   $full_paths eq 'full_paths' ? "$sources_configuration_directory/$_" : $_;
 	       }
 	       @$command_filenames,
 	      ]

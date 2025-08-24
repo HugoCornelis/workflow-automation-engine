@@ -531,6 +531,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
+  - workflow-tests-workflow builtin known_command_filenames
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin start_project
@@ -566,6 +567,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
+  - workflow-tests-workflow builtin known_command_filenames
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin start_project
@@ -704,7 +706,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the commands?",
-						   read => 'a --b add_target archive_configuration fetch_scripts grep install_scripts print_configuration_directory pull_scripts start_project tmux_create_sessions tmux_kill_sessions',
+						   read => 'a --b add_target archive_configuration fetch_scripts grep install_scripts known_command_filenames print_configuration_directory pull_scripts start_project tmux_create_sessions tmux_kill_sessions',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -1010,7 +1012,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the commands for the new installed configuration?",
-						   read => 'a --b add_target archive_configuration fetch_scripts grep install_scripts print_configuration_directory pull_scripts start_project tmux_create_sessions tmux_kill_sessions',
+						   read => 'a --b add_target archive_configuration fetch_scripts grep install_scripts known_command_filenames print_configuration_directory pull_scripts start_project tmux_create_sessions tmux_kill_sessions',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
