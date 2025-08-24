@@ -7,8 +7,8 @@ Document workflows required for project execution, collaboration
 between software developers and reduce on-boarding time of new
 developers.
 
-Two complimentary software applications are introduced: Workflow and
-Vigilia.  Together, they elaborate a multipolar view of the
+Two complimentary software applications are introduced: `workflow` and
+`vigilia`.  Together, they elaborate a multipolar view of the
 implementation of a software documentation project while allowing
 refinement during project development.
 
@@ -54,13 +54,15 @@ sequences on different local, remote and virtual machines.
 
 The workflow automation engine offers the following functions:
 
+- Convenient implmenetation of modular custom workflows, with or
+  without arguments, including bash completions and help pages.
 - Easy to start a new project, new _targets_ and new _commands_.
 - Integration with `bash` completion allows browsing project specific
   _targets_, project specific _commands_ and project specific
   _configuration_.
 - Integration with `grc` for project specific _keyword highlighting_.
 - Support for different _roles_ e.g. for remote execution, in a Docker
-  container or a `tmux` session.
+  container or in a `tmux` session.
 
 ## The `vigilia` tester
 
@@ -71,28 +73,31 @@ specifications to:
 - Separate layers of test specfications.
 - Generate documentation of user-visible functions.
 - Run the tests and report about software application behaviour.
+- Query the test specifications as if they are a knowledge base of
+  implemented, required or desired application function.
 
 
 ## Installation
 
 ### Prerequisites
 
-The workflow automation engine uses `grc` for colorification of the
-output and relies on [YAML](https://yaml.org/) for configuration
-files.  It also has a dependency on the `File::chdir` perl module and
-installation itself is done with `make`.  The Perl module to integrate
-Python code into Perl is also required.
+`workflow` uses `grc` for colorification of its output.  Both
+`workflow` and `vigilia` require [YAML](https://yaml.org/),
+[JSON](https://toml.io/en/) or [TOML](https://toml.io/en/) for
+configuration files.  Another dependency is the `File::chdir` perl
+module and installation is done with `make`.  The Perl module for
+integration of Python code into Perl is also required.
 
-
-As an example, for an Ubuntu 22.04.3 LTS jammy, install these
-prerequisites:
+For Ubuntu 22.04.3 LTS jammy, install these prerequisites:
 
 ```
 sudo apt install automake
 sudo apt install grc
-sudo apt install libyaml-perl
 sudo apt install libfile-chdir-perl
 sudo apt install libinline-python-perl
+sudo apt install libjson-perl
+sudo apt install libtoml-perl
+sudo apt install libyaml-perl
 sudo apt install make
 ```
 
@@ -150,13 +155,13 @@ Note that this configuration is automatically generated.
 
 ## Starting a new `workflow` project
 
-Starting a new workflow project with name *abcd* consists of these
+Starting a new `workflow` project with name *foo* consists of these
 steps:
 
-1. `workflow builtin start_project abcd`
+1. `workflow builtin start_project foo`
 
 	Creates a workflow configuration for a new project with name
-    *abcd*.
+    *foo*.
 
 2. `mv workflow-project-template.pl workflow-project.pl`
 
@@ -167,12 +172,12 @@ steps:
 
 	Makes the configuration available from any directory.
 
-4. `abcd-workflow --help-commands`
+4. `foo-workflow --help-commands`
 
 	Optionally shows the available commands for the project with name
-    *abcd*.
+    *foo*.
 
-5. `abcd-workflow examples_sh sh_single_command`
+5. `foo-workflow examples_sh sh_single_command`
 
 	By default the workflow engine installs a few commands that you
     can easily adapt to your needs.  This is one of them.  Use the
@@ -180,7 +185,7 @@ steps:
     use the `--interactions` option to see the same commands based on
     the role which would execute them.
 
-6. `abcd-workflow builtin add_target -- xyz "Add commands to this new target that do new things" --install-commands-sh`
+6. `foo-workflow builtin add_target -- xyz "Add commands to this new target that do new things" --install-commands-sh`
 
 	Adds the target *xyz* and creates a directory with a few template
     examples for you to adapt to your project.
@@ -188,5 +193,15 @@ steps:
 
 ## Starting a new `vigilia` project
 
-<to be completed>
+Starting a new `vigilia` project with name *bar* consists of these
+steps:
+
+1. `vigilia configuration-create bar alpha`
+
+2. `vigilia module-create 100_test_module`
+
+3. `vigilia command-add 100_test_module a_tested_command "This test tests 'a_tested_command' and expects the output it currently generates`
+
+This section is incomplete.
+
 
