@@ -24,6 +24,11 @@ my $configuration = {
 		      %{ ref $targets eq 'HASH' ? $targets : {}; },
 		     };
 
+$configuration->{export_sh_variables}
+    = [
+       { HOME_DIRECTORY => $ENV{HOME} },
+      ];
+
 ($0 =~ m(.*/(\S+)));
 
 my $program_name = $1;

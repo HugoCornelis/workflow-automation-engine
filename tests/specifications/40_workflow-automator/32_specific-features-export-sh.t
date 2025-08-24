@@ -150,6 +150,15 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # --export-remote is not set, exporting all roles without a remote prefix
 #
+#
+# begin export_sh_variables
+#
+
+HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+
+#
+# end export_sh_variables
+#
 
 pwd
 cd /bin
@@ -200,6 +209,15 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 0
 #
 # --export-remote is 0, exporting all roles with the appriopriate remote prefix
+#
+#
+# begin export_sh_variables
+#
+
+HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+
+#
+# end export_sh_variables
 #
 
 pwd
@@ -252,6 +270,15 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # --export-remote is 1, role: localuser@localhost
 #
+#
+# begin export_sh_variables
+#
+
+HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+
+#
+# end export_sh_variables
+#
 
 pwd
 cd /bin
@@ -303,6 +330,15 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # --export-remote is 2, role: root@ssh_cd
 #
+#
+# begin export_sh_variables
+#
+
+HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+
+#
+# end export_sh_variables
+#
 
 # <local command: pwd>
 # <local command: cd /bin>
@@ -353,6 +389,15 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 3
 #
 # --export-remote is 3, role: tmux_cd
+#
+#
+# begin export_sh_variables
+#
+
+HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+
+#
+# end export_sh_variables
 #
 
 # <local command: pwd>
