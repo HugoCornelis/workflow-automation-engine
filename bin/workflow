@@ -2,6 +2,8 @@
 
 use strict;
 
+use utf8;
+
 use warnings;
 
 use Data::Dumper;
@@ -8664,6 +8666,10 @@ sub main
 		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
 		    $command_name =~ s(_help$)();
 
+		    #! utf8::upgrade works in place
+
+		    map { utf8::upgrade($_) } @ARGV;
+
 		    my $help_string = &$command_implementation($command_name, \@ARGV);
 
 		    # old style help pages ...
@@ -8697,6 +8703,10 @@ sub main
 			or $type eq 'sub')
 		    {
 			no strict "refs";
+
+			#! utf8::upgrade works in place
+
+			map { utf8::upgrade($_) } @ARGV;
 
 			my $error = &$command_implementation(\@ARGV);
 
