@@ -6182,6 +6182,19 @@ sub _execute_option_export_sh_variables_substitute
 	{
 	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
 
+	    if ($export_sh_variable_name =~ m(password)i)
+	    {
+		$export_sh_variable_value = '';
+	    }
+
+	    if (!defined $export_sh_variable_value
+		|| $export_sh_variable_value eq '')
+	    {
+		next;
+	    }
+
+	    # substitute the variable value with its name in the command
+
 	    $export_sh_command =~ s($export_sh_variable_value)(\$$export_sh_variable_name)g;
 	}
     }
