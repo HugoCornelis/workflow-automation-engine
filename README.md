@@ -84,11 +84,13 @@ specifications to:
 `workflow` uses `grc` for colorification of its output.  Both
 `workflow` and `vigilia` require [YAML](https://yaml.org/),
 [JSON](https://toml.io/en/) or [TOML](https://toml.io/en/) for
-configuration files.  Another dependency is the `File::chdir` perl
-module and installation is done with `make`.  The Perl module for
-integration of Python code into Perl is also required.
+configuration files.  Other dependencies are several Perl modules such
+as `File::chdir`, and `File::Find::Rule`, the Perl module for
+integration of Python code into Perl.  Installation itself is
+performed with `make`.
 
-For Ubuntu 22.04.3 LTS jammy, install these prerequisites:
+As an example, for Ubuntu 22.04.3 LTS jammy, you need to install these
+prerequisites:
 
 ```
 sudo apt install automake
@@ -99,6 +101,9 @@ sudo apt install libjson-perl
 sudo apt install libtoml-perl
 sudo apt install libyaml-perl
 sudo apt install make
+sudo apt libfile-find-rule-perl
+sudo apt libnet-ip-perl
+sudo apt libexpect-perl
 ```
 
 Then clone the repository into a local directory:
