@@ -712,6 +712,8 @@ sub ${target_name}_single_command
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
     #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
+    #               the hash value is either just '1' or a string that is used for the <suffix>.
     #
     # execute_shell_command(\$command, { remote => '<name of a remote that is defined in $project_name-configuration>, } );
     #
@@ -6310,6 +6312,28 @@ sub execute_scheduled_command
 		else
 		{
 		    $exit_status = system "$command";
+		}
+
+		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
+
+		if ($timestamp)
+		{
+		    my $suffix = '';
+
+		    if ($timestamp ne '1')
+		    {
+			$suffix = $timestamp;
+		    }
+
+		    my $timestamp_command = "$command";
+
+		    my $timestamp_filename = ".timestamp_${suffix}_$timestamp_command";
+
+		    $timestamp_filename =~ s(\w+)(-)g;
+		    $timestamp_filename =~ s(\()()g;
+		    $timestamp_filename =~ s(\))()g;
+
+		    system "touch '$timestamp_filename'";
 		}
 	    }
 	    else
