@@ -194,7 +194,7 @@ sub features_timestamps
 	 {
 	  timestamp => {
 			content_format => 'Return code: %%RETURNCODE%%',
-			filename_suffix => 'suffix_with spaces',
+			filename_suffix => 'suffix_with spaces and file with content',
 		       },
 	 },
 	);

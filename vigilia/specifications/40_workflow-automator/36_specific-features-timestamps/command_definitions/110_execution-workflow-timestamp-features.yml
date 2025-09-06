@@ -1,0 +1,16 @@
+---
+command: feature-testing-workflow features timestamps
+command_tests:
+  - description: execution of a workflow that uses the timestamp features
+    read: |
+      # pwd
+      #
+      /home/neurospaces
+      # pwd
+      #
+      /home/neurospaces
+      # pwd
+      #
+      /home/neurospaces
+    white_space: convert seen 0a to 0d 0a newlines
+description: execution of a workflow that uses the timestamp features

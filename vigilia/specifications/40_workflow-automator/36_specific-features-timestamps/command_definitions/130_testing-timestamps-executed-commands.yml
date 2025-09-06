@@ -1,0 +1,10 @@
+---
+command: cd ./projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/ && ls .timestamp*
+command_tests:
+  - description: Can we find the generated timestamp files?
+    read: |+2
+      .timestamp___pwd
+      .timestamp__some-suffix-with-spaces_pwd
+      .timestamp__suffix_with-spaces-and-file-with-content_pwd
+    white_space: convert seen 0a to 0d 0a newlines
+description: testing of timestamps of executed commands
