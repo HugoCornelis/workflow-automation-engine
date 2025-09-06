@@ -14,7 +14,7 @@ BEGIN
 {
 	if (not exists $ENV{PYTHONPATH})
 	{
-		$ENV{PYTHONPATH} = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache";
+		$ENV{PYTHONPATH} = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache";
 	}
 }
 
@@ -24,7 +24,7 @@ use Inline Python => <<'PYTHON';
 
 import json
 
-global_technical_project_configuration_path = '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/configuration.json'
+global_technical_project_configuration_path = '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/configuration.json'
 
 global_technical_project_configuration = None
 

@@ -12,7 +12,7 @@ filtered : <<EOV
 
 import json
 
-global_technical_project_configuration_path = '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/configuration.json'
+global_technical_project_configuration_path = '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/configuration.json'
 
 global_technical_project_configuration = None
 

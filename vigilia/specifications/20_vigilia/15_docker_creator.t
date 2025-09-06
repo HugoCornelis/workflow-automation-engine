@@ -85,7 +85,7 @@ The class properties can include IP network information and IP address of the co
 ',
 				     docker => {
 						default_user => 'neurospaces',
-						dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
+						dockerfile => "./vigilia/specifications/dockerfiles/Dockerfile.neurospaces-testing",
 						name_container => 'vigilia_test_container',
 						name_image => 'vigilia_test_image',
 					       },

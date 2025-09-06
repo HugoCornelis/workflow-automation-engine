@@ -8,7 +8,7 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --config-filename ./tests-merge.config --input-modules ./tests/to-be-merged/110_mid-level --input-modules ./tests/to-be-merged/111_low-level --show-command-tests',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --config-filename ./tests-merge.config --input-modules ./vigilia/to-be-merged/110_mid-level --input-modules ./vigilia/to-be-merged/111_low-level --show-command-tests',
 				command_tests => [
 						  {
 						   description => "Can we merge several partial test specifications and then run these merged tests?",

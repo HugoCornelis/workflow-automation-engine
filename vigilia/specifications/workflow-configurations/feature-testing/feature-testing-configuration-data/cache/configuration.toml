@@ -3,9 +3,9 @@ configuration_version = 1
 configuration_origin = "dynamically_generated from the executable script name"
 field_project_name = "feature-testing"
 search_path_workflow_executable_directory = "/home/hugo/bin"
-sources_configuration_data_directory = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-data"
-sources_configuration_directory = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing"
-sources_configuration_filename = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration"
+sources_configuration_data_directory = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data"
+sources_configuration_directory = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing"
+sources_configuration_filename = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration"
 [technical_project_configuration]
 command_filenames = ["feature-testing-commands-features", "feature-testing-commands-more_python.py", "feature-testing-commands-perl_examples", "feature-testing-commands-python.py"]
 description = "The following are example targets, modify/remove/add according to your project needs."

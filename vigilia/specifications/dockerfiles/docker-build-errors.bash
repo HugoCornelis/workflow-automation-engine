@@ -8,7 +8,7 @@ GROUP_ID=`id -g`
 
 WORKING_DIRECTORY=`pwd`
 
-DOCKERFILE="./tests/specifications/dockerfiles/Dockerfile.workflow-errors"
+DOCKERFILE="./vigilia/specifications/dockerfiles/Dockerfile.workflow-errors"
 
 echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_directory $WORKING_DIRECTORY from directory $SCRIPTPATH"
 

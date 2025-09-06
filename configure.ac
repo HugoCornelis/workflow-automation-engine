@@ -223,7 +223,7 @@ AC_MSG_CHECKING([Python prefix is ])
 
 # determine the test library to install
 
-TEST_SPECIFICATION_FILES=`/bin/echo -n "tests/introduction.html " && find tests/specifications -name "*.t" | perl -pe 's/\n/ /g' && find tests/specifications/strings -name "*.txt" | perl -pe 's/\n/ /g' && find tests/data -name "*.yml" | perl -pe 's/\n/ /g'`
+TEST_SPECIFICATION_FILES=`/bin/echo -n "vigilia/introduction.html " && find vigilia/specifications -name "*.t" | perl -pe 's/\n/ /g' && find vigilia/specifications/strings -name "*.txt" | perl -pe 's/\n/ /g' && find vigilia/data -name "*.yml" && find vigilia/specifications -name "*.yml" | perl -pe 's/\n/ /g'`
 AC_SUBST(TEST_SPECIFICATION_FILES)
 
 

@@ -279,7 +279,7 @@ No email sent.
 				     comment => 'Enter this container with "docker exec -it vigilia_test_container bash"',
 				     docker => {
 						default_user => 'neurospaces',
-						dockerfile => "./tests/specifications/dockerfiles/Dockerfile.neurospaces-testing",
+						dockerfile => "./vigilia/specifications/dockerfiles/Dockerfile.neurospaces-testing",
 						name_container => 'vigilia_test_container',
 						name_image => 'vigilia_test_image',
 					       },
