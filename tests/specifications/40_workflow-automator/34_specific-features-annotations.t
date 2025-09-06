@@ -70,7 +70,7 @@ feature-testing-workflow builtin add_target source_code Operations on the source
 				command => 'feature-testing-workflow features annotations',
 				command_tests => [
 						  {
-						   description => "Do we see correct changes in directory during a workflow execution that uses the 'cd' command?",
+						   description => "Do we see the annotations when executing a command that uses them?",
 						   read => "
 ### Three commands, one changes the current working directory.
 # pwd
