@@ -3280,11 +3280,22 @@ sub builtin_rename_project
 
     my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-    my $project_filenames
+    #t to be updated
+
+    my $project_filename
 	= [
 	   "workflow-project.pl",
-	   "conf.$field_project_name-configuration",
 	  ];
+
+    #t to be renamed and updated?
+
+    my $conf_project_filenames
+	= [
+	   "conf.$field_project_name-configuration",
+	   "conf.$field_project_name-workflow",
+	  ];
+
+    #t to be renamed and updated
 
     my $bash_completion_filenames
 	= [
@@ -3312,6 +3323,8 @@ sub builtin_rename_project
 ./conf.workflow 17:# # neurospaces workflow
 ';
 
+    #t to be renamed in the current directory and in ~/bin
+
     my $bin_files
 	= [
 	   "$field_project_name-configuration",
@@ -3321,6 +3334,8 @@ sub builtin_rename_project
     my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    #t to be renamed in the current directory and in ~/bin
 
     my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
 
