@@ -15,6 +15,25 @@ our $global_technical_project_configuration;
 package Command;
 
 
+sub features_annotations
+{
+    my $remote_commands
+	= [
+	   'pwd',
+	   'cd /bin',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $remote_commands,
+	 {
+	  annotation => "Three commands, one changes the current working directory.",
+	 },
+	);
+}
+
+
 sub features_cd_tests
 {
     # Some options to command execution:
@@ -46,31 +65,6 @@ sub features_cd_tests
 
 
 our $target_servers = $::global_technical_project_configuration->{target_servers};
-
-sub features_cd_tests_tmux
-{
-    my $remote = $target_servers->{tmux_cd};
-
-    my $remote_commands
-	= [
-	   'pwd >>/tmp/tmux-pwd.txt',
-	   'cd bin',
-	   'pwd >>/tmp/tmux-pwd.txt',
-	   'cd ..',
-	   'pwd >>/tmp/tmux-pwd.txt',
-	   'cd /',
-	   'pwd >>/tmp/tmux-pwd.txt',
-	  ];
-
-    execute_shell_command_array
-	(
-	 $remote_commands,
-	 {
-	  remote => $remote,
-	 },
-	);
-}
-
 
 sub features_cd_tests_ssh
 {
@@ -105,20 +99,26 @@ sub features_cd_tests_ssh
 }
 
 
-sub features_annotations
+sub features_cd_tests_tmux
 {
+    my $remote = $target_servers->{tmux_cd};
+
     my $remote_commands
 	= [
-	   'pwd',
-	   'cd /bin',
-	   'pwd',
+	   'pwd >>/tmp/tmux-pwd.txt',
+	   'cd bin',
+	   'pwd >>/tmp/tmux-pwd.txt',
+	   'cd ..',
+	   'pwd >>/tmp/tmux-pwd.txt',
+	   'cd /',
+	   'pwd >>/tmp/tmux-pwd.txt',
 	  ];
 
     execute_shell_command_array
 	(
 	 $remote_commands,
 	 {
-	  annotation => "Three commands, one changes the current working directory.",
+	  remote => $remote,
 	 },
 	);
 }
