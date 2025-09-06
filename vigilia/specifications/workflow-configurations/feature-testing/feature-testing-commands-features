@@ -184,7 +184,18 @@ sub features_timestamps
 	(
 	 $commands,
 	 {
-	  timestamp => 'some prefix with spaces',
+	  timestamp => 'some suffix with spaces',
+	 },
+	);
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  timestamp => {
+			content_format => 'Return code: %%RETURNCODE%%',
+			filename_suffix => 'suffix_with spaces',
+		       },
 	 },
 	);
 }
