@@ -8,7 +8,7 @@ GROUP_ID=`id -g`
 
 WORKING_DIRECTORY=`pwd`
 
-DOCKERFILE="./tests/specifications/dockerfiles/Dockerfile.workflow"
+DOCKERFILE="./vigilia/specifications/dockerfiles/Dockerfile.workflow-errors"
 
 echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_directory $WORKING_DIRECTORY from directory $SCRIPTPATH"
 
@@ -16,7 +16,7 @@ echo "Creating a Docker image for $USER_NAME ($USER_ID, $GROUP_ID) for working_d
 
 docker image prune -f
 docker build \
-    --tag workflow_automation_image \
+    --tag workflow_automation_image_errors \
     --file $DOCKERFILE \
     .
 
@@ -24,3 +24,4 @@ docker build \
     # --build-arg USER_ID=$USER_ID \
     # --build-arg GROUP_ID=$GROUP_ID \
     # --build-arg WORKING_DIRECTORY=$WORKING_DIRECTORY \
+

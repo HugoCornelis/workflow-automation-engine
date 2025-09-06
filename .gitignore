@@ -13,8 +13,8 @@ _MTN/
 bin/cscope.files
 run_harness.sh.trs
 bin/vigilia.trs
+vigilia/html
 neurospaces_cpan_modules
-tests/html/
 try-graph.pl
 
 python-tests/
@@ -22,8 +22,11 @@ testing/
 
 configured-workflows/automation-configuration-data/cache/
 
-tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/
-tests/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
+vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data
+vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/
+vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
+vigilia/specifications/workflow-configurations/feature-testing/.timestamp*
+
 
 # http://www.gnu.org/software/automake
 

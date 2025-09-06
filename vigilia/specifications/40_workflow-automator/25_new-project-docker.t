@@ -79,7 +79,7 @@ checking for GNU default python exec_prefix... ${exec_prefix}
 checking for python script directory (pythondir)... ${PYTHON_PREFIX}/lib/python3.11/site-packages
 checking for python extension module directory (pyexecdir)... ${PYTHON_EXEC_PREFIX}/lib/python3.11/site-packages
 checking Python prefix is ... \'${prefix}\'
-find: \'tests/data\': No such file or directory
+find: \'vigilia/data\': No such file or directory
 checking that generated files are newer than configure... done
 : creating ./config.status
 config.status: creating Makefile
@@ -1035,7 +1035,7 @@ project-specific workflows consisting of shell commands.
 				comment => 'Enter this container with "docker exec -it workflow_automation_test_container bash"',
 				docker => {
 					   default_user => 'neurospaces',
-					   dockerfile => './tests/specifications/dockerfiles/Dockerfile.workflow',
+					   dockerfile => './vigilia/specifications/dockerfiles/Dockerfile.workflow',
 					   name_container => 'workflow_automation_test_container',
 					   name_image => 'workflow_automation_image',
 					  },

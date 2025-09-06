@@ -15,6 +15,25 @@ our $global_technical_project_configuration;
 package Command;
 
 
+sub features_annotations
+{
+    my $commands
+	= [
+	   'pwd',
+	   'cd /bin',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  annotation => "Three commands, one changes the current working directory.",
+	 },
+	);
+}
+
+
 sub features_cd_tests
 {
     # Some options to command execution:
@@ -30,7 +49,7 @@ sub features_cd_tests
     #
     # These options can given to any of the functions that execute commands.
 
-    my $local_commands
+    my $commands
 	= [
 	   'pwd',
 	   'cd bin',
@@ -41,36 +60,11 @@ sub features_cd_tests
 	   'pwd',
 	  ];
 
-    execute_shell_command_array($local_commands);
+    execute_shell_command_array($commands);
 }
 
 
 our $target_servers = $::global_technical_project_configuration->{target_servers};
-
-sub features_cd_tests_tmux
-{
-    my $remote = $target_servers->{tmux_cd};
-
-    my $remote_commands
-	= [
-	   'pwd >>/tmp/tmux-pwd.txt',
-	   'cd bin',
-	   'pwd >>/tmp/tmux-pwd.txt',
-	   'cd ..',
-	   'pwd >>/tmp/tmux-pwd.txt',
-	   'cd /',
-	   'pwd >>/tmp/tmux-pwd.txt',
-	  ];
-
-    execute_shell_command_array
-	(
-	 $remote_commands,
-	 {
-	  remote => $remote,
-	 },
-	);
-}
-
 
 sub features_cd_tests_ssh
 {
@@ -105,20 +99,26 @@ sub features_cd_tests_ssh
 }
 
 
-sub features_annotations
+sub features_cd_tests_tmux
 {
+    my $remote = $target_servers->{tmux_cd};
+
     my $remote_commands
 	= [
-	   'pwd',
-	   'cd /bin',
-	   'pwd',
+	   'pwd >>/tmp/tmux-pwd.txt',
+	   'cd bin',
+	   'pwd >>/tmp/tmux-pwd.txt',
+	   'cd ..',
+	   'pwd >>/tmp/tmux-pwd.txt',
+	   'cd /',
+	   'pwd >>/tmp/tmux-pwd.txt',
 	  ];
 
     execute_shell_command_array
 	(
 	 $remote_commands,
 	 {
-	  annotation => "Three commands, one changes the current working directory.",
+	  remote => $remote,
 	 },
 	);
 }
@@ -138,18 +138,18 @@ sub features_export_sh
 
     $remote_ssh->{ssh_server} = $ssh_server;
 
-    my $remote_commands
+    my $commands
 	= [
 	   'pwd',
 	   'cd /bin',
 	   'pwd',
 	  ];
 
-    execute_shell_command_array($remote_commands);
+    execute_shell_command_array($commands);
 
     execute_shell_command_array
 	(
-	 $remote_commands,
+	 $commands,
 	 {
 	  remote => $remote_ssh,
 	 },
@@ -157,9 +157,45 @@ sub features_export_sh
 
     execute_shell_command_array
 	(
-	 $remote_commands,
+	 $commands,
 	 {
 	  remote => $remote_tmux,
+	 },
+	);
+}
+
+
+sub features_timestamps
+{
+    my $commands
+	= [
+	   'pwd',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  timestamp => 1,
+	 },
+	);
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  timestamp => 'some suffix with spaces',
+	 },
+	);
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  timestamp => {
+			content_format => 'Return code: %%RETURNCODE%%',
+			filename_suffix => 'suffix_with spaces and file with content',
+		       },
 	 },
 	);
 }

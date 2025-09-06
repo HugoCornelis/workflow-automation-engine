@@ -712,6 +712,8 @@ sub ${target_name}_single_command
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
     #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
+    #               the hash value is either just '1' or a string that is used for the <suffix>.
     #
     # execute_shell_command(\$command, { remote => '<name of a remote that is defined in $project_name-configuration>, } );
     #
@@ -6310,6 +6312,54 @@ sub execute_scheduled_command
 		else
 		{
 		    $exit_status = system "$command";
+		}
+
+		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
+
+		if ($timestamp)
+		{
+		    my $suffix = '';
+
+		    if (!ref $timestamp)
+		    {
+			if ($timestamp ne '1')
+			{
+			    $suffix = $timestamp;
+			}
+		    }
+		    elsif (ref $timestamp eq 'HASH')
+		    {
+			$suffix = $timestamp->{filename_suffix} || '';
+		    }
+		    else
+		    {
+			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+		    }
+
+		    my $timestamp_command = "$command";
+
+		    my $timestamp_filename = ".timestamp__${suffix}_$timestamp_command";
+
+		    $timestamp_filename =~ s(\s+)(-)g;
+		    $timestamp_filename =~ s(\()()g;
+		    $timestamp_filename =~ s(\))()g;
+
+		    if (!ref $timestamp)
+		    {
+			system "touch '$timestamp_filename'";
+		    }
+		    elsif (ref $timestamp eq 'HASH')
+		    {
+			my $content = $timestamp->{content_format};
+
+			$content =~ s(%%RETURNCODE%%)($exit_status)g;
+
+			system "echo '$content' >$timestamp_filename";
+		    }
+		    else
+		    {
+			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+		    }
 		}
 	    }
 	    else
