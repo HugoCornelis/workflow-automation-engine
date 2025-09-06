@@ -1,0 +1,165 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>./specifications/40_workflow-automator/10_help-pages.html: Index of group ./specifications/40_workflow-automator/10_help-pages</title>
+<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link href="/favicon.ico" rel="icon" type="image/x-icon" />
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
+<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr><h1>Index of group ./specifications/40_workflow-automator/10_help-pages</h1><hr /><a href="../../index.html">Index</a><br /><a href="main.html">Up</a><br /><hr /><h1>testing of the workflow automation engine</h1>
+<table>
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_1">1. The main help page</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_2">2. Default builtin commands</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_3">3. Default builtin targets</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_4">4. Default builtin targets</a></td></tr>
+</tbody>
+
+
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_1"></a><h2>1. The main help page</h2><h4>Startup command : <a>../bin/workflow --help</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>1.1. Do we get the main help page ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_1_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+
+../bin/workflow: support for workflow design for embedded software engineers.
+
+SYNOPSIS
+
+../bin/workflow &amp;lt;options&amp;gt; &amp;lt;target&amp;gt; &amp;lt;command&amp;gt; -- &amp;lt; ... command specific options and arguments ... &amp;gt;
+
+EXAMPLES -- first try these with the --dry-run to understand what they do:
+
+  $ ../bin/workflow --help-targets                                       # display the available targets that are found in the configuration file.
+
+  $ ../bin/workflow --help-commands                                      # display the available commands that are found in the configuration file.
+
+  $ ../bin/workflow ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
+
+  $ ../bin/workflow --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
+
+options:
+    --bash-completion               compute bash completion for the given command line.
+                                    hint: the bash completion script implements completion for options, targets and commands.
+    --branch                        git branch to work with.
+    --build-server                  the build server profile to work with.
+    --built-image-directory         the directory on the build server where the built images are to be found.
+    --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
+    --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
+    --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
+    --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
+    --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
+    --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+    --export-remote                 include the remote access part of exported commands.
+                                    this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
+    --export-sh                     export the commands to a file with the given name.
+    --export-sudo                   include the sudo commands when exporting commands to a file.
+    --export-times                  export the times when commands are started and ended to a file with the given name.
+    --export-verbose                when exporting the commands to a file, interleave them with echo commands.
+    --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
+    --forward-destination           the target file forward destination to copy to.
+    --forward-source                the target file forward source to copy from.
+    --help                          display usage information and stop execution.
+    --help-build-servers            display the known build servers.
+    --help-commands                 display the available commands, add a target name for restricted output.
+    --help-module                   display all the available help information about the commands of the module.
+    --help-field-project-name       print the field project name and exit.
+    --help-options                  print the option values.
+    --help-packages                 display known package and overriden package information and stop execution.
+    --help-projects                 display known project information and stop execution.
+    --help-targets                  display known targets and stop execution.
+    --incremental                   assume an incremental build (default is yes
+    --interactions                  show the interaction diagram of the commands.
+    --interactions-all              show a diagram with all the commands and all the interaction roles.
+    --interactions-module           show the interaction diagram of all the commands in the module.
+    --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
+    --packages                      packages to operate on, can be given multiple times.
+    --ssh-port                      the ssh port.
+    --ssh-server                    the used ssh build server.
+    --ssh-user                      ssh-user on the build server (please configure your public key).
+    --target                        the target to apply the given commands to.
+    --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
+    --verbose                       set verbosity level.
+
+NOTES
+
+OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
+
+</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_2"></a><h2>2. Default builtin commands</h2><h4>Startup command : <a>../bin/workflow --help-commands</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>2.1. Do we get the builtin commands help page ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_2_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+
+'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)':
+  - workflow builtin add_target --help
+  - workflow builtin install_scripts --help
+  - workflow builtin print_configuration_directory --help
+  - workflow builtin start_project --help
+</pre>
+</td></tr>
+<tr><td valign="top">2. Comment</td><td valign="top"><pre>
+note that the expect module does not easily allow the read string to be started with yaml's '---'</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_3"></a><h2>3. Default builtin targets</h2><h4>Startup command : <a>../bin/workflow --help-targets</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>3.1. Do we get the builtin targets help page ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_3_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+
+targets:
+  builtin:
+    description: the builtin target allows to start a new project and upgrade existing projects
+</pre>
+</td></tr>
+<tr><td valign="top">2. Comment</td><td valign="top"><pre>
+note that the expect module does not easily allow the read string to be started with yaml's '---'</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_4"></a><h2>4. Default builtin targets</h2><h4>Startup command : <a>../bin/workflow builtin start_project --help</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>4.1. Do we see the help page for starting a new project ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/10_help-pages_4_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+builtin start_project: start a new project with a given name in the current directory.
+
+This will install a project descriptor, a configuration file and an
+empty command file.
+
+arguments:
+
+    name: name of the new project.
+</pre>
+</td></tr>
+<tr><td valign="top">2. Comment</td><td valign="top"><pre>
+note that the expect module does not easily allow the read string to be started with yaml's '---'</pre>
+</td></tr>
+</tbody>
+</table>
+
+</body>
+</html>

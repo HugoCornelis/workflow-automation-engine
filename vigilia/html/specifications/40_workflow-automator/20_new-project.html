@@ -1,0 +1,361 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>./specifications/40_workflow-automator/20_new-project.html: Index of group ./specifications/40_workflow-automator/20_new-project</title>
+<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link href="/favicon.ico" rel="icon" type="image/x-icon" />
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
+<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr><h1>Index of group ./specifications/40_workflow-automator/20_new-project</h1><hr /><a href="../../index.html">Index</a><br /><a href="main.html">Up</a><br /><hr /><h1>testing of the workflow automation engine</h1>
+<table>
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_1">1. Start of a new project</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_2">2. Correct creation of the field project file</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_3">3. Check the execute bit of the generated shell scripts</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_4">4. Rename the field project file to its final name</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_5">5. Correct creation of the field project file</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_6">6. Correct installation of the new project files</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_7">7. Correct installation of the new project commands</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_8">8. Are the shell command templates installed and executed, --dry-run ?</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_9">9. Are the shell command templates installed and executed ?</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_10">10. Are the shell command templates installed and executed from a different directory?</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_11">11. Can we add new targets with a shell template file for their commands ?</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_12">12. Can we add new targets2 with a shell template file for their commands ?</a></td></tr>
+</tbody>
+
+
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_1"></a><h2>1. Start of a new project</h2><h4>Startup command : <a>../bin/workflow builtin start_project workflow-tests</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>1.1. Can we start a new project ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_1_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+Using 'workflow-tests' as name for your project.
+Created a template configuration file for project 'workflow-tests'
+Created a template workflow-project in 'workflow-project-template.pl' with contents:
+---
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+my $configuration
+    = {
+       field_project_name =&amp;gt; 'workflow-tests',
+      };
+
+return $configuration;
+
+---
+If this looks good, please rename it to 'workflow-project.pl' using the command:
+
+  mv 'workflow-project-template.pl' 'workflow-project.pl'
+
+And test it with the command:
+
+  workflow --help-field-project-name
+
+Afterwards install the scripts on your system using the command:
+
+  workflow builtin install_scripts -- --engine --commands --git
+
+Then check if they work by inspecting the examples they provide (with various options):
+
+  workflow-tests-workflow examples array_of_commands_remote_execution --interactions
+
+  workflow-tests-workflow examples sequencing_and_composition --interactions-module
+
+  workflow-tests-workflow examples single_command --dry-run
+
+  workflow-tests-workflow examples array_of_commands --help
+</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_2"></a><h2>2. Correct creation of the field project file</h2><h4>Startup command : <a>find .</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>2.1. Have the project files been created ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_2_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+.
+./workflow-project-template.pl
+./workflow-tests-bash-completion.sh
+./workflow-tests-configuration-data
+./workflow-tests-configuration-data/targets.yml
+./workflow-tests-configuration-data/command_filenames.yml
+./workflow-tests-configuration-data/target_servers.yml
+./workflow-tests-configuration-data/build_servers.yml
+./workflow-tests-configuration-data/node_configuration.yml
+./conf.workflow-tests-workflow
+./conf.workflow-tests-configuration
+./workflow-tests-commands-data
+./workflow-tests-commands-data/examples_sh
+./workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+./workflow-tests-commands-data/examples_sh/sh_single_command.sh
+./workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+./workflow-tests-commands-data/examples_yml
+./workflow-tests-commands-data/examples_yml/remote_execution.yml
+./workflow-tests-commands-data/examples_yml/array_of_commands.yml
+./workflow-tests-commands-data/examples_yml/single_command.yml
+./workflow-tests-configuration
+./docker
+./docker/docker-build.bash
+./docker/docker-run.bash
+./docker/Dockerfile.neurospaces-testing
+./workflow-tests-commands
+</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_3"></a><h2>3. Check the execute bit of the generated shell scripts</h2>
+<verbatim>
+<!-- Generator: GNU source-highlight 3.1.9
+by Lorenzo Bettini
+http://www.lorenzobettini.it
+http://www.gnu.org/software/src-highlite -->
+<pre><tt><a name="line1"><font color="#000000">1:</font></a> <font color="#009900">$VAR1</font> <font color="#990000">=</font> <b><font color="#0000FF">sub</font></b> <font color="#FF0000">{</font>
+<a name="line2"><font color="#000000">2:</font></a>             <b><font color="#0000FF">use</font></b> strict<font color="#990000">;</font>
+<a name="line3"><font color="#000000">3:</font></a>             <b><font color="#0000FF">if</font></b> <font color="#990000">(-</font><b><font color="#0000FF">x</font></b> <font color="#FF0000">'workflow-tests-commands-data/examples_sh/sh_single_command.sh'</font><font color="#990000">)</font> <font color="#FF0000">{</font>
+<a name="line4"><font color="#000000">4:</font></a>                 <b><font color="#0000FF">return</font></b> <b><font color="#0000FF">undef</font></b><font color="#990000">;</font>
+<a name="line5"><font color="#000000">5:</font></a>             <font color="#FF0000">}</font>
+<a name="line6"><font color="#000000">6:</font></a>             <b><font color="#0000FF">else</font></b> <font color="#FF0000">{</font>
+<a name="line7"><font color="#000000">7:</font></a>                 <b><font color="#0000FF">return</font></b> <font color="#FF0000">'workflow-tests-commands-data/examples_sh/sh_single_command.sh does not have its execute bit set'</font><font color="#990000">;</font>
+<a name="line8"><font color="#000000">8:</font></a>             <font color="#FF0000">}</font>
+<a name="line9"><font color="#000000">9:</font></a>         <font color="#FF0000">}</font><font color="#990000">;</font>
+<a name="line10"><font color="#000000">10:</font></a> </tt></pre>
+
+</verbatim>
+<hr /><hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_4"></a><h2>4. Rename the field project file to its final name</h2><h4>Startup command : <a>mv --verbose workflow-project-template.pl workflow-project.pl</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>4.1. Have the project files been created ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_4_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+renamed 'workflow-project-template.pl' -&amp;gt; 'workflow-project.pl'
+</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_5"></a><h2>5. Correct creation of the field project file</h2><h4>Startup command : <a>../bin/workflow --help-field-project-name</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>5.1. Has the project been correctly initialized ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_5_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+
+global_field_project_configuration:
+  field_project_configuration_filename: workflow-project.pl
+  field_project_name: workflow-tests
+  from_directory: .
+  from_executable: workflow on the command line
+  technical_project_configuration_directory: .
+  true_technical_project_configuration_directory: /home/hugo/projects/developer/source/snapshots/master/tmp
+  true_technical_project_configuration_filename: /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-project.pl
+  true_technical_project_data_commands_directory: /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data
+  true_technical_project_data_configuration_directory: /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration-data
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_6"></a><h2>6. Correct installation of the new project files</h2><h4>Startup command : <a>../bin/workflow builtin install_scripts -- --engine --commands</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>6.1. Have the project files been correctly installed ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_6_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+# mkdir --parents /home/hugo/bin
+#
+# ln -sf /usr/local/bin/workflow /home/hugo/bin/workflow-tests-workflow
+#
+# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration /home/hugo/bin/./workflow-tests-configuration
+#
+# ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands /home/hugo/bin/./workflow-tests-commands
+#
+# bash -c "echo '# workflow-tests-workflow
+
+alias workflow-tests-workflow=\"grc workflow-tests-workflow\"
+alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
+' | cat &amp;gt;&amp;gt;/home/hugo/.bashrc"
+#
+# bash -c "echo '. /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-bash-completion.sh
+' | cat &amp;gt;&amp;gt;/home/hugo/.bashrc"
+#
+# sudo     bash -c "echo '
+# workflow-tests-workflow
+(^|[/\w\.]+/)workflow-tests-workflow\s?
+conf.workflow-tests-workflow
+
+# workflow-tests-configuration
+(^|[/\w\.]+/)workflow-tests-configuration\s?
+conf.workflow-tests-configuration
+
+' | cat &amp;gt;&amp;gt;/etc/grc.conf"
+#
+# sudo     ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/conf.workflow-tests-configuration /usr/share/grc/conf.workflow-tests-configuration
+#
+# sudo     ln -sf /home/hugo/projects/developer/source/snapshots/master/tmp/conf.workflow-tests-workflow /usr/share/grc/conf.workflow-tests-workflow
+#
+</pre>
+</td></tr>
+<tr><td valign="top">2. Comment</td><td valign="top"><pre>
+The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required as a work around between the test engine and the workflow engine under test.</pre>
+</td></tr>
+<tr><td valign="top">3. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_7"></a><h2>7. Correct installation of the new project commands</h2><h2>This command definition is currently disabled (disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</h2><h4>Startup command : <a>workflow-tests-workflow --help-commands</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>7.1. Have the project specific commands been correctly installed ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_7_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+
+'available_commands (copy-paste the one you would like to execute, try it with the --help or the --dry-run option, or execute it without these options)':
+  - workflow-tests-workflow builtin add_target --help
+  - workflow-tests-workflow builtin install_scripts --help
+  - workflow-tests-workflow builtin print_configuration_directory --help
+  - workflow-tests-workflow builtin start_project --help
+  - workflow-tests-workflow examples array_of_commands --help
+  - workflow-tests-workflow examples array_of_commands_remote_execution --help
+  - workflow-tests-workflow examples sequencing_and_composition --help
+  - workflow-tests-workflow examples single_command --help
+  - workflow-tests-workflow examples_sh sh_array_of_commands --help
+  - workflow-tests-workflow examples_sh sh_remote_execution --help
+  - workflow-tests-workflow examples_sh sh_single_command --help
+  - workflow-tests-workflow examples_yml array_of_commands --help
+  - workflow-tests-workflow examples_yml remote_execution --help
+  - workflow-tests-workflow examples_yml single_command --help
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_8"></a><h2>8. Are the shell command templates installed and executed, --dry-run ?</h2><h2>This command definition is currently disabled (disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</h2><h4>Startup command : <a>workflow-tests-workflow examples_sh sh_single_command --dry-run</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>8.1. Have the project specific commands been correctly installed ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_8_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+/home/hugo/bin/workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: '/home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh'
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_9"></a><h2>9. Are the shell command templates installed and executed ?</h2><h2>This command definition is currently disabled (disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</h2><h4>Startup command : <a>workflow-tests-workflow examples_sh sh_single_command</a></h4>(No model has been loaded for the following set of commands.)<hr /><h4>9.1. Have the project specific commands been correctly installed ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_9_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+# /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+#
+an example of the invocation of a single command
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_10"></a><h2>10. Are the shell command templates installed and executed from a different directory?</h2><h2>This command definition is currently disabled (disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</h2><h4>Startup command : <a>bash -c cd .. && workflow-tests-workflow examples_sh sh_single_command</a></h4><hr /><h4>10.1. Have the project specific commands been correctly installed and are they executed when invoked from a different directory ?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_10_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+# /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+#
+an example of the invocation of a single command
+</pre>
+</td></tr>
+<tr><td valign="top">2. Comment</td><td valign="top"><pre>
+This test is the same as the previous one except for the cd command.</pre>
+</td></tr>
+<tr><td valign="top">3. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_11"></a><h2>11. Can we add new targets with a shell template file for their commands ?</h2><h2>This command definition is currently disabled (disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</h2><h4>Startup command : <a>workflow-tests-workflow builtin add_target -- new_target Add commands to this new target that do new things --install-commands-sh</a></h4><hr /><h4>11.1. Can we add a new target and a template for new shell commands for this target?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_11_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+workflow-tests-workflow: added target new_target to /home/hugo/projects/developer/source/snapshots/master/tmp/workflow-tests-configuration-data/targets.yml
+workflow-tests-workflow: created the shell command file for target new_target</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_12"></a><h2>12. Can we add new targets2 with a shell template file for their commands ?</h2><h2>This command definition is currently disabled (disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</h2><h4>Startup command : <a>workflow-tests-workflow builtin add_target -- new_target2 Add commands to this new target2 that do new things2 --install-commands-sh</a></h4><hr /><h4>12.1. Can we add a new target and a template for new shell commands for this target2?</h4><a name="./specifications/40_workflow-automator_./specifications/40_workflow-automator/20_new-project_12_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+application_output_file: ./workflow-tests-configuration-data/targets.yml
+expected_output_file: .././specifications/strings/two-targets-added.txt
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'the currenct directory must be '/home/hugo/projects/developer/source/snapshots/master' to enable this test')</pre>
+</td></tr>
+</tbody>
+</table>
+
+</body>
+</html>

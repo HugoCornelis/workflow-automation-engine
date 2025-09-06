@@ -1,0 +1,229 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>./specifications/30_developer.html: Index of group ./specifications/30_developer</title>
+<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link href="/favicon.ico" rel="icon" type="image/x-icon" />
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
+<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr><h1>Index of group ./specifications/30_developer</h1><hr /><a href="../index.html">Index</a><br /><a href="main.html">Up</a><br /><hr /><h1>build testing in developer mode</h1>
+<table>
+
+
+<tbody>
+<tr><td><a href="#./specifications_./specifications/30_developer_1">1. Tag the developer package, without compilation nor installation, verbose dry run mode</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications_./specifications/30_developer_2">2. Operate on the developer package, without any compiling and related, verbose dry run mode</a></td></tr>
+</tbody>
+
+
+</table>
+<hr /><a name="./specifications_./specifications/30_developer_1"></a><h2>1. Tag the developer package, without compilation nor installation, verbose dry run mode</h2><h2>This command definition is currently disabled (disabled is 'because the mtn version always changes, this test needs regexes to get it to work')</h2><h4>Startup command : <a href="./html/../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html"./html/../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html>bin/neurospaces_build --tag build-10 --no-compile --no-configure --no-install --regex developer --enable developer --dry-run --developer --verbose --verbose --verbose</a></h4><hr /><h4>1.1. Can we set a tag on the developer package, without any compiling and related, verbose dry run mode ?</h4><a name="./specifications_./specifications/30_developer_1_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+bin/neurospaces_build: examining installer
+bin/neurospaces_build: installer [make distclean] skipped, condition_value is 0
+bin/neurospaces_build: installer [make dist-keywords &amp;&amp; make clean &amp;&amp; make clean] skipped, condition_value is 0
+bin/neurospaces_build: installer [test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`" &amp;&amp; release-expand '%package' '%release_major' '%release_minor' '%release_micro' '%release_major-%release_minor' hugo.cornelis@gmail.com --verbose &amp;&amp; make clean &amp;&amp; make clean &amp;&amp; mtn ci -m '1. Keywords only: build-10
+' &amp;&amp; test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"] preparing to execute 
+bin/neurospaces_build: for installer, chdir from (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0) to (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0)
+bin/neurospaces_build: installer [test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`" &amp;&amp; release-expand 'installer' 'build' '10' '0' 'build-10' hugo.cornelis@gmail.com --verbose &amp;&amp; make clean &amp;&amp; make clean &amp;&amp; mtn ci -m '1. Keywords only: build-10
+' &amp;&amp; test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"] not executed, dry_run is 1
+bin/neurospaces_build: for installer, chdir from (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0) to (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0)
+bin/neurospaces_build: installer [mtn tag '%version' 'build-10'] preparing to execute 
+bin/neurospaces_build: for installer, chdir from (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0) to (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0)
+bin/neurospaces_build: installer [mtn tag '2959b3d828e0c56edefcd30d3868fa1a6b6a4594' 'build-10'] not executed, dry_run is 1
+bin/neurospaces_build: for installer, chdir from (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0) to (/local_home/local_home/hugo/neurospaces_project/project/installer/source/snapshots/0)
+bin/neurospaces_build: installer [downloading] skipped, condition_value is 
+bin/neurospaces_build: installer [tar xfz '%package-build-10.tar.gz'] skipped, condition_value is 
+bin/neurospaces_build: installer [./configure] skipped, condition_value is 0
+bin/neurospaces_build: installer [make clean] skipped, condition_value is 0
+bin/neurospaces_build: installer [make] skipped, condition_value is 0
+bin/neurospaces_build: installer [make check] skipped, condition_value is 0
+bin/neurospaces_build: installer [make dist] skipped, condition_value is 0
+bin/neurospaces_build: installer [make distcheck] skipped, condition_value is 0
+bin/neurospaces_build: installer [make &amp;&amp; sudo make install] skipped, condition_value is 0
+bin/neurospaces_build: installer [make uninstall] skipped, condition_value is 0
+bin/neurospaces_build: installer [mtn cert '%version' -- build_report '%report'] skipped, condition_value is 0
+bin/neurospaces_build: examining model_container
+bin/neurospaces_build: model_container skipped, not selected using --regex-selector
+bin/neurospaces_build: examining heccer
+bin/neurospaces_build: heccer skipped, not selected using --regex-selector
+bin/neurospaces_build: examining ssp
+bin/neurospaces_build: ssp skipped, not selected using --regex-selector
+bin/neurospaces_build: examining geometry
+bin/neurospaces_build: geometry skipped, disabled is 1
+bin/neurospaces_build: examining studio
+bin/neurospaces_build: studio skipped, not selected using --regex-selector
+bin/neurospaces_build: examining project-browser
+bin/neurospaces_build: project-browser skipped, disabled is 1
+---
+client:
+  OS: linux
+description:
+  command: bin/neurospaces_build
+  name: Build report
+global:
+  status: Finished
+  test_count: 0
+operations:
+  - operations:
+      - test
+      - '!'
+      - '"`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"'
+      - '&amp;&amp;'
+      - release-expand
+      - "'installer'"
+      - "'build'"
+      - "'10'"
+      - "'0'"
+      - "'build-10'"
+      - hugo.cornelis@gmail.com
+      - --verbose
+      - '&amp;&amp;'
+      - make
+      - clean
+      - '&amp;&amp;'
+      - make
+      - clean
+      - '&amp;&amp;'
+      - mtn
+      - ci
+      - -m
+      - "'1. Keywords only: build-10\n'"
+      - '&amp;&amp;'
+      - test
+      - '!'
+      - '"`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"'
+    package_name: installer
+  - operations:
+      - mtn
+      - tag
+      - "'2959b3d828e0c56edefcd30d3868fa1a6b6a4594'"
+      - "'build-10'"
+    package_name: installer
+options:
+  certification-report!: 0
+  check!: 0
+  clean!: 0
+  client!: 0
+  compile!: 0
+  configure!: 0
+  developer!: 1
+  dist!: 0
+  distcheck!: 0
+  distclean!: 0
+  distkeywords!: 0
+  download-server=s: ~
+  dry-run!: 1
+  environment=s: []
+  help!: 0
+  help-all!: 0
+  install!: 0
+  packages: 0
+  regex-selector=s: installer
+  src-dir=s: ~
+  src-tag=s: ~
+  tag=s: build-10
+  uninstall!: 0
+  verbose+: 3
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'because the mtn version always changes, this test needs regexes to get it to work')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications_./specifications/30_developer_2"></a><h2>2. Operate on the developer package, without any compiling and related, verbose dry run mode</h2><h2>This command definition is currently disabled (disabled is 'this test can only work on PCs that have only neurospaces installed and nothing else')</h2><h4>Startup command : <a href="./html/../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html"./html/../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html>bin/neurospaces_build --no-compile --no-configure --no-install --regex developer --enable developer --dry-run --developer --verbose --verbose --verbose</a></h4><hr /><h4>2.1. Can we operate on the developer package, without any compiling and related, verbose dry run mode ?</h4><a name="./specifications_./specifications/30_developer_2_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+bin/neurospaces_build: examining package installer
+bin/neurospaces_build: package installer [make distclean] skipped, condition_value is 0
+bin/neurospaces_build: package installer [make dist-keywords &amp;&amp; make clean &amp;&amp; make clean] skipped, condition_value is 0
+bin/neurospaces_build: package installer [test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`" &amp;&amp; release-expand '%package' '%release_major' '%release_minor' '%release_micro' '%release_major-%release_minor' hugo.cornelis@gmail.com --verbose &amp;&amp; make clean &amp;&amp; make clean &amp;&amp; mtn ci -m '1. Keywords only: 0
+' &amp;&amp; test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"] skipped, condition_value is 0
+bin/neurospaces_build: package installer [mtn tag '%version' '0'] skipped, condition_value is 0
+bin/neurospaces_build: package installer [putting the tag in the tag database] skipped, condition_value is 0
+bin/neurospaces_build: package installer [downloading] skipped, condition_value is 
+bin/neurospaces_build: package installer [unpacking] skipped, condition_value is 
+bin/neurospaces_build: package installer [./configure] skipped, condition_value is 0
+bin/neurospaces_build: package installer [make clean] skipped, condition_value is 0
+bin/neurospaces_build: package installer [make] skipped, condition_value is 0
+bin/neurospaces_build: package installer [make check] skipped, condition_value is 0
+bin/neurospaces_build: package installer [export NEUROSPACES_RELEASE=1 &amp;&amp; make dist] skipped, condition_value is 0
+bin/neurospaces_build: package installer [export NEUROSPACES_RELEASE=1 &amp;&amp; make distcheck] skipped, condition_value is 0
+bin/neurospaces_build: package installer [make &amp;&amp; sudo make install] skipped, condition_value is 0
+bin/neurospaces_build: package installer [make clean &amp;&amp; sudo make uninstall] skipped, condition_value is 0
+bin/neurospaces_build: package installer [uploading] skipped, condition_value is 
+bin/neurospaces_build: package installer [mtn cert '%version' -- build_report '%report'] skipped, condition_value is 0
+bin/neurospaces_build: examining package model-container
+bin/neurospaces_build: package model-container skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package heccer
+bin/neurospaces_build: package heccer skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package dash
+bin/neurospaces_build: package dash skipped, disabled is 1
+bin/neurospaces_build: examining package ssp
+bin/neurospaces_build: package ssp skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package geometry
+bin/neurospaces_build: package geometry skipped, disabled is 1
+bin/neurospaces_build: examining package studio
+bin/neurospaces_build: package studio skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package project-browser
+bin/neurospaces_build: package project-browser skipped, disabled is 1
+---
+client:
+  OS: linux
+description:
+  command: bin/neurospaces_build
+  name: Build report
+global:
+  status: Finished
+  test_count: 0
+operations: []
+options:
+  certification-report!: 0
+  check!: 0
+  clean!: 0
+  client!: 0
+  compile!: 0
+  configure!: 0
+  developer!: 1
+  disable=s: ~
+  dist!: 0
+  distcheck!: 0
+  distclean!: 0
+  distkeywords!: 0
+  download-server=s: ~
+  dry-run!: 1
+  enable=s: installer
+  environment=s: []
+  help!: 0
+  help-all!: 0
+  install!: 0
+  packages: 0
+  regex-selector=s: installer
+  src-dir=s: ~
+  src-tag=s: ~
+  tag=s: 0
+  uninstall!: 0
+  upload-server=s: ~
+  verbose+: 3
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'this test can only work on PCs that have only neurospaces installed and nothing else')</pre>
+</td></tr>
+</tbody>
+</table>
+
+</body>
+</html>

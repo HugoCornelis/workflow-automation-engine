@@ -1,0 +1,372 @@
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>./specifications/91_json/50_downloads.html: Index of group ./specifications/91_json/50_downloads</title>
+<link href="/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+<link href="/favicon.ico" rel="icon" type="image/x-icon" />
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+</head>
+<body>
+<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr><h1>Index of group ./specifications/91_json/50_downloads</h1><hr /><a href="../../index.html">Index</a><br /><a href="main.html">Up</a><br /><hr /><h1>testing of download and consequent build operations</h1>
+<table>
+
+
+<tbody>
+<tr><td><a href="#./specifications/91_json_./specifications/91_json/50_downloads_1">1. Download from the downloads.sourceforge.net server.</a></td></tr>
+</tbody>
+
+
+
+<tbody>
+<tr><td><a href="#./specifications/91_json_./specifications/91_json/50_downloads_2">2. Download from a non-existent download server.</a></td></tr>
+</tbody>
+
+
+</table>
+<hr /><a name="./specifications/91_json_./specifications/91_json/50_downloads_1"></a><h2>1. Download from the downloads.sourceforge.net server.</h2><h2>This command definition is currently disabled (disabled is 'this test depends on the use of monotone which we don't use anymore ')</h2><h4>Startup command : <a href="./html/../../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html"./html/../../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html>bin/neurospaces_build --download-server downloads.sourceforge.net --verbose --verbose --verbose --check --no-install --regex studio --src-tag build-37 --src-dir /tmp/downloads.t/packages</a></h4><hr /><h4>Overview, Comments, Preparation, Reparation</h4><a name="./specifications/91_json_./specifications/91_json/50_downloads_1_prep"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Comment for this test definition</td><td valign="top"><pre>
+this test is disabled if no "default" route to the internet can be found, the "route" command must output a line with the text "default"</pre>
+</td></tr>
+<tr><td valign="top">2. Preparation needed before the commands below : </td><td valign="top"><pre>
+Creating a subdirectory for execution of the test</pre>
+</td></tr>
+</tbody>
+</table>
+<h4>1.1. Can we download packages from downloads.sourceforge.net, part 1 ?</h4><a name="./specifications/91_json_./specifications/91_json/50_downloads_1_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+bin/neurospaces_build: examining package installer
+bin/neurospaces_build: package installer skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package model-container
+bin/neurospaces_build: package model-container skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package heccer
+bin/neurospaces_build: package heccer skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package dash
+bin/neurospaces_build: package dash skipped, disabled is 1
+bin/neurospaces_build: examining package ssp
+bin/neurospaces_build: package ssp skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package geometry
+bin/neurospaces_build: package geometry skipped, disabled is 1
+bin/neurospaces_build: examining package studio
+bin/neurospaces_build: package studio [make distclean] skipped, condition_value is 0
+bin/neurospaces_build: package studio [make dist-keywords &amp;&amp; make clean &amp;&amp; make clean] skipped, condition_value is 0
+bin/neurospaces_build: package studio [test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`" &amp;&amp; release-expand '%package' '%release_major' '%release_minor' '%release_micro' '%release_major-%release_minor' hugo.cornelis@gmail.com --verbose &amp;&amp; make clean &amp;&amp; make clean &amp;&amp; mtn ci -m '1. Keywords only: 0
+' &amp;&amp; test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"] skipped, condition_value is 0
+bin/neurospaces_build: package studio [mtn tag '%version' '0'] skipped, condition_value is 0
+bin/neurospaces_build: package studio [downloading] preparing to execute 
+bin/neurospaces_build: package studio [unpacking] preparing to execute 
+bin/neurospaces_build: package studio [tar xfvz studio-build-37.tar.gz] executing
+studio-build-37/
+studio-build-37/bin/
+studio-build-37/bin/neurospaces
+studio-build-37/configure.ac
+studio-build-37/aclocal.m4
+studio-build-37/Makefile.am
+studio-build-37/Makefile.in
+studio-build-37/configure
+studio-build-37/install-sh
+studio-build-37/missing
+studio-build-37/perl/
+studio-build-37/perl/Neurospaces/
+studio-build-37/perl/Neurospaces/GUI/
+studio-build-37/perl/Neurospaces/GUI/Components/
+studio-build-37/perl/Neurospaces/GUI/Components/Cell.pm
+studio-build-37/perl/Neurospaces/GUI/Components/Link.pm
+studio-build-37/perl/Neurospaces/GUI/Components/Network.pm
+studio-build-37/perl/Neurospaces/GUI/Components/Node.pm
+studio-build-37/perl/Neurospaces/GUI/Components/Atomic.pm
+studio-build-37/perl/Neurospaces/GUI/Components/Root.pm
+studio-build-37/perl/Neurospaces/GUI/Components/Mechanism.pm
+studio-build-37/perl/Neurospaces/GUI/Tools/
+studio-build-37/perl/Neurospaces/GUI/Tools/Renderer.pm
+studio-build-37/perl/Neurospaces/GUI/Tools/Renderer/
+studio-build-37/perl/Neurospaces/GUI/Tools/Renderer/External.pm
+studio-build-37/perl/Neurospaces/GUI/Tools/numbers-7x11.txt
+studio-build-37/perl/Neurospaces/GUI/Algorithms.pm
+studio-build-37/perl/Neurospaces/GUI/Command.pm
+studio-build-37/perl/Neurospaces/GUI/Extractor.pm
+studio-build-37/perl/Neurospaces/GUI/Files.pm
+studio-build-37/perl/Neurospaces/GUI/Matrix.pm
+studio-build-37/perl/Neurospaces/GUI/Namespaces.pm
+studio-build-37/perl/Neurospaces/GUI/Workload.pm
+studio-build-37/perl/Neurospaces/Biolevels.pm
+studio-build-37/perl/Neurospaces/GUI.pm
+studio-build-37/perl/Neurospaces/Modeler.pm
+studio-build-37/perl/Neurospaces/SolverInfo.pm
+studio-build-37/perl/Neurospaces/Studio.pm
+studio-build-37/perl/Neurospaces/Project/
+studio-build-37/perl/Neurospaces/Project/Modules/
+studio-build-37/perl/Neurospaces/Project/Modules/Morphology.pm
+studio-build-37/perl/Neurospaces/Project.pm
+studio-build-37/perl/Neurospaces/Morphology.pm
+studio-build-37/perl/Threads.pm
+studio-build-37/perl/stubs.pm
+studio-build-37/perl/Makefile.am
+studio-build-37/perl/Makefile.in
+studio-build-37/tests/
+studio-build-37/tests/Makefile.am
+studio-build-37/tests/Makefile.in
+studio-build-37/tests/specifications/
+studio-build-37/tests/specifications/reporting.t~
+studio-build-37/tests/specifications/reporting.t
+studio-build-37/tests/specifications/operators.t
+studio-build-37/tests/specifications/operators.t~
+studio-build-37/tests/neurospaces_harness
+studio-build-37/tests/tests_2_html
+studio-build-37/tests/tests.config
+studio-build-37/tests/html/
+studio-build-37/tests/html/specifications/
+studio-build-37/tests/html/specifications/main.html
+studio-build-37/tests/html/specifications/operators.html
+studio-build-37/tests/html/specifications/reporting.html
+studio-build-37/tests/html/index.html
+studio-build-37/tests/bin/
+studio-build-37/tests/bin/neurospaces.source.html
+studio-build-37/license.txt
+studio-build-37/tests.config
+bin/neurospaces_build: package studio [tar xfvz studio-build-37.tar.gz] executed 
+bin/neurospaces_build: package studio [./configure] preparing to execute 
+bin/neurospaces_build: package studio, chdir from (/tmp/downloads.t/packages) to (/tmp/downloads.t/packages/studio-build-37)
+bin/neurospaces_build: package studio [./configure] executing
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for gawk... gawk
+checking whether make sets $(MAKE)... yes
+configure: creating ./config.status
+config.status: creating Makefile
+config.status: creating perl/Makefile
+config.status: creating tests/Makefile
+bin/neurospaces_build: package studio [./configure] executed 
+bin/neurospaces_build: package studio, chdir from (/tmp/downloads.t/packages/studio-build-37) to (/tmp/downloads.t/packages)
+bin/neurospaces_build: package studio [make clean] skipped, condition_value is 0
+bin/neurospaces_build: package studio [make] preparing to execute 
+bin/neurospaces_build: package studio, chdir from (/tmp/downloads.t/packages) to (/tmp/downloads.t/packages/studio-build-37)
+bin/neurospaces_build: package studio [make] executing
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'this test depends on the use of monotone which we don't use anymore ')</pre>
+</td></tr>
+</tbody>
+</table>
+<h4>1.2. Can we download packages from downloads.sourceforge.net, part 2 ?</h4><a name="./specifications/91_json_./specifications/91_json/50_downloads_1_2"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+==================
+All 1 tests passed
+==================
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'this test depends on the use of monotone which we don't use anymore ')</pre>
+</td></tr>
+</tbody>
+</table>
+<h4>1.3. Can we download packages from downloads.sourceforge.net, part 3 ?</h4><a name="./specifications/91_json_./specifications/91_json/50_downloads_1_3"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+bin/neurospaces_build: package studio [make check] executed 
+bin/neurospaces_build: package studio, chdir from (/tmp/downloads.t/packages/studio-build-37) to (/tmp/downloads.t/packages)
+bin/neurospaces_build: package studio [make dist] skipped, condition_value is 0
+bin/neurospaces_build: package studio [make distcheck] skipped, condition_value is 0
+bin/neurospaces_build: package studio [make &amp;&amp; sudo make install] skipped, condition_value is 0
+bin/neurospaces_build: package studio [make uninstall] skipped, condition_value is 0
+bin/neurospaces_build: package studio [mtn cert '%version' -- build_report '%report'] skipped, condition_value is 0
+bin/neurospaces_build: examining package project-browser
+bin/neurospaces_build: package project-browser skipped, disabled is 1
+---
+client:
+  OS: linux
+description:
+  command: bin/neurospaces_build
+  name: Build report
+global:
+  status: Finished
+  test_count: 0
+operations:
+  - operations: !!perl/code '{ "DUMMY" }'
+    package_name: studio
+  - operations: !!perl/code '{ "DUMMY" }'
+    package_name: studio
+  - description: unpacking
+    operations:
+      - tar
+      - xfvz
+      - studio-build-37.tar.gz
+    package_name: studio
+  - description: ./configure
+    operations:
+      - ./configure
+    package_name: studio
+  - description: make
+    operations:
+      - make
+    package_name: studio
+  - description: make check
+    operations:
+      - make
+      - check
+    package_name: studio
+options:
+  certification-report!: 0
+  check!: 1
+  clean!: 0
+  client!: 1
+  compile!: 1
+  configure!: 1
+  developer!: 0
+  dist!: 0
+  distcheck!: 0
+  distclean!: 0
+  distkeywords!: 0
+  download-server=s: downloads.sourceforge.net
+  dry-run!: 0
+  environment=s: []
+  help!: 0
+  help-all!: 0
+  install!: 0
+  packages: 0
+  regex-selector=s: studio
+  src-dir=s: /tmp/downloads.t/packages
+  src-tag=s: build-37
+  tag=s: 0
+  uninstall!: 0
+  verbose+: 3
+</pre>
+</td></tr>
+<tr><td valign="top">2. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'this test depends on the use of monotone which we don't use anymore ')</pre>
+</td></tr>
+</tbody>
+</table>
+<hr /><a name="./specifications/91_json_./specifications/91_json/50_downloads_2"></a><h2>2. Download from a non-existent download server.</h2><h2>This command definition is currently disabled (disabled is 'this test depends on the use of monotone which we don't use anymore ')</h2><h4>Startup command : <a href="./html/../../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html"./html/../../../sources/a/b/c/d/e/../bin/neurospaces_build.source.html>bin/neurospaces_build --download-server downloads.neurospaces.org --verbose --verbose --verbose --no-install --regex developer --enable developer --src-tag build-37 --src-dir /tmp/downloads.t/packages --dry-run</a></h4><hr /><h4>2.1. Do we get an appropriate error message when attempting to download from a non-existent download server, part 1 ?</h4><a name="./specifications/91_json_./specifications/91_json/50_downloads_2_1"></a>
+<table border="2" cellspacing="2" cellpadding="5">
+<tbody>
+<tr><td valign="top">1. Part of expected output </td><td valign="top"><pre>
+bin/neurospaces_build: examining package developer
+bin/neurospaces_build: package developer [make distclean] skipped, condition_value is 0
+bin/neurospaces_build: package developer [make dist-keywords &amp;&amp; make clean &amp;&amp; make clean] skipped, condition_value is 0
+bin/neurospaces_build: package developer [test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`" &amp;&amp; release-expand '%package' '%release_major' '%release_minor' '%release_micro' '%release_major-%release_minor' hugo.cornelis@gmail.com --verbose &amp;&amp; make clean &amp;&amp; make clean &amp;&amp; mtn ci -m '1. Keywords only: 0
+' &amp;&amp; test ! "`mtn ls unknown &amp;&amp; mtn ls missing &amp;&amp; mtn ls changed`"] skipped, condition_value is 0
+bin/neurospaces_build: package developer [mtn tag '%version' '0'] skipped, condition_value is 0
+bin/neurospaces_build: package developer [putting the tag in the tag database] skipped, condition_value is 0
+bin/neurospaces_build: package developer [downloading] preparing to execute 
+bin/neurospaces_build: package developer [$VAR1 = sub {
+            use strict 'refs';
+            my $package_information = shift @_;
+            my $description = $$package_information{'description'};
+            my $directory = $$package_information{'directory'};
+            my $filename = $$package_information{'filename'};
+            my $package_name = $$package_information{'package_name'};
+            my $url = $$package_information{'url'};
+            mkdir $directory;
+            if ($option_verbose &amp;gt; 1) {
+                print "$0: package $package_name [$description from $url to $filename] executing\n";
+            }
+            my $http_response = getstore($url, $directory . '/' . $filename);
+            if (not is_success $http_response) {
+                warn "$0: *** Warning: $description from ${option_download_server}: $http_response";
+            }
+        };
+] not executed, dry_run is 1
+bin/neurospaces_build: package developer [unpacking] preparing to execute 
+bin/neurospaces_build: package developer [$VAR1 = sub {
+            use strict 'refs';
+            my $package_information = shift @_;
+            my $description = $$package_information{'description'};
+            my $directory = $$package_information{'directory'};
+            my $filename = $$package_information{'filename'};
+            my $operations = $$package_information{'operations'};
+            my $package_name = $$package_information{'package_name'};
+            chdir $directory;
+            operation_execute($operations, {'description', $description, 'keywords', 0, 'package_name', $package_name}, ['tar', 'xfvz', $filename]);
+        };
+] not executed, dry_run is 1
+bin/neurospaces_build: package developer [./configure] preparing to execute 
+bin/neurospaces_build: package developer skipped, [./configure], directory (/tmp/downloads.t/packages/developer-build-37) not found, assuming this package source is not installed
+bin/neurospaces_build: package developer [make clean] skipped, condition_value is 0
+bin/neurospaces_build: package developer [make] preparing to execute 
+bin/neurospaces_build: package developer skipped, [make], directory (/tmp/downloads.t/packages/developer-build-37) not found, assuming this package source is not installed
+bin/neurospaces_build: package developer [make check] skipped, condition_value is 0
+bin/neurospaces_build: package developer [export NEUROSPACES_RELEASE=1 &amp;&amp; make dist] skipped, condition_value is 0
+bin/neurospaces_build: package developer [export NEUROSPACES_RELEASE=1 &amp;&amp; make distcheck] skipped, condition_value is 0
+bin/neurospaces_build: package developer [make &amp;&amp; sudo make install] skipped, condition_value is 0
+bin/neurospaces_build: package developer [make clean &amp;&amp; sudo make uninstall] skipped, condition_value is 0
+bin/neurospaces_build: package developer [uploading] skipped, condition_value is 
+bin/neurospaces_build: package developer [mtn cert '%version' -- build_report '%report'] skipped, condition_value is 0
+bin/neurospaces_build: examining package model-container
+bin/neurospaces_build: package model-container skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package heccer
+bin/neurospaces_build: package heccer skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package dash
+bin/neurospaces_build: package dash skipped, disabled is 1
+bin/neurospaces_build: examining package ssp
+bin/neurospaces_build: package ssp skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package geometry
+bin/neurospaces_build: package geometry skipped, disabled is 1
+bin/neurospaces_build: examining package studio
+bin/neurospaces_build: package studio skipped, not selected using --regex-selector
+bin/neurospaces_build: examining package project-browser
+bin/neurospaces_build: package project-browser skipped, disabled is 1
+---
+client:
+  OS: linux
+description:
+  command: bin/neurospaces_build
+  name: Build report
+global:
+  status: Finished
+  test_count: 0
+operations:
+  - operations: !!perl/code '{ "DUMMY" }'
+    package_name: developer
+  - operations: !!perl/code '{ "DUMMY" }'
+    package_name: developer
+options:
+  certification-report!: 0
+  check!: 0
+  clean!: 0
+  client!: 1
+  compile!: 1
+  configure!: 1
+  developer!: 0
+  disable=s: ~
+  dist!: 0
+  distcheck!: 0
+  distclean!: 0
+  distkeywords!: 0
+  download-server=s: downloads.neurospaces.org
+  dry-run!: 1
+  enable=s: developer
+  environment=s: []
+  help!: 0
+  help-all!: 0
+  install!: 0
+  packages: 0
+  regex-selector=s: developer
+  src-dir=s: /tmp/downloads.t/packages
+  src-tag=s: build-37
+  tag=s: 0
+  uninstall!: 0
+  upload-server=s: ~
+  verbose+: 3
+</pre>
+</td></tr>
+<tr><td valign="top">2. Comment</td><td valign="top"><pre>
+the test of this output is plit in two part to avoid the use of regexes in the expected output, part 1.</pre>
+</td></tr>
+<tr><td valign="top">3. This test is currently not executed</td><td valign="top"><pre>
+(disabled is 'this test depends on the use of monotone which we don't use anymore ')</pre>
+</td></tr>
+</tbody>
+</table>
+
+</body>
+</html>

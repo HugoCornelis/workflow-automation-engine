@@ -17,7 +17,7 @@ package Command;
 
 sub features_annotations
 {
-    my $remote_commands
+    my $commands
 	= [
 	   'pwd',
 	   'cd /bin',
@@ -26,7 +26,7 @@ sub features_annotations
 
     execute_shell_command_array
 	(
-	 $remote_commands,
+	 $commands,
 	 {
 	  annotation => "Three commands, one changes the current working directory.",
 	 },
@@ -49,7 +49,7 @@ sub features_cd_tests
     #
     # These options can given to any of the functions that execute commands.
 
-    my $local_commands
+    my $commands
 	= [
 	   'pwd',
 	   'cd bin',
@@ -60,7 +60,7 @@ sub features_cd_tests
 	   'pwd',
 	  ];
 
-    execute_shell_command_array($local_commands);
+    execute_shell_command_array($commands);
 }
 
 
@@ -138,18 +138,18 @@ sub features_export_sh
 
     $remote_ssh->{ssh_server} = $ssh_server;
 
-    my $remote_commands
+    my $commands
 	= [
 	   'pwd',
 	   'cd /bin',
 	   'pwd',
 	  ];
 
-    execute_shell_command_array($remote_commands);
+    execute_shell_command_array($commands);
 
     execute_shell_command_array
 	(
-	 $remote_commands,
+	 $commands,
 	 {
 	  remote => $remote_ssh,
 	 },
@@ -157,9 +157,34 @@ sub features_export_sh
 
     execute_shell_command_array
 	(
-	 $remote_commands,
+	 $commands,
 	 {
 	  remote => $remote_tmux,
+	 },
+	);
+}
+
+
+sub features_timestamps
+{
+    my $commands
+	= [
+	   'pwd',
+	  ];
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  timestamp => 1,
+	 },
+	);
+
+    execute_shell_command_array
+	(
+	 $commands,
+	 {
+	  timestamp => 'some prefix with spaces',
 	 },
 	);
 }
