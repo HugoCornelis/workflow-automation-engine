@@ -22,6 +22,7 @@ testing/
 
 configured-workflows/automation-configuration-data/cache/
 
+vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
 vigilia/specifications/workflow-configurations/feature-testing/.timestamp*
