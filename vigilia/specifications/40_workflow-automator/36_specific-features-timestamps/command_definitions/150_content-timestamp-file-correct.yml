@@ -1,0 +1,6 @@
+---
+command: cat .timestamp__suffix_with-spaces-and-file-with-content_pwd
+command_tests:
+  - description: content of the timestamp file
+    read: 'Return code: 0'
+description: Is the content of the timestamp file correct?
