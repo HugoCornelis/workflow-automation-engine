@@ -69,7 +69,7 @@ project-specific workflows that use system shell commands.
 				comment => 'Enter this container with "docker exec -it workflow_automation_test_container_errors bash"',
 				docker => {
 					   default_user => 'neurospaces',
-					   dockerfile => './tests/specifications/dockerfiles/Dockerfile.workflow-errors',
+					   dockerfile => './vigilia/specifications/dockerfiles/Dockerfile.workflow-errors',
 					   name_container => 'workflow_automation_test_container_errors',
 					   name_image => 'workflow_automation_image_errors',
 					  },

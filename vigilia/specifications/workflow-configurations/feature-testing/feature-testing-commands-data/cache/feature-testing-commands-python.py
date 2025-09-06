@@ -14,7 +14,7 @@ BEGIN
 {
 	if (not exists $ENV{PYTHONPATH})
 	{
-		$ENV{PYTHONPATH} = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/tests/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache";
+		$ENV{PYTHONPATH} = "/home/hugo/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache";
 	}
 }
 

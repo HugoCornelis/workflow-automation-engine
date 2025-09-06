@@ -1,25 +1,4 @@
-$files = {
-           '_<./bin/vigilia' => [
-                                  {
-                                    'fname' => './bin/vigilia',
-                                    'expr' => undef,
-                                    'line' => '1404',
-                                    'type' => 'user',
-                                    'text' => '    my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter, );
-',
-                                    'value' => '1'
-                                  },
-                                  {
-                                    'expr' => undef,
-                                    'text' => '    my $library_error = $test_library->validate();
-',
-                                    'value' => '1',
-                                    'type' => 'user',
-                                    'line' => '1423',
-                                    'fname' => './bin/vigilia'
-                                  }
-                                ]
-         };
+$files = {};
 $expr_list = [];
 $eval_saved_text = undef;
-$main_win_geometry = '1920x1001+0+0';
+$main_win_geometry = '1920x1051+0+0';
