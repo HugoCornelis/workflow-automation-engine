@@ -6320,20 +6320,46 @@ sub execute_scheduled_command
 		{
 		    my $suffix = '';
 
-		    if ($timestamp ne '1')
+		    if (!ref $timestamp)
 		    {
-			$suffix = $timestamp;
+			if ($timestamp ne '1')
+			{
+			    $suffix = $timestamp;
+			}
+		    }
+		    elsif (ref $timestamp eq 'HASH')
+		    {
+			$suffix = $timestamp->{filename_suffix} || '';
+		    }
+		    else
+		    {
+			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
 		    }
 
 		    my $timestamp_command = "$command";
 
-		    my $timestamp_filename = ".timestamp_${suffix}_$timestamp_command";
+		    my $timestamp_filename = ".timestamp__${suffix}_$timestamp_command";
 
-		    $timestamp_filename =~ s(\w+)(-)g;
+		    $timestamp_filename =~ s(\s+)(-)g;
 		    $timestamp_filename =~ s(\()()g;
 		    $timestamp_filename =~ s(\))()g;
 
-		    system "touch '$timestamp_filename'";
+		    if (!ref $timestamp)
+		    {
+			system "touch '$timestamp_filename'";
+		    }
+		    elsif (ref $timestamp eq 'HASH')
+		    {
+			my $content = $timestamp->{content_format};
+
+			$content =~ s(%%RETURNCODE%%)($exit_status)g;
+
+			system "echo '$content' >$timestamp_filename";
+		    }
+		    else
+		    {
+			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+		    }
 		}
 	    }
 	    else
