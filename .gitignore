@@ -13,8 +13,8 @@ _MTN/
 bin/cscope.files
 run_harness.sh.trs
 bin/vigilia.trs
+vigilia/html
 neurospaces_cpan_modules
-tests/html/
 try-graph.pl
 
 python-tests/
