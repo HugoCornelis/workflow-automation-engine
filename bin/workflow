@@ -6546,13 +6546,37 @@ sub _execute_option_export_sh_variables_export
     {
 	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
 	{
+	    #t only export the variable if it is used in the script
+	    #t this means we first have to check all the commands for their possible use of this variable
+
+	    my $used = 1;
+
+	    if (not $used)
+	    {
+		next;
+	    }
+
 	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+
+	    my $export_sh_variable_description = '';
+
+	    if (ref $export_sh_variable_value eq 'HASH')
+	    {
+		$export_sh_variable_description = $export_sh_variable_value->{description};
+
+		$export_sh_variable_value = $export_sh_variable_value->{value};
+	    }
 
 	    $export_sh_variable_value =~ s(')(\\')g;
 
 	    if ($export_sh_variable_name =~ m(password)i)
 	    {
 		$export_sh_variable_value = '';
+	    }
+
+	    if ($export_sh_variable_description)
+	    {
+		print $exported_sh_file "#\n# $export_sh_variable_name: $export_sh_variable_description\n";
 	    }
 
 	    print $exported_sh_file "$export_sh_variable_name=\${$export_sh_variable_name:=$export_sh_variable_value}\n";
