@@ -86,7 +86,7 @@ specifications to:
 [JSON](https://toml.io/en/) or [TOML](https://toml.io/en/) for
 configuration files.  Other dependencies are several Perl modules such
 as `File::chdir`, and `File::Find::Rule`, the Perl module for
-integration of Python code into Perl.  Installation itself is
+integration of Python code into Perl[^1].  Installation itself is
 performed with `make`.
 
 As an example, for Ubuntu 22.04.3 LTS jammy, you need to install these
@@ -105,6 +105,8 @@ sudo apt libfile-find-rule-perl
 sudo apt libnet-ip-perl
 sudo apt libexpect-perl
 ```
+
+[^1]: The Perl module that integrates with Python is called Inline::Python.  This module currently has a bug that generates warnings when multiple Python source code files are inlined.  A fix is available from https://github.com/niner/inline-python-pm but this fix is not available from package managers yet.
 
 Then clone the repository into a local directory:
 
