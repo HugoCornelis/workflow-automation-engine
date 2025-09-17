@@ -62,6 +62,7 @@ our $option_dump_interaction_roles;
 our $option_dump_module_interaction_roles;
 our $option_dump_schedule;
 our $option_dump_specific_workflow_roles;
+our $option_export_help_page;
 our $option_export_remote;
 our $option_export_sh;
 our $option_export_sudo;
@@ -93,6 +94,7 @@ our $global_options
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
        "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
        "dump-schedule!" => \$option_dump_schedule,
+       "export-help-page!" => \$option_export_help_page,
        "export-remote=s" => \$option_export_remote,
        "export-sh:s" => \$option_export_sh,
        "export-sudo" => \$option_export_sudo,
@@ -6322,6 +6324,22 @@ sub execute_option_export_sh
 	print $global_exported_sh_file "# $global_command_line\n";
 	print $global_exported_sh_file "#\n";
 
+	if ($option_export_help_page)
+	{
+	    my $help_page = "";
+
+	    $help_page =~ s(\n)(\n # )g;
+
+	    $help_page = "#
+# help page
+#
+# $help_page
+#
+";
+
+	    print $global_exported_sh_file $help_page;
+	}
+
 	if (not defined $option_export_remote)
 	{
 	    print $global_exported_sh_file "# --export-remote is not set, exporting all roles without a remote prefix\n";
@@ -8291,6 +8309,7 @@ sub bash_completion_generate_options
 			--dump-interaction-roles
 			--dump-module-interaction-roles
 			--dump-schedule
+			--export-help-page
 			--export-remote
 			--export-sh
 			--export-sudo
@@ -9106,6 +9125,7 @@ options:
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+    --export-help-page              export the help page of the command as comments to the shell script.
     --export-remote                 include the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
     --export-sh                     export the commands to a file with the given name.
