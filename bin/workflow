@@ -207,7 +207,7 @@ our $all_path_globals
       };
 
 
-our $global_target_command;
+our $global_output_filename_template;
 
 our $global_field_project_configuration;
 
@@ -6387,7 +6387,7 @@ sub execute_scheduled_command
 
 	if ($export_output)
 	{
-	    my $filename = generate_output_filename($global_target_command, $command);
+	    my $filename = generate_output_filename($global_output_filename_template, $command);
 
 	    my $output_file;
 
@@ -8462,7 +8462,7 @@ sub main
     # $requested_target =~ s/-/_/g;
     # $command =~ s/-/_/g;
 
-    $global_target_command = "$requested_target-$command";
+    $global_output_filename_template = join '-', "$requested_target-$command", @ARGV;
 
     # given the requested target and the command generate a useful filename for exporting commands to a shell script
 
@@ -8470,12 +8470,12 @@ sub main
     {
 	if ($option_export_sh eq 0)
 	{
-	    $option_export_sh = "/tmp/$global_target_command.sh";
+	    $option_export_sh = "/tmp/$global_output_filename_template.sh";
 	}
 	elsif ($option_export_sh eq 1
 	       or $option_export_sh eq '')
 	{
-	    $option_export_sh = "$global_target_command.sh";
+	    $option_export_sh = "$global_output_filename_template.sh";
 	}
 
 	# again we prefer to not need to press the shift key
@@ -8489,12 +8489,12 @@ sub main
     {
 	if ($option_export_times eq 0)
 	{
-	    $option_export_times = "/tmp/$global_target_command.times";
+	    $option_export_times = "/tmp/$global_output_filename_template.times";
 	}
 	elsif ($option_export_times eq 1
 	       or $option_export_times eq '')
 	{
-	    $option_export_times = "$global_target_command.times";
+	    $option_export_times = "$global_output_filename_template.times";
 	}
 
 	# again we prefer to not need to press the shift key
