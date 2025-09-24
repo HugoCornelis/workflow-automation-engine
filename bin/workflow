@@ -3668,7 +3668,7 @@ sub execute_shell_script_remote
 
     my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $remote, "scp");
 
-    my $ssh_options = $remote_and_interaction_role->{ssh_options} || "";
+    my $scp_options = $remote_and_interaction_role->{scp_options} || "";
 
 #    my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
@@ -3680,9 +3680,30 @@ sub execute_shell_script_remote
 
     $remote_filename = "/tmp/$remote_filename";
 
-    # copy the local file to the remote
+	my $remote_prefix = "";
 
-    my $scp_command = "scp -pr $ssh_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+	if (exists $remote->{ssh_password})
+	{
+		my $ssh_password = $remote->{ssh_password};
+
+		$remote_prefix .= "sshpass -p $ssh_password ";
+	}
+
+	if (exists $remote->{ssh_pass_file})
+	{
+		my $ssh_pass_file = $remote->{ssh_pass_file};
+
+		$remote_prefix .= "sshpass -f $ssh_pass_file ";
+	}
+
+	# copy the local file to the remote
+
+    my $scp_command = "scp -pr $scp_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+
+	if ($remote_prefix)
+	{
+		$scp_command = "$remote_prefix$scp_command"
+	}
 
     # execute_shell_command($scp_command, { %$options, remote => undef, }, @_);
     execute_shell_command($scp_command, { remote => undef, }, @_);
@@ -5379,6 +5400,8 @@ sub compute_remote_and_interaction_role
 
     my $ssh_options;
 
+	my $scp_options = "";
+
     if ($option_verbose)
     {
 	use Data::Dumper;
@@ -5457,6 +5480,18 @@ sub compute_remote_and_interaction_role
 		    my $ssh_password = $options_remote->{ssh_password};
 
 		    $remote_prefix .= "sshpass -p $ssh_password ";
+		}
+
+		if (exists $options_remote->{ssh_pass_file})
+		{
+		    my $ssh_pass_file = $options_remote->{ssh_pass_file};
+
+		    $remote_prefix .= "sshpass -f $ssh_pass_file ";
+		}
+
+		if (exists $options_remote->{scp_options})
+		{
+		    $scp_options .= "$options_remote->{scp_options} ";
 		}
 
 		if (exists $options_remote->{ssh_options})
@@ -5552,6 +5587,7 @@ sub compute_remote_and_interaction_role
      interaction_role_with_policy_syntax => $interaction_role_with_policy_syntax,
      remote_prefix => $remote_prefix,
      ssh_options => $ssh_options,
+	 scp_options => $scp_options
     };
 }
 
@@ -7150,27 +7186,30 @@ execute_command = None
 execute_command_array = None
 execute_command_schedule = None
 execute_command_schedule_array = None
+execute_shell_script_remote = None
 print_to_stdout = None
 print_to_stderr = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, ref_print_to_stdout, ref_print_to_stderr):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr):
     global execute_command
     global execute_command_array
     global execute_command_schedule
     global execute_command_schedule_array
+    global execute_shell_script_remote
     global print_to_stdout
     global print_to_stderr
     execute_command = exe_command
     execute_command_array = exe_command_array
     execute_command_schedule = exe_command_schedule
     execute_command_schedule_array = exe_command_schedule_array
+    execute_shell_script_remote = exe_shell_script_remote
     print_to_stdout = ref_print_to_stdout
     print_to_stderr = ref_print_to_stderr
 
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&_python_print_to_stdout, \\&_python_print_to_stderr);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr);
 
 ";
 	my $commands_template_code
@@ -8911,6 +8950,8 @@ options:
     --ssh-port                      the ssh port.
     --ssh-server                    the used ssh build server.
     --ssh-user                      ssh-user on the build server (please configure your public key).
+    --ssh-password                  ssh password to be used (this is insecure! Do not use it for non-public passwords).
+    --ssh-pass-file                 location of a file containing passwords for ssh connections.
     --target                        the target to apply the given commands to.
     --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
     --verbose                       set verbosity level.
