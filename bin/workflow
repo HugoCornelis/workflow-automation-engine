@@ -5459,6 +5459,13 @@ sub compute_remote_and_interaction_role
 		    $remote_prefix .= "sshpass -p $ssh_password ";
 		}
 
+		if (exists $options_remote->{ssh_pass_file})
+		{
+		    my $ssh_pass_file = $options_remote->{ssh_pass_file};
+
+		    $remote_prefix .= "sshpass -f $ssh_pass_file ";
+		}
+
 		if (exists $options_remote->{ssh_options})
 		{
 		    $ssh_options = "$options_remote->{ssh_options} ";
@@ -8912,6 +8919,7 @@ options:
     --ssh-server                    the used ssh build server.
     --ssh-user                      ssh-user on the build server (please configure your public key).
     --ssh-password                  ssh password to be used (this is insecure! Do not use it for non-public passwords).
+    --ssh-pass-file                 location of a file containing passwords for ssh connections.
     --target                        the target to apply the given commands to.
     --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
     --verbose                       set verbosity level.
