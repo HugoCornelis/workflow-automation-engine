@@ -8911,6 +8911,7 @@ options:
     --ssh-port                      the ssh port.
     --ssh-server                    the used ssh build server.
     --ssh-user                      ssh-user on the build server (please configure your public key).
+    --ssh-password                  ssh password to be used (this is insecure! Do not use it for non-public passwords).
     --target                        the target to apply the given commands to.
     --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
     --verbose                       set verbosity level.
