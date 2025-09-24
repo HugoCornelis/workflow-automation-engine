@@ -3680,9 +3680,30 @@ sub execute_shell_script_remote
 
     $remote_filename = "/tmp/$remote_filename";
 
-    # copy the local file to the remote
+	my $remote_prefix = "";
+
+	if (exists $remote->{ssh_password})
+	{
+		my $ssh_password = $remote->{ssh_password};
+
+		$remote_prefix .= "sshpass -p $ssh_password ";
+	}
+
+	if (exists $remote->{ssh_pass_file})
+	{
+		my $ssh_pass_file = $remote->{ssh_pass_file};
+
+		$remote_prefix .= "sshpass -f $ssh_pass_file ";
+	}
+
+	# copy the local file to the remote
 
     my $scp_command = "scp -pr $ssh_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+
+	if ($remote_prefix)
+	{
+		$scp_command = "$remote_prefix$scp_command"
+	}
 
     # execute_shell_command($scp_command, { %$options, remote => undef, }, @_);
     execute_shell_command($scp_command, { remote => undef, }, @_);
