@@ -5763,6 +5763,13 @@ sub compute_remote_and_interaction_role
 		    $remote_prefix .= "sshpass -p $ssh_password ";
 		}
 
+		if (exists $options_remote->{ssh_pass_file})
+		{
+		    my $ssh_pass_file = $options_remote->{ssh_pass_file};
+
+		    $remote_prefix .= "sshpass -f $ssh_pass_file ";
+		}
+
 		if (exists $options_remote->{ssh_options})
 		{
 		    $ssh_options = "$options_remote->{ssh_options} ";
