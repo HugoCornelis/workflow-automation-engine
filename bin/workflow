@@ -3668,7 +3668,7 @@ sub execute_shell_script_remote
 
     my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $remote, "scp");
 
-    my $ssh_options = $remote_and_interaction_role->{ssh_options} || "";
+    my $scp_options = $remote_and_interaction_role->{scp_options} || "";
 
 #    my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
@@ -3698,7 +3698,7 @@ sub execute_shell_script_remote
 
 	# copy the local file to the remote
 
-    my $scp_command = "scp -pr $ssh_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+    my $scp_command = "scp -pr $scp_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
 
 	if ($remote_prefix)
 	{
@@ -5400,6 +5400,8 @@ sub compute_remote_and_interaction_role
 
     my $ssh_options;
 
+	my $scp_options = "";
+
     if ($option_verbose)
     {
 	use Data::Dumper;
@@ -5485,6 +5487,11 @@ sub compute_remote_and_interaction_role
 		    my $ssh_pass_file = $options_remote->{ssh_pass_file};
 
 		    $remote_prefix .= "sshpass -f $ssh_pass_file ";
+		}
+
+		if (exists $options_remote->{scp_options})
+		{
+		    $scp_options .= "$options_remote->{scp_options} ";
 		}
 
 		if (exists $options_remote->{ssh_options})
@@ -5580,6 +5587,7 @@ sub compute_remote_and_interaction_role
      interaction_role_with_policy_syntax => $interaction_role_with_policy_syntax,
      remote_prefix => $remote_prefix,
      ssh_options => $ssh_options,
+	 scp_options => $scp_options
     };
 }
 
