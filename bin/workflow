@@ -3280,7 +3280,16 @@ sub builtin_rename_project
 
     my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-    #t to be updated
+    my $old_project_name = $field_project_name;
+
+    my $new_project_name = $arguments->[0];
+
+    if (not $new_project_name)
+    {
+	die "$global_program_name: *** Error: builtin_rename_project requires the new project name as an argument (the old_project_name is $old_project_name).";
+    }
+
+    my $also_bashrc = $arguments->[1];
 
     my $project_filename
 	= [
@@ -3300,8 +3309,93 @@ sub builtin_rename_project
     my $bash_completion_filenames
 	= [
 	   "$field_project_name-bash-completion.sh",
-	   "$field_project_name-configuration",
+	   # "$field_project_name-configuration",
 	  ];
+
+    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands_string_replace
+	= [
+	   "cd $sources_configuration_directory",
+	   map
+	   {
+	       "echo perl -pi -e 's/$field_project_name/$new_project_name/g' $_";
+	   }
+	   @$project_filename,
+	   @$conf_project_filenames,
+	   @$bash_completion_filenames,
+	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
+	  ];
+
+    execute_shell_command_array($commands_string_replace, { dry_run => "for testing" } );
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
+
+    $command_filenames = $command_filenames->{command_filenames};
+
+    my $project_bin_files
+	= [
+	   "$ENV{HOME}/bin/$old_project_name-configuration",
+	   "$ENV{HOME}/bin/$old_project_name-workflow",
+	  ];
+
+    my $bin_command_filenames
+	= [
+	   map
+	   {
+	       "$ENV{HOME}/bin/$_";
+	   }
+	   @$command_filenames,
+     	  ];
+
+    my $commands_rename
+	= [
+	   "cd $sources_configuration_directory",
+	   map
+	   {
+	       my $new_filename = "$_";
+
+	       $new_filename =~ s($old_project_name)($new_project_name);
+
+	       "echo mv $_ $new_filename";
+	   }
+	   @$conf_project_filenames,
+	   @$bash_completion_filenames,
+	   @$command_filenames,
+	   @$project_bin_files,
+	   @$bin_command_filenames,
+	  ];
+
+    execute_shell_command_array($commands_rename, { dry_run => "for testing" } );
+
+    if (not $also_bashrc)
+    {
+	execute_shell_command_array(
+				    [
+				     "echo ========",
+				     "echo Please also update your ~/.bashrc now.",
+				     "echo ========",
+				    ]
+				   );
+    }
+
+    my $debug_builtin_rename_project = 1;
+
+    if ($debug_builtin_rename_project)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      project_filename => $project_filename,
+		      bash_completion_filenames => $bash_completion_filenames,
+		      project_bin_files => $project_bin_files,
+		      command_filenames => $command_filenames,
+		     },
+		    );
+    }
 
     my $some_string = '
 ./workflow-project.pl 9:       field_project_name => "neurospaces",
@@ -3323,39 +3417,21 @@ sub builtin_rename_project
 ./conf.workflow 17:# # neurospaces workflow
 ';
 
-    #t to be renamed in the current directory and in ~/bin
-
-    my $bin_files
-	= [
-	   "$field_project_name-configuration",
-	   "$field_project_name-workflow",
-	  ];
-
-    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
-
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
-
-    #t to be renamed in the current directory and in ~/bin
-
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
-
-    my $debug_builtin_rename_project = 1;
-
-    if ($debug_builtin_rename_project)
-    {
-	use Data::Dumper;
-
-	print Dumper(
-		     {
-		      project_filenames => $project_filenames,
-		      bash_completion_filenames => $bash_completion_filenames,
-		      bin_files => $bin_files,
-		      command_filenames => $command_filenames,
-		     },
-		    );
-    }
-
     0;
+}
+
+
+sub builtin_rename_project_help
+{
+    my $command = shift;
+
+    return "$command: Rename the project from which this command is invoked (the 'current' project).
+
+arguments:
+
+    ARGV[0]: the new project name.
+    ARGV[1]: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+";
 }
 
 
