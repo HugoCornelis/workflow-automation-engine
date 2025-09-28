@@ -3319,7 +3319,7 @@ sub builtin_rename_project
 	   "cd $sources_configuration_directory",
 	   map
 	   {
-	       "echo perl -pi -e 's/$field_project_name/$new_project_name/g' $_";
+	       "perl -pi -e 's/$field_project_name/$new_project_name/g' $_";
 	   }
 	   @$project_filename,
 	   @$conf_project_filenames,
@@ -3327,7 +3327,7 @@ sub builtin_rename_project
 	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
 	  ];
 
-    execute_shell_command_array($commands_string_replace, { dry_run => "for testing" } );
+    execute_shell_command_array($commands_string_replace);
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
@@ -3359,7 +3359,7 @@ sub builtin_rename_project
 
 	       $new_filename =~ s($old_project_name)($new_project_name);
 
-	       "echo mv $_ $new_filename";
+	       "mv $_ $new_filename";
 	   }
 	   @$conf_project_filenames,
 	   @$bash_completion_filenames,
@@ -3368,7 +3368,7 @@ sub builtin_rename_project
 	   @$bin_command_filenames,
 	  ];
 
-    execute_shell_command_array($commands_rename, { dry_run => "for testing" } );
+    execute_shell_command_array($commands_rename);
 
     if (not $also_bashrc)
     {
@@ -3381,7 +3381,7 @@ sub builtin_rename_project
 				   );
     }
 
-    my $debug_builtin_rename_project = 1;
+    my $debug_builtin_rename_project = 0;
 
     if ($debug_builtin_rename_project)
     {
