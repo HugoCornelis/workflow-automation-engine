@@ -3304,6 +3304,12 @@ sub builtin_rename_project
 	   "conf.$field_project_name-workflow",
 	  ];
 
+    my $configuration_directories
+	= [
+	   "$field_project_name-commands-data",
+	   "$field_project_name-configuration",
+	  ];
+
     #t to be renamed and updated
 
     my $bash_completion_filenames
@@ -3321,9 +3327,9 @@ sub builtin_rename_project
 	   {
 	       "perl -pi -e 's/$field_project_name/$new_project_name/g' $_";
 	   }
-	   @$project_filename,
-	   @$conf_project_filenames,
 	   @$bash_completion_filenames,
+	   @$conf_project_filenames,
+	   @$project_filename,
 	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
 	  ];
 
@@ -3361,11 +3367,12 @@ sub builtin_rename_project
 
 	       "mv $_ $new_filename";
 	   }
-	   @$conf_project_filenames,
 	   @$bash_completion_filenames,
-	   @$command_filenames,
-	   @$project_bin_files,
 	   @$bin_command_filenames,
+	   @$command_filenames,
+	   @$conf_project_filenames,
+	   @$configuration_directories,
+	   @$project_bin_files,
 	  ];
 
     execute_shell_command_array($commands_rename);
