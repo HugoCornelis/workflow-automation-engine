@@ -179,7 +179,7 @@ my $global_known_command_packages_builtin
 			 },
        'Command::Git::RepositorySet' => {
 					 description => 'workflows for working with Git repositories',
-					 documentation => 'These workflows implement convenience interactions with a set of Git repositories..',
+					 documentation => 'These workflows implement convenience interactions with a set of Git repositories.',
 					},
        'Command::GitLab' => {
 			     description => 'workflows for working with GitLab',
