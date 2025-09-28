@@ -1,0 +1,5 @@
+This program is licensed under the GNU Affero General Public License
+v3 (or later), with the additional permission that you may create,
+distribute, and use extension plugins for this program under the
+license of your choice, including proprietary licenses, provided that
+the plugin uses only the published extension interface.
