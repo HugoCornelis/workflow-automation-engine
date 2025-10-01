@@ -3291,44 +3291,101 @@ sub builtin_rename_project
 
     my $also_bashrc = $arguments->[1];
 
+    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
+
     my $project_filename
-	= [
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
 	   "workflow-project.pl",
-	  ];
+	  };
 
     #t to be renamed and updated?
 
-    my $conf_project_filenames
-	= [
+    my $conf_private_project_filenames
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
 	   "conf.$field_project_name-configuration",
 	   "conf.$field_project_name-workflow",
-	  ];
+	  };
+
+    my $conf_public_project_filenames
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "/usr/share/grc",
+		      filename => $_,
+		      sudo => "moving these files requires root privileges",
+		     };
+
+	       $result;
+	   }
+	   "conf.$field_project_name-configuration",
+	   "conf.$field_project_name-workflow",
+	  };
 
     my $configuration_directories
-	= [
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
 	   "$field_project_name-commands-data",
 	   "$field_project_name-configuration",
-	  ];
+	  };
 
     #t to be renamed and updated
 
     my $bash_completion_filenames
-	= [
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
 	   "$field_project_name-bash-completion.sh",
 	   # "$field_project_name-configuration",
-	  ];
-
-    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
+	  };
 
     my $commands_string_replace
 	= [
-	   "cd $sources_configuration_directory",
+	   # "cd $sources_configuration_directory",
 	   map
 	   {
-	       "perl -pi -e 's/$field_project_name/$new_project_name/g' $_";
+	       "perl -pi -e 's/$field_project_name/$new_project_name/g' '$_->{directory}/$_->{filename}'";
 	   }
 	   @$bash_completion_filenames,
-	   @$conf_project_filenames,
+	   @$conf_private_project_filenames,
 	   @$project_filename,
 	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
 	  ];
@@ -3339,38 +3396,81 @@ sub builtin_rename_project
 
     my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
 
-    $command_filenames = $command_filenames->{command_filenames};
-
-    my $project_bin_files
-	= [
-	   "$ENV{HOME}/bin/$old_project_name-configuration",
-	   "$ENV{HOME}/bin/$old_project_name-workflow",
-	  ];
-
-    my $bin_command_filenames
-	= [
+    $command_filenames
+	= {
 	   map
 	   {
-	       "$ENV{HOME}/bin/$_";
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   @{ $command_filenames->{command_filenames} },
+	  };
+
+    my $project_bin_files
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "$ENV{HOME}/bin",
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "$old_project_name-configuration",
+	   "$old_project_name-workflow",
+	  };
+
+    my $bin_command_filenames
+	= {
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "$ENV{HOME}/bin/",
+		      filename => $_,
+		     };
+
+	       $result;
 	   }
 	   @$command_filenames,
-     	  ];
+     	  };
 
     my $commands_rename
 	= [
-	   "cd $sources_configuration_directory",
+	   # "cd $sources_configuration_directory",
 	   map
 	   {
-	       my $new_filename = "$_";
+	       my $old_filename = "$_->{filename}";
+
+	       $old_filename = "$_->{directory}/$_->{filename}";
+
+	       my $new_filename = "$_->{filename}";
 
 	       $new_filename =~ s($old_project_name)($new_project_name);
 
-	       "mv $_ $new_filename";
+	       $new_filename = "$_->{directory}/$new_filename";
+
+	       my $result = "mv $old_filename $new_filename";
+
+	       if ($_->{sudo})
+	       {
+		   $result = "sudo $result";
+	       }
+
+	       $result;
 	   }
 	   @$bash_completion_filenames,
 	   @$bin_command_filenames,
 	   @$command_filenames,
-	   @$conf_project_filenames,
+	   @$conf_public_project_filenames,
+	   @$conf_private_project_filenames,
 	   @$configuration_directories,
 	   @$project_bin_files,
 	  ];
