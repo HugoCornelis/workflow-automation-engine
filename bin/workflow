@@ -3294,7 +3294,7 @@ sub builtin_rename_project
     my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
 
     my $project_filename
-	= {
+	= [
 	   map
 	   {
 	       my $result
@@ -3306,12 +3306,12 @@ sub builtin_rename_project
 	       $result;
 	   }
 	   "workflow-project.pl",
-	  };
+	  ];
 
     #t to be renamed and updated?
 
     my $conf_private_project_filenames
-	= {
+	= [
 	   map
 	   {
 	       my $result
@@ -3324,10 +3324,10 @@ sub builtin_rename_project
 	   }
 	   "conf.$field_project_name-configuration",
 	   "conf.$field_project_name-workflow",
-	  };
+	  ];
 
     my $conf_public_project_filenames
-	= {
+	= [
 	   map
 	   {
 	       my $result
@@ -3341,10 +3341,10 @@ sub builtin_rename_project
 	   }
 	   "conf.$field_project_name-configuration",
 	   "conf.$field_project_name-workflow",
-	  };
+	  ];
 
     my $configuration_directories
-	= {
+	= [
 	   map
 	   {
 	       my $result
@@ -3357,12 +3357,12 @@ sub builtin_rename_project
 	   }
 	   "$field_project_name-commands-data",
 	   "$field_project_name-configuration",
-	  };
+	  ];
 
     #t to be renamed and updated
 
     my $bash_completion_filenames
-	= {
+	= [
 	   map
 	   {
 	       my $result
@@ -3375,7 +3375,7 @@ sub builtin_rename_project
 	   }
 	   "$field_project_name-bash-completion.sh",
 	   # "$field_project_name-configuration",
-	  };
+	  ];
 
     my $commands_string_replace
 	= [
@@ -3397,7 +3397,7 @@ sub builtin_rename_project
     my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
 
     $command_filenames
-	= {
+	= [
 	   map
 	   {
 	       my $result
@@ -3409,38 +3409,7 @@ sub builtin_rename_project
 	       $result;
 	   }
 	   @{ $command_filenames->{command_filenames} },
-	  };
-
-    my $project_bin_files
-	= {
-	   map
-	   {
-	       my $result
-		   = {
-		      directory => "$ENV{HOME}/bin",
-		      filename => $_,
-		     };
-
-	       $result;
-	   }
-	   "$old_project_name-configuration",
-	   "$old_project_name-workflow",
-	  };
-
-    my $bin_command_filenames
-	= {
-	   map
-	   {
-	       my $result
-		   = {
-		      directory => "$ENV{HOME}/bin/",
-		      filename => $_,
-		     };
-
-	       $result;
-	   }
-	   @$command_filenames,
-     	  };
+	  ];
 
     my $commands_rename
 	= [
@@ -3467,22 +3436,76 @@ sub builtin_rename_project
 	       $result;
 	   }
 	   @$bash_completion_filenames,
-	   @$bin_command_filenames,
 	   @$command_filenames,
 	   @$conf_public_project_filenames,
 	   @$conf_private_project_filenames,
 	   @$configuration_directories,
-	   @$project_bin_files,
 	  ];
 
     execute_shell_command_array($commands_rename);
+
+    my $project_bin_files
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "$ENV{HOME}/bin",
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "$old_project_name-configuration",
+	   "$old_project_name-workflow",
+	  ];
+
+    my $home_bin_command_filenames
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "$ENV{HOME}/bin/",
+		      filename => $_->{filename},
+		     };
+
+	       $result;
+	   }
+	   @$command_filenames,
+     	  ];
+
+    my $commands_remove
+	= [
+	   # "cd $sources_configuration_directory",
+	   map
+	   {
+	       my $old_filename = "$_->{filename}";
+
+	       $old_filename = "$_->{directory}/$_->{filename}";
+
+	       my $result = "rm $old_filename";
+
+	       $result;
+	   }
+	   @$home_bin_command_filenames,
+	   @$project_bin_files,
+	  ];
+
+    execute_shell_command_array($commands_remove);
+
+    #t now invoke builtin_install_scripts to install the correct symbolic links
 
     if (not $also_bashrc)
     {
 	execute_shell_command_array(
 				    [
 				     "echo ========",
-				     "echo Please also update your ~/.bashrc now.",
+				     "echo Please update your ~/.bashrc to invoke the correct bash completion script.",
+				     "echo",
+				     "echo $sources_configuration_directory $new_project_name-bash-completion.sh",
+				     "echo",
+				     "echo And maybe also invoke in this shell: . $sources_configuration_directory/$new_project_name-bash-completion.sh",
 				     "echo ========",
 				    ]
 				   );
