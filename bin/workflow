@@ -2962,10 +2962,6 @@ arguments:
 
 sub builtin_install_scripts
 {
-#     use Data::Dumper;
-
-#     print Dumper(\@_);
-
     my $arguments = shift || [];
 
     my $option_install_aliasses = 'by default';
@@ -3204,7 +3200,7 @@ sub builtin_known_command_filenames
 
     # generate the list of command filenames
 
-    my $full_paths = $arguments->[0] eq 'full-paths' ? 'full_paths' : 'relative_paths';
+    my $full_paths = (defined $arguments && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
 
     my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
 
