@@ -70,7 +70,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libfile-chdir-perl \
     libfile-find-rule-perl-perl \
     libinline-perl \
-    libinline-python-perl \
     libipc-system-simple-perl \
     libjson-perl \
     libnet-ip-perl \
