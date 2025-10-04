@@ -1,0 +1,134 @@
+---
+command: feature-testing-workflow builtin rename_project abcd
+command_tests:
+  - description: rename the project from feature-testing to abcd
+    read: |
+      # perl -pi -e 's/feature-testing/abcd/g' '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-bash-completion.sh'
+      #
+      # perl -pi -e 's/feature-testing/abcd/g' '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.feature-testing-configuration'
+      #
+      # perl -pi -e 's/feature-testing/abcd/g' '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.feature-testing-workflow'
+      #
+      # perl -pi -e 's/feature-testing/abcd/g' '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/workflow-project.pl'
+      #
+      # perl -pi -e 's/feature-testing/abcd/g' '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration'
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-bash-completion.sh /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-bash-completion.sh
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-features
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-more_python.py
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-perl_examples
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-python.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-python.py
+      #
+      # sudo mv /usr/share/grc/conf.feature-testing-configuration /usr/share/grc/conf.abcd-configuration
+      #
+      # sudo mv /usr/share/grc/conf.feature-testing-workflow /usr/share/grc/conf.abcd-workflow
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.feature-testing-configuration /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.abcd-configuration
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.feature-testing-workflow /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.abcd-workflow
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-data
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-configuration
+      #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-configuration-data
+      #
+      # rm /home/neurospaces/bin//feature-testing-commands-features
+      #
+      # rm /home/neurospaces/bin//feature-testing-commands-more_python.py
+      #
+      # rm /home/neurospaces/bin//feature-testing-commands-perl_examples
+      #
+      # rm /home/neurospaces/bin//feature-testing-commands-python.py
+      #
+      # rm /home/neurospaces/bin/feature-testing-configuration
+      #
+      # rm /home/neurospaces/bin/feature-testing-workflow
+      #
+      # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
+      #
+      # workflow builtin install_scripts -- --engine --commands --no-aliasses
+      #
+      Subroutine Command::_load_json_configuration_file redefined at (eval 44) line 1.
+      Subroutine Command::assign_api_functions redefined at (eval 45) line 1.
+      Subroutine Command::more_python_python_command redefined at (eval 46) line 1.
+      Subroutine Command::more_python_python_command_completions redefined at (eval 47) line 1.
+      Subroutine Command::more_python_python_command_help redefined at (eval 48) line 1.
+      # mkdir --parents /home/neurospaces/bin
+      #
+      # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/abcd-workflow
+      #
+      # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-configuration /home/neurospaces/bin/abcd-configuration
+      #
+      # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-features /home/neurospaces/bin/abcd-commands-features
+      #
+      # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-more_python.py /home/neurospaces/bin/abcd-commands-more_python.py
+      #
+      # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-perl_examples /home/neurospaces/bin/abcd-commands-perl_examples
+      #
+      # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-python.py /home/neurospaces/bin/abcd-commands-python.py
+      #
+      # bash -c "echo '. /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-bash-completion.sh
+      ' | cat >>/home/neurospaces/.bashrc"
+      #
+      # sudo     bash -c "echo '
+      # abcd-workflow
+      (^|[/\w\.]+/)abcd-workflow\s?
+      conf.abcd-workflow
+      
+      # abcd-configuration
+      (^|[/\w\.]+/)abcd-configuration\s?
+      conf.abcd-configuration
+      
+      ' | cat >>/etc/grc.conf"
+      #
+      # sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.abcd-configuration /usr/share/grc/conf.abcd-configuration
+      #
+      # sudo     ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/conf.abcd-workflow /usr/share/grc/conf.abcd-workflow
+      #
+      
+      Bash completion can be enabled using:
+      
+      . ./abcd-bash-completion.sh
+      
+      Or / and maybe followed with a command to add or modify a first target, here, for the target named source_code:
+      
+      abcd-workflow builtin add_target source_code Operations on the source code, such as git checkout, build and installation. -- --install-commands-py
+      
+      ========================================================================================================================
+      ========================================================================================================================
+      ========================================================================================================================
+      
+      Please update your /home/neurospaces/.bashrc to invoke the correct bash completion script.
+      
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing abcd-bash-completion.sh
+      
+      And maybe also invoke in this shell: . /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-bash-completion.sh
+      
+      ========================================================================================================================
+      ========================================================================================================================
+      ========================================================================================================================
+    white_space: convert seen 0a to 0d 0a newlines
+comment: |+
+  This type of comment element can be inserted at any level in the YAML files that define tests.
+  
+  For a concise example, see the second command definition that was generated with this one.
+  
+  The tests are defined with arrays of command definitions that each can have an array of command tests.
+  
+  Recognized key words at the level of the command definitions are (in alphabetical order):
+  
+  class: The name of a perl class that will execute the tests.
+  command: The command the must be tested, with space seperated arguments and options.
+  command_tests: An array of the tests executed against the command.
+  disable: Gives the reason why this test command is disabled.
+  description: A single line description of all the tests for the given command.
+  error: Gives the reason why this test command will always fail.
+  numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+  tag: An array of tags associated with this command.  These are matched with the tags given on the command line.
+
+description: rename the project from feature-testing to abcd

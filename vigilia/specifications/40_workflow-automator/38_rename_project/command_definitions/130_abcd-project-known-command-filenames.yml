@@ -1,0 +1,12 @@
+---
+command: abcd-workflow builtin known_command_filenames
+command_tests:
+  - description: abcd project configuration directory
+    read: |
+      known_command_filenames:
+        - abcd-commands-features
+        - abcd-commands-more_python.py
+        - abcd-commands-perl_examples
+        - abcd-commands-python.py
+    white_space: convert seen 0a to 0d 0a newlines
+description: abcd project known_command_filenames

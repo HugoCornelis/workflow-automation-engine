@@ -3274,6 +3274,339 @@ sub builtin_pull_scripts_help
 }
 
 
+sub builtin_rename_project
+{
+    my $arguments = shift || [];
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    my $old_project_name = $field_project_name;
+
+    my $new_project_name = $arguments->[0];
+
+    if (not $new_project_name)
+    {
+	die "$global_program_name: *** Error: builtin_rename_project requires the new project name as an argument (the old_project_name is $old_project_name).";
+    }
+
+    my $also_bashrc = $arguments->[1];
+
+    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
+
+    my $project_filename
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "workflow-project.pl",
+	  ];
+
+    my $conf_private_project_filenames
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "conf.$field_project_name-configuration",
+	   "conf.$field_project_name-workflow",
+	  ];
+
+    my $conf_public_project_filenames
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "/usr/share/grc",
+		      filename => $_,
+		      sudo => "moving these files requires root privileges",
+		     };
+
+	       $result;
+	   }
+	   "conf.$field_project_name-configuration",
+	   "conf.$field_project_name-workflow",
+	  ];
+
+    my $configuration_directories
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "$field_project_name-commands-data",
+	   "$field_project_name-configuration",
+	   "$field_project_name-configuration-data",
+	  ];
+
+    my $bash_completion_filenames
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "$field_project_name-bash-completion.sh",
+	  ];
+
+    my $commands_string_replace
+	= [
+	   map
+	   {
+	       "perl -pi -e 's/$field_project_name/$new_project_name/g' '$_->{directory}/$_->{filename}'";
+	   }
+	   @$bash_completion_filenames,
+	   @$conf_private_project_filenames,
+	   @$project_filename,
+	   {
+	    directory => $sources_configuration_directory,
+	    filename => "$field_project_name-configuration",
+	   },
+	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
+	  ];
+
+    execute_shell_command_array($commands_string_replace);
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
+
+    $command_filenames
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => $sources_configuration_directory,
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   @{ $command_filenames->{command_filenames} },
+	  ];
+
+    my $commands_rename
+	= [
+	   map
+	   {
+	       my $old_filename = "$_->{filename}";
+
+	       $old_filename = "$_->{directory}/$_->{filename}";
+
+	       my $new_filename = "$_->{filename}";
+
+	       $new_filename =~ s($old_project_name)($new_project_name);
+
+	       $new_filename = "$_->{directory}/$new_filename";
+
+	       my $result = "mv $old_filename $new_filename";
+
+	       if ($_->{sudo})
+	       {
+		   $result = "sudo $result";
+	       }
+
+	       $result;
+	   }
+	   @$bash_completion_filenames,
+	   @$command_filenames,
+	   @$conf_public_project_filenames,
+	   @$conf_private_project_filenames,
+	   @$configuration_directories,
+	  ];
+
+    execute_shell_command_array($commands_rename);
+
+    # write the commands configuration file with the new filenames
+
+    # if (not $error)
+    {
+	my $new_command_filenames = [];
+
+	foreach my $command_filename (@$command_filenames)
+	{
+	    my $new_command_filename = $command_filename->{filename};
+
+	    $new_command_filename =~ s/$old_project_name/$new_project_name/;
+
+	    push @$new_command_filenames, $new_command_filename;
+	}
+
+	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+
+	YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
+    }
+
+    my $project_bin_files
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "$ENV{HOME}/bin",
+		      filename => $_,
+		     };
+
+	       $result;
+	   }
+	   "$old_project_name-configuration",
+	   "$old_project_name-workflow",
+	  ];
+
+    my $home_bin_command_filenames
+	= [
+	   map
+	   {
+	       my $result
+		   = {
+		      directory => "$ENV{HOME}/bin/",
+		      filename => $_->{filename},
+		     };
+
+	       $result;
+	   }
+	   @$command_filenames,
+     	  ];
+
+    my $commands_remove
+	= [
+	   map
+	   {
+	       my $old_filename = "$_->{filename}";
+
+	       $old_filename = "$_->{directory}/$_->{filename}";
+
+	       my $result = "rm $old_filename";
+
+	       $result;
+	   }
+	   @$home_bin_command_filenames,
+	   @$project_bin_files,
+	  ];
+
+    execute_shell_command_array($commands_remove);
+
+    # now invoke builtin_install_scripts() from the configuration
+    # directory to install the correct symbolic links
+
+    # we assume that if aliasses were installed for the old project
+    # name, either bashrc has been updated, or the user will do the
+    # update manually.
+
+    my $aliasses = "--no-aliasses";
+
+    my $commands_reinstall_scripts
+	= [
+	   "cd $sources_configuration_directory",
+	   "workflow builtin install_scripts -- --engine --commands $aliasses",
+	  ];
+
+    execute_shell_command_array($commands_reinstall_scripts);
+
+    if (not $also_bashrc)
+    {
+	execute_shell_command_array
+	    (
+	     [
+	      "echo " . "=" x 120,
+	      "echo " . "=" x 120,
+	      "echo " . "=" x 120,
+	      "echo",
+	      "echo Please update your ~/.bashrc to invoke the correct bash completion script.",
+	      "echo",
+	      "echo $sources_configuration_directory $new_project_name-bash-completion.sh",
+	      "echo",
+	      "echo And maybe also invoke in this shell: . $sources_configuration_directory/$new_project_name-bash-completion.sh",
+	      "echo",
+	      "echo " . "=" x 120,
+	      "echo " . "=" x 120,
+	      "echo " . "=" x 120,
+	     ],
+	     {
+	      quiet => 'because that is clearer to the user to read',
+	     },
+	    );
+    }
+
+    my $debug_builtin_rename_project = 0;
+
+    if ($debug_builtin_rename_project)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      project_filename => $project_filename,
+		      bash_completion_filenames => $bash_completion_filenames,
+		      project_bin_files => $project_bin_files,
+		      command_filenames => $command_filenames,
+		     },
+		    );
+    }
+
+    my $some_string = '
+./workflow-project.pl 9:       field_project_name => "neurospaces",
+./conf.neurospaces-configuration 17:# # neurospaces configuration
+./conf.neurospaces-configuration 18:# (^|[/\w\.]+/)neurospaces-configuration
+./conf.neurospaces-configuration 19:# conf.neurospaces-configuration
+./conf.neurospaces-configuration 31:regexp=neurospaces
+./neurospaces-bash-completion.sh 2:_neurospaces_configuration_completions()
+./neurospaces-bash-completion.sh 6:    COMPLETIONS=`neurospaces-workflow --bash-completion "$COMP_LINE" $COMP_CWORD $COMP_POINT | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g"`
+./neurospaces-bash-completion.sh 11:complete -F _neurospaces_configuration_completions neurospaces-configuration
+./neurospaces-bash-completion.sh 12:complete -F _neurospaces_configuration_completions ./neurospaces-configuration
+./neurospaces-bash-completion.sh 15:_neurospaces_workflow_completions()
+./neurospaces-bash-completion.sh 19:    COMPLETIONS=`neurospaces-workflow --bash-completion "$COMP_LINE" $COMP_CWORD $COMP_POINT | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g"`
+./neurospaces-bash-completion.sh 24:# complete -F _neurospaces_workflow_completions workflow
+./neurospaces-bash-completion.sh 25:# complete -F _neurospaces_workflow_completions ./workflow
+./neurospaces-bash-completion.sh 27:complete -F _neurospaces_workflow_completions neurospaces-workflow
+./neurospaces-bash-completion.sh 28:complete -F _neurospaces_workflow_completions ./neurospaces-workflow
+./neurospaces-configuration 7:my $build_servers = YAML::LoadFile(\'neurospaces-configuration-data/build_servers.yml\');
+./conf.workflow 17:# # neurospaces workflow
+';
+
+    0;
+}
+
+
+sub builtin_rename_project_help
+{
+    my $command = shift;
+
+    return "$command: Rename the project from which this command is invoked (the 'current' project).
+
+arguments:
+
+    ARGV[0]: the new project name.
+    ARGV[1]: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+";
+}
+
+
 sub builtin_start_project
 {
     my $arguments = shift || [];

@@ -1,0 +1,14 @@
+---
+command: abcd-workflow builtin print_configuration_directory
+command_tests:
+  - description: abcd project configuration directory
+    read: |
+      global_field_project_configuration:
+        configuration_origin: dynamically_generated from the executable script name
+        field_project_name: abcd
+        search_path_workflow_executable_directory: /home/neurospaces/bin
+        sources_configuration_data_directory: /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-data
+        sources_configuration_directory: /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
+        sources_configuration_filename: /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-configuration
+    white_space: convert seen 0a to 0d 0a newlines
+description: abcd project configuration directory
