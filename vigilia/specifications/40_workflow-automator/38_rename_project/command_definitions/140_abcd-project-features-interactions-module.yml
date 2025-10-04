@@ -1,0 +1,84 @@
+---
+command: abcd-workflow features --interactions-module
+command_tests:
+  - description: abcd project interactions of the features commands
+    read: |
+      COMMAND: features_annotations
+          ROLE: 'localuser@localhost'
+      
+          'pwd'
+          'cd /bin '
+          'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_cd_tests
+          'pwd'
+          'cd bin '
+          'pwd'
+          'cd .. '
+          'pwd'
+          'cd / '
+          'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_cd_tests_ssh
+                                                  ROLE: 'root@ssh_cd'
+      
+                                                  'pwd'
+                                                  'cd /bin '
+                                                  'pwd'
+                                                  'cd .. '
+                                                  'pwd'
+                                                  'cd / '
+                                                  'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_cd_tests_tmux
+                                                                                          ROLE: 'tmux_cd'
+      
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+                                                                                          'cd bin '
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+                                                                                          'cd .. '
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+                                                                                          'cd / '
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_export_sh
+          'pwd'
+          'cd /bin '
+          'pwd'
+                                                  'pwd'
+                                                  'cd /bin '
+                                                  'pwd'
+                                                                                          'pwd'
+                                                                                          'cd /bin '
+                                                                                          'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_timestamps
+          'pwd'
+          'pwd'
+          'pwd'
+      
+      
+      ---
+      
+    white_space: convert seen 0a to 0d 0a newlines
+description: abcd project intections of the features commands
