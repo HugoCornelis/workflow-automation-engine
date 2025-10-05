@@ -1,9 +1,0 @@
----
-build_servers:
-  laptop:
-    description: local laptop
-    name: laptop
-    ssh_port: 22
-    ssh_server: localhost
-    ssh_user: hugo
-
