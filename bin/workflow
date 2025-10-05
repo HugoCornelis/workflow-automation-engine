@@ -55,8 +55,6 @@ $SIG{'INT'}
 
 our $option_bash_completion;
 our $option_branch = "master";
-our $option_build_server;
-our $option_built_image_directory;
 our $option_commands = [];
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
@@ -70,29 +68,18 @@ our $option_export_sudo;
 our $option_export_times;
 our $option_export_verbose;
 our $option_force_rebuild;
-our $option_forward_destination_server;
-our $option_forward_source_server;
 our $option_help;
-our $option_help_build_servers;
 our $option_help_commands;
 our $option_help_field_project_name;
 our $option_help_module;
 our $option_help_module_all;
 our $option_help_options;
-our $option_help_packages;
 our $option_help_projects;
 our $option_help_targets;
-our $option_incremental = 1;
 our $option_interactions;
 our $option_interactions_all;
 our $option_interactions_module;
 our $option_interactions_module_all_roles;
-our $option_packages = [];
-our $option_remote = "gitlab";
-our $option_ssh_server;
-our $option_ssh_port;
-our $option_ssh_user;
-our $option_tftp_directory;
 our $option_target;
 our $option_verbose;
 
@@ -100,8 +87,6 @@ our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
        "branch=s" => \$option_branch,
-       "build-server=s" => \$option_build_server,
-       "built-image-directory=s" => \$option_built_image_directory,
        "command=s" => $option_commands,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
@@ -114,29 +99,19 @@ our $global_options
        "export-times!" => \$option_export_times,
        "export-verbose!" => \$option_export_verbose,
        "force-rebuild!" => \$option_force_rebuild,
-       "forward-destination-server=s" => \$option_forward_destination_server,
-       "forward-source-server=s" => \$option_forward_source_server,
        "help!" => \$option_help,
-       "help-build-servers!" => \$option_help_build_servers,
        "help-commands!" => \$option_help_commands,
        "help-field-project-name!" => \$option_help_field_project_name,
        "help-module!" => \$option_help_module,
        "help-module-all!" => \$option_help_module_all,
        "help-options!" => \$option_help_options,
-       "help-packages!" => \$option_help_packages,
        "help-projects!" => \$option_help_projects,
        "help-targets!" => \$option_help_targets,
-       "incremental!" => \$option_incremental,
        "interactions!" => \$option_interactions,
        "interactions-all!" => \$option_interactions_all,
        "interactions-module!" => \$option_interactions_module,
        "interactions-module-all-roles!" => \$option_interactions_module_all_roles,
-       "package=s" => $option_packages,
-       "ssh-port=s" => \$option_ssh_port,
-       "ssh-server=s" => \$option_ssh_server,
-       "ssh-user=s" => \$option_ssh_user,
        "target=s" => \$option_target,
-       "tftp-directory=s" => \$option_tftp_directory,
        "v|verbose+" => \$option_verbose,
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
@@ -1344,46 +1319,6 @@ help: this command echos a string to the terminal
 }
 
 
-sub _builtin_project_configuration_build_servers_create
-{
-    my $project_name = shift;
-
-    my $configuration_data_directory = shift;
-
-    my $user = shift;
-
-    my $configuration_file_part
-	= "---
-build_servers:
-  laptop:
-    description: local laptop
-    name: laptop
-    ssh_port: 22
-    ssh_server: localhost
-    ssh_user: $user
-";
-
-    my $error = '';
-
-    use IO::File;
-
-    my $file = IO::File->new("> $configuration_data_directory/build_servers.yml");
-
-    if (defined $file)
-    {
-	print $file $configuration_file_part;
-
-	$file->close();
-    }
-    else
-    {
-	$error = "cannot open $configuration_data_directory/build_servers.yml";
-    }
-
-    return $error;
-}
-
-
 sub _builtin_project_configuration_command_filenames_create
 {
     my $project_name = shift;
@@ -1445,8 +1380,6 @@ use warnings;
 
 require YAML;
 
-my \$build_servers = eval { YAML::LoadFile('$configuration_data_directory/build_servers.yml'); };
-
 my \$command_filenames = eval { YAML::LoadFile('$configuration_data_directory/command_filenames.yml'); };
 
 my \$node_configuration = eval { YAML::LoadFile('$configuration_data_directory/node_configuration.yml'); };
@@ -1456,7 +1389,6 @@ my \$target_servers = eval { YAML::LoadFile('$configuration_data_directory/targe
 my \$targets = eval { YAML::LoadFile('$configuration_data_directory/targets.yml'); };
 
 my \$configuration = {
-		      \%{ ref \$build_servers eq 'HASH' ? \$build_servers : {}; },
 		      \%{ ref \$command_filenames eq 'HASH' ? \$command_filenames : {}; },
 		      \%{ ref \$node_configuration eq 'HASH' ? \$node_configuration : {}; },
 		      \%{ ref \$target_servers eq 'HASH' ? \$target_servers : {}; },
@@ -1475,11 +1407,6 @@ my \$configuration = {
     if (not $error)
     {
 	$error = _builtin_project_configuration_targets_create($project_name, $configuration_data_directory);
-    }
-
-    if (not $error)
-    {
-	$error = _builtin_project_configuration_build_servers_create($project_name, $configuration_data_directory, $user);
     }
 
     if (not $error)
@@ -2936,7 +2863,7 @@ sub builtin_grep
 
 	my $command = "grep -n '$regex_search' $command_filenames_string";
 
-	execute_shell_command($command);
+	execute_shell_command($command, { allow_fail => 'in case grep finds no hits' });
     }
 }
 
@@ -3585,7 +3512,6 @@ sub builtin_rename_project
 ./neurospaces-bash-completion.sh 25:# complete -F _neurospaces_workflow_completions ./workflow
 ./neurospaces-bash-completion.sh 27:complete -F _neurospaces_workflow_completions neurospaces-workflow
 ./neurospaces-bash-completion.sh 28:complete -F _neurospaces_workflow_completions ./neurospaces-workflow
-./neurospaces-configuration 7:my $build_servers = YAML::LoadFile(\'neurospaces-configuration-data/build_servers.yml\');
 ./conf.workflow 17:# # neurospaces workflow
 ';
 
@@ -8359,8 +8285,6 @@ sub bash_completion_generate_options
 		  qw(
 			--bash-completion
 			--branch
-			--build-server
-			--built-image-directory
 			--command
 			--dry-run
 			--dump-all-interaction-roles
@@ -8376,26 +8300,18 @@ sub bash_completion_generate_options
 			--forward-destination
 			--forward-source
 			--help
-			--help-build-servers
 			--help-commands
 			--help-field-project-name
 			--help-module
 			--help-module-all
 			--help-options
-			--help-packages
 			--help-projects
 			--help-targets
-			--incremental
 			--interactions
 			--interactions-all
 			--interactions-module
 			--interactions-module-all-roles
-			--packages
-			--ssh-port
-			--ssh-server
-			--ssh-user
 			--target
-			--tftp-directory
 			--verbose
 		   )
 		 ];
@@ -8851,39 +8767,6 @@ sub main
 	$option_export_times =~ s/_/-/g;
     }
 
-    # if we are using a build server
-
-    if ($option_build_server)
-    {
-	die "$global_program_name: *** option_build_server is still in development";
-
-	my $build_source = "";
-
-	my $build_servers = $global_technical_project_configuration->{build_servers};
-
-	my $build_server = $build_servers->{$option_build_server};
-
-	if ($build_server->{name} ne 'laptop')
-	{
-	    my $ssh_user = $build_server->{ssh_user};
-
-	    my $ssh_server = $build_server->{ssh_server};
-
-	    my $tftp_directory = $build_server->{tftp_directory};
-
-	    $build_source .= "$ssh_user\@$ssh_server";
-	}
-
-	# this results in something like this:
-	#
-	# ssh cornelih@cbi.utsa.edu tmux new-session -d 'project-workflow ssp build && bash'
-	#
-	# but I will likely also need to use sendkeys to detach from the session
-	# also need to cd to the correct directory
-
-	Engine::execute_shell_command("ssh $build_source tmux new-session -d 'neurospaces-workflow $requested_target $command && bash'");
-    }
-
     # we are not using a build server
 
     else
@@ -9177,13 +9060,6 @@ sub parse_command_line
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    # my $asking_help = ($option_help
-    # 		       or $option_help_build_servers
-    # 		       or $option_help_commands
-    # 		       or $option_help_packages
-    # 		       or $option_help_projects
-    # 		       or $option_help_targets);
-
     # try to make sure there is a target early on
 
     if (not defined $option_target
@@ -9224,8 +9100,6 @@ options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --branch                        git branch to work with.
-    --build-server                  the build server profile to work with.
-    --built-image-directory         the directory on the build server where the built images are to be found.
     --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -9242,100 +9116,26 @@ options:
     --forward-destination           the target file forward destination to copy to.
     --forward-source                the target file forward source to copy from.
     --help                          display usage information and stop execution.
-    --help-build-servers            display the known build servers.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
     --help-module                   display all the available help information about the commands of the module.
     --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
-    --help-packages                 display known package and overriden package information and stop execution.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
-    --incremental                   assume an incremental build (default is " . ($option_incremental ? "yes" : "no") . "
     --interactions                  show the interaction diagram of the commands.
     --interactions-all              show a diagram with all the commands and all the interaction roles.
     --interactions-module           show the interaction diagram of all the commands in the module.
     --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
-    --packages                      packages to operate on, can be given multiple times.
-    --ssh-port                      the ssh port.
-    --ssh-server                    the used ssh build server.
-    --ssh-user                      ssh-user on the build server (please configure your public key).
     --target                        the target to apply the given commands to.
-    --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
     --verbose                       set verbosity level.
-
-NOTES
-
-OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
 ";
 
 	exit 0;
     }
 
-    if (defined $option_build_server)
-    {
-	my $build_servers = $global_technical_project_configuration->{build_servers};
-
-	if (not exists $build_servers->{$option_build_server})
-	{
-	    die "$global_program_name: *** Error: unknown build server $option_build_server, use --help-build-servers to learn about the known servers";
-	}
-
-	# if (not defined $option_ssh_server)
-	# {
-	#     $option_ssh_server = $build_servers->{$option_build_server}->{ssh_server};
-	# }
-
-	# if (not defined $option_ssh_user)
-	# {
-	#     $option_ssh_user = $build_servers->{$option_build_server}->{ssh_user};
-	# }
-
-	if (not defined $option_ssh_port)
-	{
-	    $option_ssh_port = $build_servers->{$option_build_server}->{ssh_port};
-	}
-
-	# if (not defined $option_tftp_directory)
-	# {
-	#     $option_tftp_directory = $build_servers->{$option_build_server}->{tftp_directory};
-	# }
-
-	# if (not defined $option_built_image_directory)
-	# {
-	#     $option_built_image_directory = $build_servers->{$option_build_server}->{built_image_directory};
-	# }
-    }
-
-    my $build_servers = $global_technical_project_configuration->{build_servers};
-
     my $status;
-
-    if (defined $option_forward_destination_server)
-    {
-	if (not exists $build_servers->{$option_forward_destination_server})
-	{
-	    $status = "$global_program_name: *** Error: unknown forwarding server $option_forward_destination_server, use --help-build-servers to learn about the known servers";
-	}
-    }
-
-    if (defined $option_forward_source_server)
-    {
-	if (not exists $build_servers->{$option_forward_source_server})
-	{
-	    $status = "$global_program_name: *** Error: unknown forwarding server $option_forward_source_server, use --help-build-servers to learn about the known servers";
-	}
-    }
-
-    if ($option_help_build_servers)
-    {
-	use YAML;
-
-	print Dump( { build_servers => $build_servers, }, );
-
-	exit 0;
-    }
 
     if ($option_help_commands)
     {
@@ -9442,19 +9242,6 @@ OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 	use YAML;
 
 	print Dump( { "global_options" => $global_options, }, );
-
-	exit 0;
-    }
-
-    if ($option_help_packages)
-    {
-	use YAML;
-
-	my $packages = $global_technical_project_configuration->{packages};
-
-	print Dump( { global_packages => $packages, }, );
-
-	print Dump( { global_overriden_packages => $global_overriden_packages, }, );
 
 	exit 0;
     }
@@ -9596,8 +9383,6 @@ sub workflow_project_list_generate
 
 sub buildroot_parse_packages_directories
 {
-#     "$ENV{HOME}/projects/developer/source/snapshots/$branch";
-
     # packages listed in alphabetical order, dashes replaced with underscores
 
     my $package_overrides_filename = "local.mk";

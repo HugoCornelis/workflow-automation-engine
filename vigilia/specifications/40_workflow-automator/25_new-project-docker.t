@@ -287,8 +287,6 @@ options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --branch                        git branch to work with.
-    --build-server                  the build server profile to work with.
-    --built-image-directory         the directory on the build server where the built images are to be found.
     --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -305,31 +303,19 @@ options:
     --forward-destination           the target file forward destination to copy to.
     --forward-source                the target file forward source to copy from.
     --help                          display usage information and stop execution.
-    --help-build-servers            display the known build servers.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
     --help-module                   display all the available help information about the commands of the module.
     --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
-    --help-packages                 display known package and overriden package information and stop execution.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
-    --incremental                   assume an incremental build (default is yes
     --interactions                  show the interaction diagram of the commands.
     --interactions-all              show a diagram with all the commands and all the interaction roles.
     --interactions-module           show the interaction diagram of all the commands in the module.
     --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
-    --packages                      packages to operate on, can be given multiple times.
-    --ssh-port                      the ssh port.
-    --ssh-server                    the used ssh build server.
-    --ssh-user                      ssh-user on the build server (please configure your public key).
     --target                        the target to apply the given commands to.
-    --tftp-directory                the target tftp directory (eg. where your device will find its kernel and rootfs).
     --verbose                       set verbosity level.
-
-NOTES
-
-OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
 
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -400,7 +386,6 @@ Or:
 ./workflow-tests-commands-python_examples.py
 ./workflow-tests-configuration
 ./workflow-tests-configuration-data
-./workflow-tests-configuration-data/build_servers.yml
 ./workflow-tests-configuration-data/cache
 ./workflow-tests-configuration-data/command_filenames.yml
 ./workflow-tests-configuration-data/node_configuration.yml
@@ -684,7 +669,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options?",
-						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
+						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -799,7 +784,6 @@ scripts:
   - workflow-test/workflow-tests-commands-perl_examples
   - workflow-test/workflow-tests-commands-python_examples.py
   - workflow-test/workflow-tests-configuration
-  - workflow-test/workflow-tests-configuration-data/build_servers.yml
   - workflow-test/workflow-tests-configuration-data/cache/configuration.json
   - workflow-test/workflow-tests-configuration-data/cache/configuration.toml
   - workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
@@ -836,7 +820,6 @@ workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
 workflow-test/workflow-tests-commands-perl_examples
 workflow-test/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-configuration
-workflow-test/workflow-tests-configuration-data/build_servers.yml
 workflow-test/workflow-tests-configuration-data/cache/configuration.json
 workflow-test/workflow-tests-configuration-data/cache/configuration.toml
 workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
@@ -884,7 +867,6 @@ workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
 workflow-test/workflow-tests-commands-perl_examples
 workflow-test/workflow-tests-commands-python_examples.py
 workflow-test/workflow-tests-configuration
-workflow-test/workflow-tests-configuration-data/build_servers.yml
 workflow-test/workflow-tests-configuration-data/cache/configuration.json
 workflow-test/workflow-tests-configuration-data/cache/configuration.toml
 workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
@@ -988,7 +970,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options for the new installed configuration?",
-						   read => 'bash-completion --branch --build-server --built-image-directory --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-build-servers --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-packages --help-projects --help-targets --incremental --interactions --interactions-all --interactions-module --interactions-module-all-roles --packages --ssh-port --ssh-server --ssh-user --target --tftp-directory --verbose aa bb',
+						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],

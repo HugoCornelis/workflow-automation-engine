@@ -6,8 +6,6 @@ use warnings;
 
 require YAML;
 
-my $build_servers = eval { YAML::LoadFile('feature-testing-configuration-data/build_servers.yml'); };
-
 my $command_filenames = eval { YAML::LoadFile('feature-testing-configuration-data/command_filenames.yml'); };
 
 my $node_configuration = eval { YAML::LoadFile('feature-testing-configuration-data/node_configuration.yml'); };
@@ -17,7 +15,6 @@ my $target_servers = eval { YAML::LoadFile('feature-testing-configuration-data/t
 my $targets = eval { YAML::LoadFile('feature-testing-configuration-data/targets.yml'); };
 
 my $configuration = {
-		      %{ ref $build_servers eq 'HASH' ? $build_servers : {}; },
 		      %{ ref $command_filenames eq 'HASH' ? $command_filenames : {}; },
 		      %{ ref $node_configuration eq 'HASH' ? $node_configuration : {}; },
 		      %{ ref $target_servers eq 'HASH' ? $target_servers : {}; },
