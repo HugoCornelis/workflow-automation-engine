@@ -111,7 +111,7 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && sudo make install',
+				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && rm neurospaces_cpan_modules && sudo make install',
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation engine?",

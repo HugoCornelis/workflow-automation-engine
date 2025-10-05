@@ -161,6 +161,7 @@ COPY --chown=${USER_NAME} . /home/${USER_NAME}/projects/workflow-automation-engi
 
 WORKDIR /home/${USER_NAME}/projects/workflow-automation-engine/source/snapshots/master
 
+RUN rm ./neurospaces_cpan_modules
 RUN ./autogen.sh
 RUN ./configure
 RUN make
