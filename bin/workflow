@@ -9130,10 +9130,6 @@ options:
     --target                        the target to apply the given commands to.
     --verbose                       set verbosity level.
 
-NOTES
-
-OVERRIDE_SRCDIR delivered packages for Buildroot targets are recognized.
-
 ";
 
 	exit 0;
