@@ -36,6 +36,7 @@ command_tests:
                                        by recycling test definitions.
           --harness-prune              Remove all the docker containers.
           --help                       Print usage information.
+          --images-clean               Remove the images and containers that are referenced by the specifications (also enable --show-images for this to work).
           --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
           --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
           --input-modules              Merge the given file or directory as modules to be tested (can given several times).
@@ -55,6 +56,7 @@ command_tests:
           --select-context-path        Select only the matching context paths (default is '.*').
           --show                       Show tests that would be run using the current configuration.
           --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
+          --show-images                Show the docker images and containers that are referenced by the test harnesses.
           --tags                       Only test test modules that have been tagged with these tags (default: all tags).
           --timeout-multiplier         Multiply all timeout values with this constant.
           --timings                    Add timing information about the tests to the report.
