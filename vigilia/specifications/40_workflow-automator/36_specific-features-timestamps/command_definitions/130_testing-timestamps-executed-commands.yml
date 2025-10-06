@@ -1,5 +1,5 @@
 ---
-command: cd ./projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/ && ls .timestamp*
+command: ls .timestamp*
 command_tests:
   - description: Can we find the generated timestamp files?
     read: |+2
