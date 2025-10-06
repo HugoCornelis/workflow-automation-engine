@@ -6326,18 +6326,50 @@ sub execute_option_export_sh
 
 	if ($option_export_help_page)
 	{
-	    my $help_page = "";
+	    my $command_line = [ split '\s', $global_command_line ];
 
-	    $help_page =~ s(\n)(\n # )g;
+	    my $command = $command_line->[0];
+	    my $target = $command_line->[1];
+	    my $operation = $command_line->[2];
 
-	    $help_page = "#
-# help page
+	    my $help_sub = "Command::${target}_${operation}_help";
+
+	    my $help_string
+		= eval {
+
+		    no strict "refs";
+
+		    local $SIG{'__DIE__'};
+
+		    &$help_sub("${target}_${operation}");
+		};
+
+	    if ($@)
+	    {
+		# there is no help available, that is ok
+
+		my $help_page = "#
+# '$command $target $operation --help' is not implemented.
 #
-# $help_page
 #
 ";
 
-	    print $global_exported_sh_file $help_page;
+		print $global_exported_sh_file $help_page;
+	    }
+	    else
+	    {
+		$help_string = "#    $help_string";
+		$help_string =~ s(\n)(\n#    )gs;
+
+		my $help_page = "#
+# $command $target $operation --help
+#
+$help_string
+#
+";
+
+		print $global_exported_sh_file $help_page;
+	    }
 	}
 
 	if (not defined $option_export_remote)
