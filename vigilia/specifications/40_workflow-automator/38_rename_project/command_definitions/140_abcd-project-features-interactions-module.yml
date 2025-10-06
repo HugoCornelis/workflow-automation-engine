@@ -14,7 +14,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_cd_tests
+      COMMAND: features_cd_tests (use --help to see the help page)
           'pwd'
           'cd bin '
           'pwd'
