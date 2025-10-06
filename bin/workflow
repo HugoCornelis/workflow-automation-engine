@@ -8844,6 +8844,10 @@ sub main
 
 	    my $all_commands = command_hash_with_structure_generate('with help subs');
 
+	    #! make sure we can provide help that depends on the type of the sub (sh, sub or yaml).
+
+	    my $all_typed_commands = command_hash_typed_generate('with help subs');
+
 	    # loop over all the matching targets
 
 	    my $all_defined_targets = $global_technical_project_configuration->{targets};
@@ -8859,6 +8863,27 @@ sub main
 		# reference subroutine names specific for the given target: they belong together
 
 		my $target_subroutines = $all_commands->{$defined_target};
+
+		my $target_subroutines_typed
+		    = {
+		       map
+		       {
+			   # register the subrouting name and its type
+
+			   $_ => $all_typed_commands->{$_};
+		       }
+		       grep
+		       {
+			   my $typed_command = shift;
+
+			   $typed_command =~ m(^([^\s]*));
+
+			   my $typed_target = $1;
+
+			   $typed_target eq $defined_target;
+		       }
+		       keys %$all_typed_commands
+		      };
 
 		# collect the subroutine names
 
