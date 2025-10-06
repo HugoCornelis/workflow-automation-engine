@@ -28,6 +28,7 @@ my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSP
 my $option_flattenout;
 my $option_harness_prune;
 my $option_help;
+my $option_images_clean;
 my $option_input_command_tests = [];
 my $option_input_commands= [];
 my $option_input_modules = [];
@@ -56,6 +57,7 @@ my $option_report_disabled;
 my $option_select_context_path = '.*';
 my $option_show;
 my $option_show_command_tests;
+my $option_show_images;
 my $option_tags = [];
 my $option_timeout_multiplier = 1;
 my $option_timings = 1;
@@ -113,6 +115,7 @@ options:
                                  by recycling test definitions.
     --harness-prune              Remove all the docker containers.
     --help                       Print usage information.
+    --images-clean               Remove the images and containers that are referenced by the specifications (also enable --show-images for this to work).
     --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
     --input-commands             Merge the given file or directory as commands to be tested (can be given several times).
     --input-modules              Merge the given file or directory as modules to be tested (can given several times).
@@ -132,6 +135,7 @@ options:
     --select-context-path        Select only the matching context paths (default is '$option_select_context_path').
     --show                       Show tests that would be run using the current configuration.
     --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
+    --show-images                Show the docker images and containers that are referenced by the test harnesses.
     --tags                       Only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier         Multiply all timeout values with this constant.
     --timings                    Add timing information about the tests to the report.
@@ -162,6 +166,7 @@ options:
 					    "flattenout" => \$option_flattenout,
 					    "harness-prune!" => \$option_harness_prune,
 					    "help!" => \$option_help,
+					    "images-clean!" => \$option_images_clean,
 					    "input-command-tests=s" => $option_input_command_tests,
 					    "input-commands=s" => $option_input_commands,
 					    "input-modules=s" => $option_input_modules,
@@ -181,6 +186,7 @@ options:
 					    "select-context-path=s" => \$option_select_context_path,
 					    "show!" => \$option_show,
 					    "show-command-tests!" => \$option_show_command_tests,
+					    "show-images!" => \$option_show_images,
 					    "tags=s" => $option_tags,
 					    "timeout-multiplier=s" => \$option_timeout_multiplier,
 					    "timings!" => \$option_timings,
@@ -557,6 +563,12 @@ sub parse_options
 
 	    $option_output = "Heterarch::Test::Output::Formatter::YAML::CommandTests";
 	}
+	elsif ($option_show_images)
+	{
+	    $global_test_report->{output_format} = 'yaml_exit';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Images";
+	}
 	else
 	{
 	    $global_test_report->{output_format} = 'executor';
@@ -596,6 +608,7 @@ sub parse_options
 	   flattenout => $option_flattenout,
 	   harness_prune => $option_harness_prune,
 	   help => $option_help,
+	   images_clean => $option_images_clean,
 	   input_commands => $option_input_commands,
 	   input_modules => $option_input_modules,
 	   input_command_tests => $option_input_command_tests,
@@ -614,6 +627,7 @@ sub parse_options
 	   select_context_path => $option_select_context_path,
 	   show => $option_show,
 	   show_command_tests => $option_show_command_tests,
+	   show_images => $option_show_images,
 	   tags => $option_tags,
 	   timeout_multiplier => $option_timeout_multiplier,
 	   timings => $option_timings,
@@ -10873,6 +10887,306 @@ sub ex_terminate
     my $reporter = $execution_context->{reporter};
 
     $reporter->report_message_info_no_rulers("message_info", "$report_text");
+}
+
+
+package Heterarch::Test::Output::Formatter::YAML::Images;
+
+# The Formatter:YAML::Images package converts the test specifications
+# to a YAML formatted list of the Docker images and containers
+# referenced by the harnesses of the specifications.
+
+
+our @ISA = ("Heterarch::Test::Output::Summarizer");
+
+
+#
+# Create the infrastructure for keeping module test results.
+#
+
+sub ex_mo_prepare
+{
+    my $self = shift;
+
+    my $arguments = shift;
+
+    my $result = $self->SUPER::ex_mo_prepare($arguments);
+
+    # create an output entry for the module
+
+    my $execution_context = $self->{execution_context};
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	my $module_counter = $execution_context->get_module_definition_counter();
+
+	my $context_path = $execution_context->get_context_path();;
+
+	if ($option_verbose)
+	{
+	    my $reporter = $execution_context->{reporter};
+
+	    $reporter->report_message_info("message_info", "$0: Preparing $context_path\n");
+	}
+
+	if (exists $module_definition->{harnessing})
+	{
+	    my $harnessing = $module_definition->{harnessing};
+
+	    if (exists $harnessing->{class})
+	    {
+		my $class = $harnessing->{class};
+
+		if (exists $class->{docker})
+		{
+		    my $docker = $class->{docker};
+
+		    # register the container to remove it just before exiting this process
+
+		    if (exists $docker->{name_container})
+		    {
+			my $name_container = $docker->{name_container};
+
+			$global_test_report->{selected}->{$module_name}
+			    = {
+			       # context_path => $context_path,
+			       # count => $module_counter,
+			      };
+
+			$global_test_report->{selected}->{$module_name}->{name_container} = $name_container;
+		    }
+
+		    # register the image to remove it just before exiting this process
+
+		    if (exists $docker->{name_image})
+		    {
+			my $name_image = $docker->{name_image};
+
+			$global_test_report->{selected}->{$module_name}->{name_image} = $name_image;
+		    }
+
+		    # register the source image to remove it just before exiting this process
+
+		    if (exists $docker->{dockerfile})
+		    {
+			my $dockerfile = $docker->{dockerfile};
+
+			$global_test_report->{selected}->{$module_name}->{dockerfile} = $dockerfile;
+
+			my $from_image = `grep -E '^FROM ' '$dockerfile'`;
+
+			$from_image =~ m(FROM (.*));
+
+			my $source_image = $1;
+
+			$global_test_report->{selected}->{$module_name}->{source_image} = $source_image;
+		    }
+		}
+	    }
+	}
+    }
+    else
+    {
+	die "$0: *** Error: module_name $module_name is defined twice.";
+    }
+}
+
+
+# Don't run a test, always succeed.
+
+sub ex_ct_run
+{
+    my $self = shift;
+
+    my $command_test = shift;
+
+    my $execution_context = $self->{execution_context};
+
+    my $command_definition = $execution_context->get_command_definition();
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
+}
+
+
+# don't run a command.
+
+sub ex_cd_start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    #t we could add a counter here to keep the order of execution in the final yaml output
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    my $command_definition = $execution_context->get_command_definition();
+}
+
+
+# note that this implementation is the same as the one of ex_terminate() in
+# Heterarch::Test::Output::Formatter::YAML::Summary
+
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    # yaml out the test report
+
+    my $report_yaml
+	= {
+	  };
+
+    $report_yaml->{selected} = $global_test_report->{selected};
+
+    use YAML;
+
+    my $report_text = "\n" . Dump($report_yaml);
+
+    my $execution_context = $self->{execution_context};
+
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message_info_no_rulers("message_info", "$report_text");
+
+    if ($option_images_clean)
+    {
+	my $selected_modules = $global_test_report->{selected};
+
+	# remove all containers
+
+	foreach my $module_name (keys %$selected_modules)
+	{
+	    my $image_and_container_info = $selected_modules->{$module_name};
+
+	    my $name_container = $image_and_container_info->{name_container};
+
+	    my $commands
+		= [
+		   "docker container stop -t 1 '$name_container'",
+		   "docker container rm '$name_container'",
+		  ];
+
+	    foreach my $command (@$commands)
+	    {
+		system $command;
+	    }
+	}
+
+	# prune the automatically generated containers
+
+	my $commands_container_prune
+	    = [
+	       "docker container prune --force",
+	      ];
+
+	foreach my $command_container_prune (@$commands_container_prune)
+	{
+	    system $command_container_prune;
+	}
+
+	# remove all images
+
+    	foreach my $module_name (keys %$selected_modules)
+	{
+	    my $image_and_container_info = $selected_modules->{$module_name};
+
+	    my $name_image = $image_and_container_info->{name_image};
+
+	    my $commands
+		= [
+		   "docker image rm '$name_image'",
+		  ];
+
+	    foreach my $command (@$commands)
+	    {
+		system $command;
+	    }
+	}
+
+	# remove all source images
+
+    	foreach my $module_name (keys %$selected_modules)
+	{
+	    my $image_and_container_info = $selected_modules->{$module_name};
+
+	    my $source_image = $image_and_container_info->{source_image};
+
+	    if (defined $source_image)
+	    {
+		my $commands
+		    = [
+		       "docker image rm '$source_image'",
+		      ];
+
+		foreach my $command (@$commands)
+		{
+		    system $command;
+		}
+	    }
+	}
+
+	# prune the images, this includes source images
+
+	my $commands_image_prune
+	    = [
+	       "docker image prune --force",
+	      ];
+
+	foreach my $command_image_prune (@$commands_image_prune)
+	{
+	    system $command_image_prune;
+	}
+
+	# list the remaining containers and images
+
+	my $commands_list
+	    = [
+	       "echo Remaining containers",
+	       "echo ====================",
+	       "docker container ls -a",
+	       "echo ====================",
+	       "echo ====================",
+	       "echo Remaining images",
+	       "echo ================",
+	       "docker image ls -a",
+	       "echo ================",
+	       "echo ================",
+	      ];
+
+	foreach my $command_list (@$commands_list)
+	{
+	    system $command_list;
+	}
+    }
 }
 
 
