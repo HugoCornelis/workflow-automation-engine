@@ -64,6 +64,26 @@ sub features_cd_tests
 }
 
 
+sub features_cd_tests_help
+{
+    my $command = shift;
+
+    return "$command: Test the 'cd' features.
+
+SYNOPSIS: $command
+
+This command is used for testing of the internal 'cd' command.
+
+In addition, it is also used for testing of the '--export-help-page' option.
+
+This help page is implemented with the 'features_cd_tests_help' sub.
+This sub documents the command line arguments and options:
+
+    ARGV[0]: The directory to which to change.
+
+ "; }
+
+
 our $target_servers = $::global_technical_project_configuration->{target_servers};
 
 sub features_cd_tests_ssh

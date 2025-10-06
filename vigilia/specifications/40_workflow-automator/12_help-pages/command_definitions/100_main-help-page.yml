@@ -30,6 +30,7 @@ command_tests:
           --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
           --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
           --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+          --export-help-page              export the help page of the command as comments to the shell script.
           --export-remote                 include the remote access part of exported commands.
                                           this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
           --export-sh                     export the commands to a file with the given name.

@@ -293,6 +293,7 @@ options:
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+    --export-help-page              export the help page of the command as comments to the shell script.
     --export-remote                 include the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
     --export-sh                     export the commands to a file with the given name.
@@ -669,7 +670,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options?",
-						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
+						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -970,7 +971,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options for the new installed configuration?",
-						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
+						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
