@@ -129,7 +129,6 @@ our $global_options
       };
 
 our $global_command_line = join " ", $0, @ARGV;
-our $global_overriden_packages;
 our $global_program_abs_directory;
 our $global_program_rel_directory;
 our $global_program_name;
@@ -8727,10 +8726,6 @@ sub main
 	# initialize the command module
 
 	Command::_workflow_commands_initialize();
-
-	# parse the local.mk packages to update the dynamically generated help pages
-
-	$global_overriden_packages = buildroot_parse_packages_directories();
     }
 
     # parse command line
@@ -8745,7 +8740,6 @@ sub main
 	print STDERR Dumper(
 			    {
 			     global_field_project_configuration => $global_field_project_configuration,
-# 			     global_overriden_packages => $global_overriden_packages,
 			     global_technical_project_configuration => $global_technical_project_configuration,
 			    },
 			   );
@@ -8759,13 +8753,6 @@ sub main
 
 	#! bash_completion() never returns
     }
-
-    # parse package directories
-
-    #t this will overwrite the code in the build directories with custom code for packages listed in local.mk.
-    #t should set a flag whether a build will be required and honor the flag in preprocessing stages.
-
-    buildroot_process_packages_directories($global_overriden_packages);
 
     # figure out the target and the command
 
@@ -9428,124 +9415,6 @@ sub workflow_project_list_generate
 	  ];
 
     return $result;
-}
-
-
-# parse the package directories in local.mk
-
-sub buildroot_parse_packages_directories
-{
-    # packages listed in alphabetical order, dashes replaced with underscores
-
-    my $package_overrides_filename = "local.mk";
-
-    my $package_overrides;
-
-    {
-	# see also https://stackoverflow.com/questions/8963400/the-correct-way-to-read-a-data-file-into-an-array
-
-	# local $/;		# enable localized slurp mode
-
-	$package_overrides = [ `cat 2>/dev/null "$package_overrides_filename"` ];
-    }
-
-    # loop over all lines in local.mk
-
-    my $overriden_packages;
-
-    foreach my $package_override (@$package_overrides)
-    {
-	# we are only interested custom repositories
-
-	if ($package_override !~ /_OVERRIDE_SRCDIR/)
-	{
-	    next;
-	}
-
-	if ($package_override =~ /_RSYNC_EXCLUSIONS/)
-	{
-	    next;
-	}
-
-	# skip comment lines
-
-	if ($package_override =~ /^\s*#/)
-	{
-	    next;
-	}
-
-	#! beware of unmatched characters in the directory name
-
-	$package_override =~ /^\s*(\w+)_OVERRIDE_SRCDIR\s*=\s*([\w\/\.-]*)/;
-
-	my $package_name = lc $1;
-
-	# # skip gcc related overrides, buildroot ignores them, we deal with them elsewhere
-
-	# if ($package_name eq 'cr_gcc')
-	# {
-	#     next;
-	# }
-
-	my $package_directory = $2;
-
-	$overriden_packages->{$package_name}->{directory} = $package_directory;
-
-	if ($option_verbose)
-	{
-	    print "$global_program_name: *** added for package $package_name OVERRIDE_SRCDIR $package_directory\n";
-	}
-    }
-
-    # propagate the overriden_packages
-
-    return $overriden_packages;
-}
-
-
-# prepare the package directories in local.mk
-
-sub buildroot_process_packages_directories
-{
-    my $overriden_packages = shift;
-
-    # loop over all the overriden packages
-
-    foreach my $package_name (sort keys %$overriden_packages)
-    {
-	# skip gcc related overrides, buildroot ignores them, we deal
-	# with them in the build command of the toolchain target
-
-	if ($package_name eq 'cr_gcc')
-	{
-	    next;
-	}
-
-	# get the package source directory from the override
-
-	my $package_directory = $overriden_packages->{$package_name}->{directory};
-
-	# get the build directory from the globally known packages
-
-	my $packages = $global_technical_project_configuration->{packages};
-
-	my $build_directory = $packages->{$package_name}->{build_directory};
-
-	if (not defined $build_directory)
-	{
-	    die "$global_program_name: *** Fatal: package $package_name has no build_directory defined in the package list";
-	}
-
-	# Engine::execute_shell_command("mkdir --parents '$build_directory'");
-
-	# Engine::execute_shell_command("cp -a '$package_directory'/* '$build_directory'");
-
-	# my $stamp_filenames = $global_technical_project_configuration->{stamp_filenames};
-
-	# my $stamp_built = $stamp_filenames->[0];
-
-	# Engine::execute_shell_command("rm -f '$build_directory/$stamp_built'");
-    }
 }
 
 
