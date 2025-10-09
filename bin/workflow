@@ -6568,7 +6568,7 @@ sub execute_scheduled_command
     }
     elsif ($dry_run)
     {
-	#! this should never be called, if I am correct
+	#! this should never be called, this is already called from execute_all_scheduled_commands()
 
 	execute_scheduled_command_option_dry_run($scheduled_command);
     }
