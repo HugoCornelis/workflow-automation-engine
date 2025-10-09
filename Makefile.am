@@ -64,7 +64,7 @@ dist-hook:
 install-data-local: neurospaces_cpan_modules
 
 install-data-hook:
-	@echo "Developer package installation finished"
+	@echo "workflow and vigilia installation finished"
 
 neurospaces_cpan_modules:
 	@echo "======================== Installing CPAN modules"

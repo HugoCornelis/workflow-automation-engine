@@ -52,7 +52,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 						       {
 							comment => "The timeout value of this test is a guess, it could be off by a large amount.",
 							description => "Can we install the workflow engine package in the Docker container ?",
-							read => 'Developer package installation finished',
+							read => 'workflow and vigilia installation finished',
 							timeout => 50,
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },

@@ -51,12 +51,12 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     command_tests => [
 						       {
 							description => "Can we install the developer package in the Docker container ?",
-							read => 'Developer package installation finished',
+							read => 'workflow and vigilia installation finished',
 							timeout => 5,
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
 						      ],
-				     description => "showing that the container works: installing the Developer package in the Docker container",
+				     description => "showing that the container works: installing the workflow and vigilia in the Docker container",
 				    },
 				    {
 				     command => 'docker-snapshot --snapshot-image-name testing-developer-package',
