@@ -8586,6 +8586,17 @@ sub command_hash_subs_generate
 
     # generate a list of the available command subroutines
 
+    my $subroutines_unfiltered;
+
+    {
+	no strict "refs";
+
+	$subroutines_unfiltered
+	    = [
+	       keys %{"${package_name}"}
+	      ];
+    }
+
     my $subroutines = [
 		       sort
 
@@ -8593,7 +8604,7 @@ sub command_hash_subs_generate
 
 		       grep
 		       {
-		       	   defined &{"$_"};
+			   defined &{"$_"};
 		       }
 
 		       # clarify that they belong to the Command:: package
@@ -8613,7 +8624,7 @@ sub command_hash_subs_generate
 		       # {
 		       # 	   not defined &$_;
 		       # }
-		       keys %Command::,
+		       @$subroutines_unfiltered
 		      ];
 
     # rework, select and sort these commands
@@ -8625,12 +8636,13 @@ sub command_hash_subs_generate
     {
 	use Data::Dumper;
 
-	print STDERR Dumper(
-			    {
-			     defined_found_subroutines => $subroutines,
-			     global_technical_project_configuration_targets => $targets,
-			    },
-			   );
+	print Dumper(
+		     {
+		      defined_found_subroutines => $subroutines,
+		      global_technical_project_configuration_targets => $targets,
+		      package_name => $package_name,
+		     },
+		    );
     }
 
     my $commands = {
@@ -8639,15 +8651,11 @@ sub command_hash_subs_generate
 			$_ => { type => 'sub' };
 		    }
 
-		    # alphabatically group and make sense
-
-		    sort
-
 		    # remove internal commands and commands that don't belong to a target
 
 		    grep
 		    {
-			$_ !~ /Command::/;
+			$_ !~ /$package_name/;
 		    }
 
 		    # remove Command:: package name and split target name from operation name on that target
@@ -8664,7 +8672,7 @@ sub command_hash_subs_generate
 			$_;
 		    }
 
-		    # no help subroutines if so asked
+		    # filter out completion and help subroutines if so asked
 
 		    grep
 		    {
@@ -8702,7 +8710,13 @@ sub command_hash_subs_generate
     {
 	use Data::Dumper;
 
-	print Dumper( { all_targets => $targets, }, );
+	print Dumper(
+		     {
+		      all_targets => $targets,
+		      commands => $commands,
+		      package_name => $package_name,
+		     },
+		    );
     }
 
     return $commands;
@@ -9263,14 +9277,14 @@ options:
 	       %$global_known_command_packages_builtin,
 	      };
 
-	my $module_all_help
-	    = [
+	my $all_module_all_subs
+	    = {
 	       map
 	       {
-		   command_hash_subs_generate($_, "with help subs");
+		   $_ => command_hash_subs_generate($_ . "::", "with help subs");
 	       }
 	       keys %$known_command_packages,
-	      ];
+	      };
 
 	if ($option_help_module)
 	{
@@ -9279,6 +9293,8 @@ options:
 		use YAML;
 
 		print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+
+		print Dump( { $option_target => $all_module_all_subs->{$option_target} } );
 
 		exit 0;
 	    }
