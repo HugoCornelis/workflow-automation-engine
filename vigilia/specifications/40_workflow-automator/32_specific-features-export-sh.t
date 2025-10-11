@@ -144,7 +144,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # script generated with feature-testing-workflow
 #
-# the command line to generate this script was:
+# the command line used to generate this script was:
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh
 #
@@ -204,7 +204,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 #
 # script generated with feature-testing-workflow
 #
-# the command line to generate this script was:
+# the command line used to generate this script was:
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 0
 #
@@ -264,7 +264,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # script generated with feature-testing-workflow
 #
-# the command line to generate this script was:
+# the command line used to generate this script was:
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 1
 #
@@ -324,7 +324,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # script generated with feature-testing-workflow
 #
-# the command line to generate this script was:
+# the command line used to generate this script was:
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 2
 #
@@ -384,7 +384,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # script generated with feature-testing-workflow
 #
-# the command line to generate this script was:
+# the command line used to generate this script was:
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 3
 #
