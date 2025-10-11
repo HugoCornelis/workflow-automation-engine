@@ -2444,7 +2444,7 @@ sub spawn_new
 
 		    $global_running_command_definition = $command_line;
 
-		    $reporter->report_message("message_command", "Executing $command $command_line->{original_command}");
+		    $reporter->report_message("message_command", "Executing '$command_line->{original_command}'");
 
 		    # remember to do startup testing
 
@@ -5423,7 +5423,7 @@ sub ec_examine
 
 	    $comment = $command_test->{comment};
 
-	    $description = $command_test->{description} ? "Test: $command_test->{description}" : "(Warning: no description of this command_test when examining the execution context)";
+	    $description = $command_test->{description} ? $command_test->{description} : "(Warning: no description of this command_test when examining the execution context)";
 
 	    $name = "";
 	}
@@ -5433,7 +5433,7 @@ sub ec_examine
 
 	    $comment = $command_definition->{comment};
 
-	    $description = $command_definition->{description} ? "command $command_definition->{description}" : "(Warning: no description of this command_definition when examining the execution context)";
+	    $description = $command_definition->{description} ? $command_definition->{description} : "(Warning: no description of this command_definition when examining the execution context)";
 
 	    $name = " ($command_definition->{command})";
 	}
@@ -5443,7 +5443,7 @@ sub ec_examine
 
 	    $comment = $module_definition->{comment};
 
-	    $description = "module $module_definition->{description}";
+	    $description = $module_definition->{description};
 
 	    $name = " ($module_definition->{name})";
 	}
@@ -5456,12 +5456,12 @@ sub ec_examine
 	}
 	else
 	{
-	    $reporter->report_message_start($message_level, "Running tests of $description$name");
+	    $reporter->report_message_start($message_level, "$description$name");
 	}
 
 	if ($comment)
 	{
-	    $reporter->report_message("message_details", "Comment: $comment");
+	    $reporter->report_message("message_details", $comment);
 	}
     }
 
