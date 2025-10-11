@@ -54,7 +54,6 @@ $SIG{'INT'}
 
 
 our $option_bash_completion;
-our $option_branch = "master";
 our $option_commands = [];
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
@@ -87,7 +86,6 @@ our $option_verbose;
 our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
-       "branch=s" => \$option_branch,
        "command=s" => $option_commands,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
@@ -8346,7 +8344,6 @@ sub bash_completion_generate_options
     my $result = [
 		  qw(
 			--bash-completion
-			--branch
 			--command
 			--dry-run
 			--dump-all-interaction-roles
@@ -8360,8 +8357,6 @@ sub bash_completion_generate_options
 			--export-times
 			--export-verbose
 			--force-rebuild
-			--forward-destination
-			--forward-source
 			--help
 			--help-commands
 			--help-field-project-name
@@ -9147,7 +9142,6 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
-    --branch                        git branch to work with.
     --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -9162,8 +9156,6 @@ options:
     --export-times                  export the times when commands are started and ended to a file with the given name.
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
-    --forward-destination           the target file forward destination to copy to.
-    --forward-source                the target file forward source to copy from.
     --help                          display usage information and stop execution.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
