@@ -55,6 +55,7 @@ $SIG{'INT'}
 
 our $option_bash_completion;
 our $option_commands = [];
+our $option_details;
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
 our $option_dump_interaction_roles;
@@ -87,6 +88,7 @@ our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
        "command=s" => $option_commands,
+       "d|details+" => \$option_details,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
@@ -115,6 +117,15 @@ our $global_options
        "v|verbose+" => \$option_verbose,
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
+
+       "dd" => sub { $option_details += 2 },
+       "ddd" => sub { $option_details += 3 },
+       "dddd" => sub { $option_details += 4 },
+       "ddddd" => sub { $option_details += 5 },
+       "dddddd" => sub { $option_details += 6 },
+       "ddddddd" => sub { $option_details += 7 },
+       "dddddddd" => sub { $option_details += 8 },
+       "ddddddddd" => sub { $option_details += 9 },
 
        "vv" => sub { $option_verbose += 2 },
        "vvv" => sub { $option_verbose += 3 },
@@ -5993,6 +6004,10 @@ sub execute_scheduled_command_option_dry_run
     if ($dry_run =~ /^[0-9]+$/)
     {
 	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
+
+	if ($option_details)
+	{
+	}
     }
 
     my $cd_command = _process_cd_command($executable_command);
@@ -6209,6 +6224,10 @@ sub execute_option_interactions
 	    my $indent = " " x $interaction_indent;
 
 	    print "$indent'$executable_command'\n";
+
+	    if ($option_details)
+	    {
+	    }
 	}
     }
 }
@@ -8345,6 +8364,7 @@ sub bash_completion_generate_options
 		  qw(
 			--bash-completion
 			--command
+			--details
 			--dry-run
 			--dump-all-interaction-roles
 			--dump-interaction-roles
@@ -9158,6 +9178,7 @@ options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
+    --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
