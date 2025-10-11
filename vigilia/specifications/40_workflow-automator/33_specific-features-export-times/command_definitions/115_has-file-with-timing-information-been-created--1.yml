@@ -1,0 +1,27 @@
+---
+command: cat python-python-command-abc.times
+command_tests:
+  - description: Has the file with timing information been created (1)?
+    read: |+
+      #!/bin/sh
+      #
+      # script generated with feature-testing-workflow
+      #
+      # the command line used to generate this script was:
+      #
+      # /home/neurospaces/bin/feature-testing-workflow python python_command --export-times abc
+      #
+      /home/neurospaces/bin/feature-testing-workflow: *** Starting ('echo 'python_command from bash (1)'') at Sat Oct 11 11:38:32 2025
+      /home/neurospaces/bin/feature-testing-workflow: *** Ended    ('echo 'python_command from bash (1)'') at Sat Oct 11 11:38:32 2025
+      /home/neurospaces/bin/feature-testing-workflow: *** Duration (s): 0
+      
+      /home/neurospaces/bin/feature-testing-workflow: *** Starting ('echo 'python_command from bash (2)'') at Sat Oct 11 11:38:32 2025
+      /home/neurospaces/bin/feature-testing-workflow: *** Ended    ('echo 'python_command from bash (2)'') at Sat Oct 11 11:38:32 2025
+      /home/neurospaces/bin/feature-testing-workflow: *** Duration (s): 0
+      
+      /home/neurospaces/bin/feature-testing-workflow: *** Starting ('echo 'python_command from bash (3)'') at Sat Oct 11 11:38:32 2025
+      /home/neurospaces/bin/feature-testing-workflow: *** Ended    ('echo 'python_command from bash (3)'') at Sat Oct 11 11:38:32 2025
+      /home/neurospaces/bin/feature-testing-workflow: *** Duration (s): 0
+
+    white_space: convert seen 0a to 0d 0a newlines
+description: Has the file with timing information been created (1)?

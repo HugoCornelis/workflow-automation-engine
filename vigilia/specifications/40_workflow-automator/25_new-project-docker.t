@@ -115,7 +115,7 @@ make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engi
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation engine?",
-						   read => "Developer package installation finished
+						   read => "workflow and vigilia installation finished
 make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
@@ -248,7 +248,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 touch ./neurospaces_cpan_modules
 make  install-data-hook
 make[3]: Entering directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
-Developer package installation finished
+workflow and vigilia installation finished
 make[3]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[2]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'
 make[1]: Leaving directory \'/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master\'

@@ -5191,8 +5191,6 @@ our $global_exported_sh_filename;
 
 our $global_exported_times_file;
 
-our $global_exported_times_filename;
-
 
 # note: keys are interaction_roles, values are working directories
 
@@ -6318,7 +6316,7 @@ sub execute_option_export_sh
 	print $global_exported_sh_file "#\n";
 	print $global_exported_sh_file "# script generated with $::global_program_name\n";
 	print $global_exported_sh_file "#\n";
-	print $global_exported_sh_file "# the command line to generate this script was:\n";
+	print $global_exported_sh_file "# the command line used to generate this script was:\n";
 	print $global_exported_sh_file "#\n";
 	print $global_exported_sh_file "# $global_command_line\n";
 	print $global_exported_sh_file "#\n";
@@ -6570,7 +6568,7 @@ sub execute_scheduled_command
     }
     elsif ($dry_run)
     {
-	#! this should never be called, if I am correct
+	#! this should never be called, this is already called from execute_all_scheduled_commands()
 
 	execute_scheduled_command_option_dry_run($scheduled_command);
     }
@@ -6584,28 +6582,25 @@ sub execute_scheduled_command
 	{
 	    if (not defined $global_exported_times_file)
 	    {
-		if (not defined $global_exported_times_filename)
-		{
-		    $global_exported_times_filename = $export_times->{filename};
-		}
+		my $exported_times_filename = $export_times->{filename};
 
-		my $ok = open($global_exported_times_file, ">", $global_exported_times_filename);
+		my $ok = open($global_exported_times_file, ">", $exported_times_filename);
 
 		if (not $ok)
 		{
-		    die "*** Error: $global_program_name: cannot open $global_exported_times_filename for writing ($!)";
+		    die "*** Error: $global_program_name: cannot open $exported_times_filename for writing ($!)";
 		}
 
 		print $global_exported_times_file "#!/bin/sh\n";
 		print $global_exported_times_file "#\n";
 		print $global_exported_times_file "# script generated with $::global_program_name\n";
 		print $global_exported_times_file "#\n";
-		print $global_exported_times_file "# the command line to generate this script was:\n";
+		print $global_exported_times_file "# the command line used to generate this script was:\n";
 		print $global_exported_times_file "#\n";
 		print $global_exported_times_file "# $global_command_line\n";
 		print $global_exported_times_file "#\n";
 
-		chmod 0644, $global_exported_times_filename;
+		chmod 0644, $exported_times_filename;
 	    }
 	}
 
@@ -6936,6 +6931,8 @@ sub execute_shell_command
 	    # configure the export_times option
 
 	    $export_times = { filename => $option_export_times, };
+
+	    $options->{export_times} = $export_times;
 	}
 	else
 	{
@@ -6954,10 +6951,14 @@ sub execute_shell_command
 	    # set the shared filename
 
 	    $export_times->{filename} = $option_export_times;
+
+	    $options->{export_times} = $export_times;
 	}
 	else
 	{
 	    # use the filename set in the command specific options
+
+	    $options->{export_times} = $export_times;
 	}
     }
 
@@ -8805,9 +8806,6 @@ sub main
 	$option_export_times =~ s/_/-/g;
     }
 
-    # we are not using a build server
-
-    else
     {
 	# are we dry running all the commands of a module (target)?
 

@@ -75,11 +75,22 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libengine-pkcs11-openssl \
     sbsigntool
 
-# packages required for testing of: tmux
+# packages required for testing of tmux
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     openssh-server \
     sshpass \
     tmux
+
+# packages required for testing of option_export_times
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    libfaketime
+
+# Set up libfaketime globally
+ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
+
+# the container will use this time
+ENV FAKETIME="@2025-10-11 11:38:32"
+
 
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8

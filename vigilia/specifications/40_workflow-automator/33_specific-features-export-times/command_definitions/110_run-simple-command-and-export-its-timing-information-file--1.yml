@@ -1,0 +1,16 @@
+---
+command: feature-testing-workflow python python_command --export-times abc
+command_tests:
+  - description: run a simple command and export its timing information to a file (1)
+    read: |
+      # echo 'python_command from bash (1)'
+      #
+      python_command from bash (1)
+      # echo 'python_command from bash (2)'
+      #
+      python_command from bash (2)
+      # echo 'python_command from bash (3)'
+      #
+      python_command from bash (3)
+    white_space: convert seen 0a to 0d 0a newlines
+description: run a simple command and export its timing information to a file (1)
