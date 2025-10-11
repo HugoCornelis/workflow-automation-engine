@@ -8434,7 +8434,9 @@ sub command_hash_with_structure_generate
 {
     my $with_feature_subs = shift;
 
-    my $commands = command_list_generate($with_feature_subs);
+    my $command_hash = command_hash_typed_generate($with_feature_subs);
+
+    my $commands = [ keys %$command_hash, ];
 
     # set default result
 
@@ -8492,18 +8494,6 @@ sub command_hash_typed_generate
 	   %$result,
 	   %$commands_yaml,
 	  };
-
-    return $result;
-}
-
-
-sub command_list_generate
-{
-    my $with_feature_subs = shift;
-
-    my $command_hash = command_hash_typed_generate($with_feature_subs);
-
-    my $result = [ keys %$command_hash, ];
 
     return $result;
 }
@@ -9207,7 +9197,9 @@ options:
     {
 	use YAML;
 
-	my $commands = command_list_generate();
+	my $command_hash = command_hash_typed_generate();
+
+	my $commands = [ keys %$command_hash, ];
 
 	if ($option_target)
 	{
