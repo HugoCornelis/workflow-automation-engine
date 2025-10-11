@@ -26,7 +26,6 @@ my $option_dump_file_structured_json;
 my $option_dump_file_structured_yaml;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
 my $option_flattenout;
-my $option_harness_prune;
 my $option_help;
 my $option_images_clean;
 my $option_input_command_tests = [];
@@ -113,7 +112,6 @@ options:
     --flattenout                 Flattenout the test definitions before testing,
                                  this experimental feature might increase test performance,
                                  by recycling test definitions.
-    --harness-prune              Remove all the docker containers.
     --help                       Print usage information.
     --images-clean               Remove the images and containers that are referenced by the specifications (also enable --show-images for this to work).
     --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
@@ -164,7 +162,6 @@ options:
 					    "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
 					    "email" => \$option_email,
 					    "flattenout" => \$option_flattenout,
-					    "harness-prune!" => \$option_harness_prune,
 					    "help!" => \$option_help,
 					    "images-clean!" => \$option_images_clean,
 					    "input-command-tests=s" => $option_input_command_tests,
@@ -606,7 +603,6 @@ sub parse_options
 	   dump_file_structured_yaml => $option_dump_file_structured_yaml,
 	   email => $option_email,
 	   flattenout => $option_flattenout,
-	   harness_prune => $option_harness_prune,
 	   help => $option_help,
 	   images_clean => $option_images_clean,
 	   input_commands => $option_input_commands,

@@ -34,7 +34,6 @@ command_tests:
           --flattenout                 Flattenout the test definitions before testing,
                                        this experimental feature might increase test performance,
                                        by recycling test definitions.
-          --harness-prune              Remove all the docker containers.
           --help                       Print usage information.
           --images-clean               Remove the images and containers that are referenced by the specifications (also enable --show-images for this to work).
           --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
