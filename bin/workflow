@@ -3538,13 +3538,18 @@ sub builtin_start_project
 {
     my $arguments = shift || [];
 
-    my $command_files = [ split '\n', `ls -1 2>/dev/null *-commands*`, ];
+    my $non_empty_directory = [ split '\n', `ls -1 2>/dev/null`, ];
+
+    if (scalar @$non_empty_directory)
+    {
+	die "$global_program_name: *** Error: Please empty this directory before starting a new project.";
+    }
 
     my $result;
 
     if (not $::option_dry_run)
     {
-	my $project_name = $arguments->[0] || $command_files->[0];
+	my $project_name = $arguments->[0];
 
 	if (not defined $project_name)
 	{
@@ -3679,9 +3684,9 @@ sub builtin_start_project
     {
 	# schedule one shell command such that it is visible in diagrams for this command
 
-	my $commands = [ "cat 'workflow-project.pl'", ];
+	my $commands = "echo builtin_start_project";
 
-	execute_shell_command_array($commands);
+	execute_shell_command($commands);
     }
 
     return $result;
