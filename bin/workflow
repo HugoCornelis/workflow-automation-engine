@@ -8465,6 +8465,12 @@ sub command_hash_with_structure_generate
 }
 
 
+# generate a hash that maps each known commands to a description with
+# information:
+#
+# type: one of 'sub', 'sh', 'yml'.
+#
+
 sub command_hash_typed_generate
 {
     my $with_feature_subs = shift;
@@ -8521,7 +8527,7 @@ sub command_hash_data_directory_generate
 	    = {
 	       map
 	       {
-		   $_ => $type,
+		   $_ => { type => $type },
 	       }
 	       sort
 	       map
@@ -8630,7 +8636,7 @@ sub command_hash_subs_generate
     my $commands = {
 		    map
 		    {
-			$_ => 'sub';
+			$_ => { type => 'sub' };
 		    }
 
 		    # alphabatically group and make sense
@@ -9048,7 +9054,7 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $command_hash->{"$requested_target $command"};
+		    my $type = $command_hash->{"$requested_target $command"}->{type};
 
 		    # ... either as a regular perl sub ...
 
