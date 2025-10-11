@@ -325,6 +325,17 @@ options:
 				description => "help page of the workflow engine",
 			       },
 			       {
+				command => 'mkdir workflow-test-non-empty-directory && cd workflow-test-non-empty-directory && touch abc && workflow builtin start_project workflow-tests',
+				command_tests => [
+						  {
+						   description => "Can we start a new project in a non-empty directory (we should not)?",
+						   read => 'workflow: *** Error: Please empty this directory before starting a new project.',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "failure starting a new project in a non-empty directory",
+			       },
+			       {
 				command => 'mkdir workflow-test && cd workflow-test && workflow builtin start_project workflow-tests',
 				command_tests => [
 						  {
