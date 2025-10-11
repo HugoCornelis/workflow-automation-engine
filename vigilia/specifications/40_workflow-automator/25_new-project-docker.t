@@ -286,7 +286,6 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
-    --branch                        git branch to work with.
     --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -301,8 +300,6 @@ options:
     --export-times                  export the times when commands are started and ended to a file with the given name.
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
-    --forward-destination           the target file forward destination to copy to.
-    --forward-source                the target file forward source to copy from.
     --help                          display usage information and stop execution.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
@@ -681,7 +678,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options?",
-						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
+						   read => 'bash-completion --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -982,7 +979,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options for the new installed configuration?",
-						   read => 'bash-completion --branch --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --forward-destination --forward-source --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
+						   read => 'bash-completion --command --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
