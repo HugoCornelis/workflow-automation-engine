@@ -1,0 +1,15 @@
+---
+command: bin/workflow Command::Git --help-module
+command_tests:
+  - description: help of the Command::Git builtin convenience convenience module
+    read: |
+      Command::Git:
+        description: workflows for working with Git
+        documentation: These workflows implement convenience interactions with Git.
+      ---
+      Command::Git:
+        builtin git_move_file_across_keep_history:
+          type: sub
+        builtin git_move_file_across_keep_history_help:
+          type: sub
+description: help of the Command::Git builtin convenience module
