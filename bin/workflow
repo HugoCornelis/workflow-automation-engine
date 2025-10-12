@@ -8586,124 +8586,102 @@ sub command_hash_subs_generate
 
     # generate a list of the available command subroutines
 
-    my $subroutines_unfiltered;
+    my $all_references;
 
     {
 	no strict "refs";
 
-	$subroutines_unfiltered
+	$all_references
 	    = [
 	       keys %{"${package_name}"}
 	      ];
     }
 
-    my $subroutines = [
-		       sort
+    my $all_subroutines
+	= [
+	   sort
 
-		       # select only code references
+	   # select only code references
 
-		       grep
-		       {
-			   defined &{"$_"};
-		       }
+	   grep
+	   {
+	       defined &{"$_"};
+	   }
 
-		       # clarify that they belong to the Command:: package
+	   # clarify that they belong to the Command:: package
 
-		       map
-		       {
-			   "$package_name$_";
-		       }
-
-		       # select only code references
-
-		       # grep
-		       # {
-		       # 	   ref {Command::}->{$_} eq 'CODE';
-		       # }
-		       # grep
-		       # {
-		       # 	   not defined &$_;
-		       # }
-		       @$subroutines_unfiltered
-		      ];
+	   map
+	   {
+	       "$package_name$_";
+	   }
+	   @$all_references
+	  ];
 
     # rework, select and sort these commands
 
     my $targets = $global_technical_project_configuration->{targets};
 
-    if (defined $option_verbose
-	and $option_verbose > 2)
-    {
-	use Data::Dumper;
+    my $all_commands
+	= {
+	   map
+	   {
+	       $_ => { type => 'sub' };
+	   }
 
-	print Dumper(
-		     {
-		      defined_found_subroutines => $subroutines,
-		      global_technical_project_configuration_targets => $targets,
-		      package_name => $package_name,
-		     },
-		    );
-    }
+	   # remove internal commands and commands that don't belong to a target
 
-    my $commands = {
-		    map
-		    {
-			$_ => { type => 'sub' };
-		    }
+	   grep
+	   {
+	       $_ !~ /$package_name/;
+	   }
 
-		    # remove internal commands and commands that don't belong to a target
+	   # remove the Command:: package name (or other package_name)
+	   # and split target name from operation name on that target
 
-		    grep
-		    {
-			$_ !~ /$package_name/;
-		    }
+	   map
+	   {
+	       foreach my $target (sort keys %$targets)
+	       {
+		   $target =~ s/-/_/g;
 
-		    # remove Command:: package name and split target name from operation name on that target
+		   s/${package_name}${target}_(.*)/${target} $1/g;
+	       }
 
-		    map
-		    {
-			foreach my $target (sort keys %$targets)
-			{
-			    $target =~ s/-/_/g;
+	       $_;
+	   }
 
-			    s/Command::${target}_(.*)/${target} $1/g;
-			}
+	   # filter out completion and help subroutines if so asked
 
-			$_;
-		    }
+	   grep
+	   {
+	       my $sub_name = $_;
 
-		    # filter out completion and help subroutines if so asked
+	       my $is_help = ($sub_name =~ m(_help$));
 
-		    grep
-		    {
-			my $sub_name = $_;
+	       my $is_completion = ($sub_name =~ m(_completions$));
 
-			my $is_help = ($sub_name =~ m(_help$));
+	       my $is_none = !$is_help && !$is_completion;
 
-			my $is_completion = ($sub_name =~ m(_completions$));
+	       my $allow_none = 'always';
 
-			my $is_none = !$is_help && !$is_completion;
+	       my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
 
-			my $allow_none = 'always';
+	       my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
 
-			my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
+	       my $result;
 
-			my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
+	       $result
+		   = ($is_none && $allow_none
+		      || $is_help && $allow_help
+		      || $is_completion && $allow_completion);
 
-			my $result;
+	       $result;
+	   }
 
-			$result
-			    = ($is_none && $allow_none
-			       || $is_help && $allow_help
-			       || $is_completion && $allow_completion);
+	   # all internal commands
 
-			$result;
-		    }
-
-		    # all internal commands
-
-		    sort @$subroutines,
-		   };
+	   sort @$all_subroutines,
+	  };
 
     if (defined $option_verbose
 	and $option_verbose > 2)
@@ -8712,14 +8690,16 @@ sub command_hash_subs_generate
 
 	print Dumper(
 		     {
+		      all_commands => $all_commands,
+		      all_references => $all_references,
+		      all_subroutines => $all_subroutines,
 		      all_targets => $targets,
-		      commands => $commands,
 		      package_name => $package_name,
 		     },
 		    );
     }
 
-    return $commands;
+    return $all_commands;
 }
 
 
@@ -9283,7 +9263,7 @@ options:
 	       {
 		   $_ => command_hash_subs_generate($_ . "::", "with help subs");
 	       }
-	       keys %$known_command_packages,
+	       sort keys %$known_command_packages,
 	      };
 
 	if ($option_help_module)
