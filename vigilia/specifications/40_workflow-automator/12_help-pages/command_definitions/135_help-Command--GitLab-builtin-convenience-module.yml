@@ -1,0 +1,17 @@
+---
+command: bin/workflow Command::GitLab --help-module
+command_tests:
+  - description: help of the Command::GitLab builtin convenience module
+    read: |
+      Command::GitLab:
+        description: workflows for working with GitLab
+        documentation: These workflows implement convenience interactions to push and pull source code from GitLab.
+      ---
+      Command::GitLab:
+        builtin gitlab_clone_install:
+          type: sub
+        builtin gitlab_create_unused:
+          type: sub
+        builtin gitlab_push:
+          type: sub
+description: help of the Command::GitLab builtin convenience module

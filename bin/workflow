@@ -8434,7 +8434,9 @@ sub command_hash_with_structure_generate
 {
     my $with_feature_subs = shift;
 
-    my $commands = command_list_generate($with_feature_subs);
+    my $command_hash = command_hash_typed_generate($with_feature_subs);
+
+    my $commands = [ keys %$command_hash, ];
 
     # set default result
 
@@ -8462,6 +8464,12 @@ sub command_hash_with_structure_generate
     return $result;
 }
 
+
+# generate a hash that maps each known commands to a description with
+# information:
+#
+# type: one of 'sub', 'sh', 'yml'.
+#
 
 sub command_hash_typed_generate
 {
@@ -8497,18 +8505,6 @@ sub command_hash_typed_generate
 }
 
 
-sub command_list_generate
-{
-    my $with_feature_subs = shift;
-
-    my $command_hash = command_hash_typed_generate($with_feature_subs);
-
-    my $result = [ keys %$command_hash, ];
-
-    return $result;
-}
-
-
 sub command_hash_data_directory_generate
 {
     my $type = shift;
@@ -8531,7 +8527,7 @@ sub command_hash_data_directory_generate
 	    = {
 	       map
 	       {
-		   $_ => $type,
+		   $_ => { type => $type },
 	       }
 	       sort
 	       map
@@ -8590,126 +8586,120 @@ sub command_hash_subs_generate
 
     # generate a list of the available command subroutines
 
-    my $subroutines = [
-		       sort
+    my $all_references;
 
-		       # select only code references
+    {
+	no strict "refs";
 
-		       grep
-		       {
-		       	   defined &{"$_"};
-		       }
+	$all_references
+	    = [
+	       keys %{"${package_name}"}
+	      ];
+    }
 
-		       # clarify that they belong to the Command:: package
+    my $all_subroutines
+	= [
+	   sort
 
-		       map
-		       {
-			   "$package_name$_";
-		       }
+	   # select only code references
 
-		       # select only code references
+	   grep
+	   {
+	       defined &{"$_"};
+	   }
 
-		       # grep
-		       # {
-		       # 	   ref {Command::}->{$_} eq 'CODE';
-		       # }
-		       # grep
-		       # {
-		       # 	   not defined &$_;
-		       # }
-		       keys %Command::,
-		      ];
+	   # clarify that they belong to the Command:: package
+
+	   map
+	   {
+	       "$package_name$_";
+	   }
+	   @$all_references
+	  ];
 
     # rework, select and sort these commands
 
     my $targets = $global_technical_project_configuration->{targets};
 
-    if (defined $option_verbose
-	and $option_verbose > 2)
-    {
-	use Data::Dumper;
+    my $all_commands
+	= {
+	   map
+	   {
+	       $_ => { type => 'sub' };
+	   }
 
-	print STDERR Dumper(
-			    {
-			     defined_found_subroutines => $subroutines,
-			     global_technical_project_configuration_targets => $targets,
-			    },
-			   );
-    }
+	   # remove internal commands and commands that don't belong to a target
 
-    my $commands = {
-		    map
-		    {
-			$_ => 'sub';
-		    }
+	   grep
+	   {
+	       $_ !~ /$package_name/;
+	   }
 
-		    # alphabatically group and make sense
+	   # remove the Command:: package name (or other package_name)
+	   # and split target name from operation name on that target
 
-		    sort
+	   map
+	   {
+	       foreach my $target (sort keys %$targets)
+	       {
+		   $target =~ s/-/_/g;
 
-		    # remove internal commands and commands that don't belong to a target
+		   s/${package_name}${target}_(.*)/${target} $1/g;
+	       }
 
-		    grep
-		    {
-			$_ !~ /Command::/;
-		    }
+	       $_;
+	   }
 
-		    # remove Command:: package name and split target name from operation name on that target
+	   # filter out completion and help subroutines if so asked
 
-		    map
-		    {
-			foreach my $target (sort keys %$targets)
-			{
-			    $target =~ s/-/_/g;
+	   grep
+	   {
+	       my $sub_name = $_;
 
-			    s/Command::${target}_(.*)/${target} $1/g;
-			}
+	       my $is_help = ($sub_name =~ m(_help$));
 
-			$_;
-		    }
+	       my $is_completion = ($sub_name =~ m(_completions$));
 
-		    # no help subroutines if so asked
+	       my $is_none = !$is_help && !$is_completion;
 
-		    grep
-		    {
-			my $sub_name = $_;
+	       my $allow_none = 'always';
 
-			my $is_help = ($sub_name =~ m(_help$));
+	       my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
 
-			my $is_completion = ($sub_name =~ m(_completions$));
+	       my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
 
-			my $is_none = !$is_help && !$is_completion;
+	       my $result;
 
-			my $allow_none = 'always';
+	       $result
+		   = ($is_none && $allow_none
+		      || $is_help && $allow_help
+		      || $is_completion && $allow_completion);
 
-			my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
+	       $result;
+	   }
 
-			my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
+	   # all internal commands
 
-			my $result;
-
-			$result
-			    = ($is_none && $allow_none
-			       || $is_help && $allow_help
-			       || $is_completion && $allow_completion);
-
-			$result;
-		    }
-
-		    # all internal commands
-
-		    sort @$subroutines,
-		   };
+	   sort @$all_subroutines,
+	  };
 
     if (defined $option_verbose
 	and $option_verbose > 2)
     {
 	use Data::Dumper;
 
-	print Dumper( { all_targets => $targets, }, );
+	print Dumper(
+		     {
+		      all_commands => $all_commands,
+		      all_references => $all_references,
+		      all_subroutines => $all_subroutines,
+		      all_targets => $targets,
+		      package_name => $package_name,
+		     },
+		    );
     }
 
-    return $commands;
+    return $all_commands;
 }
 
 
@@ -8844,6 +8834,10 @@ sub main
 
 	    my $all_commands = command_hash_with_structure_generate('with help subs');
 
+	    #! make sure we can provide help that depends on the type of the sub (sh, sub or yaml).
+
+	    my $all_typed_commands = command_hash_typed_generate('with help subs');
+
 	    # loop over all the matching targets
 
 	    my $all_defined_targets = $global_technical_project_configuration->{targets};
@@ -8859,6 +8853,27 @@ sub main
 		# reference subroutine names specific for the given target: they belong together
 
 		my $target_subroutines = $all_commands->{$defined_target};
+
+		my $target_subroutines_typed
+		    = {
+		       map
+		       {
+			   # register the subrouting name and its type
+
+			   $_ => $all_typed_commands->{$_};
+		       }
+		       grep
+		       {
+			   my $typed_command = shift;
+
+			   $typed_command =~ m(^([^\s]*));
+
+			   my $typed_target = $1;
+
+			   $typed_target eq $defined_target;
+		       }
+		       keys %$all_typed_commands
+		      };
 
 		# collect the subroutine names
 
@@ -9033,7 +9048,7 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $command_hash->{"$requested_target $command"};
+		    my $type = $command_hash->{"$requested_target $command"}->{type};
 
 		    # ... either as a regular perl sub ...
 
@@ -9182,7 +9197,9 @@ options:
     {
 	use YAML;
 
-	my $commands = command_list_generate();
+	my $command_hash = command_hash_typed_generate();
+
+	my $commands = [ keys %$command_hash, ];
 
 	if ($option_target)
 	{
@@ -9240,14 +9257,14 @@ options:
 	       %$global_known_command_packages_builtin,
 	      };
 
-	my $module_all_help
-	    = [
+	my $all_module_all_subs
+	    = {
 	       map
 	       {
-		   command_hash_subs_generate($_, "with help subs");
+		   $_ => command_hash_subs_generate($_ . "::", "with help subs");
 	       }
-	       keys %$known_command_packages,
-	      ];
+	       sort keys %$known_command_packages,
+	      };
 
 	if ($option_help_module)
 	{
@@ -9256,6 +9273,8 @@ options:
 		use YAML;
 
 		print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+
+		print Dump( { $option_target => $all_module_all_subs->{$option_target} } );
 
 		exit 0;
 	    }
