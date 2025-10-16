@@ -3956,10 +3956,10 @@ sub execute_shell_script_remote
 
     my $arguments = $3;
 
-    if (not -e $local_filename)
-    {
-	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
-    }
+    # if (not -e $local_filename)
+    # {
+    # 	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
+    # }
 
     my $remote = $options->{remote};
 
@@ -3978,6 +3978,15 @@ sub execute_shell_script_remote
     $remote_filename = "/tmp/$remote_filename";
 
     # copy the local file to the remote
+
+    my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
+
+    my $commands
+	= [
+	   "cd $commands_data_directory",
+	  ];
+
+    Engine::execute_shell_command_array($commands);
 
     my $scp_command = "scp -pr $ssh_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
 
