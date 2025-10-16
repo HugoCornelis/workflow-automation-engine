@@ -185,6 +185,16 @@ sub features_export_sh
 }
 
 
+sub features_remote_script_execution
+{
+    my $shell_script_filename = "scripts/feature-shell-script-remote arg1 arg2";
+
+    my $remote_ssh = $target_servers->{ssh_cd};
+
+    execute_shell_script_remote($shell_script_filename, { remote => $remote_ssh } );
+}
+
+
 sub features_timestamps
 {
     my $commands
