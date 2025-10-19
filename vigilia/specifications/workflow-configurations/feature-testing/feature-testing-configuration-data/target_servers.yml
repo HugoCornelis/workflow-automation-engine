@@ -28,6 +28,7 @@ target_servers:
   ssh_cd:
     description: interaction with the combined ssh to test cd commands
     name: ssh_cd
+    scp_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
     ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
     ssh_password: harness
     ssh_port: 22
