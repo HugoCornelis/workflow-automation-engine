@@ -5589,6 +5589,7 @@ sub create_or_fetch
 	       'Heterarch::Test::ExecutionContext::Harness::Builtin::Preparer' => 'builtin',
 	       'Heterarch::Test::ExecutionContext::Harness::Docker' => 'builtin',
 	       'Heterarch::Test::ExecutionContext::Harness::Docker::Image' => 'builtin',
+	       'Heterarch::Test::ExecutionContext::Harness::Docker::Remote' => 'builtin',
 	      };
 
 	if (exists $known_harnessing_types->{$harnessing_type}
@@ -6534,6 +6535,86 @@ sub new
     bless $harness;
 
     return $harness;
+}
+
+
+package Heterarch::Test::ExecutionContext::Harness::Docker::Remote;
+
+# this package assumes that a docker image must be built from a
+# dockerfile with pathname $self->{class}->{docker}->{dockerfile}.
+#
+# Its difference with its superclass, is that it treats the Docker
+# container as a remote: Test commands are executed locally but they
+# can connect to the remote to test specific features of the
+# application under test.
+
+our @ISA = ("Heterarch::Test::ExecutionContext::Harness::Docker");
+
+
+sub hs_construct_command_line
+{
+    my $self = shift;
+
+    my $command_definition = shift;
+
+    my $execution_context = shift;
+
+    my $command_line;
+
+    # if this is a command specific to this harness
+
+    if ($command_definition->{command} =~ m'^docker-snapshot')
+    {
+	# construct the regular command line
+
+	$command_line = $command_definition->cd_construct_command_line();
+
+	# process the command line
+
+	my $snapshot_id = $self->_docker_snapshot($command_line);
+
+	# tell the exeuction context that the command was internally processed
+
+	$command_line
+	    = {
+	       internal => "_docker_snapshot, result is ($snapshot_id)",
+	      };
+    }
+
+    # for regular commands
+
+    else
+    {
+	if (exists $command_definition->{command_user})
+	{
+	    my $command_user = $command_definition->{command_user};
+
+	    my $is_remote = $self->{command_users}->{$command_user}->{is_remote};
+
+	    if ($is_remote && $is_remote ne 'no')
+	    {
+		# generate the prefix for this harness and user
+
+		my $command_prefix = $self->_generate_command_prefix($command_definition, $execution_context);
+
+		# retrieve the shell command and its arguments
+
+		$command_line = $command_definition->cd_construct_command_line($command_prefix);
+	    }
+	    else
+	    {
+		$command_line = $command_definition->cd_construct_command_line('');
+	    }
+	}
+	else
+	{
+	    $command_line = $command_definition->cd_construct_command_line('');
+	}
+    }
+
+    # return result
+
+    return $command_line;
 }
 
 
