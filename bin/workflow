@@ -4004,7 +4004,7 @@ sub execute_shell_script_remote
 
     Engine::execute_shell_command_array($commands);
 
-    my $scp_command = "scp -pr $scp_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+    my $scp_command = "scp -pr $scp_options $local_filename.sh $interaction_role_with_policy_syntax$remote_filename.sh";
 
     if ($remote_prefix)
     {
@@ -4015,7 +4015,7 @@ sub execute_shell_script_remote
 
     # execute the remote file with the remote role
 
-    return Engine::execute_shell_command("$remote_filename $arguments", $options, @_);
+    return Engine::execute_shell_command("$remote_filename.sh $arguments", $options, @_);
 }
 
 
