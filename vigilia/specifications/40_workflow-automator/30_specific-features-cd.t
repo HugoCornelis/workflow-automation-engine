@@ -281,6 +281,7 @@ $ docker inspect --format=\'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{e
 				command => 'feature-testing-workflow features cd_tests_ssh',
 				command_tests => [
 						  {
+						   comment => 'this test connects from inside the container to that same container',
 						   description => "Do we see correct changes in directory during a workflow execution in an ssh session that uses the 'cd' command?",
 						   read => '# sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd
 #

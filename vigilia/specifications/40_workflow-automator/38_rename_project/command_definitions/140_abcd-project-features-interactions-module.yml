@@ -72,6 +72,15 @@ command_tests:
       ---
       
       ---
+      COMMAND: features_remote_script_execution
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-data '
+          'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@172.18.0.6:/tmp/feature-shell-script-remote.sh'
+                                                  '/tmp/feature-shell-script-remote.sh arg1 arg2'
+      
+      
+      ---
+      
+      ---
       COMMAND: features_timestamps
           'pwd'
           'pwd'

@@ -24,6 +24,7 @@ command_tests:
           --bash-completion               compute bash completion for the given command line.
                                           hint: the bash completion script implements completion for options, targets and commands.
           --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
+          --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
           --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
           --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
           --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).

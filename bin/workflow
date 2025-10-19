@@ -55,6 +55,7 @@ $SIG{'INT'}
 
 our $option_bash_completion;
 our $option_commands = [];
+our $option_details;
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
 our $option_dump_interaction_roles;
@@ -87,6 +88,7 @@ our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
        "command=s" => $option_commands,
+       "d|details+" => \$option_details,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
@@ -115,6 +117,15 @@ our $global_options
        "v|verbose+" => \$option_verbose,
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
+
+       "dd" => sub { $option_details += 2 },
+       "ddd" => sub { $option_details += 3 },
+       "dddd" => sub { $option_details += 4 },
+       "ddddd" => sub { $option_details += 5 },
+       "dddddd" => sub { $option_details += 6 },
+       "ddddddd" => sub { $option_details += 7 },
+       "dddddddd" => sub { $option_details += 8 },
+       "ddddddddd" => sub { $option_details += 9 },
 
        "vv" => sub { $option_verbose += 2 },
        "vvv" => sub { $option_verbose += 3 },
@@ -3133,7 +3144,7 @@ sub builtin_known_command_filenames
 
     # generate the list of command filenames
 
-    my $full_paths = (defined $arguments && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
+    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
 
     my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
 
@@ -3945,16 +3956,16 @@ sub execute_shell_script_remote
 
     my $arguments = $3;
 
-    if (not -e $local_filename)
-    {
-	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
-    }
+    # if (not -e $local_filename)
+    # {
+    # 	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
+    # }
 
     my $remote = $options->{remote};
 
     my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $remote, "scp");
 
-    my $ssh_options = $remote_and_interaction_role->{ssh_options} || "";
+    my $scp_options = $remote_and_interaction_role->{scp_options} || "";
 
 #    my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
@@ -3966,16 +3977,45 @@ sub execute_shell_script_remote
 
     $remote_filename = "/tmp/$remote_filename";
 
+    my $remote_prefix = "";
+
+    if (exists $remote->{ssh_password})
+    {
+	my $ssh_password = $remote->{ssh_password};
+
+	$remote_prefix .= "sshpass -p $ssh_password ";
+    }
+
+    if (exists $remote->{ssh_pass_file})
+    {
+	my $ssh_pass_file = $remote->{ssh_pass_file};
+
+	$remote_prefix .= "sshpass -f $ssh_pass_file ";
+    }
+
     # copy the local file to the remote
 
-    my $scp_command = "scp -pr $ssh_options $local_filename $interaction_role_with_policy_syntax$remote_filename";
+    my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
 
-    # execute_shell_command($scp_command, { %$options, remote => undef, }, @_);
+    my $commands
+	= [
+	   "cd $commands_data_directory",
+	  ];
+
+    Engine::execute_shell_command_array($commands);
+
+    my $scp_command = "scp -pr $scp_options $local_filename.sh $interaction_role_with_policy_syntax$remote_filename.sh";
+
+    if ($remote_prefix)
+    {
+	$scp_command = "$remote_prefix$scp_command"
+    }
+
     execute_shell_command($scp_command, { remote => undef, }, @_);
 
     # execute the remote file with the remote role
 
-    return Engine::execute_shell_command("$remote_filename $arguments", $options, @_);
+    return Engine::execute_shell_command("$remote_filename.sh $arguments", $options, @_);
 }
 
 
@@ -5663,6 +5703,8 @@ sub compute_remote_and_interaction_role
 
     my $ssh_options;
 
+	my $scp_options = "";
+
     if ($option_verbose)
     {
 	use Data::Dumper;
@@ -5741,6 +5783,18 @@ sub compute_remote_and_interaction_role
 		    my $ssh_password = $options_remote->{ssh_password};
 
 		    $remote_prefix .= "sshpass -p $ssh_password ";
+		}
+
+		if (exists $options_remote->{ssh_pass_file})
+		{
+		    my $ssh_pass_file = $options_remote->{ssh_pass_file};
+
+		    $remote_prefix .= "sshpass -f $ssh_pass_file ";
+		}
+
+		if (exists $options_remote->{scp_options})
+		{
+		    $scp_options .= "$options_remote->{scp_options} ";
 		}
 
 		if (exists $options_remote->{ssh_options})
@@ -5836,6 +5890,7 @@ sub compute_remote_and_interaction_role
      interaction_role_with_policy_syntax => $interaction_role_with_policy_syntax,
      remote_prefix => $remote_prefix,
      ssh_options => $ssh_options,
+	 scp_options => $scp_options
     };
 }
 
@@ -5993,6 +6048,10 @@ sub execute_scheduled_command_option_dry_run
     if ($dry_run =~ /^[0-9]+$/)
     {
 	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
+
+	if ($option_details)
+	{
+	}
     }
 
     my $cd_command = _process_cd_command($executable_command);
@@ -6209,6 +6268,10 @@ sub execute_option_interactions
 	    my $indent = " " x $interaction_indent;
 
 	    print "$indent'$executable_command'\n";
+
+	    if ($option_details)
+	    {
+	    }
 	}
     }
 }
@@ -7485,27 +7548,30 @@ execute_command = None
 execute_command_array = None
 execute_command_schedule = None
 execute_command_schedule_array = None
+execute_shell_script_remote = None
 print_to_stdout = None
 print_to_stderr = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, ref_print_to_stdout, ref_print_to_stderr):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr):
     global execute_command
     global execute_command_array
     global execute_command_schedule
     global execute_command_schedule_array
+    global execute_shell_script_remote
     global print_to_stdout
     global print_to_stderr
     execute_command = exe_command
     execute_command_array = exe_command_array
     execute_command_schedule = exe_command_schedule
     execute_command_schedule_array = exe_command_schedule_array
+    execute_shell_script_remote = exe_shell_script_remote
     print_to_stdout = ref_print_to_stdout
     print_to_stderr = ref_print_to_stderr
 
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&_python_print_to_stdout, \\&_python_print_to_stderr);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr);
 
 ";
 	my $commands_template_code
@@ -8345,6 +8411,7 @@ sub bash_completion_generate_options
 		  qw(
 			--bash-completion
 			--command
+			--details
 			--dry-run
 			--dump-all-interaction-roles
 			--dump-interaction-roles
@@ -9158,6 +9225,7 @@ options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
+    --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).

@@ -1,4 +1,25 @@
-$files = {};
+$files = {
+           '_<./bin/vigilia' => [
+                                  {
+                                    'fname' => './bin/vigilia',
+                                    'type' => 'user',
+                                    'value' => '1',
+                                    'line' => '354',
+                                    'text' => '    my $option_result = GetOptionsFromArray($arguments, %$options);
+',
+                                    'expr' => undef
+                                  },
+                                  {
+                                    'expr' => undef,
+                                    'fname' => './bin/vigilia',
+                                    'text' => '    my $output;
+',
+                                    'line' => '951',
+                                    'value' => '1',
+                                    'type' => 'user'
+                                  }
+                                ]
+         };
 $expr_list = [];
 $eval_saved_text = undef;
-$main_win_geometry = '1920x1051+0+0';
+$main_win_geometry = '1920x1001+0+0';

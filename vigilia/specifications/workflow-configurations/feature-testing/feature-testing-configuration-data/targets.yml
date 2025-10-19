@@ -15,6 +15,8 @@ targets:
     description: Python testing
   python_examples:
     description: these are python examples that explain how to use the APIs
+  scripts:
+    description: An archive of scripts to test workflow features.
   source_code:
     description: operations on the source code that is used for testing
   wiki_gitlab:
