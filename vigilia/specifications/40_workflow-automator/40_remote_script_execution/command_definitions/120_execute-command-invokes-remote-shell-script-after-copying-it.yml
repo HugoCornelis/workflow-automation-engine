@@ -1,0 +1,10 @@
+---
+command: feature-testing-workflow features remote_script_execution
+command_tests:
+  - description: execute a command that invokes a remote shell script after copying it
+    read: |2
+      This script is used to test remote shell script execution.
+      Arguments are: arg1 arg2
+      /root
+    white_space: convert seen 0a to 0d 0a newlines
+description: execute a command that invokes a remote shell script after copying it
