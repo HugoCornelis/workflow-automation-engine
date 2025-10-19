@@ -860,7 +860,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used.
+    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
@@ -946,7 +946,18 @@ sub harness_command_module_command_add
 
     $command_definition->{description} = $description;
 
-    my $output = `$command_to_be_tested`;
+    my $option_output = $options->{"command-output=s"};
+
+    my $output;
+
+    if (defined $$option_output)
+    {
+	$output = $$option_output;
+    }
+    else
+    {
+	$output = `$command_to_be_tested`;
+    }
 
     $command_definition->{command_tests} = [];
 
@@ -1015,7 +1026,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-update <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used.
+    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
@@ -1103,7 +1114,18 @@ sub harness_command_module_command_update
 
     $command_definition->{description} = $description;
 
-    my $output = `$command_to_be_tested`;
+    my $option_output = $options->{"command-output=s"};
+
+    my $output;
+
+    if (defined $$option_output)
+    {
+	$output = $$option_output;
+    }
+    else
+    {
+	$output = `$command_to_be_tested`;
+    }
 
     $command_definition->{command_tests} = [];
 
