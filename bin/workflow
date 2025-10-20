@@ -2379,6 +2379,14 @@ sub _install_script_symbolic_link_to_engine
 }
 
 
+sub builtin_help
+{
+    my $command = shift;
+
+    return "module $command: Builtin functions for maintenance of a workflow project configuration.";
+}
+
+
 sub builtin_add_target
 {
     my $arguments = shift || [];
@@ -9144,7 +9152,7 @@ sub main
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    $global_output_filename_template = join '-', "$requested_target-$global_command", @ARGV;
+    $global_output_filename_template = join '-', $requested_target, ($global_command || ''), @ARGV;
 
     # given the requested target and the command generate a useful filename for exporting commands to a shell script
 
@@ -9314,7 +9322,8 @@ sub main
 
 	    my $type_package_builtin;
 
-	    if (exists $global_known_command_packages_builtin->{$command})
+	    if (defined $command
+		and exists $global_known_command_packages_builtin->{$command})
 	    {
 		my $sub_name = shift @ARGV;
 
@@ -9336,7 +9345,7 @@ sub main
 
 		$command_implementation = "$command::$sub_name";
 	    }
-	    else
+	    elsif (defined $command)
 	    {
 		# if help was requested for this command
 
@@ -9348,6 +9357,19 @@ sub main
 		}
 
 		$command_implementation = "Command::${requested_target}_${command}";
+	    }
+	    else
+	    {
+		# if help was requested for this command
+
+		if ($option_help)
+		{
+		    # call the subroutine that implements the help function for the target
+
+		    $command = "help";
+
+		    $command_implementation = "Command::${requested_target}_${command}";
+		}
 	    }
 
 	    if ($option_verbose)
