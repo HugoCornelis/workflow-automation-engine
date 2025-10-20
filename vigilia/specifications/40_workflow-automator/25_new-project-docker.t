@@ -286,7 +286,6 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
-    --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -679,7 +678,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options?",
-						   read => 'bash-completion --command --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
+						   read => 'bash-completion --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -980,7 +979,7 @@ global_field_project_configuration:
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate bash completion strings for the options for the new installed configuration?",
-						   read => 'bash-completion --command --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
+						   read => 'bash-completion --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-commands --help-field-project-name --help-module --help-module-all --help-options --help-projects --help-targets --interactions --interactions-all --interactions-module --interactions-module-all-roles --target --verbose aa bb',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],

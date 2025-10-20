@@ -54,7 +54,6 @@ $SIG{'INT'}
 
 
 our $option_bash_completion;
-our $option_commands = [];
 our $option_details;
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
@@ -87,7 +86,6 @@ our $option_verbose;
 our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
-       "command=s" => $option_commands,
        "d|details+" => \$option_details,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
@@ -141,6 +139,29 @@ our $global_command_line = join " ", $0, @ARGV;
 our $global_program_abs_directory;
 our $global_program_rel_directory;
 our $global_program_name;
+
+{
+    use Cwd;
+
+    ($0 =~ m((.*)/(\S+)));
+
+    $global_program_rel_directory = $1;
+    # $global_program_name = $2;
+
+    my $program_name_full = $0;
+
+    my $program_name_full_abs = Cwd::abs_path($program_name_full);
+
+    ($program_name_full_abs =~ m((.*)/(\S+)));
+
+    $global_program_abs_directory = $1;
+
+    ($0 =~ m((.*)/(\S+)));
+
+    $global_program_name = $2;
+}
+
+
 our $global_scheduled_commands = [];
 
 my $global_builtin_commands
@@ -188,28 +209,6 @@ my $global_known_command_packages_builtin
       };
 
 
-{
-    use Cwd;
-
-    ($0 =~ m((.*)/(\S+)));
-
-    $global_program_rel_directory = $1;
-    # $global_program_name = $2;
-
-    my $program_name_full = $0;
-
-    my $program_name_full_abs = Cwd::abs_path($program_name_full);
-
-    ($program_name_full_abs =~ m((.*)/(\S+)));
-
-    $global_program_abs_directory = $1;
-
-    ($0 =~ m((.*)/(\S+)));
-
-    $global_program_name = $2;
-}
-
-
 our $all_path_globals
     = {
        global_command_line => $global_command_line,
@@ -224,6 +223,9 @@ our $global_output_filename_template;
 our $global_field_project_configuration;
 
 our $global_technical_project_configuration;
+
+
+our $global_command;
 
 
 package Command;
@@ -8410,7 +8412,6 @@ sub bash_completion_generate_options
     my $result = [
 		  qw(
 			--bash-completion
-			--command
 			--details
 			--dry-run
 			--dump-all-interaction-roles
@@ -8823,7 +8824,7 @@ sub main
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $option_target);
 
-    my $command = $option_commands->[0] || "";
+    my $command = $global_command;;
 
     # # we allow finger laziness: the shift key is not necessary for the underscore
 
@@ -9195,13 +9196,11 @@ sub parse_command_line
 
     # try to make sure there is a command on this target early on
 
-    if (not defined $option_commands->[0]
-	and scalar @ARGV)
     {
-	$option_commands->[0] = shift @ARGV;
+	$global_command = shift @ARGV;
     }
 
-    if ($option_help and (not $option_target) and (not $option_commands->[0]))
+    if ($option_help and (not $option_target) and (not $global_command))
     {
         print
             "
@@ -9224,7 +9223,6 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
-    --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -9450,10 +9448,10 @@ options:
     #t *** Executing docker workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa 12" 5
 
     if ($option_target eq 'builtin'
-	and (defined $option_commands->[0]
-	     and exists $global_builtin_commands->{$option_commands->[0]})
-	or (defined $option_commands->[0]
-	    and exists $global_known_command_packages_builtin->{$option_commands->[0]}))
+	and (defined $global_command
+	     and exists $global_builtin_commands->{$global_command})
+	or (defined $global_command
+	    and exists $global_known_command_packages_builtin->{$global_command}))
     {
     }
     else
