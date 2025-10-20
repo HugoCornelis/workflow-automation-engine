@@ -9044,21 +9044,7 @@ sub main
 
 		    my $help_string = &$command_implementation($command_name, \@ARGV);
 
-		    # old style help pages ...
-
-		    if ($help_string =~ /^[0-9]*$/)
-		    {
-			# ... are printed by the help function
-		    }
-
-		    # new style help pages ...
-
-		    else
-		    {
-			# ... are printed by us
-
-			print "$global_program_name $help_string\n";
-		    }
+		    print "$global_program_name $help_string\n";
 		}
 
 		# ... or invoke the implementation sub of the command ...
