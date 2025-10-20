@@ -9040,7 +9040,7 @@ sub main
 
 		    #! utf8::upgrade works in place
 
-		    map { utf8::upgrade($_) } @ARGV;
+		    map { utf8::upgrade($_) } @ARGV, $command_name;
 
 		    my $help_string = &$command_implementation($command_name, \@ARGV);
 
