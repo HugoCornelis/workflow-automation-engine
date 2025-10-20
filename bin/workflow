@@ -8919,27 +8919,6 @@ sub main
 
 		my $target_subroutines = $all_commands->{$defined_target};
 
-		my $target_subroutines_typed
-		    = {
-		       map
-		       {
-			   # register the subrouting name and its type
-
-			   $_ => $all_typed_commands->{$_};
-		       }
-		       grep
-		       {
-			   my $typed_command = shift;
-
-			   $typed_command =~ m(^([^\s]*));
-
-			   my $typed_target = $1;
-
-			   $typed_target eq $defined_target;
-		       }
-		       keys %$all_typed_commands
-		      };
-
 		# collect the subroutine names
 
 		my $command_implementations
