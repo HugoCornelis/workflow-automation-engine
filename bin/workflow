@@ -8216,7 +8216,9 @@ sub bash_completion
 
 	    if ($internal_completion)
 	    {
-		my $internal_commands = command_hash_with_structure_generate();
+		my $all_typed_commands = command_hash_typed_generate();
+
+		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
 
 		$result = bash_completion_generate($command, $arguments, $internal_commands, $comp_cword);
 
@@ -8472,11 +8474,9 @@ sub command_filenames_file_read
 
 sub command_hash_with_structure_generate
 {
-    my $with_feature_subs = shift;
+    my $all_typed_commands = shift;
 
-    my $command_hash = command_hash_typed_generate($with_feature_subs);
-
-    my $commands = [ keys %$command_hash, ];
+    my $commands = [ keys %$all_typed_commands, ];
 
     # set default result
 
@@ -8868,15 +8868,13 @@ sub main
 	    $option_dry_run = 'option_dump_module_interaction_roles';
 	}
 
+	my $all_typed_commands = command_hash_typed_generate('with help subs');
+
 	if ($dry_run_module_commands)
 	{
 	    # generate the list of all commands
 
-	    my $all_commands = command_hash_with_structure_generate('with help subs');
-
-	    #! make sure we can provide help that depends on the type of the sub (sh, sub or yaml).
-
-	    my $all_typed_commands = command_hash_typed_generate('with help subs');
+	    my $all_commands = command_hash_with_structure_generate($all_typed_commands);
 
 	    # loop over all the matching targets
 
@@ -9013,17 +9011,15 @@ sub main
 
 	    # if this command exists ...
 
-	    my $command_hash = command_hash_typed_generate('with help subs');
-
 	    if (defined $option_verbose
 		and $option_verbose > 2)
 	    {
 		use Data::Dumper;
 
-		print Dumper( { command_hash_with_help_subs => $command_hash, }, );
+		print Dumper( { all_typed_commands_with_help_subs => $all_typed_commands, }, );
 	    }
 
-	    if (exists $command_hash->{"$requested_target $command"}
+	    if (exists $all_typed_commands->{"$requested_target $command"}
 	        or $type_package_builtin)
 	    {
 		# ... either invoke the --help sub
@@ -9053,7 +9049,7 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $command_hash->{"$requested_target $command"}->{type};
+		    my $type = $all_typed_commands->{"$requested_target $command"}->{type};
 
 		    # ... either as a regular perl sub ...
 
