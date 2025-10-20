@@ -233,10 +233,6 @@ package Command;
 
 sub _all_install_scripts_execute_shell_command_array
 {
-    # use Data::Dumper;
-
-    # print Dumper( { _all_install_scripts_execute_shell_command_array => \@_, }, );
-
     my $install_force = shift;
 
     my $install_report = shift;
@@ -4321,12 +4317,6 @@ sub _init_command_filenames_found
     my $result
 	= [
 	   sort
-	   # grep
-	   # {
-	   #     ($full_paths =~ "configuration"
-	   # 	? m/$field_project_name-configuration[-a-z0-9]*$/
-	   # 	: m/$field_project_name-commands[-a-z0-9]*$/);
-	   # }
 	   map
 	   {
 	       chomp; $_;
@@ -4335,21 +4325,6 @@ sub _init_command_filenames_found
 	    ? `ls 2>/dev/null $command_filename_directory/$field_project_name-configuration`
 	    : `ls 2>/dev/null $command_filename_directory/$field_project_name-commands*`),
 	  ];
-
-    # system "ls 2>/dev/null $command_filename_directory/$field_project_name-configuration*";
-    # system "ls 2>/dev/null $command_filename_directory/$field_project_name-commands*";
-
-    # use Data::Dumper;
-
-    # print STDERR "ls $command_filename_directory/$field_project_name-commands*\n";
-
-    # print STDERR Dumper(
-    # 			{
-    # 			 global_field_project_configuration => $global_field_project_configuration,
-    # 			 _init_command_filenames_found => $result,
-    # 			 all_path_globals => $all_path_globals,
-    # 			},
-    # 		       );
 
     return $result;
 }
@@ -9109,8 +9084,6 @@ sub main
 
 			if ($error)
 			{
-			    # die "$global_program_name: *** Error: $error";
-
 			    warn "$global_program_name: *** Warning: $requested_target $command generated an warning response ($error)";
 			}
 		    }
