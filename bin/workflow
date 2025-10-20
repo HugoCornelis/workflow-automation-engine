@@ -80,7 +80,6 @@ our $option_interactions;
 our $option_interactions_all;
 our $option_interactions_module;
 our $option_interactions_module_all_roles;
-our $option_target;
 our $option_verbose;
 
 our $global_options
@@ -111,7 +110,6 @@ our $global_options
        "interactions-all!" => \$option_interactions_all,
        "interactions-module!" => \$option_interactions_module,
        "interactions-module-all-roles!" => \$option_interactions_module_all_roles,
-       "target=s" => \$option_target,
        "v|verbose+" => \$option_verbose,
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
@@ -224,6 +222,8 @@ our $global_field_project_configuration;
 
 our $global_technical_project_configuration;
 
+
+our $global_target;
 
 our $global_command;
 
@@ -8105,9 +8105,7 @@ sub bash_completion
 
     my $arguments = [ split ' ', $command_line, ];
 
-    #! this is sloppy: option_target is first set through a shift @ARGV and then fetched here.
-
-    my $comp_cword = $option_target;
+    my $comp_cword = $global_target;
 
     #t $comp_point is not used yet, I believe it is an index into the current command line
 
@@ -8437,7 +8435,6 @@ sub bash_completion_generate_options
 			--interactions-all
 			--interactions-module
 			--interactions-module-all-roles
-			--target
 			--verbose
 		   )
 		 ];
@@ -8822,7 +8819,7 @@ sub main
 
     # figure out the target and the command
 
-    my $requested_target = (defined $option_interactions_all ? '.*' : $option_target);
+    my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
     my $command = $global_command;;
 
@@ -9186,21 +9183,12 @@ sub parse_command_line
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    # try to make sure there is a target early on
+    # try to make sure there is a target and command early on
 
-    if (not defined $option_target
-	and scalar @ARGV)
-    {
-	$option_target = shift @ARGV;
-    }
+    $global_target = shift @ARGV;
+    $global_command = shift @ARGV;
 
-    # try to make sure there is a command on this target early on
-
-    {
-	$global_command = shift @ARGV;
-    }
-
-    if ($option_help and (not $option_target) and (not $global_command))
+    if ($option_help and (not $global_target) and (not $global_command))
     {
         print
             "
@@ -9249,7 +9237,6 @@ options:
     --interactions-all              show a diagram with all the commands and all the interaction roles.
     --interactions-module           show the interaction diagram of all the commands in the module.
     --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
-    --target                        the target to apply the given commands to.
     --verbose                       set verbosity level.
 
 ";
@@ -9267,13 +9254,13 @@ options:
 
 	my $commands = [ keys %$command_hash, ];
 
-	if ($option_target)
+	if ($global_target)
 	{
 	    $commands
 		= [
 		   grep
 		   {
-		       /$option_target/;
+		       /$global_target/;
 		   }
 		   @$commands,
 		  ];
@@ -9308,7 +9295,7 @@ options:
     if ($option_help_module
         or $option_help_module_all)
     {
-	if (not defined $option_target
+	if (not defined $global_target
 	    and $option_help_module)
 	{
 	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
@@ -9334,19 +9321,19 @@ options:
 
 	if ($option_help_module)
 	{
-	    if (exists $known_command_packages->{$option_target})
+	    if (exists $known_command_packages->{$global_target})
 	    {
 		use YAML;
 
-		print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+		print Dump( { $global_target => $known_command_packages->{$global_target}, }, );
 
-		print Dump( { $option_target => $all_module_all_subs->{$option_target} } );
+		print Dump( { $global_target => $all_module_all_subs->{$global_target} } );
 
 		exit 0;
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: module '$option_target' does not provide --help-module, does this module exist?'";
+		die "$global_program_name: *** Error: module '$global_target' does not provide --help-module, does this module exist?'";
 	    }
 	}
 	elsif ($option_help_module_all)
@@ -9429,7 +9416,7 @@ options:
 
     if ((not defined $option_interactions_all
 	 and not defined $option_interactions_module_all_roles)
-	and not defined $option_target)
+	and not defined $global_target)
     {
 	die "$global_program_name: *** Error: neither a target option nor target argument given, try --help";
     }
@@ -9447,7 +9434,7 @@ options:
     #t this may give an 'Use of uninitialized value in exists at /home/neurospaces/bin/workflow-tests-workflow line 7929.'
     #t *** Executing docker workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa 12" 5
 
-    if ($option_target eq 'builtin'
+    if ($global_target eq 'builtin'
 	and (defined $global_command
 	     and exists $global_builtin_commands->{$global_command})
 	or (defined $global_command
