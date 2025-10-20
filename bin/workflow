@@ -54,7 +54,6 @@ $SIG{'INT'}
 
 
 our $option_bash_completion;
-our $option_commands = [];
 our $option_details;
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
@@ -81,13 +80,11 @@ our $option_interactions;
 our $option_interactions_all;
 our $option_interactions_module;
 our $option_interactions_module_all_roles;
-our $option_target;
 our $option_verbose;
 
 our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
-       "command=s" => $option_commands,
        "d|details+" => \$option_details,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
@@ -113,7 +110,6 @@ our $global_options
        "interactions-all!" => \$option_interactions_all,
        "interactions-module!" => \$option_interactions_module,
        "interactions-module-all-roles!" => \$option_interactions_module_all_roles,
-       "target=s" => \$option_target,
        "v|verbose+" => \$option_verbose,
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
@@ -141,6 +137,29 @@ our $global_command_line = join " ", $0, @ARGV;
 our $global_program_abs_directory;
 our $global_program_rel_directory;
 our $global_program_name;
+
+{
+    use Cwd;
+
+    ($0 =~ m((.*)/(\S+)));
+
+    $global_program_rel_directory = $1;
+    # $global_program_name = $2;
+
+    my $program_name_full = $0;
+
+    my $program_name_full_abs = Cwd::abs_path($program_name_full);
+
+    ($program_name_full_abs =~ m((.*)/(\S+)));
+
+    $global_program_abs_directory = $1;
+
+    ($0 =~ m((.*)/(\S+)));
+
+    $global_program_name = $2;
+}
+
+
 our $global_scheduled_commands = [];
 
 my $global_builtin_commands
@@ -188,28 +207,6 @@ my $global_known_command_packages_builtin
       };
 
 
-{
-    use Cwd;
-
-    ($0 =~ m((.*)/(\S+)));
-
-    $global_program_rel_directory = $1;
-    # $global_program_name = $2;
-
-    my $program_name_full = $0;
-
-    my $program_name_full_abs = Cwd::abs_path($program_name_full);
-
-    ($program_name_full_abs =~ m((.*)/(\S+)));
-
-    $global_program_abs_directory = $1;
-
-    ($0 =~ m((.*)/(\S+)));
-
-    $global_program_name = $2;
-}
-
-
 our $all_path_globals
     = {
        global_command_line => $global_command_line,
@@ -224,6 +221,11 @@ our $global_output_filename_template;
 our $global_field_project_configuration;
 
 our $global_technical_project_configuration;
+
+
+our $global_target;
+
+our $global_command;
 
 
 package Command;
@@ -8103,9 +8105,7 @@ sub bash_completion
 
     my $arguments = [ split ' ', $command_line, ];
 
-    #! this is sloppy: option_target is first set through a shift @ARGV and then fetched here.
-
-    my $comp_cword = $option_target;
+    my $comp_cword = $global_target;
 
     #t $comp_point is not used yet, I believe it is an index into the current command line
 
@@ -8410,7 +8410,6 @@ sub bash_completion_generate_options
     my $result = [
 		  qw(
 			--bash-completion
-			--command
 			--details
 			--dry-run
 			--dump-all-interaction-roles
@@ -8436,7 +8435,6 @@ sub bash_completion_generate_options
 			--interactions-all
 			--interactions-module
 			--interactions-module-all-roles
-			--target
 			--verbose
 		   )
 		 ];
@@ -8821,9 +8819,9 @@ sub main
 
     # figure out the target and the command
 
-    my $requested_target = (defined $option_interactions_all ? '.*' : $option_target);
+    my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    my $command = $option_commands->[0] || "";
+    my $command = $global_command;;
 
     # # we allow finger laziness: the shift key is not necessary for the underscore
 
@@ -8920,27 +8918,6 @@ sub main
 		# reference subroutine names specific for the given target: they belong together
 
 		my $target_subroutines = $all_commands->{$defined_target};
-
-		my $target_subroutines_typed
-		    = {
-		       map
-		       {
-			   # register the subrouting name and its type
-
-			   $_ => $all_typed_commands->{$_};
-		       }
-		       grep
-		       {
-			   my $typed_command = shift;
-
-			   $typed_command =~ m(^([^\s]*));
-
-			   my $typed_target = $1;
-
-			   $typed_target eq $defined_target;
-		       }
-		       keys %$all_typed_commands
-		      };
 
 		# collect the subroutine names
 
@@ -9185,23 +9162,12 @@ sub parse_command_line
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    # try to make sure there is a target early on
+    # try to make sure there is a target and command early on
 
-    if (not defined $option_target
-	and scalar @ARGV)
-    {
-	$option_target = shift @ARGV;
-    }
+    $global_target = shift @ARGV;
+    $global_command = shift @ARGV;
 
-    # try to make sure there is a command on this target early on
-
-    if (not defined $option_commands->[0]
-	and scalar @ARGV)
-    {
-	$option_commands->[0] = shift @ARGV;
-    }
-
-    if ($option_help and (not $option_target) and (not $option_commands->[0]))
+    if ($option_help and (not $global_target) and (not $global_command))
     {
         print
             "
@@ -9224,7 +9190,6 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
-    --command                       commands to execute, hyphens (-) in the command will be replaced with underscores (_).
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -9251,7 +9216,6 @@ options:
     --interactions-all              show a diagram with all the commands and all the interaction roles.
     --interactions-module           show the interaction diagram of all the commands in the module.
     --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
-    --target                        the target to apply the given commands to.
     --verbose                       set verbosity level.
 
 ";
@@ -9269,13 +9233,13 @@ options:
 
 	my $commands = [ keys %$command_hash, ];
 
-	if ($option_target)
+	if ($global_target)
 	{
 	    $commands
 		= [
 		   grep
 		   {
-		       /$option_target/;
+		       /$global_target/;
 		   }
 		   @$commands,
 		  ];
@@ -9310,7 +9274,7 @@ options:
     if ($option_help_module
         or $option_help_module_all)
     {
-	if (not defined $option_target
+	if (not defined $global_target
 	    and $option_help_module)
 	{
 	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
@@ -9336,19 +9300,19 @@ options:
 
 	if ($option_help_module)
 	{
-	    if (exists $known_command_packages->{$option_target})
+	    if (exists $known_command_packages->{$global_target})
 	    {
 		use YAML;
 
-		print Dump( { $option_target => $known_command_packages->{$option_target}, }, );
+		print Dump( { $global_target => $known_command_packages->{$global_target}, }, );
 
-		print Dump( { $option_target => $all_module_all_subs->{$option_target} } );
+		print Dump( { $global_target => $all_module_all_subs->{$global_target} } );
 
 		exit 0;
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: module '$option_target' does not provide --help-module, does this module exist?'";
+		die "$global_program_name: *** Error: module '$global_target' does not provide --help-module, does this module exist?'";
 	    }
 	}
 	elsif ($option_help_module_all)
@@ -9431,7 +9395,7 @@ options:
 
     if ((not defined $option_interactions_all
 	 and not defined $option_interactions_module_all_roles)
-	and not defined $option_target)
+	and not defined $global_target)
     {
 	die "$global_program_name: *** Error: neither a target option nor target argument given, try --help";
     }
@@ -9449,11 +9413,11 @@ options:
     #t this may give an 'Use of uninitialized value in exists at /home/neurospaces/bin/workflow-tests-workflow line 7929.'
     #t *** Executing docker workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa 12" 5
 
-    if ($option_target eq 'builtin'
-	and (defined $option_commands->[0]
-	     and exists $global_builtin_commands->{$option_commands->[0]})
-	or (defined $option_commands->[0]
-	    and exists $global_known_command_packages_builtin->{$option_commands->[0]}))
+    if ($global_target eq 'builtin'
+	and (defined $global_command
+	     and exists $global_builtin_commands->{$global_command})
+	or (defined $global_command
+	    and exists $global_known_command_packages_builtin->{$global_command}))
     {
     }
     else
