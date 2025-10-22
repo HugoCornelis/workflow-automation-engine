@@ -3,6 +3,8 @@ description: 'The following are example targets, modify/remove/add according to 
 targets:
   all:
     description: used for processing of target files that are produced by other targets
+  build:
+    description: 'Operations on the build target, here this is used to test bash completion features.'
   docker:
     description: interaction with the docker build container
   features:

@@ -4,6 +4,7 @@ command_tests:
   - description: abcd project configuration directory
     read: |
       known_command_filenames:
+        - abcd-commands-build
         - abcd-commands-features
         - abcd-commands-more_python.py
         - abcd-commands-perl_examples

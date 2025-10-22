@@ -60,6 +60,8 @@ export PATH=\"$HOME/bin:$PATH\"
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration /home/neurospaces/bin/feature-testing-configuration
 #
+# ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-build /home/neurospaces/bin/feature-testing-commands-build
+#
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/bin/feature-testing-commands-features
 #
 # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/bin/feature-testing-commands-more_python.py
