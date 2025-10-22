@@ -624,28 +624,42 @@ sub _builtin_project_bash_completion_create
 	= "#/usr/bin/env bash
 _${project_name_underscore}_configuration_completions()
 {
+    # Bash assigns values to the COMP_LINE, COMP_POINT, COMP_KEY, and COMP_TYPE variables
+    # Bash also sets the COMP_WORDS and COMP_CWORD variables.
+
     COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+
+    # note: the two subshells are there to convert newlines to white space
 
     COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
 }
 
+# note: -o bashdefault -o default is unnecessary
+
 # complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
 # complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
-complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration -o bashdefault -o default
-complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration -o bashdefault -o default
+complete -F _${project_name_underscore}_configuration_completions ${project_name_dash}-configuration
+complete -F _${project_name_underscore}_configuration_completions ./${project_name_dash}-configuration
 
 
 _${project_name_underscore}_workflow_completions()
 {
+    # Bash assigns values to the COMP_LINE, COMP_POINT, COMP_KEY, and COMP_TYPE variables
+    # Bash also sets the COMP_WORDS and COMP_CWORD variables.
+
     COMPLETIONS=`${project_name_dash}-workflow --bash-completion \"\$COMP_LINE\" \$COMP_CWORD \$COMP_POINT | sed 's/\x1b\[[0-9;]*m//g'`
+
+    # note: the two subshells are there to convert newlines to white space
 
     COMPREPLY=(\$(compgen -W \"\$COMPLETIONS\" -- \"\${COMP_WORDS[\$COMP_CWORD]}\"))
 }
 
+# note: -o bashdefault -o default is unnecessary
+
 # complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
 # complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
-complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow -o bashdefault -o default
-complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow -o bashdefault -o default
+complete -F _${project_name_underscore}_workflow_completions ${project_name_dash}-workflow
+complete -F _${project_name_underscore}_workflow_completions ./${project_name_dash}-workflow
 
 ";
 
@@ -8082,6 +8096,9 @@ sub bash_completion
 
     my $comp_cword = $global_target;
 
+    #t Bash assigns values to the COMP_LINE, COMP_POINT, COMP_KEY, and COMP_TYPE variables
+    #t Bash also sets the COMP_WORDS and COMP_CWORD variables.
+
     #t $comp_point is not used yet, I believe it is an index into the current command line
 
     #t The index of the current cursor position relative to the
@@ -8090,6 +8107,23 @@ sub bash_completion
     #t is equal to ${#COMP_LINE}
 
     my $comp_point = $ARGV[0];
+
+    my $string_before_point = substr $command_line, 0, $comp_point;
+    my $string_after_point = substr $command_line, $comp_point;
+
+    if ($string_before_point =~ /(\s)(?!.*\s)/)
+    {
+	my $last_space_index = $-[1];
+
+	# print "Last white space at index $last_space_index\n";
+    }
+
+    if ($string_before_point =~ /(.*)\s/)
+    {
+	my $last_space_index = length($1);
+
+	# print "Last white space at index $last_space_index\n";
+    }
 
     my $command_line_word = $arguments->[$comp_cword];
 
