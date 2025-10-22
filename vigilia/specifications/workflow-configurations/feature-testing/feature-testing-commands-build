@@ -1,0 +1,65 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our $option_verbose;
+
+our $global_technical_project_configuration;
+
+
+package Command;
+
+
+sub build_operation1
+{
+    execute_shell_command('echo build operation1, testing bash completion');
+}
+
+
+sub build_operation1_completions
+{
+    return
+    {
+     build => '',
+     build2 => {
+		build2a => '',
+		build2b => '',
+	       },
+    };
+}
+
+
+sub build_operation2
+{
+    execute_shell_command('echo build operation2, testing bash completion');
+}
+
+
+sub build_operation2_completions
+{
+    return { build => { build => { build => '' } } };
+}
+
+
+sub build_operation3
+{
+    execute_shell_command('echo build operation2, testing bash completion');
+}
+
+
+sub build_operation3_completions
+{
+    return { build1 => { build2 => { build3 => '' } } };
+}
+
+
+# return success
+
+1;
+
+
