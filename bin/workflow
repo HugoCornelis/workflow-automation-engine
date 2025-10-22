@@ -8092,8 +8092,6 @@ sub bash_completion
 {
     my $command_line = $option_bash_completion || "";
 
-    my $arguments = [ split ' ', $command_line, ];
-
     my $comp_cword = $global_target;
 
     #t Bash assigns values to the COMP_LINE, COMP_POINT, COMP_KEY, and COMP_TYPE variables
@@ -8111,19 +8109,36 @@ sub bash_completion
     my $string_before_point = substr $command_line, 0, $comp_point;
     my $string_after_point = substr $command_line, $comp_point;
 
-    if ($string_before_point =~ /(\s)(?!.*\s)/)
-    {
-	my $last_space_index = $-[1];
+    $string_before_point =~ /(\s)(?!.*\s)/;
 
-	# print "Last white space at index $last_space_index\n";
+    my $last_space_index1 = $-[1];
+
+    $string_before_point =~ /(.*)\s/;
+
+    my $last_space_index2 = length($1);
+
+    my $debug_completion = 0;
+
+    if ($debug_completion)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper(
+			    {
+			     bash => {
+				      command_line => $command_line,
+				      comp_cword => $comp_cword,
+				      comp_point => $comp_point,
+				     },
+			     last_space_index1 => $last_space_index1,
+			     last_space_index2 => $last_space_index2,
+			     string_after_point => $string_after_point,
+			     string_before_point => $string_before_point,
+			    }
+			   );
     }
 
-    if ($string_before_point =~ /(.*)\s/)
-    {
-	my $last_space_index = length($1);
-
-	# print "Last white space at index $last_space_index\n";
-    }
+    my $arguments = [ split ' ', $command_line, ];
 
     my $command_line_word = $arguments->[$comp_cword];
 
@@ -8172,40 +8187,14 @@ sub bash_completion
 
 	    my $target_command = [];
 
-	    my $position_flag = 0;
-
-	    my $position_flags = [];
-
-	    my $debug_completion = 0;
-
 	    if ($comp_cword > 0)
 	    {
 		#! we shifted one from $arguments so $comp_cword - 1 is the last entry
 
 		foreach my $index (0 .. $comp_cword - 1)
 		{
-		    #! arguments->[$index] can be undef here when the
-		    #! cursor is at the first position of the next
-		    #! word to be completed, resulting in all
-		    #! completions still possible.
-
-		    if ($debug_completion > 2)
-		    {
-			print STDERR Dumper(
-					    {
-					     barguments => $arguments,
-					     bcomp_cword => $comp_cword,
-					     bindex => $index,
-					     bnot_exists_arguments_index => (not exists $arguments->[$index]),
-					     brange => [ ( 0 .. $comp_cword - 1) ],
-					    },
-					   );
-		    }
-
 		    if (exists $arguments->[$index])
 		    {
-			push @$position_flags, 'exists';
-
 			if ($arguments->[$index] =~ /^--/)
 			{
 			}
@@ -8216,22 +8205,6 @@ sub bash_completion
 			    $position++;
 			}
 		    }
-		    else
-		    {
-			push @$position_flags, '';
-		    }
-		}
-
-		if ($debug_completion > 2)
-		{
-		    print STDERR Dumper(
-					{
-					 arguments => $arguments,
-					 comp_cword => $comp_cword,
-					 not_exists_arguments_index => (not exists $arguments->[$comp_cword - 1]),
-					 range => [ ( 0 .. $comp_cword - 1) ],
-					},
-				       );
 		}
 
 		# if the command line is at the start a new word to be
@@ -8239,8 +8212,6 @@ sub bash_completion
 
 		if (not exists $arguments->[$comp_cword - 1])
 		{
-		    $position_flag = 1;
-
 		    $position++;
 		}
 	    }
@@ -8253,6 +8224,106 @@ sub bash_completion
 		my $all_typed_commands = command_hash_typed_generate();
 
 		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
+
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build oper' 2 35
+
+# $VAR1 = {
+#           'bash' => {
+#                       'command_line' => 'feature-testing-workflow build oper',
+#                       'comp_cword' => '2',
+#                       'comp_point' => 35
+#                     },
+#           'last_space_index1' => 30,
+#           'last_space_index2' => 30,
+#           'string_after_point' => '',
+#           'string_before_point' => 'feature-testing-workflow build oper'
+#         };
+# $VAR1 = {
+#           'command_arguments' => {
+#                                    'arguments' => [
+#                                                     'build',
+#                                                     'oper'
+#                                                   ],
+#                                    'command' => 'feature-testing-workflow',
+#                                    'command_line' => 'feature-testing-workflow build oper',
+#                                    'command_line_word' => 'oper',
+#                                    'target_command' => [
+#                                                          'build',
+#                                                          'oper'
+#                                                        ]
+#                                  },
+#           'position' => {
+#                           'comp_cword' => 2,
+#                           'position' => 2
+#                         },
+#           'status' => {
+#                         'internal_commands' => {
+#                                                  'build' => {
+#                                                               'operation1' => 'build operation1',
+#                                                               'operation2' => 'build operation2'
+#                                                             },
+#                                                  'builtin' => {
+#                                                                 'add_target' => 'builtin add_target',
+#                                                                 'archive_configuration' => 'builtin archive_configuration',
+#                                                                 'fetch_scripts' => 'builtin fetch_scripts',
+#                                                                 'grep' => 'builtin grep',
+#                                                                 'install_scripts' => 'builtin install_scripts',
+#                                                                 'known_command_filenames' => 'builtin known_command_filenames',
+#                                                                 'print_configuration_directory' => 'builtin print_configuration_directory',
+#                                                                 'pull_scripts' => 'builtin pull_scripts',
+#                                                                 'rename_project' => 'builtin rename_project',
+#                                                                 'start_project' => 'builtin start_project',
+#                                                                 'tmux_create_sessions' => 'builtin tmux_create_sessions',
+#                                                                 'tmux_kill_sessions' => 'builtin tmux_kill_sessions'
+#                                                               },
+#                                                  'examples_sh' => {
+#                                                                     'sh_array_of_commands' => 'examples_sh sh_array_of_commands',
+#                                                                     'sh_remote_execution' => 'examples_sh sh_remote_execution',
+#                                                                     'sh_single_command' => 'examples_sh sh_single_command'
+#                                                                   },
+#                                                  'features' => {
+#                                                                  'annotations' => 'features annotations',
+#                                                                  'cd_tests' => 'features cd_tests',
+#                                                                  'cd_tests_ssh' => 'features cd_tests_ssh',
+#                                                                  'cd_tests_tmux' => 'features cd_tests_tmux',
+#                                                                  'export_sh' => 'features export_sh',
+#                                                                  'remote_script_execution' => 'features remote_script_execution',
+#                                                                  'timestamps' => 'features timestamps'
+#                                                                },
+#                                                  'more_python' => {
+#                                                                     'python_command' => 'more_python python_command'
+#                                                                   },
+#                                                  'perl_examples' => {
+#                                                                       'array_of_commands' => 'perl_examples array_of_commands',
+#                                                                       'array_of_commands_remote_execution' => 'perl_examples array_of_commands_remote_execution',
+#                                                                       'sequencing_and_composition' => 'perl_examples sequencing_and_composition',
+#                                                                       'single_command' => 'perl_examples single_command'
+#                                                                     },
+#                                                  'python' => {
+#                                                                'python_command' => 'python python_command'
+#                                                              },
+#                                                  'scripts' => {
+#                                                                 'feature-shell-script-remote' => 'scripts feature-shell-script-remote'
+#                                                               }
+#                                                },
+#                         'internal_completion' => 1,
+#                         'result' => [
+#                                       'operation1',
+#                                       'operation2',
+#                                       '--a',
+#                                       '--b'
+#                                     ]
+#                       }
+#         };
+# $VAR1 = {
+#           'generated_completions' => [
+#                                        '--a',
+#                                        '--b',
+#                                        'operation1',
+#                                        'operation2'
+#                                      ]
+#         };
+# --a --b operation1 operation2
 
 		$result = bash_completion_generate($command, $arguments, $internal_commands, $comp_cword);
 
@@ -8274,10 +8345,9 @@ sub bash_completion
 					 position => {
 						      comp_cword => $comp_cword,
 						      position => $position,
-						      position_flag => $position_flag,
-						      position_flags => $position_flags,
 						     },
 					 status => {
+						    internal_commands => $internal_commands,
 						    internal_completion => $internal_completion,
 						    result => $result,
 						   },
@@ -8314,6 +8384,75 @@ sub bash_completion
 		    $external_commands = &$completion_sub($command_name, $arguments);
 		}
 
+
+# feature-testing-workflow --bash-completion 'feature-testing-workflow bu' 1 27  ==> --a --b build builtin examples_sh features more_python perl_examples python scripts
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build op' 2 33  ==> --a --b operation1 operation2
+
+
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 ' 3 42
+
+# $VAR1 = {
+#           'bash' => {
+#                       'command_line' => 'feature-testing-workflow build operation1 ',
+#                       'comp_cword' => '3',
+#                       'comp_point' => 42
+#                     },
+#           'last_space_index1' => 41,
+#           'last_space_index2' => 41,
+#           'string_after_point' => '',
+#           'string_before_point' => 'feature-testing-workflow build operation1 '
+#         };
+
+# $VAR1 = {
+#           'command_arguments' => {
+#                                    'arguments' => [
+#                                                     'build',
+#                                                     'operation1'
+#                                                   ],
+#                                    'command' => 'feature-testing-workflow',
+#                                    'command_line' => 'feature-testing-workflow build operation1 ',
+#                                    'command_line_word' => undef,
+#                                    'target_command' => [
+#                                                          'build',
+#                                                          'operation1'
+#                                                        ]
+#                                  },
+#           'position' => {
+#                           'comp_cword' => 3,
+#                           'position' => 3
+#                         },
+#           'status' => {
+#                         'internal_completion' => '',
+#                         'result' => [
+#                                       ''
+#                                     ]
+#                       }
+#         };
+
+#           'command_hash' => {
+#                               ...
+#                               'build operation1' => {
+#                                                       'type' => 'sub'
+#                                                     },
+#                               'build operation1_completions' => {
+#                                                                   'type' => 'sub'
+#                                                                 },
+#                               'build operation2' => {
+#                                                       'type' => 'sub'
+#                                                     },
+#                               'build operation2_completions' => {
+#                                                                   'type' => 'sub'
+#                                                                 },
+#                               ...
+#                             },
+#           'external_commands' => {
+#                                    'build' => '',
+#                                    'build2' => {
+#                                                  'build2a' => '',
+#                                                  'build2b' => ''
+#                                                }
+#                                  },
+
 		$result = bash_completion_generate($command, $arguments, $external_commands, $comp_cword);
 
 		if ($debug_completion)
@@ -8330,7 +8469,6 @@ sub bash_completion
 					 position => {
 						      comp_cword => $comp_cword,
 						      position => $position,
-						      position_flag => $position_flag,
 						     },
 					 status => {
 						    internal_completion => $internal_completion,
@@ -8357,6 +8495,11 @@ sub bash_completion
     $result = [ sort @$result, ];
 
     print join " ", @$result;
+
+    if ($debug_completion)
+    {
+	print STDERR Dumper( { generated_completions => $result } );
+    }
 
     exit 0;
 }
@@ -8539,10 +8682,12 @@ sub command_hash_with_structure_generate
 }
 
 
-# generate a hash that maps each known commands to a description with
+# generate a hash that maps each known command to a description with
 # information:
 #
 # type: one of 'sub', 'sh', 'yml'.
+#
+# arguments is either undef, 'with completions subs' or 'with help subs'.
 #
 
 sub command_hash_typed_generate
