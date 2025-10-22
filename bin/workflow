@@ -8117,9 +8117,9 @@ sub bash_completion
 
     my $last_space_index2 = length($1);
 
-    my $debug_completion = 0;
+    my $debug_completion = { bash_completion => 0, generate => 0, };
 
-    if ($debug_completion)
+    if ($debug_completion->{bash_completion})
     {
 	use Data::Dumper;
 
@@ -8138,7 +8138,7 @@ sub bash_completion
 			   );
     }
 
-    my $arguments = [ split ' ', $command_line, ];
+    my $arguments = [ split ' ', $string_before_point ]; # $command_line, ];
 
     my $command_line_word = $arguments->[$comp_cword];
 
@@ -8150,7 +8150,7 @@ sub bash_completion
 
     if ($command =~ /configuration/)
     {
-	$result = bash_completion_generate($command, $arguments, $global_technical_project_configuration, $comp_cword);
+	$result = bash_completion_generate($arguments, $global_technical_project_configuration, $comp_cword, $debug_completion);
 
 	# add the depth level options that the configuration browser understands
 
@@ -8216,7 +8216,6 @@ sub bash_completion
 		}
 	    }
 
-# 	    my $internal_completion = ($comp_cword < 3) or 1;
 	    my $internal_completion = ($position < 3);
 
 	    if ($internal_completion)
@@ -8224,8 +8223,6 @@ sub bash_completion
 		my $all_typed_commands = command_hash_typed_generate();
 
 		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
-
-# feature-testing-workflow --bash-completion 'feature-testing-workflow build oper' 2 35
 
 # $VAR1 = {
 #           'bash' => {
@@ -8325,13 +8322,13 @@ sub bash_completion
 #         };
 # --a --b operation1 operation2
 
-		$result = bash_completion_generate($command, $arguments, $internal_commands, $comp_cword);
+		$result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
 
 		# make sure the user gets a hint that options are also possible
 
 		push @$result, '--a', '--b';
 
-		if ($debug_completion)
+		if ($debug_completion->{bash_completion})
 		{
 		    print STDERR Dumper(
 					{
@@ -8357,9 +8354,10 @@ sub bash_completion
 	    }
 	    else
 	    {
-		# my $completion_sub = "Command::" . join '_', (@$target_command, 'completion');
+		my $internal_command = shift @$target_command;
+		my $internal_operation = shift @$target_command;
 
-		my $completion_sub = "Command::$target_command->[0]_$target_command->[1]_completions";
+		my $completion_sub = "Command::${internal_command}_${internal_operation}_completions";
 
 		my $command_hash = command_hash_typed_generate('with completion subs');
 
@@ -8371,7 +8369,7 @@ sub bash_completion
 		       "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
 		      };
 
-		if (exists $command_hash->{"$target_command->[0] $target_command->[1]_completions"})
+		if (exists $command_hash->{"$internal_command ${internal_operation}_completions"})
 		{
 		    no strict "refs";
 
@@ -8385,11 +8383,28 @@ sub bash_completion
 		}
 
 
+# feature-testing-workflow --bash-completion 'feature-testing-workflow ' 1 25  ==> --a --b build builtin examples_sh features more_python perl_examples python scripts
+# feature-testing-workflow --bash-completion 'feature-testing-workflow b' 1 26  ==> --a --b build builtin examples_sh features more_python perl_examples python scripts
 # feature-testing-workflow --bash-completion 'feature-testing-workflow bu' 1 27  ==> --a --b build builtin examples_sh features more_python perl_examples python scripts
-# feature-testing-workflow --bash-completion 'feature-testing-workflow build op' 2 33  ==> --a --b operation1 operation2
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build' 1 31  ==> --a --b build builtin examples_sh features more_python perl_examples python scripts
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build ' 2 31  ==> --a --b operation1 operation2 operation3
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build o' 2 32  ==> --a --b operation1 operation2 operation3
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build op' 2 33  ==> --a --b operation1 operation2 operation3
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build oper' 2 35 ==> --a --b operation1 operation2 operation3
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1' 2 41 ==> --a --b operation1 operation2 operation3
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 ' 3 42 ==> build build2
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 b' 3 43 ==> build build2
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build' 3 47 ==> build build2
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build ' 4 48 ==> ''
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2' 3 48 ==> build build2
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2 ' 4 49 ==> build2a build2b
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2 b' 4 50 ==> build2a build2b
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2 build2a' 4 56 ==> build2a build2b
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2 build2b' 4 56 ==> build2a build2b
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2 build2a ' 5 57 ==> ''
+# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 build2 build2b ' 5 57 ==> ''
 
 
-# feature-testing-workflow --bash-completion 'feature-testing-workflow build operation1 ' 3 42
 
 # $VAR1 = {
 #           'bash' => {
@@ -8453,9 +8468,90 @@ sub bash_completion
 #                                                }
 #                                  },
 
-		$result = bash_completion_generate($command, $arguments, $external_commands, $comp_cword);
+# $VAR1 = {
+#           'bash' => {
+#                       'command_line' => 'feature-testing-workflow perl_examples single_command aa ',
+#                       'comp_cword' => '4',
+#                       'comp_point' => 57
+#                     },
+#           'last_space_index1' => 56,
+#           'last_space_index2' => 56,
+#           'string_after_point' => '',
+#           'string_before_point' => 'feature-testing-workflow perl_examples single_command aa '
+#         };
+# $VAR1 = {
+#           'command_arguments' => {
+#                                    'arguments' => [
+#                                                     'perl_examples',
+#                                                     'single_command',
+#                                                     'aa'
+#                                                   ],
+#                                    'command' => 'feature-testing-workflow',
+#                                    'command_line' => 'feature-testing-workflow perl_examples single_command aa ',
+#                                    'command_line_word' => undef,
+#                                    'target_command' => [
+#                                                          'perl_examples',
+#                                                          'single_command',
+#                                                          'aa'
+#                                                        ]
+#                                  },
+#           'position' => {
+#                           'comp_cword' => 4,
+#                           'position' => 4
+#                         },
+#           'status' => {
+#                         'internal_completion' => '',
+#                         'result' => [
+#                                       '12',
+#                                       '34'
+#                                     ]
+#                       }
+#         };
+# $VAR1 = {
+#           'command_hash' => {
+#                               ...
+#                               'perl_examples array_of_commands' => {
+#                                                                      'type' => 'sub'
+#                                                                    },
+#                               ...
+#                               'perl_examples single_command' => {
+#                                                                   'type' => 'sub'
+#                                                                 },
+#                               ...
+#                             },
+#           'external_commands' => {
+#                                    'aa' => {
+#                                              '12' => {
+#                                                        'cc' => 1
+#                                                      },
+#                                              '34' => {
+#                                                        'dd' => 1
+#                                                      }
+#                                            },
+#                                    'bb' => {
+#                                              '56' => {
+#                                                        'ee' => 1
+#                                                      },
+#                                              '78' => {
+#                                                        'ff' => 1
+#                                                      }
+#                                            }
+#                                  },
+#           'result' => [
+#                         '12',
+#                         '34'
+#                       ]
+#         };
+# $VAR1 = {
+#           'generated_completions' => [
+#                                        '12',
+#                                        '34'
+#                                      ]
+#         };
 
-		if ($debug_completion)
+		$result = bash_completion_generate($target_command, $external_commands, $comp_cword - 2, $debug_completion);
+
+		if ($debug_completion->{bash_completion})
 		{
 		    print STDERR Dumper(
 					{
@@ -8496,7 +8592,7 @@ sub bash_completion
 
     print join " ", @$result;
 
-    if ($debug_completion)
+    if ($debug_completion->{bash_completion})
     {
 	print STDERR Dumper( { generated_completions => $result } );
     }
@@ -8507,54 +8603,127 @@ sub bash_completion
 
 sub bash_completion_generate
 {
-    my $command = shift;
-
     use Clone qw(clone);
 
     my $arguments = clone(shift);
 
-    my $configuration_or_commands = shift;
+    my $completions = shift;
 
     my $comp_cword = shift;
 
+    my $debug_completion = shift;
+
     # search the given arguments in the configuration by following its path in the hash
 
-    while (@$arguments and $comp_cword > 0)
+    while (@$arguments and $comp_cword > 1)
     {
-	if (ref $configuration_or_commands eq 'HASH')
+	if ($debug_completion->{generate})
+	{
+	    use Data::Dumper;
+
+	    print STDERR Dumper
+		(
+		 {
+		  arguments => $arguments,
+		  completions => $completions,
+		  comp_cword => $comp_cword,
+		 }
+		);
+	}
+
+	if (ref $completions eq 'HASH')
 	{
 	    my $argument = shift @$arguments;
 
 	    $comp_cword--;
 
-	    if (exists $configuration_or_commands->{$argument})
+	    if (exists $completions->{$argument})
 	    {
-		$configuration_or_commands = $configuration_or_commands->{$argument};
+		$completions = $completions->{$argument};
+	    }
+	    else
+	    {
+		if ($debug_completion->{generate})
+		{
+		    print STDERR "LAST\n";
+		}
+
+		last;
 	    }
 	}
-	elsif (ref $configuration_or_commands eq 'ARRAY')
+	elsif (ref $completions eq 'ARRAY')
 	{
+	    if ($debug_completion->{generate})
+	    {
+		print STDERR "LAST\n";
+	    }
+
 	    last;
 	}
 	else
 	{
+	    if ($debug_completion->{generate})
+	    {
+		print STDERR "LAST\n";
+	    }
+
 	    last;
 	}
     }
 
+    if ($comp_cword == 0)
+    {
+	if ($debug_completion->{generate})
+	{
+	    print STDERR "CHECK NEXT\n";
+	}
+
+	if (@$arguments and ref $completions eq 'HASH')
+	{
+	    my $argument = shift @$arguments;
+
+	    if (exists $completions->{$argument})
+	    {
+		$completions = $completions->{$argument};
+	    }
+	    else
+	    {
+		$completions = {};
+	    }
+	}
+	else
+	{
+	    $completions = {};
+	}
+    }
+
+    if ($debug_completion->{generate})
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper
+	    (
+	     {
+	      arguments => $arguments,
+	      completions => $completions,
+	      comp_cword => $comp_cword,
+	     }
+	    );
+    }
+
     # return the result depending on its type
 
-    if (ref $configuration_or_commands eq 'HASH')
+    if (ref $completions eq 'HASH')
     {
-	return [ keys %$configuration_or_commands, ];
+	return [ keys %$completions, ];
     }
-    elsif (ref $configuration_or_commands eq 'ARRAY')
+    elsif (ref $completions eq 'ARRAY')
     {
-	return [ @$configuration_or_commands, ];
+	return [ @$completions, ];
     }
     else
     {
-	return [ $configuration_or_commands, ];
+	return [ $completions, ];
     }
 }
 
