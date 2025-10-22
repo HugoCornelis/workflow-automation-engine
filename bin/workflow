@@ -8106,7 +8106,7 @@ sub bash_completion
     #t is at the end of the current command, the value of this variable
     #t is equal to ${#COMP_LINE}
 
-    my $comp_point = $ARGV[0];
+    my $comp_point = $global_command || 0;
 
     my $string_before_point = substr $command_line, 0, $comp_point;
     my $string_after_point = substr $command_line, $comp_point;
