@@ -9144,14 +9144,12 @@ sub main
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    my $command = $global_command;;
-
     # # we allow finger laziness: the shift key is not necessary for the underscore
 
     # $requested_target =~ s/-/_/g;
-    # $command =~ s/-/_/g;
+    # $global_command =~ s/-/_/g;
 
-    $global_output_filename_template = join '-', "$requested_target-$command", @ARGV;
+    $global_output_filename_template = join '-', "$requested_target-$global_command", @ARGV;
 
     # given the requested target and the command generate a useful filename for exporting commands to a shell script
 
@@ -9312,6 +9310,8 @@ sub main
 	}
 	else
 	{
+	    my $command = $global_command;
+
 	    my $command_implementation;
 
 	    my $type_package_builtin;
@@ -9336,7 +9336,7 @@ sub main
 		    $sub_name .= "_help";
 		}
 
-		$command_implementation = "${command}::$sub_name";
+		$command_implementation = "$command::$sub_name";
 	    }
 	    else
 	    {
