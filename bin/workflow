@@ -9144,11 +9144,6 @@ sub main
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    # # we allow finger laziness: the shift key is not necessary for the underscore
-
-    # $requested_target =~ s/-/_/g;
-    # $global_command =~ s/-/_/g;
-
     $global_output_filename_template = join '-', "$requested_target-$global_command", @ARGV;
 
     # given the requested target and the command generate a useful filename for exporting commands to a shell script
@@ -9165,7 +9160,7 @@ sub main
 	    $option_export_sh = "$global_output_filename_template.sh";
 	}
 
-	# again we prefer to not need to press the shift key
+	# do not need to press the shift key
 
 	$option_export_sh =~ s/_/-/g;
     }
@@ -9184,7 +9179,7 @@ sub main
 	    $option_export_times = "$global_output_filename_template.times";
 	}
 
-	# again we prefer to not need to press the shift key
+	# do not need to press the shift key
 
 	$option_export_times =~ s/_/-/g;
     }
@@ -9308,6 +9303,9 @@ sub main
 		}
 	    }
 	}
+
+	# we are not dry running, but really will execute the commands
+
 	else
 	{
 	    my $command = $global_command;
@@ -9357,8 +9355,6 @@ sub main
 		print "Invoking ($command_implementation)\n";
 	    }
 
-	    # if this command exists ...
-
 	    if (defined $option_verbose
 		and $option_verbose > 2)
 	    {
@@ -9366,6 +9362,8 @@ sub main
 
 		print Dumper( { all_typed_commands_with_help_subs => $all_typed_commands, }, );
 	    }
+
+	    # if this command exists ...
 
 	    if (exists $all_typed_commands->{"$requested_target $command"}
 	        or $type_package_builtin)
