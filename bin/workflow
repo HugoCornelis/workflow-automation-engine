@@ -2379,6 +2379,14 @@ sub _install_script_symbolic_link_to_engine
 }
 
 
+sub builtin_help
+{
+    my $command = shift;
+
+    return "module $command: Builtin functions for maintenance of a workflow project configuration.";
+}
+
+
 sub builtin_add_target
 {
     my $arguments = shift || [];
@@ -9144,14 +9152,7 @@ sub main
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    my $command = $global_command;;
-
-    # # we allow finger laziness: the shift key is not necessary for the underscore
-
-    # $requested_target =~ s/-/_/g;
-    # $command =~ s/-/_/g;
-
-    $global_output_filename_template = join '-', "$requested_target-$command", @ARGV;
+    $global_output_filename_template = join '-', $requested_target, ($global_command || ''), @ARGV;
 
     # given the requested target and the command generate a useful filename for exporting commands to a shell script
 
@@ -9167,7 +9168,7 @@ sub main
 	    $option_export_sh = "$global_output_filename_template.sh";
 	}
 
-	# again we prefer to not need to press the shift key
+	# do not need to press the shift key
 
 	$option_export_sh =~ s/_/-/g;
     }
@@ -9186,7 +9187,7 @@ sub main
 	    $option_export_times = "$global_output_filename_template.times";
 	}
 
-	# again we prefer to not need to press the shift key
+	# do not need to press the shift key
 
 	$option_export_times =~ s/_/-/g;
     }
@@ -9310,13 +9311,19 @@ sub main
 		}
 	    }
 	}
+
+	# we are not dry running, but really will execute the commands
+
 	else
 	{
+	    my $command = $global_command;
+
 	    my $command_implementation;
 
 	    my $type_package_builtin;
 
-	    if (exists $global_known_command_packages_builtin->{$command})
+	    if (defined $command
+		and exists $global_known_command_packages_builtin->{$command})
 	    {
 		my $sub_name = shift @ARGV;
 
@@ -9336,9 +9343,9 @@ sub main
 		    $sub_name .= "_help";
 		}
 
-		$command_implementation = "${command}::$sub_name";
+		$command_implementation = "$command::$sub_name";
 	    }
-	    else
+	    elsif (defined $command)
 	    {
 		# if help was requested for this command
 
@@ -9351,13 +9358,24 @@ sub main
 
 		$command_implementation = "Command::${requested_target}_${command}";
 	    }
+	    else
+	    {
+		# if help was requested for this command
+
+		if ($option_help)
+		{
+		    # call the subroutine that implements the help function for the target
+
+		    $command = "help";
+
+		    $command_implementation = "Command::${requested_target}_${command}";
+		}
+	    }
 
 	    if ($option_verbose)
 	    {
 		print "Invoking ($command_implementation)\n";
 	    }
-
-	    # if this command exists ...
 
 	    if (defined $option_verbose
 		and $option_verbose > 2)
@@ -9366,6 +9384,8 @@ sub main
 
 		print Dumper( { all_typed_commands_with_help_subs => $all_typed_commands, }, );
 	    }
+
+	    # if this command exists ...
 
 	    if (exists $all_typed_commands->{"$requested_target $command"}
 	        or $type_package_builtin)
@@ -9580,7 +9600,7 @@ options:
 	if (not defined $global_target
 	    and $option_help_module)
 	{
-	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
+	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-module' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
 	}
 
 	my $known_command_packages
