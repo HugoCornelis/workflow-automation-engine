@@ -9580,7 +9580,7 @@ options:
 	if (not defined $global_target
 	    and $option_help_module)
 	{
-	    die "$global_program_name: *** Error: neither a target option nor target argument given, try '$global_program_name Command --help-module'";
+	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-module' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
 	}
 
 	my $known_command_packages
