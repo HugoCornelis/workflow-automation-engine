@@ -1,0 +1,29 @@
+---
+command: cat ./features-export-variables.sh
+command_tests:
+  - description: Has the file with the commands and variables been created?
+    read: |
+      #!/bin/sh
+      #
+      # script generated with feature-testing-workflow
+      #
+      # the command line used to generate this script was:
+      #
+      # /home/neurospaces/bin/feature-testing-workflow features export_variables --export-sh
+      #
+      # --export-remote is not set, exporting all roles without a remote prefix
+      #
+      #
+      # begin export_sh_variables
+      #
+      
+      HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+      
+      #
+      # end export_sh_variables
+      #
+      
+      cd $HOME_DIRECTORY
+      cd /some/directory
+    white_space: convert seen 0a to 0d 0a newlines
+description: Has the file with the commands and variables been created?
