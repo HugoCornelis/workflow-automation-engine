@@ -1,0 +1,9 @@
+---
+command: feature-testing-workflow features export_variables --export-sh
+command_tests:
+  - description: export commands that have variable values to a script
+    read: |
+      feature-testing-workflow: *** Running in export_sh mode, exporting: 'cd $HOME_DIRECTORY'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: 'cd /some/directory'
+    white_space: convert seen 0a to 0d 0a newlines
+description: export commands that have variable values to a script

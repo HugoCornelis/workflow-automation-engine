@@ -185,6 +185,18 @@ sub features_export_sh
 }
 
 
+sub features_export_variables
+{
+    my $commands
+	= [
+	   "cd $ENV{HOME}",
+	   "cd /some/directory",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
 sub features_remote_script_execution
 {
     my $shell_script_filename = "scripts/feature-shell-script-remote arg1 arg2";

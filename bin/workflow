@@ -6473,7 +6473,9 @@ $help_string
 
 	if (exists $global_technical_project_configuration->{export_sh_variables})
 	{
-	    _execute_option_export_sh_variables_export($global_exported_sh_file, $global_technical_project_configuration->{export_sh_variables});
+	    my $selected_variables = _execute_option_export_sh_variables_select($global_technical_project_configuration->{export_sh_variables});
+
+	    _execute_option_export_sh_variables_export($global_exported_sh_file, $selected_variables);
 	}
 
 	print $global_exported_sh_file "\n";
@@ -6531,11 +6533,72 @@ $help_string
 }
 
 
+sub _execute_option_export_sh_variables_select
+{
+    my $export_sh_variables = shift;
+
+    my $result = [];
+
+    foreach my $export_sh_variable_hash (@$export_sh_variables)
+    {
+	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
+	{
+	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+
+	    if ($export_sh_variable_name =~ m(password)i)
+	    {
+		$export_sh_variable_value = '';
+	    }
+
+	    if (!defined $export_sh_variable_value
+		|| $export_sh_variable_value eq '')
+	    {
+		next;
+	    }
+
+	    foreach my $scheduled_command (@$global_scheduled_commands)
+	    {
+		# substitute the variable value with its name in the command
+
+		my $export_sh_command = $scheduled_command->{export_sh_command};
+
+		#! some interaction roles add single quotes, we remove them here.
+
+		if ($export_sh_command =~ /^'/
+		    and $export_sh_command =~ /'$/)
+		{
+		    $export_sh_command =~ s/^'//;
+		    $export_sh_command =~ s/'$//;
+		}
+
+		my $will_be_used = ($export_sh_command =~ m($export_sh_variable_value));
+
+		if ($will_be_used)
+		{
+		    push @$result, $export_sh_variable_hash;
+		}
+	    }
+	}
+    }
+
+    return $result;
+}
+
+
 sub _execute_option_export_sh_variables_export
 {
     my $exported_sh_file = shift;
 
     my $export_sh_variables = shift;
+
+    if (not scalar @$export_sh_variables)
+    {
+	print $exported_sh_file "#\n";
+	print $exported_sh_file "# no variables of export_sh_variables have been selected for export\n";
+	print $exported_sh_file "#\n";
+
+	return;
+    }
 
     print $exported_sh_file "#\n";
     print $exported_sh_file "# begin export_sh_variables\n";
@@ -6546,13 +6609,37 @@ sub _execute_option_export_sh_variables_export
     {
 	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
 	{
+	    #t only export the variable if it is used in the script
+	    #t this means we first have to check all the commands for their possible use of this variable
+
+	    my $used = 1;
+
+	    if (not $used)
+	    {
+		next;
+	    }
+
 	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+
+	    my $export_sh_variable_description = '';
+
+	    if (ref $export_sh_variable_value eq 'HASH')
+	    {
+		$export_sh_variable_description = $export_sh_variable_value->{description};
+
+		$export_sh_variable_value = $export_sh_variable_value->{value};
+	    }
 
 	    $export_sh_variable_value =~ s(')(\\')g;
 
 	    if ($export_sh_variable_name =~ m(password)i)
 	    {
 		$export_sh_variable_value = '';
+	    }
+
+	    if ($export_sh_variable_description)
+	    {
+		print $exported_sh_file "#\n# $export_sh_variable_name: $export_sh_variable_description\n";
 	    }
 
 	    print $exported_sh_file "$export_sh_variable_name=\${$export_sh_variable_name:=$export_sh_variable_value}\n";
