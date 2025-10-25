@@ -53,7 +53,7 @@ command_tests:
           --output-pdf                 Generate PDF output.
           --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
           --regex-selector             Defines a regex to run specific tests.
-          --report-disabled            Include information of disabled tests in the test report.
+          --report-disabled-tests      Include information of disabled tests in the test report.
           --select-context-path        Select only the matching context paths (default is '.*').
           --show                       Show tests that would be run using the current configuration.
           --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.

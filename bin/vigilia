@@ -52,7 +52,7 @@ my $option_output_title_page = '';
 
 my $option_random_order;
 my $option_regex_selector = ".*";
-my $option_report_disabled;
+my $option_report_disabled_tests;
 my $option_select_context_path = '.*';
 my $option_show;
 my $option_show_command_tests;
@@ -129,7 +129,7 @@ options:
     --output-pdf                 Generate PDF output.
     --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector             Defines a regex to run specific tests.
-    --report-disabled            Include information of disabled tests in the test report.
+    --report-disabled-tests      Include information of disabled tests in the test report.
     --select-context-path        Select only the matching context paths (default is '$option_select_context_path').
     --show                       Show tests that would be run using the current configuration.
     --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
@@ -179,7 +179,7 @@ options:
 					    "output-pdf" => \$option_output_pdf,
 					    "randomize-order=s" => \$option_random_order,
 					    "regex-selector=s" => \$option_regex_selector,
-					    "report-disabled!" => \$option_report_disabled,
+					    "report-disabled-tests!" => \$option_report_disabled_tests,
 					    "select-context-path=s" => \$option_select_context_path,
 					    "show!" => \$option_show,
 					    "show-command-tests!" => \$option_show_command_tests,
@@ -619,7 +619,7 @@ sub parse_options
 	   output_pdf => $option_output_pdf,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
-	   report_disabled => $option_report_disabled,
+	   report_disabled_tests => $option_report_disabled_tests,
 	   select_context_path => $option_select_context_path,
 	   show => $option_show,
 	   show_command_tests => $option_show_command_tests,
@@ -6756,7 +6756,7 @@ sub ex_terminate
 
     # # add output specific to the output selection
 
-    # if ($option_report_disabled)
+    # if ($option_report_disabled_tests)
     # {
     # 	$report_yaml->{disabled} = $global_test_report->{disabled};
     # }
@@ -10808,7 +10808,7 @@ sub ex_terminate
 
     # add output specific to the output selection
 
-    if ($option_report_disabled)
+    if ($option_report_disabled_tests)
     {
 	$report_yaml->{disabled} = $global_test_report->{disabled};
     }
@@ -10970,7 +10970,7 @@ sub ex_terminate
 
     # add output specific to the output selection
 
-    if ($option_report_disabled)
+    if ($option_report_disabled_tests)
     {
 	$report_yaml->{disabled} = $global_test_report->{disabled};
     }
