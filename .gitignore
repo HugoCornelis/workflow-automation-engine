@@ -20,6 +20,8 @@ try-graph.pl
 python-tests/
 testing/
 
+report_workflow-automation-engine/
+
 configured-workflows/automation-configuration-data/cache/
 
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/

@@ -9,7 +9,7 @@ command_tests:
       Update the given command under the given module by inserting its current output as the expected output.
       
       Options:
-          --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
+          --command-output The correct output, if no command-output is given the tested command is used to produce it.
           --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
           --description    The description to insert.  The description is inserted both at command definition level and at command test level.
           --help           Show this help message.

@@ -52,7 +52,8 @@ my $option_output_title_page = '';
 
 my $option_random_order;
 my $option_regex_selector = ".*";
-my $option_report_disabled;
+my $option_report_disabled_tests;
+my $option_reporting_directory;
 my $option_select_context_path = '.*';
 my $option_show;
 my $option_show_command_tests;
@@ -129,7 +130,8 @@ options:
     --output-pdf                 Generate PDF output.
     --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector             Defines a regex to run specific tests.
-    --report-disabled            Include information of disabled tests in the test report.
+    --report-disabled-tests      Include information of disabled tests in the test report.
+    --reporting-directory        The directory to use to write reports to (default is '.').
     --select-context-path        Select only the matching context paths (default is '$option_select_context_path').
     --show                       Show tests that would be run using the current configuration.
     --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
@@ -179,7 +181,8 @@ options:
 					    "output-pdf" => \$option_output_pdf,
 					    "randomize-order=s" => \$option_random_order,
 					    "regex-selector=s" => \$option_regex_selector,
-					    "report-disabled!" => \$option_report_disabled,
+					    "report-disabled-tests!" => \$option_report_disabled_tests,
+					    "reporting-directory=s" => \$option_reporting_directory,
 					    "select-context-path=s" => \$option_select_context_path,
 					    "show!" => \$option_show,
 					    "show-command-tests!" => \$option_show_command_tests,
@@ -619,7 +622,8 @@ sub parse_options
 	   output_pdf => $option_output_pdf,
 	   random_order => $option_random_order,
 	   regex_selector => $option_regex_selector,
-	   report_disabled => $option_report_disabled,
+	   report_disabled_tests => $option_report_disabled_tests,
+	   reporting_directory => $option_reporting_directory,
 	   select_context_path => $option_select_context_path,
 	   show => $option_show,
 	   show_command_tests => $option_show_command_tests,
@@ -860,7 +864,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
+    --command-output The correct output, if no command-output is given the tested command is used to produce it.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
@@ -1026,7 +1030,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-update <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
+    --command-output The correct output, if no command-output is given the tested command is used to produce it.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
@@ -1629,7 +1633,7 @@ sub initialize_config
 
     if (not defined $global_config)
     {
-	die "No test configuration found";
+	die "$0: No test configuration found";
     }
 
     if (not exists $global_config->{tests_directory})
@@ -1655,7 +1659,26 @@ sub initialize_config
 
     if (not exists $global_config->{reporting_directory})
     {
-	$global_config->{reporting_directory} = "/tmp/report_$global_config->{package}->{name}";
+	$global_config->{reporting_directory} = "./report_$global_config->{package}->{name}";
+
+	if ($option_reporting_directory)
+	{
+	    $global_config->{reporting_directory} = $option_reporting_directory;
+	}
+    }
+
+    my $reporting_directory = "$global_config->{reporting_directory}";
+
+    my $error = Utilities::create_directories($reporting_directory);
+
+    if ($error)
+    {
+	die "$0: *** Error: cannot create directory $reporting_directory for reporting ($error).\n";
+    }
+
+    if (!-d $reporting_directory)
+    {
+	die "$0: *** Error: the directory $reporting_directory for reporting does not exist although I just tried to create it.\n";
     }
 
     # correct numerical_compare mode for this configuration
@@ -1924,18 +1947,11 @@ sub report_file_dump
 
     my $report_directory = "$global_config->{reporting_directory}";
 
-    my $error = Utilities::create_directories($report_directory);
-
-    if ($error)
-    {
-	print $global_fd_output "*** Warning: cannot create directory $report_directory for reporting ($error).\n";
-    }
-
-    my $report_filename = ">$report_directory/report.yml";
+    my $report_filename = "$report_directory/report.yml";
 
     eval
     {
-	YAML::DumpFile($report_filename, $global_test_report);
+	YAML::DumpFile(">$report_filename", $global_test_report);
     };
 
     if ($@)
@@ -1944,14 +1960,7 @@ sub report_file_dump
     }
     else
     {
-	# if ($reporter)
-	# {
-	#     $reporter->report_message_info("message_info", "See '$report_filename' for the detailed report.");
-	# }
-	# else
-	{
-	    print $global_fd_output "*** Info: See '$report_filename' for the detailed report.\n";
-	}
+	print $global_fd_output "*** Info: See '$report_filename' for the detailed report.\n";
     }
 }
 
@@ -6756,7 +6765,7 @@ sub ex_terminate
 
     # # add output specific to the output selection
 
-    # if ($option_report_disabled)
+    # if ($option_report_disabled_tests)
     # {
     # 	$report_yaml->{disabled} = $global_test_report->{disabled};
     # }
@@ -8442,55 +8451,13 @@ sub ex_terminate
 
     # generate an output directory where processors can store the generated output
 
-    my $output_directory = "/tmp/test_report_$global_config->{package}->{name}";
+    my $output_directory = "$global_config->{reporting_directory}";
 
-    my $created;
+    my $output_filename = "test_report_$global_config->{package}->{name}_$extension";
 
-    if ( !-d $output_directory )
-    {
-	use File::Path qw( make_path );
+    my $output_pathname = "$output_directory/$output_filename";
 
-	$created = make_path($output_directory);
-    }
-    else
-    {
-	$created = "exists";
-    }
-
-    if ($created)
-    {
-	my $output_filename = "test_report_$global_config->{package}->{name}_$extension";
-
-	my $output_pathname = "$output_directory/$output_filename";
-
-	$self->process($output_pathname, $test_module_library_contents, $global_test_report);
-
-	# my $testing = 1;
-
-	# if ($testing)
-	# {
-	# 	my $output_filename = "/tmp/test_report_$global_config->{package}->{name}";
-
-	# 	$self->process($output_filename, $test_module_library_contents, $global_test_report);
-	# }
-    }
-    else
-    {
-	my $execution_context = $self->{execution_context};
-
-	my $reporter = $execution_context->{reporter};
-
-	$reporter->report_error_add
-		(
-		 {
-		  context_path => $execution_context->get_context_path(),
-		  description => "error creating the output_directory ($created)",
-		  error => "this test was tagged with the error flag",
-		  module_name => "END",
-		  subdescription => "error creating the output_directory ($created)",
-		 },
-		);
-    }
+    $self->process($output_pathname, $test_module_library_contents, $global_test_report);
 }
 
 
@@ -10808,7 +10775,7 @@ sub ex_terminate
 
     # add output specific to the output selection
 
-    if ($option_report_disabled)
+    if ($option_report_disabled_tests)
     {
 	$report_yaml->{disabled} = $global_test_report->{disabled};
     }
@@ -10970,7 +10937,7 @@ sub ex_terminate
 
     # add output specific to the output selection
 
-    if ($option_report_disabled)
+    if ($option_report_disabled_tests)
     {
 	$report_yaml->{disabled} = $global_test_report->{disabled};
     }

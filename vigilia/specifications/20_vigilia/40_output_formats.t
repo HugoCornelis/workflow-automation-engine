@@ -69,7 +69,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "convert the container to an image",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled --show',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled-tests --show',
 				     command_tests => [
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",
@@ -94,7 +94,7 @@ selected:
       tests:
         - '1/_3/_1: Can we list the root directory in the Docker container ?'
 
-*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
@@ -104,7 +104,7 @@ No email sent.
 				     description => "inspecting the commands that are tested",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --show-command-tests --report-disabled',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --show-command-tests --report-disabled-tests',
 				     command_tests => [
 						       {
 							description => "Can we inspect the command tests that will be run using the regular options ?",
@@ -123,7 +123,7 @@ selected:
     - 1/_2/_-1 command: 'ls '
     - 1/_3/_-1 command: ls -1 /
 
-*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
@@ -151,7 +151,7 @@ selected:
     - 1/_2/_-1 command: 'ls '
     - 1/_3/_-1 command: ls -1 /
 
-*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
@@ -185,7 +185,7 @@ selected:
       tests:
         - '1/_3/_1: Can we list the root directory in the Docker container ?'
 
-*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
@@ -217,7 +217,7 @@ selected:
     - description: 'showing that the container works: root directory contents'
       tests: []
 
-*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
@@ -231,7 +231,7 @@ No email sent.
 				     command_tests => [
 						       {
 							description => "Can we convert the test specifications to a latex file ?",
-							read => "*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+							read => "*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
@@ -248,7 +248,7 @@ No email sent.
 							disabled => "Heterarch::Test::Output::Formatter::HTMLTable is not fully implemented.",
 							read => '*** die: Can\'t locate object method "process" via package "Heterarch::Test::Output::Formatter::HTMLTable" at /usr/local/bin/vigilia line 5165.
 
-*** Info: See \'>/tmp/report_workflow-automation-engine/report.yml\' for the detailed report.
+*** Info: See \'./report_workflow-automation-engine/report.yml\' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ',
@@ -263,7 +263,7 @@ No email sent.
 						       {
 							description => "Can we convert the test specifications to pdf ?",
 							read => "sh: 1: pdflatex: not found
-*** Info: See '>/tmp/report_workflow-automation-engine/report.yml' for the detailed report.
+*** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
 ",
