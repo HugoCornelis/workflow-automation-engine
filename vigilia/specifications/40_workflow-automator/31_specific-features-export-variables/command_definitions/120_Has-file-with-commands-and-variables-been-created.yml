@@ -17,13 +17,21 @@ command_tests:
       # begin export_sh_variables
       #
       
+      A_USED_VARIABLE=${A_USED_VARIABLE:=with an unused value}
+      #
+      # HOME_DIRECTORY: Your home directory
       HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
+      #
+      # SERVER_PASSWORD: Variables that have 'password' in their name, may be exported but their value is never exported.  This allows exported scripts to log into remote machines without exposing the credentials to do so.
+      SERVER_PASSWORD=${SERVER_PASSWORD:=}
       
       #
       # end export_sh_variables
       #
       
       cd $HOME_DIRECTORY
-      cd /some/directory
+      echo /some/directory
+      echo $A_USED_VARIABLE
+      echo SERVER_PASSWORD: $SERVER_PASSWORD
     white_space: convert seen 0a to 0d 0a newlines
 description: Has the file with the commands and variables been created?
