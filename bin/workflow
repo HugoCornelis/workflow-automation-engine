@@ -6541,14 +6541,10 @@ sub _execute_option_export_sh_variables_select
 
     foreach my $export_sh_variable_hash (@$export_sh_variables)
     {
-	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
+	foreach my $export_sh_variable_name (sort keys %$export_sh_variable_hash)
 	{
-	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
-
-	    if ($export_sh_variable_name =~ m(password)i)
-	    {
-		$export_sh_variable_value = '';
-	    }
+	    my ($export_sh_variable_value, $export_sh_variable_description)
+		= _export_sh_variable_get_value($export_sh_variable_hash, $export_sh_variable_name);
 
 	    if (!defined $export_sh_variable_value
 		|| $export_sh_variable_value eq '')
@@ -6585,6 +6581,38 @@ sub _execute_option_export_sh_variables_select
 }
 
 
+sub _export_sh_variable_get_value
+{
+    my $export_sh_variable_hash = shift;
+
+    my $export_sh_variable_name = shift;
+
+    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+
+    my $export_sh_variable_description = '';
+
+    if (ref $export_sh_variable_value eq 'HASH')
+    {
+	$export_sh_variable_description = $export_sh_variable_value->{description};
+
+	$export_sh_variable_value = $export_sh_variable_value->{value};
+    }
+
+    if (not defined $export_sh_variable_value)
+    {
+	$export_sh_variable_value = '';
+
+	# producing this warning complicates testing, just let it go
+
+	# print STDERR "$0: *** Warning: Variable $export_sh_variable_name has no value, using an empty string.\n";
+    }
+
+    $export_sh_variable_value =~ s(')(\\')g;
+
+    return ($export_sh_variable_value, $export_sh_variable_description);
+}
+
+
 sub _execute_option_export_sh_variables_export
 {
     my $exported_sh_file = shift;
@@ -6607,30 +6635,12 @@ sub _execute_option_export_sh_variables_export
 
     foreach my $export_sh_variable_hash (@$export_sh_variables)
     {
-	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
+	foreach my $export_sh_variable_name (sort keys %$export_sh_variable_hash)
 	{
-	    #t only export the variable if it is used in the script
-	    #t this means we first have to check all the commands for their possible use of this variable
+	    my ($export_sh_variable_value, $export_sh_variable_description)
+		= _export_sh_variable_get_value($export_sh_variable_hash, $export_sh_variable_name);
 
-	    my $used = 1;
-
-	    if (not $used)
-	    {
-		next;
-	    }
-
-	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
-
-	    my $export_sh_variable_description = '';
-
-	    if (ref $export_sh_variable_value eq 'HASH')
-	    {
-		$export_sh_variable_description = $export_sh_variable_value->{description};
-
-		$export_sh_variable_value = $export_sh_variable_value->{value};
-	    }
-
-	    $export_sh_variable_value =~ s(')(\\')g;
+	    # never export password values
 
 	    if ($export_sh_variable_name =~ m(password)i)
 	    {
@@ -6661,17 +6671,20 @@ sub _execute_option_export_sh_variables_substitute
 
     foreach my $export_sh_variable_hash (@$export_sh_variables)
     {
-	foreach my $export_sh_variable_name (keys %$export_sh_variable_hash)
+	foreach my $export_sh_variable_name (sort keys %$export_sh_variable_hash)
 	{
-	    my $export_sh_variable_value = $export_sh_variable_hash->{$export_sh_variable_name};
+	    my ($export_sh_variable_value, $export_sh_variable_description)
+		= _export_sh_variable_get_value($export_sh_variable_hash, $export_sh_variable_name);
 
-	    if ($export_sh_variable_name =~ m(password)i)
-	    {
-		$export_sh_variable_value = '';
-	    }
+	    my $export = 'yes';
 
 	    if (!defined $export_sh_variable_value
-		|| $export_sh_variable_value eq '')
+		or $export_sh_variable_value eq '')
+	    {
+		$export = '';
+	    }
+
+	    if (not $export)
 	    {
 		next;
 	    }
