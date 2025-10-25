@@ -54,6 +54,7 @@ command_tests:
           --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
           --regex-selector             Defines a regex to run specific tests.
           --report-disabled-tests      Include information of disabled tests in the test report.
+          --reporting-directory        The directory to use to write reports to (default is '.').
           --select-context-path        Select only the matching context paths (default is '.*').
           --show                       Show tests that would be run using the current configuration.
           --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
