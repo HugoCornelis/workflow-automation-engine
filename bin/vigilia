@@ -860,7 +860,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
+    --command-output The correct output, if no command-output is given the tested command is used to produce it.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
@@ -1026,7 +1026,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-update <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The command that produces correct output on STDOUT, if no command-output is given the tested command is used to produce it.
+    --command-output The correct output, if no command-output is given the tested command is used to produce it.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
