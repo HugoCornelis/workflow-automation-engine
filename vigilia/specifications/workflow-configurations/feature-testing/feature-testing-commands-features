@@ -190,7 +190,9 @@ sub features_export_variables
     my $commands
 	= [
 	   "cd $ENV{HOME}",
-	   "cd /some/directory",
+	   "echo /some/directory",
+	   "echo with an unused value",
+	   "echo SERVER_PASSWORD: a-password-value-is-never-exported",
 	  ];
 
     execute_shell_command_array($commands);

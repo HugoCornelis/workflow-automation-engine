@@ -74,7 +74,9 @@ command_tests:
       ---
       COMMAND: features_export_variables
           'cd /home/neurospaces '
-          'cd /some/directory '
+          'echo /some/directory'
+          'echo with an unused value'
+          'echo SERVER_PASSWORD: a-password-value-is-never-exported'
       
       
       ---

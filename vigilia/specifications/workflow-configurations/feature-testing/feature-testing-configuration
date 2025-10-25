@@ -23,8 +23,38 @@ my $configuration = {
 
 $configuration->{export_sh_variables}
     = [
-       { HOME_DIRECTORY => $ENV{HOME} },
+       {
+	A => {
+	      description => "This variable can be used to explain the structure and relationships of the variables in your exported script.  It comes first in the list of exported variables.",
+	      value => 'The value of this variable is not used',
+	     },
+       },
+       { A_USED_VARIABLE => "with an unused value" },
+       {
+	HOME_DIRECTORY => {
+			   description => 'Your home directory',
+			   value => $ENV{HOME},
+			  },
+       },
        { SOME_UNUSED_VARIABLE => "some unused value" },
+       {
+	SOME_UNUSED_VARIABLE_WITH_A_DESCRIPTION => {
+						    description => 'A variable description is included in the --export-sh output',
+						    value => "some unused value",
+						   },
+       },
+       {
+	SOME_UNUSED_VARIABLE_WITHOUT_A_VALUE => {
+						 description => 'A variable description is included in the --export-sh output',
+						 value_typo => "some unused value",
+						},
+       },
+       {
+	SERVER_PASSWORD => {
+			    description => "Variables that have 'password' in their name, may be exported but their value is never exported.  This allows exported scripts to log into remote machines without exposing the credentials to do so.",
+			    value => 'a-password-value-is-never-exported',
+			   },
+       },
       ];
 
 ($0 =~ m(.*/(\S+)));
