@@ -15,7 +15,6 @@ use POSIX qw( strftime );
 use YAML;
 
 
-my $option_check_test_names = 'by default';
 my $option_config_filename = './vigilia.config';
 my $option_console_type = 'status';
 our $option_debugging;
@@ -101,7 +100,6 @@ $0 <command> <options>
 ",
 		       usage => "
 options:
-    --check-test-names           Check the pathnames of the specification files against the names of the tests.
     --config-filename            The name of the file with the configuration (default is: $option_config_filename).
     --console-type               The type of the console output (one of " . (join ", ", sort keys %$global_reporter_classes) . ").
     --debugging                  Enable specific debugging options.
@@ -153,7 +151,6 @@ options:
 				},
        option_configuration => {
 				options => {
-					    "check-test-names!" => \$option_check_test_names,
 					    "config-filename=s" => \$option_config_filename,
 					    "console-type=s" => \$option_console_type,
 					    "debugging=s" => \$option_debugging,
@@ -595,7 +592,6 @@ sub parse_options
 
     $global_test_report->{options}
 	= {
-	   check_test_names => $option_check_test_names,
 	   config_filename => $option_config_filename,
 	   console_type => $option_console_type,
 	   debugging => $option_debugging,
@@ -7492,7 +7488,6 @@ sub module_read_perl
 # option_dump_yaml
 # option_dump_file_structured_json
 # option_dump_file_structured_yaml
-# option_check_test_names
 #
 
 sub module_read_process_options
@@ -7548,30 +7543,26 @@ sub module_read_process_options
 
     # check if the name of the test and the pathname match
 
-    if ($option_check_test_names)
+    my $expected_module_definition_name = "$global_config->{tests_directory}/$module_definition->{name}";
+
+    if (exists $options->{input_module_directory})
     {
-	my $expected_module_definition_name = "$global_config->{tests_directory}/$module_definition->{name}";
+	$expected_module_definition_name = "$options->{input_module_directory}/$module_definition->{name}";
+    }
 
-	if (exists $options->{input_module_directory})
-	{
-	    $expected_module_definition_name = "$options->{input_module_directory}/$module_definition->{name}";
-	}
+    if ($pathname ne $expected_module_definition_name)
+    {
+	$error = "for the test module ($module_definition->{name}), the pathname ($pathname) and the expected full path name ($expected_module_definition_name) are different.";
 
-	if ($pathname ne $expected_module_definition_name)
-	{
-	    $error = "for the test module ($module_definition->{name}), the pathname ($pathname) and the expected full path name ($expected_module_definition_name) are different.";
-
-	    $reporter->report_error_add
-		(
-		 {
-		  context_path => 'module_read_process_options',
-		  description => "the pathname ($pathname) and the test name ($module_definition->{name}) are different",
-		  error => $error,
-		  module_name => $pathname,
-		 },
-		);
-
-	}
+	$reporter->report_error_add
+	    (
+	     {
+	      context_path => 'module_read_process_options',
+	      description => "the pathname ($pathname) and the test name ($module_definition->{name}) are different",
+	      error => $error,
+	      module_name => $pathname,
+	     },
+	    );
     }
 
     return $error;
