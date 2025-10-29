@@ -22,7 +22,6 @@ command_tests:
           run-tests            Run the tests, possibly with an executor that converts the tests rather than running them.
       
       options:
-          --check-test-names           Check the pathnames of the specification files against the names of the tests.
           --config-filename            The name of the file with the configuration (default is: ./vigilia.config).
           --console-type               The type of the console output (one of linear, status).
           --debugging                  Enable specific debugging options.
