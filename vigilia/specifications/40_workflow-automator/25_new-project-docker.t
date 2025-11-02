@@ -347,7 +347,7 @@ Test it with the command:
 
 Afterwards install the scripts on your system using the command:
 
-  workflow builtin install_scripts -- --engine --commands --git
+  workflow builtin install_scripts -- --commands --git
 
 Then check if they work by inspecting the examples they provide (with various options):
 
@@ -804,7 +804,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --engine --commands --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
