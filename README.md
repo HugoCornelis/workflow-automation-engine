@@ -11,6 +11,43 @@ generate documentation of user-visible functions and validate if the
 delivered software complies with the required application functions.
 
 
+__The Workflow Automation Engine__
+
+The workflow engine helps automating complicated system shell tasks
+during the development of a software project.
+
+Typical examples of workflow automation are running local and remote
+shell commands with arguments and options that are hard to remember,
+to compile source code on a build server, to convert documentation to
+a web page, to flash a binary software image such as the Linux kernel
+to a small or embedded device, or orchestrate the execution of command
+sequences on different local, remote and virtual machines.
+
+The workflow engine offers the following functions:
+
+- Convenient implmenetation of modular custom workflows, with or
+  without arguments, including bash completions and help pages.
+- Easy to start a new project, new _targets_ and new _commands_.
+- Integration with `bash` completion allows browsing project specific
+  _targets_, project specific _commands_ and project specific
+  _configuration_.
+- Integration with `grc` for project specific _keyword highlighting_.
+- Support for different _roles_ e.g. for remote execution, in a Docker
+  container or in a `tmux` session.
+
+__The `vigilia` tester__
+
+The `vigilia` tester starts from a declarative database of test
+specifications to:
+
+- Run the tests and report about software application behaviour.
+- Query the test specifications as a knowledge base of implemented,
+  required or desired application function.
+- Separate layers of test specfications.
+- Generate documentation of user-visible functions.
+- Isolate a test environment through virtualization.
+
+
 ## Abstract
 
 Software documentation management systems face three long-standing
@@ -51,56 +88,17 @@ ensuring software system tests, documents and software functions
 remain coherently synchronized.
 
 
-## The Workflow Automation Engine
+# Installation
 
-The workflow engine helps automating complicated system shell tasks
-during the development of a software project.
+## Prerequisites
 
-Typical examples of workflow automation are running local and remote
-shell commands with arguments and options that are hard to remember,
-to compile source code on a build server, to convert documentation to
-a web page, to flash a binary software image such as the Linux kernel
-to a small or embedded device, or orchestrate the execution of command
-sequences on different local, remote and virtual machines.
-
-### Overview
-
-The workflow engine offers the following functions:
-
-- Convenient implmenetation of modular custom workflows, with or
-  without arguments, including bash completions and help pages.
-- Easy to start a new project, new _targets_ and new _commands_.
-- Integration with `bash` completion allows browsing project specific
-  _targets_, project specific _commands_ and project specific
-  _configuration_.
-- Integration with `grc` for project specific _keyword highlighting_.
-- Support for different _roles_ e.g. for remote execution, in a Docker
-  container or in a `tmux` session.
-
-## The `vigilia` tester
-
-The `vigilia` tester starts from a declarative database of test
-specifications to:
-
-- Isolate a test environment through virtualization.
-- Separate layers of test specfications.
-- Generate documentation of user-visible functions.
-- Run the tests and report about software application behaviour.
-- Query the test specifications as if they are a knowledge base of
-  implemented, required or desired application function.
-
-
-## Installation
-
-### Prerequisites
-
-`workflow` uses `grc` for colorification of its output.  Both
 `workflow` and `vigilia` require [YAML](https://yaml.org/),
 [JSON](https://toml.io/en/) or [TOML](https://toml.io/en/) for
-configuration files.  Other dependencies are several Perl modules such
-as `File::chdir`, and `File::Find::Rule`, the Perl module for
-integration of Python code into Perl[^1].  Installation itself is
-performed with `make`.
+configuration files.  The Perl modules `File::chdir`, and
+`File::Find::Rule`, the Perl module for integration of Python code
+into Perl are required[^1].  `workflow` uses `grc` for colorification
+of its output.  Installation itself is performed with `autotools` and
+`make` and uses `gcc` to compile C code.
 
 As an example, for Ubuntu 22.04.3 LTS jammy, you need to install these
 prerequisites:
@@ -121,20 +119,22 @@ sudo apt libexpect-perl
 
 [^1]: The Perl module that integrates with Python is called Inline::Python.  This module currently has a bug that generates warnings when multiple Python source code files are inlined.  A fix is available from https://github.com/niner/inline-python-pm but this fix is not available from package managers yet.
 
-Then clone the repository into a local directory:
+Then clone this repository into a local directory:
 
 ```
 git clone https://github.com/HugoCornelis/workflow-automation-engine.git
 cd workflow-automation-engine
 ```
 
-To generate a `configure` script, issue the command:
+## Installation
+
+Generate a `configure` script with the command:
 
 ```
 ./autogen.sh
 ```
 
-Then install the engine using `configure` and `make`:
+Install `workflow` and `vigilia` using `configure` and `make`:
 
 ```
 ./configure
@@ -145,33 +145,8 @@ sudo make install
 `workflow` and `vigilia` are now installed on your system.
 
 
-### Configuration
 
-After installation new projects can be created.  Each project has its
-own configuration for `grc` and `bash` (completion).  The
-configuration of `grc` is found in its regular configuration directory
-(see the man page of `grc` for more information) and shell aliases
-make sure `grc` is invoked appropriately.
-
-`bash` completion is dynamically generated by the workflow engine when
-it is needed (when the user hits the <tab> key).
-
-The `bash` completion script is generated automatically upon workflow
-engine project creation (see below) and its invocation added to your
-`.bashrc` file.
-
-Combined this leads to this configuration in your `.bashrc` file for
-each project:
-
-```
-alias neurospaces-workflow="grc neurospaces-workflow"
-alias neurospaces-configuration="grc neurospaces-configuration"
-
-. ~/projects/developer/source/snapshots/master/bin/workflow-files/neurospaces-bash-completion.sh
-```
-
-Note that this configuration is automatically generated.
-
+# Using `workflow` and `vigilia`
 
 ## Starting a new `workflow` project
 
@@ -181,23 +156,18 @@ steps:
 1. `workflow builtin start_project foo`
 
 	Creates a workflow configuration for a new project with name
-    *foo*.
+    *foo* and initialize a `git` repository for it.
 
-2. `mv workflow-project-template.pl workflow-project.pl`
-
-	Renames the template project file such that the workflow engine
-	recognizes it.
-
-3. `workflow builtin install_scripts -- --engine --commands --git`
+2. `workflow builtin install_scripts -- --commands --git`
 
 	Makes the configuration available from any directory.
 
-4. `foo-workflow --help-commands`
+3. `foo-workflow --help-commands`
 
 	Optionally shows the available commands for the project with name
     *foo*.
 
-5. `foo-workflow examples_sh sh_single_command`
+4. `foo-workflow examples_sh sh_single_command`
 
 	By default the workflow engine installs a few commands that you
     can easily adapt to your needs.  This is one of them.  Use the
@@ -205,9 +175,9 @@ steps:
     use the `--interactions` option to see the same commands based on
     the role which would execute them.
 
-6. `foo-workflow builtin add_target -- xyz "Add commands to this new target that do new things" --install-commands-sh`
+5. `foo-workflow builtin add_target -- bar "Add commands to this new target that do new things" --install-commands-sh`
 
-	Adds the target *xyz* and creates a directory with a few template
+	Adds the target *bar* and creates a directory with a few template
     examples for you to adapt to your project.
 
 
