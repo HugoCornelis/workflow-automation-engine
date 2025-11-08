@@ -2242,9 +2242,7 @@ sub _install_script_path_in_bashrc
 {
     my $project_name = shift;
 
-    my $use_dotlocal_bin = shift;
-
-    my $bin_path_choice = $use_dotlocal_bin ? '.local/bin' : 'bin';
+    my $bin_path_choice = Utilities::bin_path_choice();
 
     my $bin_path_marker = 'export PATH="$HOME/'. $bin_path_choice . ':$PATH"';
 
@@ -2363,9 +2361,7 @@ sub _install_script_symbolic_link_to_engine
 
     my $option_install_report = shift;
 
-    my $use_dotlocal_bin = shift;
-
-    my $bin_path_choice = $use_dotlocal_bin ? '.local/bin' : 'bin';
+    my $bin_path_choice = Utilities::bin_path_choice();
 
     my $source = "/usr/local/bin/workflow";
 
@@ -2991,27 +2987,20 @@ sub builtin_install_scripts
         die "$global_program_name: *** error: no valid project_name in the field_configuration found";
     }
 
-    # should we install to ~/bin or to ~/.local/bin?
-
-    my $use_dot_local = 0;
-
-    if (-d "$ENV{HOME}/.local/bin")
-    {
-	$use_dot_local = 0;
-    }
-
     # add the ~/bin  or ~/.local/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
 
     if ($option_install_path_in_bashrc)
     {
-	_install_script_path_in_bashrc($project_name, $use_dot_local);
+	_install_script_path_in_bashrc($project_name);
     }
 
-    my $command_mkdir = $use_dot_local ? "mkdir --parents $ENV{HOME}/.local/bin" : "mkdir --parents $ENV{HOME}/bin";
+    my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $command_mkdir = "mkdir --parents $ENV{HOME}/$bin_path_choice";
 
     execute_shell_command($command_mkdir);
 
-    _install_script_symbolic_link_to_engine($project_name, $option_install_engine, $option_install_report, $use_dot_local);
+    _install_script_symbolic_link_to_engine($project_name, $option_install_engine, $option_install_report);
 
     _install_script_symbolic_link_to_configuration($project_name, $option_install_commands, $option_install_report);
 
@@ -3441,14 +3430,7 @@ sub builtin_rename_project
 	YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
     }
 
-    my $use_dot_local = 0;
-
-    if (-d "$ENV{HOME}/.local/bin")
-    {
-	$use_dot_local = 0;
-    }
-
-    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+    my $bin_path_choice = Utilities::bin_path_choice();
 
     my $project_bin_files
 	= [
@@ -3634,14 +3616,7 @@ sub builtin_start_project
 
 	my $error;
 
-	my $use_dot_local = 0;
-
-	if (-d "$ENV{HOME}/.local/bin")
-	{
-	    $use_dot_local = 0;
-	}
-
-	my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+	my $bin_path_choice = Utilities::bin_path_choice();
 
 	my $field_project_configuration
 	    = {
@@ -4402,14 +4377,7 @@ sub _init_filenames_2_symlink_commands
 	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
     }
 
-    my $use_dot_local = 0;
-
-    if (-d "$ENV{HOME}/.local/bin")
-    {
-	$use_dot_local = 0;
-    }
-
-    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+    my $bin_path_choice = Utilities::bin_path_choice();
 
     my $commands
 	= [
@@ -8234,6 +8202,21 @@ sub read_directory
 }
 
 
+sub bin_path_choice
+{
+    # should we install to ~/bin or to ~/.local/bin?
+
+    my $use_dot_local = 0;
+
+    if (-d "$ENV{HOME}/.local/bin")
+    {
+	$use_dot_local = 0;
+    }
+
+    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+}
+
+
 package main;
 
 
@@ -9911,14 +9894,7 @@ sub workflow_project_list_generate
 {
     my $selector = shift || '.*';
 
-    my $use_dot_local = 0;
-
-    if (-d "$ENV{HOME}/.local/bin")
-    {
-	$use_dot_local = 0;
-    }
-
-    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+    my $bin_path_choice = Utilities::bin_path_choice();
 
     my $result
 	= [
