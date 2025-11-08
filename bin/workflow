@@ -8202,15 +8202,13 @@ sub bash_completion
 
     my $comp_cword = $global_target;
 
-    #t Bash assigns values to the COMP_LINE, COMP_POINT, COMP_KEY, and COMP_TYPE variables
-    #t Bash also sets the COMP_WORDS and COMP_CWORD variables.
+    # Bash assigns values to the COMP_LINE, COMP_POINT, COMP_KEY, and COMP_TYPE variables
+    # Bash also sets the COMP_WORDS and COMP_CWORD variables.
 
-    #t $comp_point is not used yet, I believe it is an index into the current command line
-
-    #t The index of the current cursor position relative to the
-    #t beginning of the current command.  If the current cursor position
-    #t is at the end of the current command, the value of this variable
-    #t is equal to ${#COMP_LINE}
+    # $comp_point is the index of the current cursor position relative
+    # to the beginning of the current command.  If the current cursor
+    # position is at the end of the current command, the value of this
+    # variable is equal to ${#COMP_LINE}
 
     my $comp_point = $global_command || 0;
 
@@ -8454,7 +8452,7 @@ sub bash_completion
 					 status => {
 						    internal_commands => $internal_commands,
 						    internal_completion => $internal_completion,
-						    result => $result,
+						    result => [ sort @$result ],
 						   },
 					},
 				       );
