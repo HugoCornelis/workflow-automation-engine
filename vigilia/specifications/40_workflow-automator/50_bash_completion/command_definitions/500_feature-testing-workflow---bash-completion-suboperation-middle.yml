@@ -1,0 +1,6 @@
+---
+command: feature-testing-workflow --bash-completion 'feature-testing-workflow build operation3 build1 build build' 3 43
+command_tests:
+  - description: feature-testing-workflow --bash-completion suboperation in the middle
+    read: build1
+description: feature-testing-workflow --bash-completion suboperation in the middle

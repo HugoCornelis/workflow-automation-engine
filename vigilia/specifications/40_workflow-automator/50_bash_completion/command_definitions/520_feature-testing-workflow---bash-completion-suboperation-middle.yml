@@ -1,0 +1,6 @@
+---
+command: feature-testing-workflow --bash-completion 'feature-testing-workflow feats annoions' 1 29
+command_tests:
+  - description: feature-testing-workflow --bash-completion suboperation in the middle
+    read: a --b build builtin examples_sh features more_python perl_examples python scripts
+description: feature-testing-workflow --bash-completion suboperation in the middle
