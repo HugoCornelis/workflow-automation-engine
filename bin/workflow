@@ -2089,10 +2089,16 @@ sub _install_script_git_repository
 	   "echo >>.gitignore '$project_name-commands-data/cache'",
 	   "echo >>.gitignore '$project_name-configuration-data/cache'",
 	   "git add --all",
-	   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
 	  ];
 
     execute_shell_command_array($commands);
+
+    my $commands_commit
+	= [
+	   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
+	  ];
+
+    execute_shell_command_array($commands_commit, { allow_fail => "this command can fail if git was not properly configured yet." } );
 }
 
 
