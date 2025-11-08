@@ -48,7 +48,7 @@ my $test
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation configuration for the cd feature tests?",
-						   read => '# bash -c "echo \'# necessary for $project_name-workflow
+						   read => '# bash -c "echo \'# necessary for feature-testing-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
 
