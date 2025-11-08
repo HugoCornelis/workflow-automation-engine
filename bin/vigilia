@@ -860,14 +860,15 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The correct output, if no command-output is given the tested command is used to produce it.
-    --command-prefix Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
-    --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
-    --description    The description to insert.  The description is inserted both at command definition level and at command test level.
-    --help           Show this help message.
-    --output-json    Output in json format.
-    --output-yaml    Output in yaml format.
-    --test-prefix    Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
+    --command-output   The correct output, if no command-output is given the tested command is used to produce it.
+    --command-prefix   Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
+    --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.
+    --description      The description to insert.  The description is inserted both at command definition level and at command test level.
+    --help             Show this help message.
+    --output-json      Output in json format.
+    --output-yaml      Output in yaml format.
+    --test-prefix      Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
+    --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
 ",
 	       },
        options => {
@@ -878,6 +879,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
 		   "test-prefix=s" => do { my $option_test_prefix; \$option_test_prefix; },
+		   "yaml-work-around!" => do { my $option_yaml_work_around; \$option_yaml_work_around; },
 		  },
       };
 
@@ -941,6 +943,15 @@ sub harness_command_module_command_add
 	$test_prefix = $$option_test_prefix;
     }
 
+    my $option_yaml_work_around = $options->{"yaml-work-around!"};
+
+    my $yaml_work_around = 'yes';
+
+    if (defined $$option_yaml_work_around)
+    {
+	$yaml_work_around = $$option_yaml_work_around;
+    }
+
     use Clone 'clone';
 
     my $tests_directory = $global_config->{tests_directory};
@@ -984,6 +995,16 @@ sub harness_command_module_command_add
 	}
 
 	$output = `$command_to_be_tested`;
+
+	# correct yaml output to work around a problem with Expect
+
+	if ($yaml_work_around)
+	{
+	    if ($output =~ /^---/)
+	    {
+		$output = substr($output, 3);
+	    }
+	}
     }
 
     $command_definition->{command_tests} = [];
