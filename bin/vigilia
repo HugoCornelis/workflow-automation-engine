@@ -861,19 +861,23 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
     --command-output The correct output, if no command-output is given the tested command is used to produce it.
+    --command-prefix Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
     --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
     --description    The description to insert.  The description is inserted both at command definition level and at command test level.
     --help           Show this help message.
     --output-json    Output in json format.
     --output-yaml    Output in yaml format.
+    --test-prefix    Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
 ",
 	       },
        options => {
 		   "command-output=s" => do { my $option_command_output; \$option_command_output; },
+		   "command-prefix=s" => do { my $option_command_prefix; \$option_command_prefix; },
 		   "comment=s" => do { my $option_comment; \$option_comment; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
+		   "test-prefix=s" => do { my $option_test_prefix; \$option_test_prefix; },
 		  },
       };
 
@@ -919,6 +923,24 @@ sub harness_command_module_command_add
 	$comment = $$option_comment;
     }
 
+    my $option_command_prefix = $options->{"command-prefix=s"};
+
+    my $command_prefix = '';
+
+    if (defined $$option_command_prefix)
+    {
+	$command_prefix = $$option_command_prefix;
+    }
+
+    my $option_test_prefix = $options->{"test-prefix=s"};
+
+    my $test_prefix = '';
+
+    if (defined $$option_test_prefix)
+    {
+	$test_prefix = $$option_test_prefix;
+    }
+
     use Clone 'clone';
 
     my $tests_directory = $global_config->{tests_directory};
@@ -956,6 +978,11 @@ sub harness_command_module_command_add
     }
     else
     {
+	if ($command_prefix)
+	{
+	    $command_to_be_tested = "$command_prefix '$command_to_be_tested'";
+	}
+
 	$output = `$command_to_be_tested`;
     }
 
@@ -978,7 +1005,7 @@ sub harness_command_module_command_add
 
     my $directory = "$module_path_name/command_definitions";
 
-    my $prefix = Heterarch::Test::Library::directory_next_filename_prefix($directory);
+    my $prefix = $test_prefix || Heterarch::Test::Library::directory_next_filename_prefix($directory);
 
     my $error;
 
@@ -7706,26 +7733,79 @@ sub directory_next_filename_prefix
 
     my $increment = shift || 10;
 
+    my $base = shift || 100;
+
+    my $length = length($base);
+
+    my $debug_directory_next_filename_prefix = 0;
+
     my $filenames = directory_filenames($directory, "*.yml");
+
+    if ($debug_directory_next_filename_prefix)
+    {
+	print STDERR Dumper( { filenames => $filenames } );
+    }
 
     if (not ref $filenames)
     {
 	return undef;
     }
 
-    my $result = 100;
+    foreach my $filename (sort @$filenames)
+    {
+	if ($filename =~ m(command_definitions/([0-9]+)_))
+	{
+	    $base = $1;
+
+	    $length = length($base);
+
+	    last;
+	}
+    }
+
+    my $result = $base;
+
+    if ($debug_directory_next_filename_prefix)
+    {
+	print STDERR "$result\n";
+    }
 
     foreach my $filename (sort @$filenames)
     {
+	if ($debug_directory_next_filename_prefix)
+	{
+	    print STDERR "Filename: $filename\n";
+	}
+
 	if ($filename =~ m(/${result}_)
 	    or $filename =~ m(^${result}_))
 	{
 	    $result += $increment;
+
+	    if ($debug_directory_next_filename_prefix)
+	    {
+		print STDERR "Increment: $result\n";
+	    }
 	}
 	else
 	{
+	    if ($debug_directory_next_filename_prefix)
+	    {
+		print STDERR "Final: $result\n";
+	    }
+
 	    last;
 	}
+    }
+
+    if (length($result) < $length)
+    {
+	$result = sprintf("%0${length}d", $result);
+    }
+
+    if ($debug_directory_next_filename_prefix)
+    {
+	print STDERR "Padded: $result\n";
     }
 
     return $result;
