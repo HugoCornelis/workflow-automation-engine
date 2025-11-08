@@ -355,7 +355,7 @@ sub command_line_dispatch
 
     if (! $option_result)
     {
-	$options->{"help!"} = 'option processing error';
+	$options->{"help!"} = \'option processing error';
     }
 
     my $option_help = $options->{"help!"};
