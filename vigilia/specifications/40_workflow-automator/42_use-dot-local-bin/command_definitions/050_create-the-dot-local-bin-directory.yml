@@ -1,0 +1,9 @@
+---
+command: mkdir -vp ~/.local/bin
+command_tests:
+  - description: Can we create the ~/.local/bin directory?
+    read: |+2
+      mkdir: created directory '/home/neurospaces/.local'
+      mkdir: created directory '/home/neurospaces/.local/bin'
+    white_space: convert seen 0a to 0d 0a newlines
+description: creation of the ~/.local/bin directory
