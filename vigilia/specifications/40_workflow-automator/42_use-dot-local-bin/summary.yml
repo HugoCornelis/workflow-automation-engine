@@ -1,0 +1,27 @@
+---
+description: testing the use of the ~/.local/bin directory.
+documentation:
+  explanation: |+2
+
+    The workflow script enables the automation of customizable modular
+    project-specific workflows consisting of shell commands.
+
+  purpose: This module tests if the ~/.local/bin directory is correctly used.
+harnessing:
+  class:
+    comment: Enter this container with "docker exec -it workflow_feature_testing_container bash".
+    description: |+2
+      This class instantiates a docker image based on the given docker file, then runs a container based on that image.
+      
+      The name of image and the name of the container are controlled from the class properties.
+      
+      The class properties can include IP network information and IP address of the container.
+
+    docker:
+      default_user: neurospaces
+      dockerfile: ./vigilia/specifications/dockerfiles/Dockerfile.workflow-feature-testing
+      name_container: workflow_feature_testing_container
+      name_image: workflow_feature_testing_image
+    identifier: docker_harness_feature_testing
+    type: Heterarch::Test::ExecutionContext::Harness::Docker
+name: 40_workflow-automator/42_use-dot-local-bin/summary.yml

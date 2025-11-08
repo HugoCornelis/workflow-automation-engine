@@ -809,7 +809,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
 						   description => "Can we install an unpacked workflow configuration?",
-						   read => '# bash -c "echo \'# necessary for $project_name-workflow
+						   read => '# bash -c "echo \'# necessary for workflow-tests-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
 
@@ -829,7 +829,7 @@ export PATH=\"$HOME/bin:$PATH\"
 \' | cat >>/home/neurospaces2/.bashrc"
 #
 ',
-						   read_with_aliasses => '# bash -c "echo \'# necessary for $project_name-workflow
+						   read_with_aliasses => '# bash -c "echo \'# necessary for workflow-tests-workflow
 
 export PATH=\"$HOME/bin:$PATH\"
 

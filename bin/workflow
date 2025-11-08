@@ -1884,9 +1884,9 @@ options:
 
     --aliasses         configure the grc aliases in .bashrc if they are not there yet.
     --bash-completion  configure bash completion in .bashrc if they are not there yet.
-    --commands         install or upgrade the command configuration to ~/bin.
-    --engine           create a symbolic link to the workflow engine in ~/bin.
-    --path-in-bashrc   update .bashrc to include ~/bin in PATH.
+    --commands         install or upgrade the command configuration to ~/bin or ~/.local/bin.
+    --engine           create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
+    --path-in-bashrc   update .bashrc to include ~/bin or ~/.local/bin in PATH.
 
 Note that grc configuration files will also be installed and configured.
 ```
@@ -2242,16 +2242,16 @@ sub _install_script_path_in_bashrc
 {
     my $project_name = shift;
 
-    # export PATH="$HOME/bin:$PATH"
+    my $bin_path_choice = Utilities::bin_path_choice();
 
-    my $bin_path_marker = 'export PATH="$HOME/bin:$PATH"';
+    my $bin_path_marker = 'export PATH="$HOME/'. $bin_path_choice . ':$PATH"';
 
     my $bin_path_additions
-	= '# necessary for $project_name-workflow
+	= "# necessary for $project_name-workflow
 
-export PATH="$HOME/bin:$PATH"
+$bin_path_marker
 
-';
+";
 
     my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $bin_path_marker);
 
@@ -2295,10 +2295,10 @@ sub _install_script_symbolic_link_to_commands_configured
 
     my $command_filenames_configured = [ @{ _init_command_filenames_configured('full-paths') }, ];
 
-    # install each script to the ~/bin directory
+    # install each script to the ~/bin or .local/bin directory
 
     # TODO: use case if a script exists but does not have a symbolic
-    # link in ~/bin yet, a new script that was just created:
+    # link in ~/bin or .local/bin yet, a new script that was just created:
     # 1. requires adding the symbolic link.
     # 2. requires adding the targets defined in the script to the configuration
     # -- this requires to guess the targets.
@@ -2311,7 +2311,7 @@ sub _install_script_symbolic_link_to_commands_configured
 
     my $commands_configured = _init_filenames_2_symlink_commands($command_filenames_configured);
 
-    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin: symbolic links for commands
+    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin or .local/bin: symbolic links for commands
 
     # 2.b. from configured filenames to symbolic links.
 ", $commands_configured);
@@ -2348,7 +2348,7 @@ sub _install_script_symbolic_link_to_configuration
 
     my $configurations_found = _init_filenames_2_symlink_commands( [ keys %$configuration_filenames_found_2, ], );
 
-    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 1. Install to ~/bin: symbolic links for workflow engine configuration
+    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic links for workflow engine configuration
 ", $configurations_found);
 }
 
@@ -2361,9 +2361,11 @@ sub _install_script_symbolic_link_to_engine
 
     my $option_install_report = shift;
 
+    my $bin_path_choice = Utilities::bin_path_choice();
+
     my $source = "/usr/local/bin/workflow";
 
-    my $target = "$ENV{HOME}/bin/$project_name-workflow";
+    my $target = "$ENV{HOME}/$bin_path_choice/$project_name-workflow";
 
     my $command = "ln -sf $source $target";
 
@@ -2374,7 +2376,7 @@ sub _install_script_symbolic_link_to_engine
 	    print "$global_program_name: installation of the workflow engine with (--install-engine == $option_install_engine, --install-report == $option_install_report)\n";
 	}
 
-	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
+	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
     }
 }
 
@@ -2962,14 +2964,14 @@ sub builtin_install_scripts
 
     # need to take these actions:
     #
-    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name and the configuration of the project
-    # 2. Install to ~/bin: symbolic links for commands
+    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+    # 2. Install to ~/bin or ~/.local/bin: symbolic links for commands
     # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
     # 4. Install to /etc/grc.conf: text addition
     # 5. Install to /usr/share/grc/: symbolic links
     # 6. Create and populate the git repository
 
-    # 1. Install to ~/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
 
     my $field_configuration = FieldProject::_init_get_field_project_configuration();
 
@@ -2985,14 +2987,16 @@ sub builtin_install_scripts
         die "$global_program_name: *** error: no valid project_name in the field_configuration found";
     }
 
-    # add the ~/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
+    # add the ~/bin  or ~/.local/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
 
     if ($option_install_path_in_bashrc)
     {
 	_install_script_path_in_bashrc($project_name);
     }
 
-    my $command_mkdir = "mkdir --parents $ENV{HOME}/bin";
+    my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $command_mkdir = "mkdir --parents $ENV{HOME}/$bin_path_choice";
 
     execute_shell_command($command_mkdir);
 
@@ -3076,12 +3080,12 @@ sub builtin_install_scripts_completions
 	       '--' => {
 			'--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
 			'--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-			'--commands' => "install or upgrade the command configuration to ~/bin.",
-			'--engine' => "create a symbolic link to the workflow engine in ~/bin.",
+			'--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
+			'--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
 			'--force' => "don't use this.",
 			'--git' => "create a git repository for the workflow configuration.",
 			'--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-			'--path-in-bashrc' => "update .bashrc to include ~/bin in PATH.",
+			'--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
 			'--report' => "report on what is being done.",
 		       },
 	      };
@@ -3136,12 +3140,12 @@ options:
 
     --aliasses           configure the grc aliases in .bashrc if they are not there yet.
     --bash-completion    configure bash completion in .bashrc if they are not there yet.
-    --commands           install or upgrade the command configuration to ~/bin.
-    --engine             create a symbolic link to the workflow engine in ~/bin.
+    --commands           install or upgrade the command configuration to ~/bin or ~/.local/bin.
+    --engine             create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
     --force              don't use this.
     --git                create a git repository for the workflow configuration.
     --grc-configuration  install symbolic links for grc configuration to color code the workflow output (requires sudo access).
-    --path-in-bashrc     update .bashrc to include ~/bin in PATH.
+    --path-in-bashrc     update .bashrc to include ~/bin or ~/.local/bin in PATH.
     --report             report on what is being done.
 
 Note that grc configuration files will also be installed and configured.
@@ -3426,13 +3430,15 @@ sub builtin_rename_project
 	YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
     }
 
+    my $bin_path_choice = Utilities::bin_path_choice();
+
     my $project_bin_files
 	= [
 	   map
 	   {
 	       my $result
 		   = {
-		      directory => "$ENV{HOME}/bin",
+		      directory => "$ENV{HOME}/$bin_path_choice",
 		      filename => $_,
 		     };
 
@@ -3448,7 +3454,7 @@ sub builtin_rename_project
 	   {
 	       my $result
 		   = {
-		      directory => "$ENV{HOME}/bin/",
+		      directory => "$ENV{HOME}/$bin_path_choice/",
 		      filename => $_->{filename},
 		     };
 
@@ -3610,12 +3616,13 @@ sub builtin_start_project
 
 	my $error;
 
+	my $bin_path_choice = Utilities::bin_path_choice();
+
 	my $field_project_configuration
 	    = {
 	       configuration_origin => 'statically_generated by builtin_start_project',
 	       field_project_name => $project_name,
-	       search_path_workflow_executable_directory => "$ENV{HOME}/bin",
-	       # search_path_workflow_executable_filename => "$ENV{HOME}/bin/$project_name-configuration",
+	       search_path_workflow_executable_directory => "$ENV{HOME}/$bin_path_choice",
 	       sources_configuration_directory => '.',
 	       sources_configuration_filename => "./$project_name-configuration",
 	       sources_configuration_data_directory => "./$project_name-commands-data",
@@ -4192,7 +4199,7 @@ sub _workflow_commands_initialize
 #
 # if full_paths is the empty string: nothing more is done.
 #
-# if full_paths is 'true-paths': the ~/bin directory is prefixed.
+# if full_paths is 'true-paths': the ~/bin or ~/.local/bin directory is prefixed.
 #
 # if full_paths is 'full-paths': the sources_configuration_directory is prefixed.
 #
@@ -4353,7 +4360,7 @@ sub _init_command_filenames_found
 
 
 # given a list of filenames, create system shell commands that create
-# symbolic links in the ~/bin directory to each of these filenames.
+# symbolic links in the ~/bin or ~/.local/bin directory to each of these filenames.
 #
 # each given filename must match with *-(commands|configuration) and
 # is checked for existence.
@@ -4369,6 +4376,8 @@ sub _init_filenames_2_symlink_commands
     {
 	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
     }
+
+    my $bin_path_choice = Utilities::bin_path_choice();
 
     my $commands
 	= [
@@ -4386,7 +4395,7 @@ sub _init_filenames_2_symlink_commands
 
 	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
 
-	       my $target = "$ENV{HOME}/bin/$filename";
+	       my $target = "$ENV{HOME}/$bin_path_choice/$filename";
 
 	       my $result = "ln -sf $source $target";
 
@@ -4419,7 +4428,7 @@ sub _init_filenames_2_symlink_commands
 
 	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
 
-	       my $target = "$ENV{HOME}/bin/$filename";
+	       my $target = "$ENV{HOME}/$bin_path_choice/$filename";
 
 	       not -e $target;
 	   }
@@ -7865,7 +7874,7 @@ sub _init_get_field_project_configuration
 
 	if (-r $search_path_workflow_executable_filename)
 	{
-	    # resolve the symbolic link from ~/bin/* to its absolute path it refers to
+	    # resolve the symbolic link from ~/bin/* or ~/.local/bin/* to its absolute path it refers to
 
 	    use Cwd 'abs_path';
 
@@ -7945,7 +7954,7 @@ sub _init_get_field_project_configuration
 
 	    $status = $eval_status;
 
-	    # resolve the symbolic link from ~/bin/* to its absolute path it refers to
+	    # resolve the symbolic link from ~/bin/* or ~/.local/bin/* to its absolute path it refers to
 
 	    use Cwd 'abs_path';
 
@@ -8190,6 +8199,21 @@ sub read_directory
     }
 
     return $result;
+}
+
+
+sub bin_path_choice
+{
+    # should we install to ~/bin or to ~/.local/bin?
+
+    my $use_dot_local = 1;
+
+    if (!-d "$ENV{HOME}/.local/bin")
+    {
+	$use_dot_local = 0;
+    }
+
+    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
 }
 
 
@@ -9796,8 +9820,6 @@ options:
 	       @$all_workflow_projects,
 	      ];
 
-# 	my $projects = $global_technical_project_configuration->{projects};
-
 	print Dump( { "available_workflow automation projects (copy-paste the one you would like to get help for)" => $workflow_projects, }, );
 
 	exit 0;
@@ -9830,9 +9852,6 @@ options:
 
     #! they should do their own checking for a valid
     #! field_configuration, project_name as required.
-
-    #t this may give an 'Use of uninitialized value in exists at /home/neurospaces/bin/workflow-tests-workflow line 7929.'
-    #t *** Executing docker workflow-tests-workflow --bash-completion "workflow-tests-workflow perl_examples single_command aa 12" 5
 
     if ($global_target eq 'builtin'
 	and (defined $global_command
@@ -9875,6 +9894,8 @@ sub workflow_project_list_generate
 {
     my $selector = shift || '.*';
 
+    my $bin_path_choice = Utilities::bin_path_choice();
+
     my $result
 	= [
 	   grep
@@ -9885,7 +9906,7 @@ sub workflow_project_list_generate
 	   {
 	       chomp; $_;
 	   }
-	   `ls -1 ~/bin/*workflow`,
+	   `ls -1 ~/$bin_path_choice/*workflow`,
 	  ];
 
     return $result;
