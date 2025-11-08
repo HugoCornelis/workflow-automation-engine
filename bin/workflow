@@ -8206,9 +8206,9 @@ sub bin_path_choice
 {
     # should we install to ~/bin or to ~/.local/bin?
 
-    my $use_dot_local = 0;
+    my $use_dot_local = 1;
 
-    if (-d "$ENV{HOME}/.local/bin")
+    if (!-d "$ENV{HOME}/.local/bin")
     {
 	$use_dot_local = 0;
     }
