@@ -92,6 +92,19 @@ remain coherently synchronized.
 
 # Installation
 
+`workflow` and `vigilia` are available for most Linux distributions.
+The regression tests use Docker files to install and test Debian,
+Ubuntu, Fedora and OpenSUSE.  The package lists in these Dockerfiles
+document the prerequisites for those distributions (Dockerfile for
+[Debian](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-debian),
+[Ubuntu](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-ubuntu),
+[Fedora](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-fedora),
+[OpenSUSE](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-opensuse)).
+
+Here below follow the instructions for manual installation on Ubuntu.
+
+
+
 ## Prerequisites
 
 `workflow` and `vigilia` require [YAML](https://yaml.org/),
