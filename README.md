@@ -1,3 +1,5 @@
+![Logos](logos/cables-bw-final-comp-1-shrunk-cropped-reduced-bottom-640x170.png)
+
 # Introduction
 
 `workflow` and `vigilia` offer features that allow guaranteeing a
