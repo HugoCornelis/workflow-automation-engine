@@ -1870,7 +1870,7 @@ After installation of the workflow engine, use the following command
 from this directory to make this project configuration available to
 the workflow engine:
 
-`\$ workflow builtin install_scripts -- --engine --commands --aliasses --bash-completion`
+`\$ workflow builtin install_scripts -- --commands --aliasses`
 
 The output of the command explains what has been done and it is
 recommended to carefully inspect it.  The help page of the command
@@ -3053,15 +3053,15 @@ sub builtin_install_scripts
 	       # "echo",
 	       # "echo   $project_name-workflow builtin remove_commands $project_name-commands-perl_examples $project_name-commands-python_examples.py examples_sh/*",
 	       # "echo",
-	       # "echo Or / and maybe followed with commands removing existing targets:",
+	       # "echo Or/and maybe followed with commands removing existing targets:",
 	       # "echo",
 	       # "echo   $project_name-workflow builtin remove_target perl_examples $project_name-commands-python_examples.py examples_sh/*",
 	       # "echo   $project_name-workflow builtin remove_target python_examples",
 	       # "echo   $project_name-workflow builtin remove_target examples_sh\n",
 	       # "echo",
-	       "echo Or / and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
+	       "echo Or/and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
 	       "echo",
-	       "echo   $project_name-workflow builtin add_target source_code 'Operations on the source code, such as git checkout, build and installation.' -- --install-commands-py",
+	       "echo   $project_name-workflow builtin add_target source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
 	       "echo",
 	      ];
 
@@ -3499,7 +3499,7 @@ sub builtin_rename_project
     my $commands_reinstall_scripts
 	= [
 	   "cd $sources_configuration_directory",
-	   "workflow builtin install_scripts -- --engine --commands $aliasses",
+	   "workflow builtin install_scripts -- --commands $aliasses",
 	  ];
 
     execute_shell_command_array($commands_reinstall_scripts);
@@ -3711,7 +3711,7 @@ sub builtin_start_project
 	    print "---\nTest it with the command:\n\n";
 	    print "  workflow --help-field-project-name\n\n";
 	    print "Afterwards install the scripts on your system using the command:\n\n";
-	    print "  workflow builtin install_scripts -- --engine --commands --git\n\n";
+	    print "  workflow builtin install_scripts -- --commands --git\n\n";
 	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
 	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
 	    print "  $project_name-workflow examples sequencing_and_composition --interactions-module\n\n";

@@ -57,9 +57,9 @@ Bash completion can be enabled using:
 
 . ./feature-testing-bash-completion.sh
 
-Or / and maybe followed with a command to add or modify a first target, here, for the target named source_code:
+Or/and maybe followed with a command to add or modify a first target, here, for the target named source_code:
 
-feature-testing-workflow builtin add_target source_code Operations on the source code, such as git checkout, build and installation. -- --install-commands-py
+feature-testing-workflow builtin add_target source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
 
 ',
 						   wait => 2,

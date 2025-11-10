@@ -55,7 +55,7 @@ command_tests:
       #
       # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
       #
-      # workflow builtin install_scripts -- --engine --commands --no-aliasses
+      # workflow builtin install_scripts -- --commands --no-aliasses
       #
       # mkdir --parents /home/neurospaces/bin
       #
@@ -96,9 +96,9 @@ command_tests:
       
       . ./abcd-bash-completion.sh
       
-      Or / and maybe followed with a command to add or modify a first target, here, for the target named source_code:
+      Or/and maybe followed with a command to add or modify a first target, here, for the target named source_code:
       
-      abcd-workflow builtin add_target source_code Operations on the source code, such as git checkout, build and installation. -- --install-commands-py
+      abcd-workflow builtin add_target source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
       
       ========================================================================================================================
       ========================================================================================================================

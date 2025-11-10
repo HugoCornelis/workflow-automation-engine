@@ -37,7 +37,7 @@ After installation of the workflow engine, use the following command
 from this directory to make this project configuration available to
 the workflow engine:
 
-`$ workflow builtin install_scripts -- --engine --commands --aliasses --bash-completion`
+`$ workflow builtin install_scripts -- --commands --aliasses --bash-completion`
 
 The output of the command explains what has been done and it is
 recommended to carefully inspect it.  The help page of the command
