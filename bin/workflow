@@ -8253,7 +8253,11 @@ sub bash_completion
 
     my $last_space_index2 = length($1);
 
-    my $debug_completion = { bash_completion => 0, generate => 0, };
+    my $debug_completion
+	= {
+	   bash_completion => (defined $option_details && $option_details & 1),
+	   generate => (defined $option_details && $option_details & 2),
+	  };
 
     if ($debug_completion->{bash_completion})
     {
