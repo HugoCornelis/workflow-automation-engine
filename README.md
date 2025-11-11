@@ -5,8 +5,8 @@
 `workflow` and `vigilia` provide features that ensure a single "source
 of truth" for documenting a software system.
 
-The `workflow` engine automates complex shell-based tasks during
-software development, streamlining project workflows.
+The `workflow` engine automates and documents complex shell-based
+tasks during software development, streamlining project workflows.
 
 The `vigilia` testing framework uses a database of test specifications
 to generate documentation for user-facing functionality and to verify
