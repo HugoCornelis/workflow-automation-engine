@@ -1022,6 +1022,11 @@ sub harness_command_module_command_add
 	    {
 		$output = substr($output, 3);
 	    }
+
+	    if ($output =~ /^--/)
+	    {
+		$output = substr($output, 2);
+	    }
 	}
     }
 
