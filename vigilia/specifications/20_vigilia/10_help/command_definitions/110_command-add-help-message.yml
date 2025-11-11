@@ -15,6 +15,7 @@ command_tests:
           --description      The description to insert.  The description is inserted both at command definition level and at command test level.
           --help             Show this help message.
           --output-json      Output in json format.
+          --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
           --output-yaml      Output in yaml format.
           --test-prefix      Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
           --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
