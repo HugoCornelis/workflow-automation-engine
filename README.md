@@ -2,52 +2,82 @@
 
 # Introduction
 
-`workflow` and `vigilia` offer features that allow guaranteeing a
-single “source of truth” for the documentation of a software system.
+`workflow` and `vigilia` provide features that ensure a single "source
+of truth" for documenting a software system.
 
-The `workflow` engine helps automating complicated system shell tasks
-during the development of a software project.
+The `workflow` engine automates complex shell-based tasks during
+software development, streamlining project workflows.
 
-The `vigilia` tester uses a database of test specifications to
-generate documentation of user-visible functions and validate if the
-delivered software complies with the required application functions.
+The `vigilia` testing framework uses a database of test specifications
+to generate documentation for user-facing functionality and to verify
+that the delivered software meets the required application functions.
 
 
 __The Workflow Automation Engine__
 
-The workflow engine helps automating complicated system shell tasks
-during the development of a software project.
+The `workflow` engine helps automate complex system shell tasks during
+software development.
 
-Typical examples of workflow automation are running local and remote
-shell commands with arguments and options that are hard to remember,
-to compile source code on a build server, to convert documentation to
-a web page, to flash a binary software image such as the Linux kernel
-to a small or embedded device, or orchestrate the execution of command
-sequences on different local, remote and virtual machines.
+Typical use cases include running local or remote shell commands with
+hard-to-remember arguments and options, compiling source code on a
+build server, converting documentation into web pages, flashing binary
+software images (such as the Linux kernel) to small or embedded
+devices, and orchestrating command sequences across local, remote, or
+virtual machines.
 
-The workflow engine offers the following functions:
+The `workflow` engine provides the following capabilities:
 
-- Convenient implmenetation of modular custom workflows, with or
-  without arguments, including bash completions and help pages.
-- Easy to start a new project, new _targets_ and new _commands_.
-- Integration with `bash` completion allows browsing project specific
-  _targets_, project specific _commands_ and project specific
-  _configuration_.
-- Integration with `grc` for project specific _keyword highlighting_.
-- Support for different _roles_ e.g. for remote execution, in a Docker
-  container or in a `tmux` session.
+- Convenient implementation of modular, custom workflows integrated
+  with `bash` completion and automatically generated help pages.
+- Simple creation of new projects, new _targets_, and new _commands_.
+- Integration with Bash completion enables browsing of
+  project-specific _targets_, _commands_, and _configurations_.
+- Integration with `grc` for project-specific _keyword highlighting_.
+- Support for multiple _roles_ for remote execution in a Docker
+  containers or `tmux` sessions.
 
-__The `vigilia` tester__
 
-The `vigilia` tester starts from a declarative database of test
+`workflow` engine configurations and libraries have been used for:
+
+- Buildroot wrapping: Use Buildroot more conveniently and leverage
+  `workflow` `bash` completion to explore available `defconfig`s and
+  track which builds have already been completed.
+- Linux kernel testing and debugging: Compile a specific Linux kernel
+  source tree and initiate debugging sessions under `qemu`.
+- Device fleet simulation: Build embedded software artifacts and
+  integrate the required open-source components to simulate device
+  fleet scenarios.
+- Documentation generation and verification: Use the `workflow` engine
+  to automatically generate user-facing documentation from test
+  specifications.
+
+
+The `workflow` engine is typically used to:
+
+- Organize, orchestrate and integrate software components into a
+  cohesive system.
+- Separate Open Source Software components from commercial ones.
+- Ensure reproducibility and traceability throughout the software
+  development lifecycle.
+- Maintain consistency and standardization across diverse development
+  environments.
+- Facilitate collaboration by providing a common framework for
+  defining and executing project workflows organized in a `git`
+  repository.
+
+
+__The `vigilia` Tester__
+
+The `vigilia` tester is based on a declarative database of test
 specifications to:
 
-- Run the tests and report about software application behaviour.
+- Execute tests and report on software application behavior.
 - Query the test specifications as a knowledge base of implemented,
-  required or desired application function.
-- Separate layers of test specfications.
-- Generate documentation of user-visible functions.
-- Isolate a test environment through virtualization.
+  required or desired application functions.
+- Organize test specifications into hierarchically layers and
+  categorize them using tags.
+- Generate documentation for user-visible functionality.
+- Isolate test environments using virtualization.
 
 
 ## Abstract
@@ -93,63 +123,66 @@ remain coherently synchronized.
 # Installation
 
 `workflow` and `vigilia` are available for most Linux distributions.
-The regression tests use Docker files to install and test Debian,
-Ubuntu, Fedora and OpenSUSE.  The package lists in these Dockerfiles
-document the prerequisites for those distributions (Dockerfile for
+The regression tests use Docker files to install and verify
+functionality on Debian, Ubuntu, Fedora and OpenSUSE.  The package
+lists within these Dockerfiles document the prerequisites for each of
+those distributions (Dockerfile for
 [Debian](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-debian),
 [Ubuntu](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-ubuntu),
 [Fedora](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-fedora),
 [OpenSUSE](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-opensuse)).
 
-Here below follow the instructions for manual installation on Ubuntu.
+The following section provides manual installation instructions for
+Ubuntu.
 
 
 
 ## Prerequisites
 
-`workflow` and `vigilia` require [YAML](https://yaml.org/),
-[JSON](https://toml.io/en/) or [TOML](https://toml.io/en/) for
-configuration files.  The Perl modules `File::chdir`, and
-`File::Find::Rule`, the Perl module for integration of Python code
-into Perl are required[^1].  `workflow` uses `grc` for colorification
-of its output.  Installation itself is performed with `autotools` and
-`make` and uses `gcc` to compile C code.
+`workflow` and `vigilia` use [YAML](https://yaml.org/),
+[JSON](https://toml.io/en/) and [TOML](https://toml.io/en/) for
+configuration files.  They require the Perl modules `File::chdir`, and
+`File::Find::Rule`, as well as the Perl module for integration of
+Python code into Perl[^1].  `workflow` also relies `grc` for colorized
+output.  Installation itself is handled via `autotools` and `make` and
+requires `gcc` to compile C code.
 
-As an example, for Ubuntu 22.04.3 LTS jammy, you need to install these
-prerequisites:
+As an example, for Ubuntu 22.04.3 LTS (Jammy), the following
+prerequisites must be installed:
 
 ```
 sudo apt install automake
 sudo apt install grc
+sudo apt install libexpect-perl
 sudo apt install libfile-chdir-perl
+sudo apt install libfile-find-rule-perl
 sudo apt install libinline-python-perl
 sudo apt install libjson-perl
+sudo apt install libnet-ip-perl
 sudo apt install libtoml-perl
 sudo apt install libyaml-perl
 sudo apt install make
-sudo apt libfile-find-rule-perl
-sudo apt libnet-ip-perl
-sudo apt libexpect-perl
 ```
 
 [^1]: The Perl module that integrates with Python is called Inline::Python.  This module currently has a bug that generates warnings when multiple Python source code files are inlined.  A fix is available from https://github.com/niner/inline-python-pm but this fix is not available from package managers yet.
 
-Then clone this repository into a local directory:
+
+## Installation
+
+First clone this repository into a local directory:
 
 ```
 git clone https://github.com/HugoCornelis/workflow-automation-engine.git
 cd workflow-automation-engine
 ```
 
-## Installation
-
-Generate a `configure` script with the command:
+Generate the `configure` script:
 
 ```
 ./autogen.sh
 ```
 
-Install `workflow` and `vigilia` using `configure` and `make`:
+Then install `workflow` and `vigilia` using `configure` and `make`:
 
 ```
 ./configure
@@ -163,50 +196,56 @@ sudo make install
 
 # Using `workflow` and `vigilia`
 
-## Starting a new `workflow` project
+## Starting a New `workflow` Project
 
-Starting a new `workflow` project with name *foo* consists of these
-steps:
+To start a new `workflow` project named *foo*, follow these steps:
 
 1. `workflow builtin start_project foo`
 
-	Creates a workflow configuration for a new project with name
-    *foo* and initialize a `git` repository for it.
+	Creates a workflow configuration for the new project named *foo*.
 
 2. `workflow builtin install_scripts -- --commands --git`
 
-	Makes the configuration available from any directory.
+	Makes the configuration available from any directory and
+    initializes a `git` repository for it.
 
 3. `foo-workflow --help-commands`
 
-	Optionally shows the available commands for the project with name
-    *foo*.
+	Optionally displays the available commands for the project *foo*.
 
 4. `foo-workflow examples_sh sh_single_command`
 
-	By default the workflow engine installs a few commands that you
-    can easily adapt to your needs.  This is one of them.  Use the
-    `--dry-run` option to see exactly what commands would be executed,
-    use the `--interactions` option to see the same commands based on
-    the role which would execute them.
+	By default the `workflow` engine installs a several example
+    commands that can be adapted to your project's needs.  Use the
+    `--dry-run` option to see the commands that would be executed, or
+    use the `--interactions` option to see the commands and the role
+    which would execute them.
 
 5. `foo-workflow builtin add_target -- bar "Add commands to this new target that do new things" --install-commands-sh`
 
-	Adds the target *bar* and creates a directory with a few template
-    examples for you to adapt to your project.
+	Adds a new target *bar* and creates a directory with template
+    examples that you can customize for your project.
 
 
 ## Starting a new `vigilia` project
 
-Starting a new `vigilia` project with name *bar* consists of these
-steps:
+To start a new `vigilia` project named *bar*, follow these steps:
 
 1. `vigilia configuration-create bar alpha`
 
+	Creates a new configuration for the project bar with the role alpha.
+
 2. `vigilia module-create 100_test_module`
+
+	Creates a new test module named `100_test_module`.
 
 3. `vigilia command-add 100_test_module a_tested_command "This test tests 'a_tested_command' and expects the output it currently generates`
 
-This section is incomplete.
+	Adds a test command to the module that verifies the behavior of
+    `a_tested_command` and checks its output against the expected
+    result.
+
+Note: This section is under development.
+
 
 
