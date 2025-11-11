@@ -5,8 +5,8 @@
 `workflow` and `vigilia` provide features that ensure a single "source
 of truth" for documenting a software system.
 
-The `workflow` engine automates complex shell-based tasks during
-software development, streamlining project workflows.
+The `workflow` engine automates and documents complex shell-based
+tasks during software development, streamlining project workflows.
 
 The `vigilia` testing framework uses a database of test specifications
 to generate documentation for user-facing functionality and to verify
@@ -80,44 +80,44 @@ specifications to:
 - Isolate test environments using virtualization.
 
 
-## Abstract
+<!-- ## Abstract -->
 
-Software documentation management systems face three long-standing
-challenges: (1) Consistent software documentation synchronization with
-system function, (2) Satisfy industry certification schemes, (3)
-Document workflows required for project execution, collaboration
-between software developers and reduce on-boarding time of new
-developers.
+<!-- Software documentation management systems face three long-standing -->
+<!-- challenges: (1) Consistent software documentation synchronization with -->
+<!-- system function, (2) Satisfy industry certification schemes, (3) -->
+<!-- Document workflows required for project execution, collaboration -->
+<!-- between software developers and reduce on-boarding time of new -->
+<!-- developers. -->
 
-Two complimentary software applications are introduced: `workflow` and
-`vigilia`.  Together, they elaborate a multipolar view of the
-implementation of a software documentation project while allowing
-refinement during project development.
+<!-- Two complimentary software applications are introduced: `workflow` and -->
+<!-- `vigilia`.  Together, they elaborate a multipolar view of the -->
+<!-- implementation of a software documentation project while allowing -->
+<!-- refinement during project development. -->
 
-`workflow` automates the technical workflows required for project
-development.  Its descriptions are based on system shell commands
-through a set of configuration files.
+<!-- `workflow` automates the technical workflows required for project -->
+<!-- development.  Its descriptions are based on system shell commands -->
+<!-- through a set of configuration files. -->
 
-Separation of project specific workflow configurations supports
-collaboration between software developers through a shared git
-repository.
+<!-- Separation of project specific workflow configurations supports -->
+<!-- collaboration between software developers through a shared git -->
+<!-- repository. -->
 
-The configuration files implement, automate, track and document the
-execution of a series of system shell commands across machines used
-for multi-role compilations, builds, tests and deployment.
+<!-- The configuration files implement, automate, track and document the -->
+<!-- execution of a series of system shell commands across machines used -->
+<!-- for multi-role compilations, builds, tests and deployment. -->
 
-A tester tool, `vigilia` isolates declarative test descriptions from
-their execution.
+<!-- A tester tool, `vigilia` isolates declarative test descriptions from -->
+<!-- their execution. -->
 
-These descriptions facilitate layering of the documentation levels
-required for industry compliance and certification.
+<!-- These descriptions facilitate layering of the documentation levels -->
+<!-- required for industry compliance and certification. -->
 
-Specific features of test descriptions can be tagged for inclusion in
-documents derived from the tests.
+<!-- Specific features of test descriptions can be tagged for inclusion in -->
+<!-- documents derived from the tests. -->
 
-Combining these features guarantees a single “source of truth”
-ensuring software system tests, documents and software functions
-remain coherently synchronized.
+<!-- Combining these features guarantees a single “source of truth” -->
+<!-- ensuring software system tests, documents and software functions -->
+<!-- remain coherently synchronized. -->
 
 
 # Installation
