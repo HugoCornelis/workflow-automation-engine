@@ -1040,9 +1040,8 @@ sub harness_command_module_command_add
 
 	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
 
-	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
-
-	if ($result =~ /error/i)
+	if (defined $result
+	    && $result =~ /error/i)
 	{
 	    $error = "Error adding the command to the test module $module_name ($result).";
 	}
@@ -1208,9 +1207,8 @@ sub harness_command_module_command_update
 
 	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
 
-	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
-
-	if ($result =~ /error/i)
+	if (defined $result
+	    && $result =~ /error/i)
 	{
 	    $error = "Error adding the command to the test module $module_name ($result).";
 	}
@@ -7841,6 +7839,8 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     my $file_type = shift;
 
+    my $result;
+
     # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
 
     # use Data::Structure::Util qw( unbless );
@@ -7864,14 +7864,23 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     $command_definition->{command_tests} = $command_tests_unblessed;
 
-    if ($file_type eq 'yaml')
+    if (! -f $command_definition_pathname)
     {
-	YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	if ($file_type eq 'yaml')
+	{
+	    YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	}
+	else
+	{
+	    JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
+	}
     }
     else
     {
-	JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
+	$result = "Error: $command_definition_pathname already exists.";
     }
+
+    return $result;
 }
 
 
@@ -7961,13 +7970,14 @@ sub module_definition_dump_file_structured_yaml_or_json
 
 		    my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
 
-		    if (! -f $command_definition_pathname)
+		    my $error = command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_pathname, $file_type);
+
+		    if (defined $error
+			&& $error =~ /error/i)
 		    {
-			command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_pathname, $file_type);
-		    }
-		    else
-		    {
-			$result = "Error: $command_definition_pathname already exists";
+			$result = "Error: $command_definition_pathname already exists ($error).";
+
+			last;
 		    }
 
 		    $prefix += 10;
