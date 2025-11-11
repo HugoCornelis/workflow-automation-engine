@@ -1002,7 +1002,14 @@ sub harness_command_module_command_add
     {
 	if ($command_prefix)
 	{
-	    $command_to_be_tested = "$command_prefix '$command_to_be_tested'";
+	    if ($command_to_be_tested =~ /'/)
+	    {
+		$command_to_be_tested = "$command_prefix \"$command_to_be_tested\"";
+	    }
+	    else
+	    {
+		$command_to_be_tested = "$command_prefix '$command_to_be_tested'";
+	    }
 	}
 
 	$output = `$command_to_be_tested`;
