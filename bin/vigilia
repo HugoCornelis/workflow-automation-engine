@@ -866,6 +866,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
     --description      The description to insert.  The description is inserted both at command definition level and at command test level.
     --help             Show this help message.
     --output-json      Output in json format.
+    --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
     --output-yaml      Output in yaml format.
     --test-prefix      Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
     --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
@@ -877,6 +878,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
 		   "comment=s" => do { my $option_comment; \$option_comment; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
+		   "output-stdout!" => do { my $option_output_stdout; \$option_output_stdout; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
 		   "test-prefix=s" => do { my $option_test_prefix; \$option_test_prefix; },
 		   "yaml-work-around!" => do { my $option_yaml_work_around; \$option_yaml_work_around; },
@@ -932,6 +934,15 @@ sub harness_command_module_command_add
     if (defined $$option_command_prefix)
     {
 	$command_prefix = $$option_command_prefix;
+    }
+
+    my $option_output_stdout = $options->{"output-stdout!"};
+
+    my $output_stdout;
+
+    if (defined $$option_output_stdout)
+    {
+	$output_stdout = $$option_output_stdout;
     }
 
     my $option_test_prefix = $options->{"test-prefix=s"};
@@ -991,7 +1002,14 @@ sub harness_command_module_command_add
     {
 	if ($command_prefix)
 	{
-	    $command_to_be_tested = "$command_prefix '$command_to_be_tested'";
+	    if ($command_to_be_tested =~ /'/)
+	    {
+		$command_to_be_tested = "$command_prefix \"$command_to_be_tested\"";
+	    }
+	    else
+	    {
+		$command_to_be_tested = "$command_prefix '$command_to_be_tested'";
+	    }
 	}
 
 	$output = `$command_to_be_tested`;
@@ -1003,6 +1021,11 @@ sub harness_command_module_command_add
 	    if ($output =~ /^---/)
 	    {
 		$output = substr($output, 3);
+	    }
+
+	    if ($output =~ /^--/)
+	    {
+		$output = substr($output, 2);
 	    }
 	}
     }
@@ -1038,13 +1061,28 @@ sub harness_command_module_command_add
 
 	$command_definition_filename = $prefix . "_" . Heterarch::Test::Library::sentence_summarize($description, 80) . ($file_type eq 'yaml' ? ".yml" : ".json");
 
-	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
-
-	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
-
-	if ($result =~ /error/i)
+	if ($output_stdout)
 	{
-	    $error = "Error adding the command to the test module $module_name ($result).";
+	    my $output_yaml
+		= {
+		   command_definition_filename => $command_definition_filename,
+		   command_to_be_tested => $command_to_be_tested,
+		   output => $output,
+		  };
+
+	    use YAML;
+
+	    print Dump($output_yaml);
+	}
+	else
+	{
+	    my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
+
+	    if (defined $result
+		&& $result =~ /error/i)
+	    {
+		$error = "Error adding the command to the test module $module_name ($result).";
+	    }
 	}
     }
     else
@@ -1208,9 +1246,8 @@ sub harness_command_module_command_update
 
 	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, "$directory/$command_definition_filename", $file_type);
 
-	# my $result = Heterarch::Test::Library::module_definition_dump_file_structured_yaml_or_json($module_name, $module_definition, $tests_directory, $reporter, 'yaml');
-
-	if ($result =~ /error/i)
+	if (defined $result
+	    && $result =~ /error/i)
 	{
 	    $error = "Error adding the command to the test module $module_name ($result).";
 	}
@@ -7841,6 +7878,8 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     my $file_type = shift;
 
+    my $result;
+
     # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
 
     # use Data::Structure::Util qw( unbless );
@@ -7864,14 +7903,23 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     $command_definition->{command_tests} = $command_tests_unblessed;
 
-    if ($file_type eq 'yaml')
+    if (! -f $command_definition_pathname)
     {
-	YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	if ($file_type eq 'yaml')
+	{
+	    YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	}
+	else
+	{
+	    JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
+	}
     }
     else
     {
-	JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
+	$result = "Error: $command_definition_pathname already exists.";
     }
+
+    return $result;
 }
 
 
@@ -7961,13 +8009,14 @@ sub module_definition_dump_file_structured_yaml_or_json
 
 		    my $command_definition_pathname = "$module_pathname/command_definitions/$command_definition_filename";
 
-		    if (! -f $command_definition_pathname)
+		    my $error = command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_pathname, $file_type);
+
+		    if (defined $error
+			&& $error =~ /error/i)
 		    {
-			command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_pathname, $file_type);
-		    }
-		    else
-		    {
-			$result = "Error: $command_definition_pathname already exists";
+			$result = "Error: $command_definition_pathname already exists ($error).";
+
+			last;
 		    }
 
 		    $prefix += 10;
