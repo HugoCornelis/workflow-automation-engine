@@ -8301,23 +8301,8 @@ sub bash_completion
 
     elsif ($command =~ /workflow/)
     {
-	if (defined $command_line_word
-	    and $command_line_word =~ /^-/)
 	{
-	    $result = bash_completion_generate_options();
-	}
-	else
-	{
-	    # COMP_CWORD	An index into ${COMP_WORDS} of the word containing the current cursor position.
-
-	    # remove the options from the argument list
-
-	    my $position_2_type
-		= {
-		   0 => 'target',
-		   1 => 'command',
-		   2 => 'subcommand',
-		  };
+	    my $perform_option_completion;
 
 	    my $position = 0;
 
@@ -8331,8 +8316,15 @@ sub bash_completion
 		{
 		    if (exists $arguments->[$index])
 		    {
-			if ($arguments->[$index] =~ /^--/)
+			if ($arguments->[$index] eq '--')
 			{
+			    $target_command->[$position] = $arguments->[$index];
+
+			    $position++;
+			}
+			elsif ($arguments->[$index] =~ /^--/)
+			{
+			    $perform_option_completion = 'yes';
 			}
 			else
 			{
@@ -8352,19 +8344,42 @@ sub bash_completion
 		}
 	    }
 
-	    my $internal_completion = ($position < 3);
+	    my $perform_internal_completion = ($position < 3);
 
-	    if ($internal_completion)
+	    if ($debug_completion->{bash_completion})
 	    {
-		my $all_typed_commands = command_hash_typed_generate();
+		print STDERR Dumper( { perform_internal_completion => $perform_internal_completion } );
+	    }
 
-		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
+	    if ($perform_internal_completion)
+	    {
+		if ($perform_option_completion)
+		{
+		    $result = bash_completion_generate_options();
+		}
+		else
+		{
+		    my $all_typed_commands = command_hash_typed_generate();
 
-		$result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
+		    my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
 
-		# make sure the user gets a hint that options are also possible
+		    $result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
 
-		push @$result, '--a', '--b';
+		    # make sure the user gets a hint that options are also possible
+
+		    push @$result, '--a', '--b';
+
+		    # if ($debug_completion->{bash_completion})
+		    # {
+		    # 	print STDERR Dumper(
+		    # 			    {
+		    # 			     status => {
+		    # 					internal_commands => $internal_commands,
+		    # 				       },
+		    # 			    },
+		    # 			   );
+		    # }
+		}
 
 		if ($debug_completion->{bash_completion})
 		{
@@ -8382,8 +8397,8 @@ sub bash_completion
 						      position => $position,
 						     },
 					 status => {
-						    internal_commands => $internal_commands,
-						    internal_completion => $internal_completion,
+						    perform_internal_completion => $perform_internal_completion,
+						    perform_option_completion => $perform_option_completion,
 						    result => [ sort @$result ],
 						   },
 					},
@@ -8438,7 +8453,7 @@ sub bash_completion
 						      position => $position,
 						     },
 					 status => {
-						    internal_completion => $internal_completion,
+						    perform_internal_completion => $perform_internal_completion,
 						    result => $result,
 						   },
 					},
@@ -8540,6 +8555,11 @@ sub bash_completion_generate
 
 	    last;
 	}
+    }
+
+    if ($debug_completion->{generate})
+    {
+	print STDERR "LOOP DONE\n";
     }
 
     if ($comp_cword == 0)
