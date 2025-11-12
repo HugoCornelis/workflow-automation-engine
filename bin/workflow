@@ -8301,173 +8301,156 @@ sub bash_completion
 
     elsif ($command =~ /workflow/)
     {
+	my $perform_option_completion;
+
+	my $position = 0;
+
+	my $target_command = [];
+
+	if ($comp_cword > 0)
 	{
-	    my $perform_option_completion;
+	    #! we shifted one from $arguments so $comp_cword - 1 is the last entry
 
-	    my $position = 0;
-
-	    my $target_command = [];
-
-	    if ($comp_cword > 0)
+	    foreach my $index (0 .. $comp_cword - 1)
 	    {
-		#! we shifted one from $arguments so $comp_cword - 1 is the last entry
-
-		foreach my $index (0 .. $comp_cword - 1)
+		if (exists $arguments->[$index])
 		{
-		    if (exists $arguments->[$index])
+		    if ($arguments->[$index] eq '--')
 		    {
-			if ($arguments->[$index] eq '--')
-			{
-			    $target_command->[$position] = $arguments->[$index];
+			$target_command->[$position] = $arguments->[$index];
 
-			    $position++;
-			}
-			elsif ($arguments->[$index] =~ /^--/)
-			{
-			    $perform_option_completion = 'yes';
-			}
-			else
-			{
-			    $target_command->[$position] = $arguments->[$index];
+			$position++;
+		    }
+		    elsif ($arguments->[$index] =~ /^--/)
+		    {
+			$perform_option_completion = 'yes';
+		    }
+		    else
+		    {
+			$target_command->[$position] = $arguments->[$index];
 
-			    $position++;
-			}
+			$position++;
 		    }
 		}
-
-		# if the command line is at the start a new word to be
-		# completed, flag this
-
-		if (not exists $arguments->[$comp_cword - 1])
-		{
-		    $position++;
-		}
 	    }
 
-	    my $perform_internal_completion = ($position < 3);
+	    # if the command line is at the start a new word to be
+	    # completed, flag this
 
-	    if ($debug_completion->{bash_completion})
+	    if (not exists $arguments->[$comp_cword - 1])
 	    {
-		print STDERR Dumper( { perform_internal_completion => $perform_internal_completion } );
+		$position++;
 	    }
+	}
 
-	    if ($perform_internal_completion)
+	my $perform_internal_completion = ($position < 3);
+
+	if ($debug_completion->{bash_completion})
+	{
+	    print STDERR Dumper( { perform_internal_completion => $perform_internal_completion } );
+	}
+
+	if ($perform_internal_completion)
+	{
+	    if ($perform_option_completion)
 	    {
-		if ($perform_option_completion)
-		{
-		    $result = bash_completion_generate_options();
-		}
-		else
-		{
-		    my $all_typed_commands = command_hash_typed_generate();
-
-		    my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
-
-		    $result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
-
-		    # make sure the user gets a hint that options are also possible
-
-		    push @$result, '--a', '--b';
-
-		    # if ($debug_completion->{bash_completion})
-		    # {
-		    # 	print STDERR Dumper(
-		    # 			    {
-		    # 			     status => {
-		    # 					internal_commands => $internal_commands,
-		    # 				       },
-		    # 			    },
-		    # 			   );
-		    # }
-		}
-
-		if ($debug_completion->{bash_completion})
-		{
-		    print STDERR Dumper(
-					{
-					 command_arguments => {
-							       arguments => $arguments,
-							       command => $command,
-							       command_line => $command_line,
-							       command_line_word => $command_line_word,
-							       target_command => $target_command,
-							      },
-					 position => {
-						      comp_cword => $comp_cword,
-						      position => $position,
-						     },
-					 status => {
-						    perform_internal_completion => $perform_internal_completion,
-						    perform_option_completion => $perform_option_completion,
-						    result => [ sort @$result ],
-						   },
-					},
-				       );
-		}
+		$result = bash_completion_generate_options();
 	    }
 	    else
 	    {
-		my $internal_command = shift @$target_command;
-		my $internal_operation = shift @$target_command;
+		my $all_typed_commands = command_hash_typed_generate();
 
-		my $completion_sub = "Command::${internal_command}_${internal_operation}_completions";
+		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
 
-		my $command_hash = command_hash_typed_generate('with completion subs');
+		$result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
 
-		# have the command generate the data structure that lists the completions
+		# make sure the user gets a hint that options are also possible
 
-		my $external_commands
-		    = {
-		       "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
-		       "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
-		      };
+		push @$result, '--a', '--b';
+	    }
 
-		if (exists $command_hash->{"$internal_command ${internal_operation}_completions"})
-		{
-		    no strict "refs";
+	    if ($debug_completion->{bash_completion})
+	    {
+		print STDERR Dumper(
+				    {
+				     command_arguments => {
+							   arguments => $arguments,
+							   command => $command,
+							   command_line => $command_line,
+							   command_line_word => $command_line_word,
+							   target_command => $target_command,
+							  },
+				     position => {
+						  comp_cword => $comp_cword,
+						  position => $position,
+						 },
+				     status => {
+						perform_internal_completion => $perform_internal_completion,
+						perform_option_completion => $perform_option_completion,
+						result => [ sort @$result ],
+					       },
+				    },
+				   );
+	    }
+	}
+	else
+	{
+	    my $internal_command = shift @$target_command;
+	    my $internal_operation = shift @$target_command;
 
-		    my $command_name = $completion_sub;
+	    my $completion_sub = "Command::${internal_command}_${internal_operation}_completions";
 
-		    $command_name =~ s(^Command::)();
-		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $command_name =~ s(_completions$)();
+	    my $command_hash = command_hash_typed_generate('with completion subs');
 
-		    $external_commands = &$completion_sub($command_name, $arguments);
-		}
+	    # have the command generate the data structure that lists the completions
 
-		$result = bash_completion_generate($target_command, $external_commands, $comp_cword - 2, $debug_completion);
+	    my $external_commands
+		= {
+		   "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
+		   "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
+		  };
 
-		if ($debug_completion->{bash_completion})
-		{
-		    print STDERR Dumper(
-					{
-					 command_arguments => {
-							       arguments => $arguments,
-							       command => $command,
-							       command_line => $command_line,
-							       command_line_word => $command_line_word,
-							       target_command => $target_command,
-							      },
-					 position => {
-						      comp_cword => $comp_cword,
-						      position => $position,
-						     },
-					 status => {
-						    perform_internal_completion => $perform_internal_completion,
-						    result => $result,
-						   },
-					},
-				       );
+	    if (exists $command_hash->{"$internal_command ${internal_operation}_completions"})
+	    {
+		no strict "refs";
 
-		    print STDERR Dumper(
-					{
-					 command_hash => $command_hash,
-					 external_commands => $external_commands,
-					 result => $result,
-					},
-				       );
-		}
+		my $command_name = $completion_sub;
 
+		$command_name =~ s(^Command::)();
+		$command_name =~ s(^([a-z0-9]+?)_)($1 );
+		$command_name =~ s(_completions$)();
+
+		$external_commands = &$completion_sub($command_name, $arguments);
+	    }
+
+	    $result = bash_completion_generate($target_command, $external_commands, $comp_cword - 2, $debug_completion);
+
+	    if ($debug_completion->{bash_completion})
+	    {
+		print STDERR Dumper(
+				    {
+				     command_arguments => {
+							   arguments => $arguments,
+							   command => $command,
+							   command_line => $command_line,
+							   command_line_word => $command_line_word,
+							   target_command => $target_command,
+							  },
+				     position => {
+						  comp_cword => $comp_cword,
+						  position => $position,
+						 },
+				     perform_internal_completion => $perform_internal_completion,
+				    },
+				   );
+
+		print STDERR Dumper(
+				    {
+				     command_hash => $command_hash,
+				     external_commands => $external_commands,
+				     result => $result,
+				    },
+				   );
 	    }
 	}
     }
