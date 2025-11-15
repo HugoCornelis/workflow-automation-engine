@@ -199,5 +199,8 @@ RUN echo 'PATH=$PATH:~/bin' >>~/.bashrc
 
 WORKDIR /home/${USER_NAME}
 
-RUN echo 'Inside a Docker container built from Dockerfile.source_code' >~/.inside-docker
+USER root
 
+RUN echo 'Inside a Docker container built from Dockerfile.source_code' >/.inside-docker
+
+USER ${USER_NAME}
