@@ -13,6 +13,50 @@ to generate documentation for user-facing functionality and to verify
 that the delivered software meets the required application functions.
 
 
+## `workflow` Applications
+
+`workflow` engine configurations, applications and libraries are
+typically developed in Python and are used for:
+
+- IT network and infrastructure administration: Automate the IT
+  administration tasks such as monitoring remote machines and never
+  forget that one command that you once used to inspect the
+  registration details of a device inside a Docker container.  A well
+  developed `workflow` configuration offers a conceptual operational
+  view on a complex IT network while still allowing inspection and
+  configuration of all the details.
+- Buildroot wrapping: Use Buildroot more conveniently and leverage
+  `workflow` `bash` completion to explore available `defconfig`s and
+  track which packages have already been built.
+- Linux kernel testing and debugging: Compile a specific Linux kernel
+  source tree and initiate debugging sessions under `qemu`.
+- Device fleet simulation: Build embedded software artifacts and
+  integrate the required open-source components to simulate device
+  fleet scenarios.
+- Documentation generation and verification: Use the `workflow` engine
+  to automatically generate user-facing documentation from test
+  specifications.
+
+
+## `vigilia` Applications
+
+`vigilia` was originally used as a first line documentation generation
+system for the [GENESIS neural simulation
+system](http://genesis-sim.org/):
+
+- Unit, regression and integration testing: Starting `vigilia` from a
+  `cron` job implemented the tests that catch error introduced by new
+  development.
+- Static HTML web site generation: The test specifications model real
+  use cases and form the basis for documentation writers to develop
+  tutorial materials.
+- Manual generation: The inline description of selected tests are
+  converted to a PDF document that forms the foundation of
+  specification and user manuals.
+
+
+## Some of the Details
+
 __The Workflow Automation Engine__
 
 The `workflow` engine helps automate complex system shell tasks during
@@ -35,21 +79,6 @@ The `workflow` engine provides the following capabilities:
 - Integration with `grc` for project-specific _keyword highlighting_.
 - Support for multiple _roles_ for remote execution in a Docker
   containers or `tmux` sessions.
-
-
-`workflow` engine configurations and libraries have been used for:
-
-- Buildroot wrapping: Use Buildroot more conveniently and leverage
-  `workflow` `bash` completion to explore available `defconfig`s and
-  track which builds have already been completed.
-- Linux kernel testing and debugging: Compile a specific Linux kernel
-  source tree and initiate debugging sessions under `qemu`.
-- Device fleet simulation: Build embedded software artifacts and
-  integrate the required open-source components to simulate device
-  fleet scenarios.
-- Documentation generation and verification: Use the `workflow` engine
-  to automatically generate user-facing documentation from test
-  specifications.
 
 
 The `workflow` engine is typically used to:
