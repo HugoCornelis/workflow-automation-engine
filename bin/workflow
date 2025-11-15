@@ -1094,7 +1094,7 @@ def ${target_name}_python_command_completions(command, argv):
     return completions_hash
 
 
-def ${target_name}_python_command_help(command, perl_argv):
+def ${target_name}_python_command_help(command, argv):
     return f\"python_python_command {command} help page\"
 
 ";
