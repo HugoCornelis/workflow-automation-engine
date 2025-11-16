@@ -1,0 +1,6 @@
+---
+command: feature-testing-workflow docker_testing where_am_i
+command_tests:
+  - description: Can we start role based Docker containers?
+    read: "# docker exec -it docker_source_code_container   cat /.inside-docker\r\n#\r\nInside a Docker container built from Dockerfile.source_code\r\n# docker exec -it docker_source_code_container   whoami\r\n#\r\nneurospaces\r\n"
+description: Can we start role based Docker containers?
