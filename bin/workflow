@@ -2823,6 +2823,22 @@ sub builtin_docker_containers_start
 {
     my $arguments = shift || [];
 
+    my $option_restart;
+
+    our $docker_containers_start_options
+	= {
+	   "restart!" => \$option_restart,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$docker_containers_start_options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
     my $target_servers = $global_technical_project_configuration->{target_servers};
 
     my $docker_command = 'docker';
@@ -2837,16 +2853,16 @@ sub builtin_docker_containers_start
 
 	my $name_container = $docker_container->{name_container} || $target_server . "_container";
 
-	# if ($restart eq 'restart')
-	# {
-	#     my $commands
-	# 	= [
-	# 	   "$docker_command container stop -t1 $name_container ",
-	# 	   "$docker_command container rm $name_container ",
-	# 	  ];
+	if ($option_restart)
+	{
+	    my $commands
+		= [
+		   "$docker_command container stop -t1 $name_container ",
+		   "$docker_command container rm $name_container ",
+		  ];
 
-	#     execute_shell_command_array($commands, { allow_fail => 'if the container does not exist' } );
-	# }
+	    execute_shell_command_array($commands, { allow_fail => 'if the container does not exist' } );
+	}
 
 	my $shared_volumes_option = '';
 
@@ -2855,6 +2871,13 @@ sub builtin_docker_containers_start
 	foreach my $shared_volume (@$shared_volumes)
 	{
 	    $shared_volumes_option .= " -v $shared_volume->{inside}:$shared_volume->{outside}";
+	}
+
+	#! I have no idea when DiD whould be useful, but just leave a handle here
+
+	if (0)
+	{
+	    $shared_volumes_option .= " -v /var/run/docker.sock:/var/run/docker.sock";
 	}
 
 	my $commands
@@ -2872,12 +2895,20 @@ sub builtin_docker_containers_start_completions
 {
     my $docker_target_servers = _builtin_docker_target_servers();
 
+    my $option_completions
+	= {
+	   '--' => {
+		    '--restart' => '',
+		    '--no-restart' => '',
+		   },
+	  };
+
     my $result
 	= {
-	   ( "1.Type-a-role-name:" => ''),
+	   ( "1.Type-a-role-name:" => $option_completions),
 	   map
 	   {
-	       $_ => '';
+	       $_ => $option_completions;
 	   }
 	   @$docker_target_servers,
 	  };
