@@ -17,6 +17,8 @@ command_tests:
       #
       # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-build /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-build
       #
+      # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-docker_testing.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-docker_testing.py
+      #
       # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-features
       #
       # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-more_python.py
@@ -41,6 +43,8 @@ command_tests:
       #
       # rm /home/neurospaces/bin//feature-testing-commands-build
       #
+      # rm /home/neurospaces/bin//feature-testing-commands-docker_testing.py
+      #
       # rm /home/neurospaces/bin//feature-testing-commands-features
       #
       # rm /home/neurospaces/bin//feature-testing-commands-more_python.py
@@ -64,6 +68,8 @@ command_tests:
       # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-configuration /home/neurospaces/bin/abcd-configuration
       #
       # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-build /home/neurospaces/bin/abcd-commands-build
+      #
+      # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-docker_testing.py /home/neurospaces/bin/abcd-commands-docker_testing.py
       #
       # ln -sf /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-features /home/neurospaces/bin/abcd-commands-features
       #

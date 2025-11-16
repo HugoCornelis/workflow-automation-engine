@@ -5,8 +5,8 @@ targets:
     description: used for processing of target files that are produced by other targets
   build:
     description: 'Operations on the build target, here this is used to test bash completion features.'
-  docker:
-    description: interaction with the docker build container
+  docker_testing:
+    description: Docker role testing
   features:
     description: testing of workflow features
   more_python:

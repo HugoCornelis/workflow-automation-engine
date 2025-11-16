@@ -160,6 +160,13 @@ our $global_program_name;
 }
 
 
+my $USER_NAME = `id -un`; chomp $USER_NAME;
+my $USER_ID = `id -u`; chomp $USER_ID;
+my $GROUP_ID = `id -g`; chomp $GROUP_ID;
+
+our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null` =~ m'Inside a Docker' ? 'y' : 'n';
+
+
 our $global_scheduled_commands = [];
 
 my $global_builtin_commands
@@ -1087,7 +1094,7 @@ def ${target_name}_python_command_completions(command, argv):
     return completions_hash
 
 
-def ${target_name}_python_command_help(command, perl_argv):
+def ${target_name}_python_command_help(command, argv):
     return f\"python_python_command {command} help page\"
 
 ";
@@ -1590,7 +1597,14 @@ target_servers:
   docker_build:
     description: interaction with the docker build container
     name: docker_build
-    remote_policy: 'docker exec -it --workdir ~/projects/digital-engineering/source/build gitlab_interactive '
+    remote_policy: 'docker exec -it docker_build_container'
+    shared_volumes_examples:
+      - description: This is an example for sharing ssh keys read-only (use with caution).
+        inside: /home/$USER_NAME/.ssh
+        outside: /home/$USER_NAME/.ssh:ro
+      - description: This is another example for some directory
+        inside: /home/$USER_NAME/directory_inside_the_container
+        outside: /home/$USER_NAME/directory_outside_the_container
   laptop:
     description: the local computer of the developer
     localuser: yes
@@ -2783,6 +2797,202 @@ arguments:
 
     ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
 
+";
+}
+
+
+sub _builtin_docker_target_servers
+{
+    my $target_servers = $global_technical_project_configuration->{target_servers};
+
+    my $docker_target_servers = [];
+
+    foreach my $target_server_name (sort keys %$target_servers)
+    {
+	if ($target_server_name =~ m(^docker_))
+	{
+	    push @$docker_target_servers, $target_server_name;
+	}
+    }
+
+    return $docker_target_servers;
+}
+
+
+sub builtin_docker_containers_start
+{
+    my $arguments = shift || [];
+
+    my $option_restart;
+
+    our $docker_containers_start_options
+	= {
+	   "restart!" => \$option_restart,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$docker_containers_start_options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    my $target_servers = $global_technical_project_configuration->{target_servers};
+
+    my $docker_command = 'docker';
+
+    my $docker_target_servers = scalar @$arguments ? $arguments : _builtin_docker_target_servers();
+
+    foreach my $target_server (@$docker_target_servers)
+    {
+	my $docker_container = $target_servers->{$target_server};
+
+	my $name_image = $docker_container->{name_image} || $target_server . "_image";
+
+	my $name_container = $docker_container->{name_container} || $target_server . "_container";
+
+	if ($option_restart)
+	{
+	    my $commands
+		= [
+		   "$docker_command container stop -t1 $name_container ",
+		   "$docker_command container rm $name_container ",
+		  ];
+
+	    execute_shell_command_array($commands, { allow_fail => 'if the container does not exist' } );
+	}
+
+	my $shared_volumes_option = '';
+
+	my $shared_volumes = $docker_container->{shared_volumes};
+
+	foreach my $shared_volume (@$shared_volumes)
+	{
+	    $shared_volumes_option .= " -v $shared_volume->{inside}:$shared_volume->{outside}";
+	}
+
+	#! I have no idea when DiD whould be useful, but just leave a handle here
+
+	if (0)
+	{
+	    $shared_volumes_option .= " -v /var/run/docker.sock:/var/run/docker.sock";
+	}
+
+	my $commands
+	    = [
+	       "$docker_command run -d -t $shared_volumes_option --name $name_container $name_image ",
+	       # "$docker_command run -d -t --name $name_container -v \$SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent $name_image ",
+	      ];
+
+	execute_shell_command_array($commands);
+    }
+}
+
+
+sub builtin_docker_containers_start_completions
+{
+    my $docker_target_servers = _builtin_docker_target_servers();
+
+    my $option_completions
+	= {
+	   '--' => {
+		    '--restart' => '',
+		    '--no-restart' => '',
+		   },
+	  };
+
+    my $result
+	= {
+	   ( "1.Type-a-role-name:" => $option_completions),
+	   map
+	   {
+	       $_ => $option_completions;
+	   }
+	   @$docker_target_servers,
+	  };
+
+    return $result;
+}
+
+
+sub builtin_docker_containers_start_help
+{
+    my $command = shift;
+
+    return "$command: Start the docker images / containers that are required for the roles in this project.
+";
+}
+
+
+sub builtin_docker_images_build
+{
+    my $arguments = shift || [];
+
+    my $target_servers = $global_technical_project_configuration->{target_servers};
+
+    my $docker_command = 'docker';
+
+    my $configuration_directory = "$::global_field_project_configuration->{sources_configuration_directory}";
+
+    my $project_name = "$::global_field_project_configuration->{field_project_name}";
+
+    my $docker_target_servers = scalar @$arguments ? $arguments : _builtin_docker_target_servers();
+
+    foreach my $target_server (@$docker_target_servers)
+    {
+	my $docker_container = $target_servers->{$target_server};
+
+	my $name_image = $docker_container->{name_image} || $target_server . "_image";
+
+	my $name_container = $docker_container->{name_container} || $target_server . "_container";
+
+	my $dockerfile_suffix = $target_server;
+
+	$dockerfile_suffix =~ s(^docker_)();
+
+	my $dockerfile = $docker_container->{dockerfile} || "Dockerfile.$dockerfile_suffix";
+
+	my $commands
+	    = [
+	       "cd $configuration_directory",
+	       "$docker_command build --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID --file $project_name-configuration-data/dockerfiles/$dockerfile .",
+	      ];
+
+	execute_shell_command_array($commands);
+
+	# if ($restart eq 'restart')
+	# {
+	#     builtin_docker_containers_start( [ 'restart' ] );
+	# }
+    }
+}
+
+
+sub builtin_docker_images_build_completions
+{
+    my $docker_target_servers = _builtin_docker_target_servers();
+
+    my $result
+	= {
+	   ( "1.Type-a-role-name:" => ''),
+	   map
+	   {
+	       $_ => '';
+	   }
+	   @$docker_target_servers,
+	  };
+
+    return $result;
+}
+
+
+sub builtin_docker_images_build_help
+{
+    my $command = shift;
+
+    return "$command: Build the docker images that are required for the roles in this project.
 ";
 }
 

@@ -1,6 +1,7 @@
 ---
 command_filenames:
   - feature-testing-commands-build
+  - feature-testing-commands-docker_testing.py
   - feature-testing-commands-features
   - feature-testing-commands-more_python.py
   - feature-testing-commands-perl_examples

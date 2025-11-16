@@ -13,6 +13,8 @@ command_tests:
       1_commmands:
         - workflow builtin add_target
         - workflow builtin archive_configuration
+        - workflow builtin docker_containers_start
+        - workflow builtin docker_images_build
         - workflow builtin fetch_scripts
         - workflow builtin grep
         - workflow builtin install_scripts

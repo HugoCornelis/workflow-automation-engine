@@ -2,5 +2,5 @@
 command: feature-testing-workflow --bash-completion 'feature-testing-workflow ' 1 25
 command_tests:
   - description: feature-testing-workflow --bash-completion targets
-    read: a --b build builtin examples_sh features more_python perl_examples python scripts
+    read: a --b build builtin docker_testing examples_sh features more_python perl_examples python scripts
 description: feature-testing-workflow --bash-completion targets

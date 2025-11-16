@@ -7,6 +7,9 @@
 #
 # A tmux remote_policy requires its name to have a 'tmux_' prefix.
 # This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
+#
+# A docker remote_policy requires its name to have a 'docker_' prefix.
+# This is recognized by the workflow engine and allows building Docker containers and associate them with a target.
 
 target_servers:
   build:
@@ -14,10 +17,18 @@ target_servers:
     name: build
     ssh_server: build.your.local.domain
     ssh_user: tester
-  docker_build:
+  docker_source_code:
+    comment: The name of this role is the name of the target prefixed with the string 'docker_'.
     description: interaction with the docker build container
-    name: docker_build
-    remote_policy: 'docker exec -it --workdir ~/projects/digital-engineering/source/build gitlab_interactive '
+    name: docker_source_code
+    remote_policy: 'docker exec -it docker_source_code_container'
+    shared_volumes_examples:
+      - description: This is an example for sharing ssh keys read-only (use with caution).
+        inside: /home/$USER_NAME/.ssh
+        outside: /home/$USER_NAME/.ssh:ro
+      - description: This is another example for some directory
+        inside: /home/$USER_NAME/directory_inside_the_container
+        outside: /home/$USER_NAME/directory_outside_the_container
   laptop:
     description: the local computer of the developer
     localuser: yes
