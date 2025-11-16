@@ -521,6 +521,8 @@ conf.workflow-tests-configuration
 1_commmands:
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin docker_containers_start
+  - workflow-tests-workflow builtin docker_images_build
   - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
@@ -558,6 +560,8 @@ conf.workflow-tests-configuration
 1_commmands:
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin docker_containers_start
+  - workflow-tests-workflow builtin docker_images_build
   - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
