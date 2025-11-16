@@ -6186,13 +6186,40 @@ sub _docker_preparer
 	$docker_network_created = 'yes';
     }
 
+    # construct the configuration of shared directories / volumes
+
+    # +    shared_volumes_examples:
+    # +      - description: This is an example for sharing ssh keys read-only (use with caution).
+    # +        inside: /home/$USER_NAME/.ssh
+    # +      - description: This is another example for some directory
+    # +        inside: /home/$USER_NAME/directory_inside_the_container
+    # +        outside: /home/$USER_NAME/directory_outside_the_container
+
+    my $shared_volumes_option = '';
+
+    my $shared_volumes = $harness_class->{docker}->{shared_volumes};
+
+    foreach my $shared_volume (@$shared_volumes)
+    {
+	$shared_volumes_option .= " -v $shared_volume->{inside}:$shared_volume->{outside}";
+    }
+
+    # if DiD is turned on, then share the Docker daemon socket
+
+    #t should we make this the default?
+
+    if ($harness_class->{docker}->{docker_in_docker}->{shared})
+    {
+	$shared_volumes_option .= ' -v /var/run/docker.sock:/var/run/docker.sock --group-add $(stat -c %g /var/run/docker.sock)';
+    }
+
     # start the built container
 
     my $name_image = $harness_class->{docker}->{name_image};
 
     # system "$docker_command_selected run --net $docker_network->{name} --ip $docker_ip_address -d -t --name $name_container $name_image";
 
-    system "$docker_command_selected run --net $docker_network->{name} -d -t --name $name_container $name_image";
+    system "$docker_command_selected run --net $docker_network->{name} -d -t $shared_volumes_option --name $name_container $name_image";
 
     my $this_ip_address = `docker inspect '$name_container' | jq -r 'map(.NetworkSettings.Networks.harness_network.IPAddress)[]'`;
 
@@ -6603,10 +6630,37 @@ sub _docker_preparer
 
     my $name_image = $harness_class->{docker}->{name_image};
 
+    # construct the configuration of shared directories / volumes
+
+    # +    shared_volumes_examples:
+    # +      - description: This is an example for sharing ssh keys read-only (use with caution).
+    # +        inside: /home/$USER_NAME/.ssh
+    # +      - description: This is another example for some directory
+    # +        inside: /home/$USER_NAME/directory_inside_the_container
+    # +        outside: /home/$USER_NAME/directory_outside_the_container
+
+    my $shared_volumes_option = '';
+
+    my $shared_volumes = $harness_class->{docker}->{shared_volumes};
+
+    foreach my $shared_volume (@$shared_volumes)
+    {
+	$shared_volumes_option .= " -v $shared_volume->{inside}:$shared_volume->{outside}";
+    }
+
+    # if DiD is turned on, then share the Docker daemon socket
+
+    #t should we make this the default?
+
+    if ($harness_class->{docker}->{docker_in_docker}->{shared})
+    {
+	$shared_volumes_option .= ' -v /var/run/docker.sock:/var/run/docker.sock --group-add $(stat -c %g /var/run/docker.sock)';
+    }
+
     #t need more options to assign a static IP address,
     #t see: https://stackoverflow.com/questions/27937185/assign-static-ip-to-docker-container
 
-    system "$docker_command_selected run -d -t --name $name_container $name_image";
+    system "$docker_command_selected run -d -t $shared_volumes_option --name $name_container $name_image";
 
     # return no errors
 
