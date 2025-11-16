@@ -6158,7 +6158,7 @@ sub _docker_preparer
 							       );
     }
 
-    system "$docker_command_selected container stop -t 3 $name_container";
+    system "$docker_command_selected container stop -t1 $name_container";
     system "$docker_command_selected container rm $name_container";
 
     # see: https://stackoverflow.com/questions/27937185/assign-static-ip-to-docker-container
@@ -6596,7 +6596,7 @@ sub _docker_preparer
 
     my $name_container = $harness_class->{docker}->{name_container};
 
-    system "$docker_command_selected container stop -t 3 $name_container";
+    system "$docker_command_selected container stop -t1 $name_container";
     system "$docker_command_selected container rm $name_container";
 
     # start the built container
@@ -11298,7 +11298,7 @@ sub ex_terminate
 
 	    my $commands
 		= [
-		   "docker container stop -t 1 '$name_container'",
+		   "docker container stop -t1 '$name_container'",
 		   "docker container rm '$name_container'",
 		  ];
 
