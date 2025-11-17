@@ -211,6 +211,10 @@ my $global_known_command_packages_builtin
 				 description => 'workflows for measuring the performance of a network connection',
 				 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine',
 				},
+       'Command::Qemu' => {
+			   description => 'workflows for working with qemu',
+			   documentation => 'This packages has utility functions for qemu and its qcow2 disk format.',
+			  },
       };
 
 
@@ -5453,6 +5457,92 @@ sub _iperf_test
 	 ],
 	);
 
+}
+
+
+package Command::Qemu;
+
+
+# taken from gist https://gist.github.com/shamil/62935d9b456a6f9877b5
+
+sub builtin_qemu_qcow2_mount
+{
+    my $arguments = shift || [];
+
+    my $image_filename = $arguments->[0];
+
+    if (not $image_filename)
+    {
+	die "$0: *** Error: you must give the filename of the qcow2 file as an argument.";
+    }
+
+    if (-f $image_filename)
+    {
+	die "$0: *** Error: $image_filename is not readable.";
+    }
+
+    my $number_of_partitions = $arguments->[1] || 4;
+
+    my $commands
+	= [
+	   "modprobe nbd max_part=8",
+	   "qemu-nbd --connect=/dev/nbd0 $image_filename",
+	   "fdisk /dev/nbd0 -l",
+	  ];
+
+    my $commands_mount
+	= [
+	   map
+	   {
+	       my $count = $_;
+
+	       my $partition_name = "nbd0p$count";
+
+	       my $mount_point = "/media/nbd0p$count";
+
+	       my $result
+		   = [
+		      "sudo mkdir -p $mount_point",
+		      "mount $partition_name $mount_point",
+		     ];
+
+	       @$result;
+	   }
+	   (1 .. $number_of_partitions)
+	  ];
+
+    execute_shell_command_array($commands);
+
+    execute_shell_command_array($commands_mount, { allow_fail => "some partitions may not exist" } );
+}
+
+
+sub builtin_qemu_qcow2_mount_completions
+{
+    return
+    {
+     "1.Type-a-qcow2-file-name" => '',
+     "2.Optionally-type-the-number-of-partitions" => '',
+    };
+}
+
+
+sub builtin_qemu_qcow2_mount_help
+{
+    my $command = shift;
+
+    return "$command: Mount a qcow2 image.
+
+synopsis:
+
+$command <file-name> [ <number-of-partitions> ]
+
+arguments:
+
+    ARGV[0]: The filename of a qcow2 image.
+    ARGV[1]: An optional number of partitions inside the qcow2 image to mount.
+
+";
 }
 
 

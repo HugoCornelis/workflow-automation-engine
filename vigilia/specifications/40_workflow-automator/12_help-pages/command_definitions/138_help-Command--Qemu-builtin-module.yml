@@ -1,0 +1,16 @@
+---
+command: bin/workflow Command::Qemu --help-module
+command_tests:
+  - description: help of the Command::Qemu builtin module
+    read: |2
+      
+      Command::Qemu:
+        description: workflows for working with qemu
+        documentation: This packages has utility functions for qemu and its qcow2 disk format.
+      ---
+      Command::Qemu:
+        builtin qemu_qcow2_mount:
+          type: sub
+        builtin qemu_qcow2_mount_help:
+          type: sub
+description: help of the Command::Qemu builtin module
