@@ -7,7 +7,7 @@ command_tests:
       
       help_module_all:
         Command:
-          description: "a library of workflows (try these ones: 'workflow Command::Buildroot --help-module' or 'workflow Command::Git --help-module' or 'workflow Command::Git::RepositorySet --help-module' or 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module')"
+          description: "a library of workflows (try these ones: 'workflow Command::Buildroot --help-module' or 'workflow Command::Git --help-module' or 'workflow Command::Git::RepositorySet --help-module' or 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module' or 'workflow Command::Qemu --help-module')"
           documentation: each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects
         Command::Buildroot:
           description: workflows for working with Buildroot
@@ -27,4 +27,7 @@ command_tests:
         Command::Net::IPerf:
           description: workflows for measuring the performance of a network connection
           documentation: "The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument 'local' refers to the local machine"
+        Command::Qemu:
+          description: workflows for working with qemu
+          documentation: This packages has utility functions for qemu and its qcow2 disk format.
 description: default builtin convenience modules
