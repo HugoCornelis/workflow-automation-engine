@@ -1,0 +1,7 @@
+---
+command: bin/workflow builtin --help
+command_tests:
+  - description: Can we display the help page of the builtin target?
+    read: |2
+      workflow module builtin help: Builtin functions for maintenance of a workflow project configuration.
+description: Can we display the help page of the builtin target?
