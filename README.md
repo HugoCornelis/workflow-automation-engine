@@ -3,7 +3,7 @@
 # Introduction
 
 `workflow` and `vigilia` provide features that ensure a single "source
-of truth" for documenting a software system.
+of truth" for documenting software project and systems.
 
 The `workflow` engine automates and documents complex shell-based
 tasks during software development, streamlining project workflows.
@@ -13,17 +13,64 @@ to generate documentation for user-facing functionality and to verify
 that the delivered software meets the required application functions.
 
 
+## `workflow` Applications
+
+`workflow` engine configurations, applications and libraries are
+typically developed in Python, can be commercialized, and are used
+license aware bridging between Open Source Software and closed source
+software.  Typical applications include:
+
+- IT network and infrastructure administration: Automate the IT
+  administration tasks such as monitoring remote machines and never
+  forget that one command that you once used to inspect the
+  registration details of a device inside a Docker container.  A well
+  developed `workflow` configuration offers a conceptual operational
+  view on a complex IT network while still allowing inspection and
+  configuration of all the details.
+- Yocto and Buildroot wrapping: Use the Yocto or Buildroot build
+  systems more conveniently and leverage `workflow` `bash` completion
+  to explore available `defconfig`s and recipes, and track which
+  packages have already been built.
+- Linux kernel testing and debugging: Compile a specific Linux kernel
+  source tree and initiate debugging sessions under `qemu`.
+- Device fleet simulation: Build embedded software artifacts and
+  integrate the required open-source components to simulate device
+  fleet scenarios.
+- Documentation generation and verification: Use the `workflow` engine
+  to automatically generate user-facing documentation from test
+  specifications.
+
+
+## `vigilia` Applications
+
+`vigilia` was originally used as a first line documentation generation
+system for the [GENESIS neural simulation
+system](http://genesis-sim.org/):
+
+- Unit, regression and integration testing: Starting `vigilia` from a
+  `cron` job implements the execution of tests to catch error
+  introduced by new development early.
+- Static HTML web site generation: The test specifications model real
+  use cases and form the basis for documentation writers to develop
+  tutorial materials.
+- Manual generation: The inline description of selected tests are
+  converted to a PDF document that forms the foundation of
+  specification and user manuals.
+
+
+## Technical Details
+
 __The Workflow Automation Engine__
 
 The `workflow` engine helps automate complex system shell tasks during
 software development.
 
-Typical use cases include running local or remote shell commands with
+Typical workflows include running local or remote shell commands with
 hard-to-remember arguments and options, compiling source code on a
 build server, converting documentation into web pages, flashing binary
-software images (such as the Linux kernel) to small or embedded
-devices, and orchestrating command sequences across local, remote, or
-virtual machines.
+software images (such as a Linux kernel) to small or embedded devices,
+and orchestrating command sequences across local, remote, or virtual
+machines.
 
 The `workflow` engine provides the following capabilities:
 
@@ -37,26 +84,12 @@ The `workflow` engine provides the following capabilities:
   containers or `tmux` sessions.
 
 
-`workflow` engine configurations and libraries have been used for:
-
-- Buildroot wrapping: Use Buildroot more conveniently and leverage
-  `workflow` `bash` completion to explore available `defconfig`s and
-  track which builds have already been completed.
-- Linux kernel testing and debugging: Compile a specific Linux kernel
-  source tree and initiate debugging sessions under `qemu`.
-- Device fleet simulation: Build embedded software artifacts and
-  integrate the required open-source components to simulate device
-  fleet scenarios.
-- Documentation generation and verification: Use the `workflow` engine
-  to automatically generate user-facing documentation from test
-  specifications.
-
-
 The `workflow` engine is typically used to:
 
 - Organize, orchestrate and integrate software components into a
   cohesive system.
-- Separate Open Source Software components from commercial ones.
+- Separate the configuration of Open Source Software components from
+  commercial ones.
 - Ensure reproducibility and traceability throughout the software
   development lifecycle.
 - Maintain consistency and standardization across diverse development
