@@ -8541,8 +8541,8 @@ sub _init_get_field_project_configuration
 	my $technical_project_configuration_directories
 	    = [
 	       ".",
-	       $global_program_rel_directory,
-	       $global_program_abs_directory,
+	       # $global_program_rel_directory,
+	       # $global_program_abs_directory,
 	      ];
 
 	my $search_path_workflow_executable_directory;
@@ -8612,9 +8612,9 @@ sub _init_get_field_project_configuration
 	    }
 	    else
 	    {
-		$status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+		# $status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
 
-		return undef;
+		# return undef;
 	    }
 	}
     }
