@@ -1853,8 +1853,10 @@ sub _builtin_project_readme_create
     my $readme_text = "
 # The Workflow Automation Configuration for $project_name
 
-The workflow automation engine helps automating complicated system
-shell tasks during the development of a software project.
+The `workflow` engine automates and documents complex shell-based
+tasks in software development.  It addresses the problem of technical
+debt by making project execution workflows persistent, reproducible,
+and easier to maintain.
 
 The scripts in this directory provide the workflow automation
 configuration for the $project_name project.
