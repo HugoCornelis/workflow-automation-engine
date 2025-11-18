@@ -8145,7 +8145,7 @@ sub _init_do_eval_perl_file
 
 	if ($@)
 	{
-	    $status = "$global_program_name: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
+	    $status = "$global_program_name: *** Error: not a valid configuration file '$filename' (syntax error: $@)\n";
 	}
 
 	# do error processing: file problems.
@@ -8456,7 +8456,7 @@ sub _init_do_eval_yaml_command_file
 
     if ($@)
     {
-	$status = "$global_program_name: *** Error: no valid configuration file '$filename' found (syntax error: $@)\n";
+	$status = "$global_program_name: *** Error: not a valid configuration file '$filename' found (syntax error: $@)\n";
     }
 
     # do error processing: file problems.
