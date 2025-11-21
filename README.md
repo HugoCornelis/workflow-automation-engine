@@ -6,7 +6,9 @@
 of truth" for documenting software project and systems.
 
 The `workflow` engine automates and documents complex shell-based
-tasks during software development, streamlining project workflows.
+tasks in software development.  It addresses the problem of technical
+debt by making project execution workflows persistent, reproducible,
+and easier to maintain.
 
 The `vigilia` testing framework uses a database of test specifications
 to generate documentation for user-facing functionality and to verify
