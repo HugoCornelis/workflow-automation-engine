@@ -21,6 +21,7 @@ my $test
 						     "composed roles" => "add this feature, allow ssh within tmux",
 						     command_options => {
 									 allow_fail => "allow execution of this command to fail.",
+									 allow_fail_silent => "allow execution of this command to fail but remain silent about it.",
 									 dry_run => 'do not execute this command.',
 									 remote => 'a remote that is defined in units-configuration.',
 									 quiet => 'do not provide feedback to the terminal about this command.',
@@ -31,20 +32,9 @@ my $test
 									},
 						    },
 			  },
-       commands_to_try => {
-			   commands => [
-					'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing' => 1,
-
-					'workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses' => 'does not work',
-
-					'workflow builtin install_scripts -- --no-aliasses --engine --commands' => 'does work',
-
-					'rm -fr ~/bin && rm -f .bashrc',
-				       ],
-			  },
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation configuration for the cd feature tests?",

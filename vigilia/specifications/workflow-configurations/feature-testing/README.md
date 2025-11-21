@@ -52,7 +52,6 @@ options:
     --aliasses         configure the grc aliases in .bashrc if they are not there yet.
     --bash-completion  configure bash completion in .bashrc if they are not there yet.
     --commands         install or upgrade the command configuration to ~/bin.
-    --engine           create a symbolic link to the workflow engine in ~/bin.
     --path-in-bashrc   update .bashrc to include ~/bin in PATH.
 
 Note that grc configuration files will also be installed and configured.

@@ -6,42 +6,6 @@ use strict;
 
 my $test
     = {
-       "0_description" => {
-			   features_to_be_tested => {
-						     working_directory_changes => {
-										   description => "use of 'cd' in shell commands, both remote and local",
-										   'localuser@localhost' => 1,
-										   tmux => 1,
-										   docker => 1,
-										   ssh => 1,
-										   apply_home_directory => [ 'docker', 'tmux', 'ssh', ],
-										  },
-						     "bash escapes" => "check where I added explicit support for bash",
-						     "execute_shell_script_command()" => 1,
-						     "composed roles" => "add this feature, allow ssh within tmux",
-						     command_options => {
-									 allow_fail => "allow execution of this command to fail.",
-									 dry_run => 'do not execute this command.',
-									 remote => 'a remote that is defined in units-configuration.',
-									 quiet => 'do not provide feedback to the terminal about this command.',
-									 sudo => 'invoke the command prefixed with sudo.',
-									 timeout => 'this command will fail after the given timeout.',
-									 use_bash => 'use bash to invoke the command because it uses specific bash functions or features.',
-									 remote => '<name of a remote that is defined in units-configuration>, } );',
-									},
-						    },
-			  },
-       commands_to_try => {
-			   commands => [
-					'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing' => 1,
-
-					'workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses' => 'does not work',
-
-					'workflow builtin install_scripts -- --no-aliasses --engine --commands' => 'does work',
-
-					'rm -fr ~/bin && rm -f .bashrc',
-				       ],
-			  },
        command_definitions => [
 			       {
 				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses',
