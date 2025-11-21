@@ -452,7 +452,7 @@ global_field_project_configuration:
 				description => "correct creation of the field project file",
 			       },
 			       {
-				command => 'cd workflow-test && workflow builtin install_scripts -- --no-aliasses --engine --commands',
+				command => 'cd workflow-test && workflow builtin install_scripts -- --no-aliasses --commands',
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
