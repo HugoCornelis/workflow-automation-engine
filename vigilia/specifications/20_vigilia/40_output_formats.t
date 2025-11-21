@@ -69,7 +69,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 				     description => "convert the container to an image",
 				    },
 				    {
-				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled-tests --show',
+				     command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled-tests --show-command-descriptions',
 				     command_tests => [
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",

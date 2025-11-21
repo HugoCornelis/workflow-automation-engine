@@ -20,7 +20,7 @@ my $test
 				description => "working directory",
 			       },
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled-tests --show',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master && vigilia --regex 30_docker --report-disabled-tests --show-command-descriptions',
 				command_tests => [
 						  {
 						   description => "Can we inspect the commands that will be run during the tests?",

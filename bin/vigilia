@@ -54,7 +54,7 @@ my $option_regex_selector = ".*";
 my $option_report_disabled_tests;
 my $option_reporting_directory;
 my $option_select_context_path = '.*';
-my $option_show;
+my $option_show_command_descriptions;
 my $option_show_command_tests;
 my $option_show_images;
 my $option_tags = [];
@@ -131,7 +131,7 @@ options:
     --report-disabled-tests      Include information of disabled tests in the test report.
     --reporting-directory        The directory to use to write reports to (default is '.').
     --select-context-path        Select only the matching context paths (default is '$option_select_context_path').
-    --show                       Show tests that would be run using the current configuration.
+    --show-command-descriptions  Show tests that would be run using the current configuration.
     --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
     --show-images                Show the docker images and containers that are referenced by the test harnesses.
     --tags                       Only test test modules that have been tagged with these tags (default: all tags).
@@ -181,7 +181,7 @@ options:
 					    "report-disabled-tests!" => \$option_report_disabled_tests,
 					    "reporting-directory=s" => \$option_reporting_directory,
 					    "select-context-path=s" => \$option_select_context_path,
-					    "show!" => \$option_show,
+					    "show-command-descriptions!" => \$option_show_command_descriptions,
 					    "show-command-tests!" => \$option_show_command_tests,
 					    "show-images!" => \$option_show_images,
 					    "tags=s" => $option_tags,
@@ -548,7 +548,7 @@ sub parse_options
 
 	    $option_output = "Heterarch::Test::Output::Formatter::PDF";
 	}
-	elsif ($option_show)
+	elsif ($option_show_command_descriptions)
 	{
 	    $global_test_report->{output_format} = 'yaml_exit';
 
@@ -621,7 +621,7 @@ sub parse_options
 	   report_disabled_tests => $option_report_disabled_tests,
 	   reporting_directory => $option_reporting_directory,
 	   select_context_path => $option_select_context_path,
-	   show => $option_show,
+	   show_command_descriptions => $option_show_command_descriptions,
 	   show_command_tests => $option_show_command_tests,
 	   show_images => $option_show_images,
 	   tags => $option_tags,
