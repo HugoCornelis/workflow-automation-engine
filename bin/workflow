@@ -9871,6 +9871,8 @@ options:
 	    = [
 	       map
 	       {
+		   # note: this removes the prefixes ~/bin/ and ~/.local/bin/
+
 		   s(^.*?/bin/)(); $_;
 	       }
 	       map
@@ -9954,7 +9956,7 @@ sub workflow_project_list_generate
 {
     my $selector = shift || '.*';
 
-    my $bin_path_choice = Utilities::bin_path_choice();
+#     my $bin_path_choice = Utilities::bin_path_choice();
 
     my $result
 	= [
@@ -9966,7 +9968,12 @@ sub workflow_project_list_generate
 	   {
 	       chomp; $_;
 	   }
-	   `ls -1 ~/$bin_path_choice/*workflow`,
+	   # 	   `ls -1 ~/$bin_path_choice/*workflow`,
+
+	   # allow project in both ~/bin and ~/.local/bin
+
+	   `ls 2>/dev/null -1 ~/bin/*workflow`,
+	   `ls 2>/dev/null -1 ~/.local/bin/*workflow`,
 	  ];
 
     return $result;
