@@ -1,0 +1,47 @@
+---
+command: workflow builtin grep examples '.*'
+command_tests:
+  - description: Can we grep a string across workflow projects?
+    read: |
+      # grep -n 'examples' /home/neurospaces/new-project/abcd-commands-perl_examples /home/neurospaces/new-project/abcd-commands-python_examples.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-build /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-docker_testing.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-python.py
+      #
+      /home/neurospaces/new-project/abcd-commands-perl_examples:18:sub perl_examples_single_command
+      /home/neurospaces/new-project/abcd-commands-perl_examples:50:sub perl_examples_single_command_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:61:	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
+      /home/neurospaces/new-project/abcd-commands-perl_examples:101:sub perl_examples_single_command_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:114:sub perl_examples_array_of_commands
+      /home/neurospaces/new-project/abcd-commands-perl_examples:130:sub perl_examples_array_of_commands_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:161:sub perl_examples_array_of_commands_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:176:sub perl_examples_array_of_commands_remote_execution
+      /home/neurospaces/new-project/abcd-commands-perl_examples:218:sub perl_examples_array_of_commands_remote_execution_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:249:sub perl_examples_array_of_commands_remote_execution_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:262:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:270:	   'echo this examples composes other examples into one sequence of commands',
+      /home/neurospaces/new-project/abcd-commands-perl_examples:275:    perl_examples_single_command();
+      /home/neurospaces/new-project/abcd-commands-perl_examples:276:    perl_examples_array_of_commands();
+      /home/neurospaces/new-project/abcd-commands-perl_examples:280:sub perl_examples_sequencing_and_composition_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:311:sub perl_examples_sequencing_and_composition_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:315:    return "$command: an example that composes other examples into one sequence of commands.
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:13:def python_examples_python_command_completions(command, argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:18:           "4._Look_at_the_completion_function_of_python_examples_single_command_completions_to_understand_how_it_works": "further_explanation",
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:24:def python_examples_python_command_help(command, argv):
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:18:sub perl_examples_single_command
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:41:sub perl_examples_single_command_completions
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:52:	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:92:sub perl_examples_single_command_help
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:105:sub perl_examples_array_of_commands
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:119:sub perl_examples_array_of_commands_completions
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:150:sub perl_examples_array_of_commands_help
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:165:sub perl_examples_array_of_commands_remote_execution
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:205:sub perl_examples_array_of_commands_remote_execution_completions
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:236:sub perl_examples_array_of_commands_remote_execution_help
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:249:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:255:	   'echo this examples composes other examples into one sequence of commands',
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:260:    perl_examples_single_command();
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:261:    perl_examples_array_of_commands();
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:265:sub perl_examples_sequencing_and_composition_completions
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:296:sub perl_examples_sequencing_and_composition_help
+      /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:300:    return "$command: an example that composes other examples into one sequence of commands.
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we grep a string across workflow projects?
