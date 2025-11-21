@@ -84,11 +84,11 @@ This sub documents the command line arguments and options:
  "; }
 
 
-our $target_servers = $::global_technical_project_configuration->{target_servers};
+our $roles = $::global_technical_project_configuration->{roles};
 
 sub features_cd_tests_ssh
 {
-    my $remote = $target_servers->{ssh_cd};
+    my $remote = $roles->{ssh_cd};
 
     # make sure this works from localhost and from inside a docker test container
 
@@ -121,7 +121,7 @@ sub features_cd_tests_ssh
 
 sub features_cd_tests_tmux
 {
-    my $remote = $target_servers->{tmux_cd};
+    my $remote = $roles->{tmux_cd};
 
     my $remote_commands
 	= [
@@ -146,9 +146,9 @@ sub features_cd_tests_tmux
 
 sub features_export_sh
 {
-    my $remote_tmux = $target_servers->{tmux_cd};
+    my $remote_tmux = $roles->{tmux_cd};
 
-    my $remote_ssh = $target_servers->{ssh_cd};
+    my $remote_ssh = $roles->{ssh_cd};
 
     # make sure this works from localhost and from inside a docker test container
 
@@ -203,7 +203,7 @@ sub features_remote_script_execution
 {
     my $shell_script_filename = "scripts/feature-shell-script-remote arg1 arg2";
 
-    my $remote_ssh = $target_servers->{ssh_cd};
+    my $remote_ssh = $roles->{ssh_cd};
 
     execute_shell_script_remote($shell_script_filename, { remote => $remote_ssh } );
 }

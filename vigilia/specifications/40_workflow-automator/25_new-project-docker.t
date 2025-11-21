@@ -397,7 +397,7 @@ Or:
 ./workflow-tests-configuration-data/cache
 ./workflow-tests-configuration-data/command_filenames.yml
 ./workflow-tests-configuration-data/node_configuration.yml
-./workflow-tests-configuration-data/target_servers.yml
+./workflow-tests-configuration-data/roles.yml
 ./workflow-tests-configuration-data/targets.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -713,7 +713,7 @@ scripts:
   - workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
   - workflow-test/workflow-tests-configuration-data/command_filenames.yml
   - workflow-test/workflow-tests-configuration-data/node_configuration.yml
-  - workflow-test/workflow-tests-configuration-data/target_servers.yml
+  - workflow-test/workflow-tests-configuration-data/roles.yml
   - workflow-test/workflow-tests-configuration-data/targets.yml
 tar_filename: /tmp/wtw.tar.gz
 ',
@@ -749,7 +749,7 @@ workflow-test/workflow-tests-configuration-data/cache/configuration.toml
 workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
 workflow-test/workflow-tests-configuration-data/command_filenames.yml
 workflow-test/workflow-tests-configuration-data/node_configuration.yml
-workflow-test/workflow-tests-configuration-data/target_servers.yml
+workflow-test/workflow-tests-configuration-data/roles.yml
 workflow-test/workflow-tests-configuration-data/targets.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -796,7 +796,7 @@ workflow-test/workflow-tests-configuration-data/cache/configuration.toml
 workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
 workflow-test/workflow-tests-configuration-data/command_filenames.yml
 workflow-test/workflow-tests-configuration-data/node_configuration.yml
-workflow-test/workflow-tests-configuration-data/target_servers.yml
+workflow-test/workflow-tests-configuration-data/roles.yml
 workflow-test/workflow-tests-configuration-data/targets.yml
 ',
 						   tags => [ 'manual' ],

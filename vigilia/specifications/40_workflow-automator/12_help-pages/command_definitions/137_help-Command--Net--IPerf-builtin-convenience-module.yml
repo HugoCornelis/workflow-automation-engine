@@ -5,7 +5,7 @@ command_tests:
     read: |
       Command::Net::IPerf:
         description: workflows for measuring the performance of a network connection
-        documentation: "The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument 'local' refers to the local machine"
+        documentation: "The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the roles configuration.  An argument 'local' refers to the local machine"
       ---
       Command::Net::IPerf: {}
 description: help of the Command::Net::IPerf builtin convenience module

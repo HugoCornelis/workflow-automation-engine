@@ -1,5 +1,5 @@
 ---
-command: sed -i.bak "s/^\(\s*ssh_server:\s*\).*/\1$(hostname -I | awk '{print $1}')/" /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/target_servers.yml
+command: sed -i.bak "s/^\(\s*ssh_server:\s*\).*/\1$(hostname -I | awk '{print $1}')/" /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/roles.yml
 command_tests:
   - description: change the configuration to have the correct ip address
     wait: 1

@@ -160,13 +160,13 @@ arguments:
 }
 
 
-our $target_servers = $::global_technical_project_configuration->{target_servers};
+our $roles = $::global_technical_project_configuration->{roles};
 
 sub perl_examples_array_of_commands_remote_execution
 {
     my $force = $ARGV[0] || "";
 
-    my $remote = $target_servers->{build};
+    my $remote = $roles->{build};
 
     my $remote_commands
 	= [
