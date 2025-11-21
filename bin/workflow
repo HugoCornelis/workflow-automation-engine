@@ -209,7 +209,7 @@ my $global_known_command_packages_builtin
 			   },
        'Command::Net::IPerf' => {
 				 description => 'workflows for measuring the performance of a network connection',
-				 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the target_servers configuration.  An argument \'local\' refers to the local machine',
+				 documentation => 'The sub _iperf_test() implements command for execution on different machines to determine the performance of the network connection between those machines.  It takes arguments for a test file, an iperf server machine and an iperf client machine that are referenced by name in the roles configuration.  An argument \'local\' refers to the local machine',
 				},
        'Command::Qemu' => {
 			   description => 'workflows for working with qemu',
@@ -881,7 +881,7 @@ arguments:
 }
 
 
-our \$target_servers = \$::global_technical_project_configuration->{target_servers};
+our \$roles = \$::global_technical_project_configuration->{roles};
 
 sub ${target_name}_array_of_commands_remote_execution
 {
@@ -889,7 +889,7 @@ sub ${target_name}_array_of_commands_remote_execution
 
     my \$force = \$arguments->[0] || \"\";
 
-    my \$remote = \$target_servers->{build};
+    my \$remote = \$roles->{build};
 
     my \$remote_commands
 	= [
@@ -1425,14 +1425,14 @@ my \$command_filenames = eval { YAML::LoadFile('$configuration_data_directory/co
 
 my \$node_configuration = eval { YAML::LoadFile('$configuration_data_directory/node_configuration.yml'); };
 
-my \$target_servers = eval { YAML::LoadFile('$configuration_data_directory/target_servers.yml'); };
+my \$roles = eval { YAML::LoadFile('$configuration_data_directory/roles.yml'); };
 
 my \$targets = eval { YAML::LoadFile('$configuration_data_directory/targets.yml'); };
 
 my \$configuration = {
 		      \%{ ref \$command_filenames eq 'HASH' ? \$command_filenames : {}; },
 		      \%{ ref \$node_configuration eq 'HASH' ? \$node_configuration : {}; },
-		      \%{ ref \$target_servers eq 'HASH' ? \$target_servers : {}; },
+		      \%{ ref \$roles eq 'HASH' ? \$roles : {}; },
 		      \%{ ref \$targets eq 'HASH' ? \$targets : {}; },
 		     };
 
@@ -1462,7 +1462,7 @@ my \$configuration = {
 
     if (not $error)
     {
-	$error = _builtin_project_configuration_target_servers_create($project_name, $configuration_data_directory, $user);
+	$error = _builtin_project_configuration_roles_create($project_name, $configuration_data_directory, $user);
     }
 
     use IO::File;
@@ -1574,7 +1574,7 @@ targets:
 }
 
 
-sub _builtin_project_configuration_target_servers_create
+sub _builtin_project_configuration_roles_create
 {
     my $project_name = shift;
 
@@ -1593,7 +1593,7 @@ sub _builtin_project_configuration_target_servers_create
 # A tmux remote_policy requires its name to have a 'tmux_' prefix.
 # This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
 
-target_servers:
+roles:
   build:
     description: your build server that does builds and is used for testing
     name: build
@@ -1623,7 +1623,7 @@ target_servers:
 
     use IO::File;
 
-    my $file = IO::File->new("> $configuration_data_directory/target_servers.yml");
+    my $file = IO::File->new("> $configuration_data_directory/roles.yml");
 
     if (defined $file)
     {
@@ -1633,7 +1633,7 @@ target_servers:
     }
     else
     {
-	$error = "cannot open $configuration_data_directory/target_servers.yml";
+	$error = "cannot open $configuration_data_directory/roles.yml";
     }
 
     return $error;
@@ -2006,19 +2006,19 @@ return \$configuration;
 
 sub _builtin_tmux_sessions
 {
-    my $target_servers = $global_technical_project_configuration->{target_servers};
+    my $roles = $global_technical_project_configuration->{roles};
 
     my $tmux_sessions = [];
 
-    foreach my $target_server_name (sort keys %$target_servers)
+    foreach my $role_name (sort keys %$roles)
     {
-	my $target_server = $target_servers->{$target_server_name};
+	my $role = $roles->{$role_name};
 
-	my $name = $target_server->{name};
+	my $name = $role->{name};
 
 	if ($name =~ m(^tmux_))
 	{
-	    my $remote_policy = $target_server->{remote_policy};
+	    my $remote_policy = $role->{remote_policy};
 
 	    $remote_policy =~ m(-t ([^:\s]+)(:[^\s]+)?);
 
@@ -2808,21 +2808,21 @@ arguments:
 }
 
 
-sub _builtin_docker_target_servers
+sub _builtin_docker_roles
 {
-    my $target_servers = $global_technical_project_configuration->{target_servers};
+    my $roles = $global_technical_project_configuration->{roles};
 
-    my $docker_target_servers = [];
+    my $docker_roles = [];
 
-    foreach my $target_server_name (sort keys %$target_servers)
+    foreach my $role_name (sort keys %$roles)
     {
-	if ($target_server_name =~ m(^docker_))
+	if ($role_name =~ m(^docker_))
 	{
-	    push @$docker_target_servers, $target_server_name;
+	    push @$docker_roles, $role_name;
 	}
     }
 
-    return $docker_target_servers;
+    return $docker_roles;
 }
 
 
@@ -2846,19 +2846,19 @@ sub builtin_docker_containers_start
         die "$global_program_name: *** Error in option processing, try --help";
     }
 
-    my $target_servers = $global_technical_project_configuration->{target_servers};
+    my $roles = $global_technical_project_configuration->{roles};
 
     my $docker_command = 'docker';
 
-    my $docker_target_servers = scalar @$arguments ? $arguments : _builtin_docker_target_servers();
+    my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
 
-    foreach my $target_server (@$docker_target_servers)
+    foreach my $role (@$docker_roles)
     {
-	my $docker_container = $target_servers->{$target_server};
+	my $docker_container = $roles->{$role};
 
-	my $name_image = $docker_container->{name_image} || $target_server . "_image";
+	my $name_image = $docker_container->{name_image} || $role . "_image";
 
-	my $name_container = $docker_container->{name_container} || $target_server . "_container";
+	my $name_container = $docker_container->{name_container} || $role . "_container";
 
 	if ($option_restart)
 	{
@@ -2900,7 +2900,7 @@ sub builtin_docker_containers_start
 
 sub builtin_docker_containers_start_completions
 {
-    my $docker_target_servers = _builtin_docker_target_servers();
+    my $docker_roles = _builtin_docker_roles();
 
     my $option_completions
 	= {
@@ -2917,7 +2917,7 @@ sub builtin_docker_containers_start_completions
 	   {
 	       $_ => $option_completions;
 	   }
-	   @$docker_target_servers,
+	   @$docker_roles,
 	  };
 
     return $result;
@@ -2937,7 +2937,7 @@ sub builtin_docker_images_build
 {
     my $arguments = shift || [];
 
-    my $target_servers = $global_technical_project_configuration->{target_servers};
+    my $roles = $global_technical_project_configuration->{roles};
 
     my $docker_command = 'docker';
 
@@ -2945,17 +2945,17 @@ sub builtin_docker_images_build
 
     my $project_name = "$::global_field_project_configuration->{field_project_name}";
 
-    my $docker_target_servers = scalar @$arguments ? $arguments : _builtin_docker_target_servers();
+    my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
 
-    foreach my $target_server (@$docker_target_servers)
+    foreach my $role (@$docker_roles)
     {
-	my $docker_container = $target_servers->{$target_server};
+	my $docker_container = $roles->{$role};
 
-	my $name_image = $docker_container->{name_image} || $target_server . "_image";
+	my $name_image = $docker_container->{name_image} || $role . "_image";
 
-	my $name_container = $docker_container->{name_container} || $target_server . "_container";
+	my $name_container = $docker_container->{name_container} || $role . "_container";
 
-	my $dockerfile_suffix = $target_server;
+	my $dockerfile_suffix = $role;
 
 	$dockerfile_suffix =~ s(^docker_)();
 
@@ -2979,7 +2979,7 @@ sub builtin_docker_images_build
 
 sub builtin_docker_images_build_completions
 {
-    my $docker_target_servers = _builtin_docker_target_servers();
+    my $docker_roles = _builtin_docker_roles();
 
     my $result
 	= {
@@ -2988,7 +2988,7 @@ sub builtin_docker_images_build_completions
 	   {
 	       $_ => '';
 	   }
-	   @$docker_target_servers,
+	   @$docker_roles,
 	  };
 
     return $result;
@@ -6412,7 +6412,7 @@ sub identify_interaction_roles
 
     elsif ($option_interactions_module_all_roles)
     {
-	my $target_servers = $global_technical_project_configuration->{target_servers};
+	my $roles = $global_technical_project_configuration->{roles};
 
 	my $interaction_indent = 4;
 
@@ -6469,24 +6469,24 @@ sub identify_interaction_roles
 
 	       map
 	       {
-		   my $target_server_key = $_;
+		   my $role_key = $_;
 
-		   my $target_server = $target_servers->{$target_server_key};
+		   my $role = $roles->{$role_key};
 
 		   my $result;
 
-		   if (exists $target_server->{localuser}
-		       and $target_server->{localuser} eq 'yes')
+		   if (exists $role->{localuser}
+		       and $role->{localuser} eq 'yes')
 		   {
 		       $result = "localuser\@localhost";
 		   }
 		   else
 		   {
-		       my $target_server_name = $target_server->{name} || $target_server->{ssh_server} || 'localhost';
+		       my $role_name = $role->{name} || $role->{ssh_server} || 'localhost';
 
-		       my $target_user = $target_server->{ssh_user} || 'localuser';
+		       my $target_user = $role->{ssh_user} || 'localuser';
 
-		       $result = $target_user . '@' . $target_server_name;
+		       $result = $target_user . '@' . $role_name;
 		   }
 
 		   $result;
@@ -6494,7 +6494,7 @@ sub identify_interaction_roles
 
 	       # based on the target servers
 
-	       keys %$target_servers,
+	       keys %$roles,
 	      };
     }
 

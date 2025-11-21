@@ -10,14 +10,14 @@ my $command_filenames = eval { YAML::LoadFile('feature-testing-configuration-dat
 
 my $node_configuration = eval { YAML::LoadFile('feature-testing-configuration-data/node_configuration.yml'); };
 
-my $target_servers = eval { YAML::LoadFile('feature-testing-configuration-data/target_servers.yml'); };
+my $roles = eval { YAML::LoadFile('feature-testing-configuration-data/roles.yml'); };
 
 my $targets = eval { YAML::LoadFile('feature-testing-configuration-data/targets.yml'); };
 
 my $configuration = {
 		      %{ ref $command_filenames eq 'HASH' ? $command_filenames : {}; },
 		      %{ ref $node_configuration eq 'HASH' ? $node_configuration : {}; },
-		      %{ ref $target_servers eq 'HASH' ? $target_servers : {}; },
+		      %{ ref $roles eq 'HASH' ? $roles : {}; },
 		      %{ ref $targets eq 'HASH' ? $targets : {}; },
 		     };
 

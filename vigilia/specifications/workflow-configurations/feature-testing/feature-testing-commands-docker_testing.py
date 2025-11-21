@@ -1,10 +1,10 @@
 #!/usr/bin/python3
 
 technical_project_configuration = global_technical_project_configuration['technical_project_configuration']
-target_servers = technical_project_configuration['target_servers']
+roles = technical_project_configuration['roles']
 
 def docker_testing_where_am_i(argv):
-    remote = target_servers['docker_source_code']
+    remote = roles['docker_source_code']
 
     # check for something like: 'Inside a Docker container built from Dockerfile.source_code'
     execute_command("cat /.inside-docker", {
