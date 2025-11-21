@@ -11,6 +11,7 @@ command_tests:
            try them with the --dry-run and --interactions options,
            some commands may implement a usage message available with the --help option):
       1_commmands:
+        - workflow builtin add_role
         - workflow builtin add_target
         - workflow builtin archive_configuration
         - workflow builtin docker_containers_start

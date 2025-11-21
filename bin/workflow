@@ -2416,6 +2416,303 @@ sub builtin_help
 }
 
 
+sub builtin_add_role
+{
+    my $arguments = shift || [];
+
+    my $option_dockerfile;
+    my $option_localuser;
+    my $option_scp_options;
+    my $option_ssh_options;
+    my $option_ssh_password;
+    my $option_ssh_port;
+    my $option_ssh_server;
+    my $option_ssh_user;
+    my $option_tmux_session;
+
+    our $options
+      = {
+	 "dockerfile=s" => \$option_dockerfile,
+	 "localuser!" => \$option_localuser,
+	 "scp_options=s" => \$option_scp_options,
+	 "ssh_options=s" => \$option_ssh_options,
+	 "ssh_password=s" => \$option_ssh_password,
+	 "ssh_port=s" => \$option_ssh_port,
+	 "ssh_server=s" => \$option_ssh_server,
+	 "ssh_user=s" => \$option_ssh_user,
+	 "tmux-session=s" => \$option_tmux_session,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** error in option processing, try --help";
+    }
+
+    if ($option_verbose)
+    {
+	use Data::Dumper;
+
+	print "$global_program_name: builtin_add_role, options:\n";
+
+	print Dumper( { options => $options, }, );
+    }
+
+    my $error = '';
+
+    my $role_name = $arguments->[0];
+
+    if (not defined $role_name)
+    {
+	$error ||= 'no role_name found on the command line';
+    }
+
+    my $role_description = $arguments->[1];
+
+    if (not defined $role_description)
+    {
+	$error ||= 'no role_description found on the command line';
+    }
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    if (not $field_project_name)
+    {
+	$error ||= 'no valid field_project_name found in the field_project_configuration';
+    }
+
+    if ($error)
+    {
+	die "$0: *** Error: $error";
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+    if (not $configuration_data_directory)
+    {
+	$error ||= 'no valid configuration_data_directory found in the field_project_configuration';
+    }
+
+    if ($error)
+    {
+	die "$0: *** Error: $error";
+    }
+
+    # read the targets configuration file
+
+    my $roles_configuration_filename = "$configuration_data_directory/roles.yml";
+
+    my $roles = YAML::LoadFile($roles_configuration_filename);
+
+    if (not $error)
+    {
+	if (exists $roles->{roles}->{$role_name})
+	{
+	    $error = "role $role_name already exists";
+	}
+    }
+
+    # if a docker file was given
+
+    my $remote_policy;
+
+    if ($option_dockerfile)
+    {
+	if ($role_name !~ /^docker_/)
+	{
+	    die "$0: *** Error: Docker role names must start with 'docker_'."
+	}
+
+	# copy it to the configuration
+
+	my $commands
+	    = [
+	       "mkdir -p '$configuration_data_directory'/dockerfiles",
+	       "cp -a '$option_dockerfile' '$configuration_data_directory'/dockerfiles",
+	      ];
+
+	execute_shell_command_array($commands);
+
+	my $docker_container_name = $role_name . '_container';
+
+	$remote_policy = "docker exec -it $docker_container_name";
+    }
+
+    # tmux sessions
+
+    if ($option_tmux_session)
+    {
+	if ($role_name !~ /^tmux_/)
+	{
+	    die "$0: *** Error: tmux role names must start with 'tmux_'."
+	}
+
+	$remote_policy = "tmux send-keys -t $option_tmux_session ";
+    }
+
+    if ($option_localuser)
+    {
+	if ($remote_policy)
+	{
+	    die "$0: *** Error: Roles with a remote_policy (including docker and tmux based roles) cannot have be a localuser.";
+	}
+    }
+
+    # construct the new role
+
+    my $role
+	= {
+	   description => $role_description,
+	   name => $role_name,
+
+	   # localuser
+	   (
+	    ($option_localuser ? (localuser => 'yes') : ()),
+	   ),
+
+	   # docker
+	   (
+	    ($option_dockerfile ? (dockerfile => $option_dockerfile ) : ()),
+	    ($option_dockerfile ? (remote_policy => $remote_policy ) : ()),
+	   ),
+
+	   # ssh
+	   (
+	    ($option_scp_options ? (scp_options => $option_scp_options ) : ()),
+	    ($option_ssh_options ? (ssh_options => $option_ssh_options ) : ()),
+	    ($option_ssh_password ? (ssh_password => $option_ssh_password ) : ()),
+	    ($option_ssh_port ? (ssh_port => $option_ssh_port ) : ()),
+	    ($option_ssh_server ? (ssh_server => $option_ssh_server ) : ()),
+	    ($option_ssh_user ? (ssh_user => $option_ssh_user ) : ()),
+	   ),
+
+	   # tmux
+	   (
+	    ($option_tmux_session ? (remote_policy => $remote_policy ) : ()),
+	   ),
+	  };
+
+    # add the new role, we never overwrite the old description
+
+    if (!$error)
+    {
+	if ($option_dry_run)
+	{
+	    print Dump( { role => $role } );
+	}
+	else
+	{
+	    $roles->{roles}->{$role_name} = $role;
+
+	    YAML::DumpFile($roles_configuration_filename, $roles);
+
+	    print "$global_program_name: added role $role_name to $roles_configuration_filename\n";
+	}
+    }
+
+    # return errors
+
+    return $error;
+}
+
+
+
+sub builtin_add_role_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $debug_completion = 0;
+
+    if ($debug_completion > 2)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => \@_,
+			     complete_arguments_array => $complete_arguments_array,
+			     complete_command_string => $complete_command_string,
+			    },
+			   );
+    }
+
+    my $completions_hash
+	= {
+	   "1.<role_name>" => '',
+	   "2.<role_description>" => '',
+	   "'3.[--_<options>_]'" => '',
+	   "--dockerfile" => '',
+	   "--localuser" => '',
+	   "--scp-options" => '',
+	   "--ssh-options" => '',
+	   "--ssh-password" => '',
+	   "--ssh-port" => '',
+	   "--ssh-server" => '',
+	   "--ssh-user" => '',
+	   "--tmux-session" => '',
+	  };
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+}
+
+
+sub builtin_add_role_help
+{
+    my $command = shift;
+
+    return "$command: add a new role and update the configuration to integrate it.
+
+synopsis:
+
+$command <role-name> <role-description> [-- <options>]
+
+arguments:
+
+    ARGV[0]: name of the new role.
+    ARGV[1]: description of the new role.
+
+options:
+
+    --dockerfile: A reference to a docker file.  This also configures the new role as a docker role.
+    --localuser: Set this for a local user role.
+    --scp-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+    --ssh-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+    --ssh-password: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
+    --ssh-port: This defaults to 22.
+    --ssh-server: An IP address or known host name.
+    --ssh-user: The ssh user name.
+    --tmux-session: The tmux session name.
+
+notes:
+
+It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
+
+  tmux_ssh_cd:
+    description: interaction with the combined ssh / tmux session to test cd commands
+    name: tmux_ssh_cd
+    remote_policy: 'tmux send-keys -t ssh_cd '
+    ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    ssh_password: harness
+    ssh_port: 22
+    ssh_server: 172.18.0.22
+    ssh_user: root
+
+";
+}
+
+
 sub builtin_add_target
 {
     my $arguments = shift || [];

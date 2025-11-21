@@ -13,6 +13,7 @@ command_tests:
         - feature-testing-workflow build operation1
         - feature-testing-workflow build operation2
         - feature-testing-workflow build operation3
+        - feature-testing-workflow builtin add_role
         - feature-testing-workflow builtin add_target
         - feature-testing-workflow builtin archive_configuration
         - feature-testing-workflow builtin docker_containers_start
