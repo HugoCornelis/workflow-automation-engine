@@ -3051,7 +3051,16 @@ sub builtin_grep
 
     if (scalar @$arguments == 1)
     {
-	$project_selectors = [ '.*'];
+	my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+	if (! $field_project_name)
+	{
+	    $project_selectors = [ '.*'];
+	}
+	else
+	{
+	    $project_selectors = [ $field_project_name ];
+	}
     }
     else
     {
@@ -3141,7 +3150,7 @@ $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 arguments:
 
     ARGV[0]: A regular expression to search for.
-    ARGV[1] and following: Regular expressions to match with project names.  The default is all project names.
+    ARGV[1] and following: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
 }
