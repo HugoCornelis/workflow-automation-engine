@@ -3132,7 +3132,7 @@ sub builtin_grep
 
 	my $command = "grep -n '$regex_search' $command_filenames_string";
 
-	execute_shell_command($command, { allow_fail => 'in case grep finds no hits' });
+	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
     }
 }
 
