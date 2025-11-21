@@ -741,6 +741,7 @@ sub ${target_name}_single_command
 
     # Some options to command execution:
     #   allow_fail: allow execution of this command to fail.
+    #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
     #   dry_run: do not execute this command.
     #   remote: a remote that is defined in $project_name-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
@@ -7224,11 +7225,17 @@ sub execute_scheduled_command
     {
 	my $allow_fail = $options->{allow_fail};
 
+	my $allow_fail_silent = $options->{allow_fail_silent};
+
 	if ($allow_fail)
 	{
 # 	    system "echo >>$output_path 2>&1 failed with $exit_status: $command\n";
 
 	    print "$global_program_name: *** Note: $command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	}
+	elsif ($allow_fail_silent)
+	{
+	    # nothing here
 	}
 	else
 	{
