@@ -3051,7 +3051,16 @@ sub builtin_grep
 
     if (scalar @$arguments == 1)
     {
-	$project_selectors = [ '.*'];
+	my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+	if (! $field_project_name)
+	{
+	    $project_selectors = [ '.*'];
+	}
+	else
+	{
+	    $project_selectors = [ $field_project_name ];
+	}
     }
     else
     {
@@ -3123,7 +3132,7 @@ sub builtin_grep
 
 	my $command = "grep -n '$regex_search' $command_filenames_string";
 
-	execute_shell_command($command, { allow_fail => 'in case grep finds no hits' });
+	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
     }
 }
 
@@ -3141,7 +3150,7 @@ $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 arguments:
 
     ARGV[0]: A regular expression to search for.
-    ARGV[1] and following: Regular expressions to match with project names.  The default is all project names.
+    ARGV[1] and following: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
 }
@@ -9862,6 +9871,8 @@ options:
 	    = [
 	       map
 	       {
+		   # note: this removes the prefixes ~/bin/ and ~/.local/bin/
+
 		   s(^.*?/bin/)(); $_;
 	       }
 	       map
@@ -9945,7 +9956,7 @@ sub workflow_project_list_generate
 {
     my $selector = shift || '.*';
 
-    my $bin_path_choice = Utilities::bin_path_choice();
+#     my $bin_path_choice = Utilities::bin_path_choice();
 
     my $result
 	= [
@@ -9957,7 +9968,12 @@ sub workflow_project_list_generate
 	   {
 	       chomp; $_;
 	   }
-	   `ls -1 ~/$bin_path_choice/*workflow`,
+	   # 	   `ls -1 ~/$bin_path_choice/*workflow`,
+
+	   # allow project in both ~/bin and ~/.local/bin
+
+	   `ls 2>/dev/null -1 ~/bin/*workflow`,
+	   `ls 2>/dev/null -1 ~/.local/bin/*workflow`,
 	  ];
 
     return $result;

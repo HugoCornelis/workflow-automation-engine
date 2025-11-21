@@ -876,6 +876,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
 		   "command-output=s" => do { my $option_command_output; \$option_command_output; },
 		   "command-prefix=s" => do { my $option_command_prefix; \$option_command_prefix; },
 		   "comment=s" => do { my $option_comment; \$option_comment; },
+		   "convert-seen-0d-0a-to-0a-newlines!" => do { my $option_convert_seen_0d_0a_to_0a_newlines; \$option_convert_seen_0d_0a_to_0a_newlines; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-stdout!" => do { my $option_output_stdout; \$option_output_stdout; },
@@ -918,6 +919,15 @@ sub harness_command_module_command_add
 
     my $options = $harness_command_definition->{options};
 
+    my $option_command_prefix = $options->{"command-prefix=s"};
+
+    my $command_prefix = '';
+
+    if (defined $$option_command_prefix)
+    {
+	$command_prefix = $$option_command_prefix;
+    }
+
     my $option_comment = $options->{"comment=s"};
 
     my $comment;
@@ -927,13 +937,13 @@ sub harness_command_module_command_add
 	$comment = $$option_comment;
     }
 
-    my $option_command_prefix = $options->{"command-prefix=s"};
+    my $option_convert_seen_0d_0a_to_0a_newlines = $options->{"convert-seen-0d-0a-to-0a-newlines!"};
 
-    my $command_prefix = '';
+    my $convert_seen_0d_0a_to_0a_newlines = "yes";
 
-    if (defined $$option_command_prefix)
+    if (defined $$option_convert_seen_0d_0a_to_0a_newlines)
     {
-	$command_prefix = $$option_command_prefix;
+	$convert_seen_0d_0a_to_0a_newlines = $$option_convert_seen_0d_0a_to_0a_newlines;
     }
 
     my $option_output_stdout = $options->{"output-stdout!"};
@@ -1028,6 +1038,11 @@ sub harness_command_module_command_add
 		$output = substr($output, 2);
 	    }
 	}
+
+	if ($convert_seen_0d_0a_to_0a_newlines)
+	{
+	    $output =~ s(\x0d\x0a)(\x0a)g;
+	}
     }
 
     $command_definition->{command_tests} = [];
@@ -1039,6 +1054,9 @@ sub harness_command_module_command_add
 	   defined $comment ? (comment => $comment) : (),
 	   description => $description,
 	   read => $output,
+	   ($convert_seen_0d_0a_to_0a_newlines
+	    ? (white_space => "convert seen 0a to 0d 0a newlines")
+	    : ()),
 	  };
 
     push @$command_tests, $command_test;

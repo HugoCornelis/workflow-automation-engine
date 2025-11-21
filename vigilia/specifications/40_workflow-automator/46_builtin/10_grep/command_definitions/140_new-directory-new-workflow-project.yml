@@ -1,0 +1,7 @@
+---
+command: mkdir -vp new-project
+command_tests:
+  - description: Can we create a new directory for a new workflow project?
+    read: mkdir: created directory 'new-project'
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we create a new directory for a new workflow project?

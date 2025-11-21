@@ -1,0 +1,50 @@
+---
+command: 'cd new-project && workflow builtin install_scripts -- --bash-completion --commands'
+command_tests:
+  - description: Can we install the scripts of the new workflow project with name abcd?
+    read: |+
+      # mkdir --parents /home/neurospaces/bin
+      #
+      # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/abcd-workflow
+      #
+      # ln -sf /home/neurospaces/new-project/abcd-configuration /home/neurospaces/bin/abcd-configuration
+      #
+      # ln -sf /home/neurospaces/new-project/abcd-commands-perl_examples /home/neurospaces/bin/abcd-commands-perl_examples
+      #
+      # ln -sf /home/neurospaces/new-project/abcd-commands-python_examples.py /home/neurospaces/bin/abcd-commands-python_examples.py
+      #
+      # bash -c "echo '# abcd-workflow
+      
+      alias abcd-workflow=\"grc abcd-workflow\"
+      alias abcd-configuration=\"grc abcd-configuration\"
+      ' | cat >>/home/neurospaces/.bashrc"
+      #
+      # bash -c "echo '. /home/neurospaces/new-project/abcd-bash-completion.sh
+      ' | cat >>/home/neurospaces/.bashrc"
+      #
+      # sudo     bash -c "echo '
+      # abcd-workflow
+      (^|[/\w\.]+/)abcd-workflow\s?
+      conf.abcd-workflow
+      
+      # abcd-configuration
+      (^|[/\w\.]+/)abcd-configuration\s?
+      conf.abcd-configuration
+      
+      ' | cat >>/etc/grc.conf"
+      #
+      # sudo     ln -sf /home/neurospaces/new-project/conf.abcd-configuration /usr/share/grc/conf.abcd-configuration
+      #
+      # sudo     ln -sf /home/neurospaces/new-project/conf.abcd-workflow /usr/share/grc/conf.abcd-workflow
+      #
+      
+      Bash completion can be enabled using:
+      
+      . ./abcd-bash-completion.sh
+      
+      Or/and maybe followed with a command to add or modify a first target, here, for the target named source_code:
+      
+      abcd-workflow builtin add_target source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
+
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we install the scripts of the new workflow project with name abcd?

@@ -1,6 +1,155 @@
 ---
 command: feature-testing-workflow builtin docker_images_build docker_source_code
 command_tests:
-  - description: Can we build role based Docker images?
-    read: "# cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing\r\n#\r\n# docker build --tag docker_source_code_image --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000 --file feature-testing-configuration-data/dockerfiles/Dockerfile.source_code .\r\n#\r\nSending build context to Docker daemon  167.9kB\r\r\r\nStep 1/46 : FROM debian:bookworm\r\n ---> 4ffc839c7aa5\r\nStep 2/46 : RUN apt-get update\r\n ---> Using cache\r\n ---> 2856dcb70a09\r\nStep 3/46 : RUN apt-get upgrade -y\r\n ---> Using cache\r\n ---> cead977d2de7\r\nStep 4/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils\r\n ---> Using cache\r\n ---> 651152634bd4\r\nStep 5/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     locales\r\n ---> Using cache\r\n ---> 5291342bc7b8\r\nStep 6/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     automake     binutils-dev     build-essential     cpio     cscope     gawk     gcc     git     libsdl1.2-dev     libssl-dev     mesa-common-dev     net-tools     screen     socat     sudo\r\n ---> Using cache\r\n ---> 573b6405853b\r\nStep 7/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     chrpath     cryptsetup-bin     debianutils     diffstat     emacs     file     help2man     iputils-ping     libcurl4     libegl1-mesa     liblz4-tool     pylint     python3-git     python3-jinja2     python3-pexpect     python3-pip     python3-subunit     sqlite3     texinfo     unzip     vim     wget     xterm     xz-utils     zstd\r\n ---> Using cache\r\n ---> b4082bcbb9c1\r\nStep 8/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     libexpect-perl     libfile-chdir-perl     libfile-find-rule-perl-perl     libinline-perl     libipc-system-simple-perl     libjson-perl     libnet-ip-perl     libtoml-perl     libyaml-perl     libxml-simple-perl     grc\r\n ---> Using cache\r\n ---> c7197cec9cee\r\nStep 9/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y cscope universal-ctags libz-dev libexpat-dev    python-is-python3 texinfo gawk cpio xxd    build-essential g++ git bison flex unzip    libssl-dev libxml-simple-perl libxml-sax-perl libxml-parser-perl libxml2-dev libxml2-utils xsltproc    wget bc rsync\r\n ---> Using cache\r\n ---> e4d50e658fdc\r\nStep 10/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     efitools     gnu-efi     gnupg-pkcs11-scd     gnutls-bin     gpg     libengine-pkcs11-openssl     sbsigntool\r\n ---> Using cache\r\n ---> 4565c2cf2e48\r\nStep 11/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     openssh-server     sshpass     tmux\r\n ---> Using cache\r\n ---> 75a090143021\r\nStep 12/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     bc     rsync\r\n ---> Using cache\r\n ---> 9e55f4285377\r\nStep 13/46 : RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen\r\n ---> Using cache\r\n ---> 3019d3bfa80b\r\nStep 14/46 : ENV LANG en_US.UTF-8\r\n ---> Using cache\r\n ---> 27665aa0f04f\r\nStep 15/46 : ENV LANGUAGE en_US:en\r\n ---> Using cache\r\n ---> ecc66cf773ca\r\nStep 16/46 : ENV LC_ALL en_US.UTF-8\r\n ---> Using cache\r\n ---> e43a5a1120a8\r\nStep 17/46 : ARG GROUP_ID=1000\r\n ---> Using cache\r\n ---> ed7e1da110e9\r\nStep 18/46 : ARG USER_NAME=builder\r\n ---> Using cache\r\n ---> 3189abe8bf37\r\nStep 19/46 : ARG USER_ID=1000\r\n ---> Using cache\r\n ---> f7e72bc74889\r\nStep 20/46 : RUN groupadd --gid ${GROUP_ID} ${USER_NAME}     && useradd -ou ${USER_ID} -g ${USER_NAME} -d /home/${USER_NAME} ${USER_NAME}     && mkdir /home/${USER_NAME}     && chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}\r\n ---> Using cache\r\n ---> 85362c1bfc14\r\nStep 21/46 : RUN echo \"${USER_NAME}     ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/${USER_NAME}\r\n ---> Using cache\r\n ---> 6221853702d4\r\nStep 22/46 : RUN mkdir /var/run/sshd\r\n ---> Using cache\r\n ---> d4861c97991f\r\nStep 23/46 : RUN echo 'root:harness' | chpasswd\r\n ---> Using cache\r\n ---> 62bd199c5f65\r\nStep 24/46 : RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config\r\n ---> Using cache\r\n ---> d4a551f09901\r\nStep 25/46 : ENTRYPOINT sudo service ssh start && bash\r\n ---> Using cache\r\n ---> e2b54b119a63\r\nStep 26/46 : USER ${USER_NAME}\r\n ---> Using cache\r\n ---> 2af8a4641c8a\r\nStep 27/46 : WORKDIR /home/${USER_NAME}\r\n ---> Using cache\r\n ---> 133205585544\r\nStep 28/46 : ARG WORKING_DIRECTORY=/home/${USER_NAME}\r\n ---> Using cache\r\n ---> 1ae71a310dd9\r\nStep 29/46 : RUN mkdir --parents ${WORKING_DIRECTORY}\r\n ---> Using cache\r\n ---> 4e606ed36187\r\nStep 30/46 : RUN mkdir --parents /home/${USER_NAME}/projects/workflow-automation-engine/source/snapshots/master\r\n ---> Using cache\r\n ---> f09f31bb1605\r\nStep 31/46 : WORKDIR /home/${USER_NAME}/projects/workflow-automation-engine/source/snapshots/master\r\n ---> Using cache\r\n ---> 9f666bdc4d4c\r\nStep 32/46 : RUN git clone https://github.com/HugoCornelis/workflow-automation-engine.git .\r\n ---> Using cache\r\n ---> 51abb3a388aa\r\nStep 33/46 : RUN rm -f ./neurospaces_cpan_modules\r\n ---> Using cache\r\n ---> 4e05dd57c3e4\r\nStep 34/46 : RUN ./autogen.sh\r\n ---> Using cache\r\n ---> 64007703f4d5\r\nStep 35/46 : RUN ./configure\r\n ---> Using cache\r\n ---> dc7f817dcd98\r\nStep 36/46 : RUN make\r\n ---> Using cache\r\n ---> 3caf18ec714e\r\nStep 37/46 : RUN sudo make install\r\n ---> Using cache\r\n ---> 22e5f8f2d42d\r\nStep 38/46 : RUN mkdir --parents /home/${USER_NAME}/projects/feature-testing\r\n ---> Using cache\r\n ---> 28e142f903ac\r\nStep 39/46 : COPY --chown=${USER_NAME} . /home/${USER_NAME}/projects/feature-testing\r\n ---> Using cache\r\n ---> ed919e8df909\r\nStep 40/46 : WORKDIR /home/${USER_NAME}/projects/feature-testing\r\n ---> Using cache\r\n ---> c67e4192443c\r\nStep 41/46 : RUN workflow builtin install_scripts -- --commands --no-aliasses --bash-completion\r\n ---> Using cache\r\n ---> f6d0ad4340df\r\nStep 42/46 : RUN echo 'PATH=$PATH:~/bin' >>~/.bashrc\r\n ---> Using cache\r\n ---> 0cf6a6600785\r\nStep 43/46 : WORKDIR /home/${USER_NAME}\r\n ---> Using cache\r\n ---> c5d24300a14f\r\nStep 44/46 : USER root\r\n ---> Using cache\r\n ---> 4bd45924ba58\r\nStep 45/46 : RUN echo 'Inside a Docker container built from Dockerfile.source_code' >/.inside-docker\r\n ---> Using cache\r\n ---> 589135df8261\r\nStep 46/46 : USER ${USER_NAME}\r\n ---> Using cache\r\n ---> 041a6e94b504\r\nSuccessfully built 041a6e94b504\r\nSuccessfully tagged docker_source_code_image:latest\r\n"
+  - comment: The output is stripped from all the checksums.  These can be different during development.
+    description: Can we build role based Docker images?
+    read: |+2
+      Successfully tagged docker_source_code_image:latest
+    timeout: 25
+    white_space: convert seen 0a to 0d 0a newlines
+    read_complete: |+2
+      # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
+      #
+      # docker build --tag docker_source_code_image --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000 --file feature-testing-configuration-data/dockerfiles/Dockerfile.source_code .
+      #
+      Sending build context to Docker daemon  167.4kB\r\r
+      Step 1/46 : FROM debian:bookworm
+       ---> 4ffc839c7aa5
+      Step 2/46 : RUN apt-get update
+       ---> Using cache
+       ---> 2856dcb70a09
+      Step 3/46 : RUN apt-get upgrade -y
+       ---> Using cache
+       ---> cead977d2de7
+      Step 4/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y apt-utils
+       ---> Using cache
+       ---> 651152634bd4
+      Step 5/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     locales
+       ---> Using cache
+       ---> 5291342bc7b8
+      Step 6/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     automake     binutils-dev     build-essential     cpio     cscope     gawk     gcc     git     libsdl1.2-dev     libssl-dev     mesa-common-dev     net-tools     screen     socat     sudo
+       ---> Using cache
+       ---> 573b6405853b
+      Step 7/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     chrpath     cryptsetup-bin     debianutils     diffstat     emacs     file     help2man     iputils-ping     libcurl4     libegl1-mesa     liblz4-tool     pylint     python3-git     python3-jinja2     python3-pexpect     python3-pip     python3-subunit     sqlite3     texinfo     unzip     vim     wget     xterm     xz-utils     zstd
+       ---> Using cache
+       ---> b4082bcbb9c1
+      Step 8/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     libexpect-perl     libfile-chdir-perl     libfile-find-rule-perl-perl     libinline-perl     libipc-system-simple-perl     libjson-perl     libnet-ip-perl     libtoml-perl     libyaml-perl     libxml-simple-perl     grc
+       ---> Using cache
+       ---> c7197cec9cee
+      Step 9/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y cscope universal-ctags libz-dev libexpat-dev    python-is-python3 texinfo gawk cpio xxd    build-essential g++ git bison flex unzip    libssl-dev libxml-simple-perl libxml-sax-perl libxml-parser-perl libxml2-dev libxml2-utils xsltproc    wget bc rsync
+       ---> Using cache
+       ---> e4d50e658fdc
+      Step 10/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     efitools     gnu-efi     gnupg-pkcs11-scd     gnutls-bin     gpg     libengine-pkcs11-openssl     sbsigntool
+       ---> Using cache
+       ---> 4565c2cf2e48
+      Step 11/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     openssh-server     sshpass     tmux
+       ---> Using cache
+       ---> 75a090143021
+      Step 12/46 : RUN DEBIAN_FRONTEND=noninteractive apt-get install -y     bc     rsync
+       ---> Using cache
+       ---> 9e55f4285377
+      Step 13/46 : RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+       ---> Using cache
+       ---> 3019d3bfa80b
+      Step 14/46 : ENV LANG en_US.UTF-8
+       ---> Using cache
+       ---> 27665aa0f04f
+      Step 15/46 : ENV LANGUAGE en_US:en
+       ---> Using cache
+       ---> ecc66cf773ca
+      Step 16/46 : ENV LC_ALL en_US.UTF-8
+       ---> Using cache
+       ---> e43a5a1120a8
+      Step 17/46 : ARG GROUP_ID=1000
+       ---> Using cache
+       ---> ed7e1da110e9
+      Step 18/46 : ARG USER_NAME=builder
+       ---> Using cache
+       ---> 3189abe8bf37
+      Step 19/46 : ARG USER_ID=1000
+       ---> Using cache
+       ---> f7e72bc74889
+      Step 20/46 : RUN groupadd --gid ${GROUP_ID} ${USER_NAME}     && useradd -ou ${USER_ID} -g ${USER_NAME} -d /home/${USER_NAME} ${USER_NAME}     && mkdir /home/${USER_NAME}     && chown -R ${USER_NAME}:${USER_NAME} /home/${USER_NAME}
+       ---> Using cache
+       ---> 85362c1bfc14
+      Step 21/46 : RUN echo \"${USER_NAME}     ALL=(ALL) NOPASSWD:ALL\" > /etc/sudoers.d/${USER_NAME}
+       ---> Using cache
+       ---> 6221853702d4
+      Step 22/46 : RUN mkdir /var/run/sshd
+       ---> Using cache
+       ---> d4861c97991f
+      Step 23/46 : RUN echo 'root:harness' | chpasswd
+       ---> Using cache
+       ---> 62bd199c5f65
+      Step 24/46 : RUN echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
+       ---> Using cache
+       ---> d4a551f09901
+      Step 25/46 : ENTRYPOINT sudo service ssh start && bash
+       ---> Using cache
+       ---> e2b54b119a63
+      Step 26/46 : USER ${USER_NAME}
+       ---> Using cache
+       ---> 2af8a4641c8a
+      Step 27/46 : WORKDIR /home/${USER_NAME}
+       ---> Using cache
+       ---> 133205585544
+      Step 28/46 : ARG WORKING_DIRECTORY=/home/${USER_NAME}
+       ---> Using cache
+       ---> 1ae71a310dd9
+      Step 29/46 : RUN mkdir --parents ${WORKING_DIRECTORY}
+       ---> Using cache
+       ---> 4e606ed36187
+      Step 30/46 : RUN mkdir --parents /home/${USER_NAME}/projects/workflow-automation-engine/source/snapshots/master
+       ---> Using cache
+       ---> f09f31bb1605
+      Step 31/46 : WORKDIR /home/${USER_NAME}/projects/workflow-automation-engine/source/snapshots/master
+       ---> Using cache
+       ---> 9f666bdc4d4c
+      Step 32/46 : RUN git clone https://github.com/HugoCornelis/workflow-automation-engine.git .
+       ---> Using cache
+       ---> 51abb3a388aa
+      Step 33/46 : RUN rm -f ./neurospaces_cpan_modules
+       ---> Using cache
+       ---> 4e05dd57c3e4
+      Step 34/46 : RUN ./autogen.sh
+       ---> Using cache
+       ---> 64007703f4d5
+      Step 35/46 : RUN ./configure
+       ---> Using cache
+       ---> dc7f817dcd98
+      Step 36/46 : RUN make
+       ---> Using cache
+       ---> 3caf18ec714e
+      Step 37/46 : RUN sudo make install
+       ---> Using cache
+       ---> 22e5f8f2d42d
+      Step 38/46 : RUN mkdir --parents /home/${USER_NAME}/projects/feature-testing
+       ---> Using cache
+       ---> 28e142f903ac
+      Step 39/46 : COPY --chown=${USER_NAME} . /home/${USER_NAME}/projects/feature-testing
+       ---> Using cache
+       ---> fd0ee37d5a33
+      Step 40/46 : WORKDIR /home/${USER_NAME}/projects/feature-testing
+       ---> Using cache
+       ---> 29dccfb84e35
+      Step 41/46 : RUN workflow builtin install_scripts -- --commands --no-aliasses --bash-completion
+       ---> Using cache
+       ---> 33ac328c73c2
+      Step 42/46 : RUN echo 'PATH=$PATH:~/bin' >>~/.bashrc
+       ---> Using cache
+       ---> 497aef227519
+      Step 43/46 : WORKDIR /home/${USER_NAME}
+       ---> Using cache
+       ---> 519c407fa339
+      Step 44/46 : USER root
+       ---> Using cache
+       ---> 792241370726
+      Step 45/46 : RUN echo 'Inside a Docker container built from Dockerfile.source_code' >/.inside-docker
+       ---> Using cache
+       ---> 2f495a5006d2
+      Step 46/46 : USER ${USER_NAME}
+       ---> Using cache
+       ---> 3b0683add121
+      Successfully built 3b0683add121
+      Successfully tagged docker_source_code_image:latest
 description: Can we build role based Docker images?
