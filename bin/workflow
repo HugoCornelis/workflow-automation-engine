@@ -7057,7 +7057,7 @@ sub execute_option_export_sh
 	{
 	    my $command_line = [ split '\s', $global_command_line ];
 
-	    my $command = $command_line->[0];
+	    my $shell_command = $command_line->[0];
 	    my $target = $command_line->[1];
 	    my $operation = $command_line->[2];
 
@@ -7078,7 +7078,7 @@ sub execute_option_export_sh
 		# there is no help available, that is ok
 
 		my $help_page = "#
-# '$command $target $operation --help' is not implemented.
+# '$shell_command $target $operation --help' is not implemented.
 #
 #
 ";
@@ -7091,7 +7091,7 @@ sub execute_option_export_sh
 		$help_string =~ s(\n)(\n#    )gs;
 
 		my $help_page = "#
-# $command $target $operation --help
+# $shell_command $target $operation --help
 #
 $help_string
 #
@@ -7373,7 +7373,7 @@ sub execute_scheduled_operation
 {
     my $scheduled_operation = shift;
 
-    my $command = $scheduled_operation->{command};
+    my $shell_command = $scheduled_operation->{command};
 
     my $dry_run = $scheduled_operation->{dry_run};
 
@@ -7394,7 +7394,7 @@ sub execute_scheduled_operation
     {
 	my $cd_argument = $cd_command->{argument};
 
-	display_commented_command($command, $options);
+	display_commented_command($shell_command, $options);
 
 	$exit_status = not chdir $cd_argument;
     }
@@ -7450,7 +7450,7 @@ sub execute_scheduled_operation
 	{
 	    if (not $export_output)
 	    {
-		display_commented_command($command, $options);
+		display_commented_command($shell_command, $options);
 
 		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
 
@@ -7458,11 +7458,11 @@ sub execute_scheduled_operation
 		{
 		    # _system_bash('diff <(ls -l) <(ls -al)');
 
-		    _system_bash($command);
+		    _system_bash($shell_command);
 		}
 		else
 		{
-		    $exit_status = system "$command";
+		    $exit_status = system "$shell_command";
 		}
 
 		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
@@ -7484,10 +7484,10 @@ sub execute_scheduled_operation
 		    }
 		    else
 		    {
-			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+			die "$0: Illegal suffix in the timestamp specification of command '$shell_command'.";
 		    }
 
-		    my $timestamp_command = "$command";
+		    my $timestamp_command = "$shell_command";
 
 		    my $timestamp_filename = ".timestamp__${suffix}_$timestamp_command";
 
@@ -7509,13 +7509,13 @@ sub execute_scheduled_operation
 		    }
 		    else
 		    {
-			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+			die "$0: Illegal suffix in the timestamp specification of command '$shell_command'.";
 		    }
 		}
 	    }
 	    else
 	    {
-		$output .= capture($command);
+		$output .= capture($shell_command);
 
 		$exit_status = $IPC::System::Simple::EXITVAL;
 	    }
@@ -7525,9 +7525,9 @@ sub execute_scheduled_operation
 
 	if ($export_times)
 	{
-	    print $global_exported_times_file "$0: *** Starting ('$command') at " . localtime($start_time) . "\n";
+	    print $global_exported_times_file "$0: *** Starting ('$shell_command') at " . localtime($start_time) . "\n";
 
-	    print $global_exported_times_file "$0: *** Ended    ('$command') at " . localtime($end_time) . "\n";
+	    print $global_exported_times_file "$0: *** Ended    ('$shell_command') at " . localtime($end_time) . "\n";
 
 	    print $global_exported_times_file "$0: *** Duration (s): " . ($end_time - $start_time) . "\n";
 
@@ -7538,7 +7538,7 @@ sub execute_scheduled_operation
 
 	if ($export_output)
 	{
-	    my $filename = generate_output_filename($global_output_filename_template, $command);
+	    my $filename = generate_output_filename($global_output_filename_template, $shell_command);
 
 	    my $output_file;
 
@@ -7549,7 +7549,7 @@ sub execute_scheduled_operation
 		die "*** Error: $global_program_name: cannot open $filename for writing ($!)";
 	    }
 
-	    print $output_file "# $command\n#\n";
+	    print $output_file "# $shell_command\n#\n";
 
 	    print $output_file $output;
 
@@ -7563,7 +7563,7 @@ sub execute_scheduled_operation
 
     my $output_path = $options->{output_path};
 
-#     my $exit_status = system "( $command ) >>$output_path 2>&1";
+#     my $exit_status = system "( $shell_command ) >>$output_path 2>&1";
 
     if ($exit_status)
     {
@@ -7573,9 +7573,9 @@ sub execute_scheduled_operation
 
 	if ($allow_fail)
 	{
-# 	    system "echo >>$output_path 2>&1 failed with $exit_status: $command\n";
+# 	    system "echo >>$output_path 2>&1 failed with $exit_status: $shell_command\n";
 
-	    print "$global_program_name: *** Note: $command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	    print "$global_program_name: *** Note: $shell_command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
 	}
 	elsif ($allow_fail_silent)
 	{
@@ -7583,7 +7583,7 @@ sub execute_scheduled_operation
 	}
 	else
 	{
-	    die "$global_program_name: *** Fatal: $command failed with exit status $exit_status\n";
+	    die "$global_program_name: *** Fatal: $shell_command failed with exit status $exit_status\n";
 	}
     }
 
@@ -7595,7 +7595,7 @@ sub execute_scheduled_operation
 
 sub schedule_real_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $executable_command = shift;
 
@@ -7611,7 +7611,7 @@ sub schedule_real_command
 
     my $scheduled_operation
 	= {
-	   command => $command,
+	   command => $shell_command,
 	   dry_run => $dry_run,
 	   executable_command => $executable_command,
 	   export_sh => $export_sh,
@@ -7707,17 +7707,17 @@ sub execute_all_scheduled_operations
 
 sub execute_shell_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $options = shift;
 
     # keep a record of the command that will be executed
 
-    my $executable_command = $command;
+    my $executable_command = $shell_command;
 
     $executable_command =~ s(^\s*#.*)()g;
 
-    my $command_length = length $executable_command;
+    my $shell_command_length = length $executable_command;
 
     # option preprocessing
 
@@ -7725,7 +7725,7 @@ sub execute_shell_command
 
     # the command to be exported defaults to the command given
 
-    my $export_sh_command = defined $option_export_sh ? $command : undef;
+    my $export_sh_command = defined $option_export_sh ? $shell_command : undef;
 
     if (defined $verbose
 	and $verbose =~ /^[0-9]+$/)
@@ -7804,25 +7804,25 @@ sub execute_shell_command
 
     # if there is remoting information
 
-    my $remote_and_interaction_role = compute_remote_and_interaction_role($command, $options->{remote});
+    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $options->{remote});
 
     my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
     # identify the interaction roles
 
-    identify_interaction_roles($command, $executable_command);
+    identify_interaction_roles($shell_command, $executable_command);
 
     # now that we know the remote, apply the working directory for the remote on the command to be executed
 
-    $command = working_directory_for_interaction_role_apply($current_interaction_role, $command);
+    $shell_command = working_directory_for_interaction_role_apply($current_interaction_role, $shell_command);
 
     # prefix the command with appropriate sudo options
 
-    my $sudo_prefix = compute_sudo($command, $options->{sudo});
+    my $sudo_prefix = compute_sudo($shell_command, $options->{sudo});
 
     # prefix the command with appropriate timeout options
 
-    my $timeout_prefix = compute_timeout($command, $options->{timeout});
+    my $timeout_prefix = compute_timeout($shell_command, $options->{timeout});
 
     # if we need to rebuild according to the (optionally remote) build_tree
 
@@ -7843,22 +7843,22 @@ sub execute_shell_command
 
     # apply the sudo prefix, possibly remote
 
-    ($command, $export_sh_command) = apply_sudo($sudo_prefix, $command, $option_export_sudo, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_sudo($sudo_prefix, $shell_command, $option_export_sudo, $export_sh_command);
 
     # apply the remoting prefix, always local
 
-    ($command, $export_sh_command) = apply_remote_record_exported_shell_command($global_interaction_roles, $remote_prefix, $command, $option_export_remote, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($global_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
 
     # apply the timeout prefix, always local
 
-    ($command, $export_sh_command) = apply_timeout($timeout_prefix, $command, undef, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_timeout($timeout_prefix, $shell_command, undef, $export_sh_command);
 
     # schedule the given command
 
     my $exit_code
 	= schedule_real_command
 	  (
-	   $command,
+	   $shell_command,
 	   $executable_command,
 	   $current_interaction_role,
 	   $options,
@@ -7873,7 +7873,7 @@ sub execute_shell_command
 
 sub execute_shell_command_array
 {
-    my $commands = shift;
+    my $shell_commands = shift;
 
     my $options = shift;
 
@@ -7886,7 +7886,7 @@ sub execute_shell_command_array
 
     my $first = 'true';
 
-    foreach my $command (@$commands)
+    foreach my $shell_command (@$shell_commands)
     {
 	my $individual_options = { %$options, };
 
@@ -7895,7 +7895,7 @@ sub execute_shell_command_array
 	    delete $individual_options->{annotation};
 	}
 
-	execute_shell_command($command, $individual_options);
+	execute_shell_command($shell_command, $individual_options);
 
 	$first = '';
     }
@@ -7908,7 +7908,7 @@ sub execute_shell_command_schedule
 {
     my $schedule = shift;
 
-    my $command_array = $schedule->{commands};
+    my $shell_command_array = $schedule->{commands};
 
     my $option_array = $schedule->{options};
 
@@ -7919,7 +7919,7 @@ sub execute_shell_command_schedule
 
     foreach my $options (@$option_array)
     {
-	execute_shell_command_array($command_array, $options);
+	execute_shell_command_array($shell_command_array, $options);
     }
 
     return '';
@@ -7948,7 +7948,7 @@ sub generate_output_filename
 {
     my $prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     # a command three alphanumeric sequences that are used to
     # construct an abbreviation of the command for use in the
@@ -7958,7 +7958,7 @@ sub generate_output_filename
     #! believe the regex is correct, it seems to miss anchors between
     #! the alphanumeric sequences.
 
-    $command =~ /([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)/i;
+    $shell_command =~ /([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)/i;
 
     my $one = defined $1 ? $1 : "one";
 
