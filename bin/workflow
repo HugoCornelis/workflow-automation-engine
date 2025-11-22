@@ -9341,20 +9341,18 @@ sub command_hash_with_structure_generate
 
 
 # generate a hash that maps each known command to a description with
-# information:
+# information.
 #
-# type: one of 'sub', 'sh', 'yml'.
-#
-# arguments is either undef, 'with completions subs' or 'with help subs'.
+# with_feature is either undef, 'with completions subs' or 'with help subs'.
 #
 
 sub command_hash_typed_generate
 {
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
     my $result = {};
 
-    my $commands_subs = command_hash_subs_generate("Command::", $with_feature_subs);
+    my $commands_subs = command_hash_subs_generate("Command::", $with_feature);
 
     $result
 	= {
@@ -9362,7 +9360,7 @@ sub command_hash_typed_generate
 	   %$commands_subs,
 	  };
 
-    my $commands_shell = command_hash_shell_generate($with_feature_subs);
+    my $commands_shell = command_hash_shell_generate($with_feature);
 
     $result
 	= {
@@ -9370,7 +9368,7 @@ sub command_hash_typed_generate
 	   %$commands_shell,
 	  };
 
-    my $commands_yaml = command_hash_yaml_generate($with_feature_subs);
+    my $commands_yaml = command_hash_yaml_generate($with_feature);
 
     $result
 	= {
@@ -9386,7 +9384,7 @@ sub command_hash_data_directory_generate
 {
     my $type = shift;
 
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
     my $result = {};
 
@@ -9429,9 +9427,9 @@ sub command_hash_data_directory_generate
 
 sub command_hash_shell_generate
 {
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
-    my $result = command_hash_data_directory_generate('sh', $with_feature_subs);
+    my $result = command_hash_data_directory_generate('sh', $with_feature);
 
     return $result;
 }
@@ -9439,9 +9437,9 @@ sub command_hash_shell_generate
 
 sub command_hash_yaml_generate
 {
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
-    my $result = command_hash_data_directory_generate('yml', $with_feature_subs);
+    my $result = command_hash_data_directory_generate('yml', $with_feature);
 
     return $result;
 }
@@ -9451,15 +9449,14 @@ sub command_hash_yaml_generate
 # generate all the subs in the given package and return them as a hash
 # with the values defining their type.
 #
-# with_feature_subs is either "with help subs" or "with completion
-# subs".
+# with_feature is either "with help subs" or "with completion subs".
 #
 
 sub command_hash_subs_generate
 {
     my $package_name = shift;
 
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
     # generate a list of the available command subroutines
 
@@ -9541,9 +9538,9 @@ sub command_hash_subs_generate
 
 	       my $allow_none = 'always';
 
-	       my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
+	       my $allow_help = defined $with_feature && $with_feature eq 'with help subs';
 
-	       my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
+	       my $allow_completion = defined $with_feature && $with_feature eq 'with completion subs';
 
 	       my $result;
 
