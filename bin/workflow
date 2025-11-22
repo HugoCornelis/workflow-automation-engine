@@ -169,7 +169,7 @@ our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null`
 
 our $global_scheduled_commands = [];
 
-my $global_builtin_commands
+my $global_builtin_operations
     = {
        add_target => 1,
        archive_configuration => 1,
@@ -185,7 +185,7 @@ my $global_builtin_commands
        tmux_kill_sessions => 1,
       };
 
-my $global_known_command_packages_builtin
+my $global_known_operation_packages_builtin
     = {
        'Command::Buildroot' => {
 				description => 'workflows for working with Buildroot',
@@ -236,7 +236,7 @@ our $global_technical_project_configuration;
 
 our $global_target;
 
-our $global_command;
+our $global_operation;
 
 
 package Command;
@@ -292,7 +292,7 @@ sub _builtin_add_command_filename
 
     # read the commands configuration file
 
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
 
     # add the commands filename corresponding to the new target name
 
@@ -1139,7 +1139,7 @@ sub _builtin_project_commands_sh_create
 
     my $target_name = shift;
 
-    my $command_name = shift;
+    my $operation_name = shift;
 
     my $sh_string = shift;
 
@@ -1159,7 +1159,7 @@ sub _builtin_project_commands_sh_create
     {
 	use IO::File;
 
-	my $filename = "$directory/$command_name.sh";
+	my $filename = "$directory/$operation_name.sh";
 
 	my $file = IO::File->new("> $filename");
 
@@ -1251,7 +1251,7 @@ sub _builtin_project_commands_yml_create
 
     my $target_name = shift;
 
-    my $command_name = shift;
+    my $operation_name = shift;
 
     my $yml_string = shift;
 
@@ -1271,7 +1271,7 @@ sub _builtin_project_commands_yml_create
     {
 	use IO::File;
 
-	my $filename = "$directory/$command_name.yml";
+	my $filename = "$directory/$operation_name.yml";
 
 	my $file = IO::File->new("> $filename");
 
@@ -3405,7 +3405,7 @@ sub builtin_grep
 
 	# generate the list of command filenames
 
-	my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
+	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
 
 	$command_filenames = $command_filenames->{command_filenames};
 
@@ -3699,7 +3699,7 @@ sub builtin_known_command_filenames
 
     my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
 
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
 
     $command_filenames = $command_filenames->{command_filenames};
 
@@ -3713,17 +3713,17 @@ sub builtin_known_command_filenames
 
 sub builtin_manual
 {
-    my $operations = command_hash_typed_generate();
+    my $operations = operation_hash_typed_generate();
 
     my $target = 'builtin ';
 
-    $commands
+    $operations
 	= [
 	   grep
 	   {
 	       /$target/;
 	   }
-	   keys %$commands,
+	   keys %$operations,
 	  ];
     
 }
@@ -3925,7 +3925,7 @@ sub builtin_rename_project
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
 
     $command_filenames
 	= [
@@ -8890,7 +8890,7 @@ sub bash_completion
     # position is at the end of the current command, the value of this
     # variable is equal to ${#COMP_LINE}
 
-    my $comp_point = $global_command || 0;
+    my $comp_point = $global_operation || 0;
 
     my $string_before_point = substr $command_line, 0, $comp_point;
     my $string_after_point = substr $command_line, $comp_point;
@@ -8955,7 +8955,7 @@ sub bash_completion
 
 	my $position = 0;
 
-	my $target_command = [];
+	my $target_operation = [];
 
 	if ($comp_cword > 0)
 	{
@@ -8967,7 +8967,7 @@ sub bash_completion
 		{
 		    if ($arguments->[$index] eq '--')
 		    {
-			$target_command->[$position] = $arguments->[$index];
+			$target_operation->[$position] = $arguments->[$index];
 
 			$position++;
 		    }
@@ -8977,7 +8977,7 @@ sub bash_completion
 		    }
 		    else
 		    {
-			$target_command->[$position] = $arguments->[$index];
+			$target_operation->[$position] = $arguments->[$index];
 
 			$position++;
 		    }
@@ -9008,11 +9008,11 @@ sub bash_completion
 	    }
 	    else
 	    {
-		my $all_typed_commands = command_hash_typed_generate();
+		my $all_typed_operations = operation_hash_typed_generate();
 
-		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
+		my $internal_operations = operation_hash_with_structure_generate($all_typed_operations);
 
-		$result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
+		$result = bash_completion_generate($arguments, $internal_operations, $comp_cword, $debug_completion);
 
 		# make sure the user gets a hint that options are also possible
 
@@ -9028,7 +9028,7 @@ sub bash_completion
 							   command => $command,
 							   command_line => $command_line,
 							   command_line_word => $command_line_word,
-							   target_command => $target_command,
+							   target_operation => $target_operation,
 							  },
 				     position => {
 						  comp_cword => $comp_cword,
@@ -9045,12 +9045,12 @@ sub bash_completion
 	}
 	else
 	{
-	    my $internal_command = shift @$target_command;
-	    my $internal_operation = shift @$target_command;
+	    my $target = shift @$target_operation;
+	    my $operation = shift @$target_operation;
 
-	    my $completion_sub = "Command::${internal_command}_${internal_operation}_completions";
+	    my $completion_sub = "Command::${target}_${operation}_completions";
 
-	    my $command_hash = command_hash_typed_generate('with completion subs');
+	    my $command_hash = operation_hash_typed_generate('with completion subs');
 
 	    # have the command generate the data structure that lists the completions
 
@@ -9060,20 +9060,20 @@ sub bash_completion
 		   "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
 		  };
 
-	    if (exists $command_hash->{"$internal_command ${internal_operation}_completions"})
+	    if (exists $command_hash->{"$target ${operation}_completions"})
 	    {
 		no strict "refs";
 
-		my $command_name = $completion_sub;
+		my $operation_name = $completion_sub;
 
-		$command_name =~ s(^Command::)();
-		$command_name =~ s(^([a-z0-9]+?)_)($1 );
-		$command_name =~ s(_completions$)();
+		$operation_name =~ s(^Command::)();
+		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
+		$operation_name =~ s(_completions$)();
 
-		$external_commands = &$completion_sub($command_name, $arguments);
+		$external_commands = &$completion_sub($operation_name, $arguments);
 	    }
 
-	    $result = bash_completion_generate($target_command, $external_commands, $comp_cword - 2, $debug_completion);
+	    $result = bash_completion_generate($target_operation, $external_commands, $comp_cword - 2, $debug_completion);
 
 	    if ($debug_completion->{bash_completion})
 	    {
@@ -9084,7 +9084,7 @@ sub bash_completion
 							   command => $command,
 							   command_line => $command_line,
 							   command_line_word => $command_line_word,
-							   target_command => $target_command,
+							   target_operation => $target_operation,
 							  },
 				     position => {
 						  comp_cword => $comp_cword,
@@ -9290,7 +9290,7 @@ sub bash_completion_generate_options
 }
 
 
-sub command_filenames_file_read
+sub operation_filenames_file_read
 {
     my $sources_configuration_directory = shift;
 
@@ -9342,11 +9342,11 @@ sub command_filenames_file_read
 
 # generate a hash mapping targets and subroutine names to their full names.
 
-sub command_hash_with_structure_generate
+sub operation_hash_with_structure_generate
 {
-    my $all_typed_commands = shift;
+    my $all_typed_operations = shift;
 
-    my $commands = [ keys %$all_typed_commands, ];
+    my $commands = [ keys %$all_typed_operations, ];
 
     # set default result
 
@@ -9381,13 +9381,13 @@ sub command_hash_with_structure_generate
 # with_feature is either undef, 'with completions subs' or 'with help subs'.
 #
 
-sub command_hash_typed_generate
+sub operation_hash_typed_generate
 {
     my $with_feature = shift;
 
     my $result = {};
 
-    my $commands_subs = command_hash_subs_generate("Command::", $with_feature);
+    my $commands_subs = operation_hash_subs_generate("Command::", $with_feature);
 
     $result
 	= {
@@ -9395,7 +9395,7 @@ sub command_hash_typed_generate
 	   %$commands_subs,
 	  };
 
-    my $commands_shell = command_hash_shell_generate($with_feature);
+    my $commands_shell = operation_hash_shell_generate($with_feature);
 
     $result
 	= {
@@ -9403,7 +9403,7 @@ sub command_hash_typed_generate
 	   %$commands_shell,
 	  };
 
-    my $commands_yaml = command_hash_yaml_generate($with_feature);
+    my $commands_yaml = operation_hash_yaml_generate($with_feature);
 
     $result
 	= {
@@ -9415,7 +9415,7 @@ sub command_hash_typed_generate
 }
 
 
-sub command_hash_data_directory_generate
+sub operation_hash_data_directory_generate
 {
     my $type = shift;
 
@@ -9460,21 +9460,21 @@ sub command_hash_data_directory_generate
 }
 
 
-sub command_hash_shell_generate
+sub operation_hash_shell_generate
 {
     my $with_feature = shift;
 
-    my $result = command_hash_data_directory_generate('sh', $with_feature);
+    my $result = operation_hash_data_directory_generate('sh', $with_feature);
 
     return $result;
 }
 
 
-sub command_hash_yaml_generate
+sub operation_hash_yaml_generate
 {
     my $with_feature = shift;
 
-    my $result = command_hash_data_directory_generate('yml', $with_feature);
+    my $result = operation_hash_data_directory_generate('yml', $with_feature);
 
     return $result;
 }
@@ -9487,7 +9487,7 @@ sub command_hash_yaml_generate
 # with_feature is either "with help subs" or "with completion subs".
 #
 
-sub command_hash_subs_generate
+sub operation_hash_subs_generate
 {
     my $package_name = shift;
 
@@ -9530,7 +9530,7 @@ sub command_hash_subs_generate
 
     my $targets = $global_technical_project_configuration->{targets};
 
-    my $all_commands
+    my $all_operations
 	= {
 	   map
 	   {
@@ -9599,7 +9599,7 @@ sub command_hash_subs_generate
 
 	print Dumper(
 		     {
-		      all_commands => $all_commands,
+		      all_operations => $all_operations,
 		      all_references => $all_references,
 		      all_subroutines => $all_subroutines,
 		      all_targets => $targets,
@@ -9608,7 +9608,7 @@ sub command_hash_subs_generate
 		    );
     }
 
-    return $all_commands;
+    return $all_operations;
 }
 
 
@@ -9665,7 +9665,7 @@ sub main
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    $global_output_filename_template = join '-', $requested_target, ($global_command || ''), @ARGV;
+    $global_output_filename_template = join '-', $requested_target, ($global_operation || ''), @ARGV;
 
     # given the requested target and the command generate a useful filename for exporting commands to a shell script
 
@@ -9730,13 +9730,13 @@ sub main
 	    $option_dry_run = 'option_dump_module_interaction_roles';
 	}
 
-	my $all_typed_commands = command_hash_typed_generate('with help subs');
+	my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
 	if ($dry_run_module_commands)
 	{
 	    # generate the list of all commands
 
-	    my $all_commands = command_hash_with_structure_generate($all_typed_commands);
+	    my $all_operations = operation_hash_with_structure_generate($all_typed_operations);
 
 	    # loop over all the matching targets
 
@@ -9752,11 +9752,11 @@ sub main
 	    {
 		# reference subroutine names specific for the given target: they belong together
 
-		my $target_subroutines = $all_commands->{$defined_target};
+		my $target_subroutines = $all_operations->{$defined_target};
 
 		# collect the subroutine names
 
-		my $command_implementations
+		my $operation_implementations
 		    = [
 		       map
 		       {
@@ -9769,26 +9769,26 @@ sub main
 
 		# invoke all these subroutines in dry run mode to have them either generate or report the module roles
 
-		foreach my $command_implementation (sort @$command_implementations)
+		foreach my $operation_implementation (sort @$operation_implementations)
 		{
 		    if ($option_verbose)
 		    {
-			print "Invoking ($command_implementation)\n";
+			print "Invoking ($operation_implementation)\n";
 		    }
 
-		    if ($command_implementation =~ /_help$/)
+		    if ($operation_implementation =~ /_help$/)
 		    {
 			next;
 		    }
 
 		    my $has_help = '';
 
-		    if (grep(/^${command_implementation}_help$/, @$command_implementations))
+		    if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
 		    {
 			$has_help = " (use --help to see the help page)";
 		    }
 
-		    $command_implementation =~ /Command::(.*)/;
+		    $operation_implementation =~ /Command::(.*)/;
 
 		    my $short_command = $1;
 
@@ -9808,7 +9808,7 @@ sub main
 		    {
 			no strict "refs";
 
-			&$command_implementation([]);
+			&$operation_implementation([]);
 		    }
 
 		    # end the command in the schedule / diagram
@@ -9829,14 +9829,14 @@ sub main
 
 	else
 	{
-	    my $command = $global_command;
+	    my $command = $global_operation;
 
-	    my $command_implementation;
+	    my $operation_implementation;
 
 	    my $type_package_builtin;
 
 	    if (defined $command
-		and exists $global_known_command_packages_builtin->{$command})
+		and exists $global_known_operation_packages_builtin->{$command})
 	    {
 		my $sub_name = shift @ARGV;
 
@@ -9856,7 +9856,7 @@ sub main
 		    $sub_name .= "_help";
 		}
 
-		$command_implementation = "$command::$sub_name";
+		$operation_implementation = "$command::$sub_name";
 	    }
 	    elsif (defined $command)
 	    {
@@ -9869,7 +9869,7 @@ sub main
 		    $command .= "_help";
 		}
 
-		$command_implementation = "Command::${requested_target}_${command}";
+		$operation_implementation = "Command::${requested_target}_${command}";
 	    }
 	    else
 	    {
@@ -9881,13 +9881,13 @@ sub main
 
 		    $command = "help";
 
-		    $command_implementation = "Command::${requested_target}_${command}";
+		    $operation_implementation = "Command::${requested_target}_${command}";
 		}
 	    }
 
 	    if ($option_verbose)
 	    {
-		print "Invoking ($command_implementation)\n";
+		print "Invoking ($operation_implementation)\n";
 	    }
 
 	    if (defined $option_verbose
@@ -9895,12 +9895,12 @@ sub main
 	    {
 		use Data::Dumper;
 
-		print Dumper( { all_typed_commands_with_help_subs => $all_typed_commands, }, );
+		print Dumper( { all_typed_operations_with_help_subs => $all_typed_operations, }, );
 	    }
 
 	    # if this command exists ...
 
-	    if (exists $all_typed_commands->{"$requested_target $command"}
+	    if (exists $all_typed_operations->{"$requested_target $command"}
 	        or $type_package_builtin)
 	    {
 		# ... either invoke the --help sub
@@ -9909,17 +9909,17 @@ sub main
 		{
 		    no strict "refs";
 
-		    my $command_name = $command_implementation;
+		    my $operation_name = $operation_implementation;
 
-		    $command_name =~ s(^Command::)();
-		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $command_name =~ s(_help$)();
+		    $operation_name =~ s(^Command::)();
+		    $operation_name =~ s(^([a-z0-9]+?)_)($1 );
+		    $operation_name =~ s(_help$)();
 
 		    #! utf8::upgrade works in place
 
-		    map { utf8::upgrade($_) } @ARGV, $command_name;
+		    map { utf8::upgrade($_) } @ARGV, $operation_name;
 
-		    my $help_string = &$command_implementation($command_name, \@ARGV);
+		    my $help_string = &$operation_implementation($operation_name, \@ARGV);
 
 		    print "$global_program_name $help_string\n";
 		}
@@ -9930,7 +9930,7 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $all_typed_commands->{"$requested_target $command"}->{type};
+		    my $type = $all_typed_operations->{"$requested_target $command"}->{type};
 
 		    # ... either as a regular perl sub ...
 
@@ -9943,7 +9943,7 @@ sub main
 
 			map { utf8::upgrade($_) } @ARGV;
 
-			my $error = &$command_implementation(\@ARGV);
+			my $error = &$operation_implementation(\@ARGV);
 
 			if ($error)
 			{
@@ -10001,9 +10001,9 @@ sub parse_command_line
     # try to make sure there is a target and command early on
 
     $global_target = shift @ARGV;
-    $global_command = shift @ARGV;
+    $global_operation = shift @ARGV;
 
-    if ($option_help and (not $global_target) and (not $global_command))
+    if ($option_help and (not $global_target) and (not $global_operation))
     {
         print
             "
@@ -10065,7 +10065,7 @@ options:
     {
 	use YAML;
 
-	my $command_hash = command_hash_typed_generate();
+	my $command_hash = operation_hash_typed_generate();
 
 	my $commands = [ keys %$command_hash, ];
 
@@ -10116,31 +10116,31 @@ options:
 	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-module' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
 	}
 
-	my $known_command_packages
+	my $known_operation_packages
 	    = {
 	       'Command' => {
-			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_command_packages_builtin ) . ')',
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_operation_packages_builtin ) . ')',
 			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
 			    },
-	       %$global_known_command_packages_builtin,
+	       %$global_known_operation_packages_builtin,
 	      };
 
 	my $all_module_all_subs
 	    = {
 	       map
 	       {
-		   $_ => command_hash_subs_generate($_ . "::", "with help subs");
+		   $_ => operation_hash_subs_generate($_ . "::", "with help subs");
 	       }
-	       sort keys %$known_command_packages,
+	       sort keys %$known_operation_packages,
 	      };
 
 	if ($option_help_module)
 	{
-	    if (exists $known_command_packages->{$global_target})
+	    if (exists $known_operation_packages->{$global_target})
 	    {
 		use YAML;
 
-		print Dump( { $global_target => $known_command_packages->{$global_target}, }, );
+		print Dump( { $global_target => $known_operation_packages->{$global_target}, }, );
 
 		print Dump( { $global_target => $all_module_all_subs->{$global_target} } );
 
@@ -10155,7 +10155,7 @@ options:
 	{
 	    use YAML;
 
-	    print Dump( { help_module_all => $known_command_packages, }, );
+	    print Dump( { help_module_all => $known_operation_packages, }, );
 
 	    exit 0;
 	}
@@ -10247,10 +10247,10 @@ options:
     #! field_configuration, project_name as required.
 
     if ($global_target eq 'builtin'
-	and (defined $global_command
-	     and exists $global_builtin_commands->{$global_command})
-	or (defined $global_command
-	    and exists $global_known_command_packages_builtin->{$global_command}))
+	and (defined $global_operation
+	     and exists $global_builtin_operations->{$global_operation})
+	or (defined $global_operation
+	    and exists $global_known_operation_packages_builtin->{$global_operation}))
     {
     }
     else
