@@ -5910,9 +5910,9 @@ sub working_directory_for_interaction_role_apply
 {
     my $interaction_role = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
-    my $result = $command;
+    my $result = $shell_command;
 
     if ($interaction_role eq "localuser\@localhost")
     {
@@ -5932,13 +5932,13 @@ sub working_directory_for_interaction_role_apply
 	{
 	    #! quoting is a problem here
 
-	    $result = "'cd $current_working_directory && $command'";
+	    $result = "'cd $current_working_directory && $shell_command'";
 	}
     }
 
     if ($interaction_role =~ m(^tmux_))
     {
-	$result = "'$command' ENTER";
+	$result = "'$shell_command' ENTER";
     }
 
     return $result;
@@ -6193,7 +6193,7 @@ sub build_tree_needs_rebuild
 
 sub display_commented_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $options = shift;
 
@@ -6208,9 +6208,9 @@ sub display_commented_command
 	    print "$annotation\n";
 	}
 
-	# print "# $command (length: $command_length)\n#\n";
+	# print "# $shell_command (length: $shell_command_length)\n#\n";
 
-	print "# $command\n#\n";
+	print "# $shell_command\n#\n";
     }
 }
 
@@ -6224,13 +6224,13 @@ my $current_interaction_role;
 
 # apply the remoting prefix
 
-sub apply_remote_record_exported_command
+sub apply_remote_record_exported_shell_command
 {
     my $interaction_roles = shift;
 
     my $remote_prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     my $export_remote = shift;
 
@@ -6248,7 +6248,7 @@ sub apply_remote_record_exported_command
 	{
 	    # we export the command without the remoting information
 
-	    $export_sh_command = $command;
+	    $export_sh_command = $shell_command;
 	}
 
 	# this is a command for a different role
@@ -6259,11 +6259,11 @@ sub apply_remote_record_exported_command
 
 	    if ($remote_prefix)
 	    {
-		$export_sh_command = "# <remote command at $remote_prefix: $command>";
+		$export_sh_command = "# <remote command at $remote_prefix: $shell_command>";
 	    }
 	    else
 	    {
-		$export_sh_command = "# <local command: $command>";
+		$export_sh_command = "# <local command: $shell_command>";
 	    }
 	}
 
@@ -6278,7 +6278,7 @@ sub apply_remote_record_exported_command
     if ($remote_prefix)
     {
 
-	$command = "$remote_prefix   $command";
+	$shell_command = "$remote_prefix   $shell_command";
     }
 
     # if we are exporting all roles
@@ -6288,10 +6288,10 @@ sub apply_remote_record_exported_command
     {
 	# we export the command with the remoting information prefixed
 
-	$export_sh_command = $command;
+	$export_sh_command = $shell_command;
     }
 
-    return ($command, $export_sh_command);
+    return ($shell_command, $export_sh_command);
 }
 
 
@@ -6301,7 +6301,7 @@ sub apply_sudo
 {
     my $sudo_prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_export_sudo = shift;
 
@@ -6309,15 +6309,15 @@ sub apply_sudo
 
     if ($sudo_prefix)
     {
-	$command = "$sudo_prefix   $command";
+	$shell_command = "$sudo_prefix   $shell_command";
 
 	if ($option_export_sudo)
 	{
-	    $export_sh_command = $command;
+	    $export_sh_command = $shell_command;
 	}
     }
 
-    return ($command, $export_sh_command);
+    return ($shell_command, $export_sh_command);
 }
 
 
@@ -6327,7 +6327,7 @@ sub apply_timeout
 {
     my $timeout_prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_export_timeout = shift;
 
@@ -6335,18 +6335,18 @@ sub apply_timeout
 
     if ($timeout_prefix)
     {
-	$command = "$timeout_prefix   $command";
+	$shell_command = "$timeout_prefix   $shell_command";
 
-	$export_sh_command = $command;
+	$export_sh_command = $shell_command;
     }
 
-    return ($command, $export_sh_command);
+    return ($shell_command, $export_sh_command);
 }
 
 
 sub compute_remote_and_interaction_role
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $options_remote = shift;
 
@@ -6372,9 +6372,9 @@ sub compute_remote_and_interaction_role
 	    (
 	     {
 	      compute_remote_and_interaction_role => {
-						      command => $command,
 						      options_remote => $options_remote,
 						      remote_policy => $remote_policy,
+						      shell_command => $shell_command,
 						     },
 	     },
 	    );
@@ -6399,7 +6399,7 @@ sub compute_remote_and_interaction_role
 	# if we need to skip remoting for this command?
 
 	if (exists $options_remote->{skip}
-	    and $command =~ /$options_remote->{skip}/)
+	    and $shell_command =~ /$options_remote->{skip}/)
 	{
 	    # use the localuser interaction role to prevent remoting
 
@@ -6558,7 +6558,7 @@ sub compute_remote_and_interaction_role
 
 sub compute_sudo
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_sudo = shift;
 
@@ -6594,7 +6594,7 @@ sub compute_sudo
 	    # if we need to skip sudo information
 
 	    if (exists $option_sudo->{skip}
-		and $command =~ /$option_sudo->{skip}/)
+		and $shell_command =~ /$option_sudo->{skip}/)
 	    {
 		# remember to skip
 
@@ -6611,7 +6611,7 @@ sub compute_sudo
 
 	# if the command matches the sudo pattern
 
-	if ($command =~ /$sudo_pattern/)
+	if ($shell_command =~ /$sudo_pattern/)
 	{
 	    # construct the sudo command prefix
 
@@ -6629,7 +6629,7 @@ sub compute_sudo
 
 sub compute_timeout
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_timeout = shift;
 
@@ -6642,7 +6642,7 @@ sub compute_timeout
 	# if we need to skip timeout information
 
 	if (exists $option_timeout->{skip}
-	    and $command =~ /$option_timeout->{skip}/)
+	    and $shell_command =~ /$option_timeout->{skip}/)
 	{
 	}
 
@@ -6665,7 +6665,7 @@ sub compute_timeout
 
 	    if (not exists $option_timeout->{duration})
 	    {
-		die "*** Error: $global_program_name: the timeout option of '$command' does not have the mandatory duration specified";
+		die "*** Error: $global_program_name: the timeout option of '$shell_command' does not have the mandatory duration specified";
 	    }
 
 	    $result .= "$option_timeout->{duration} ";
@@ -6682,7 +6682,7 @@ sub execute_scheduled_operation_option_dry_run
 {
     my $scheduled_operation = shift;
 
-    my $command = $scheduled_operation->{command};
+    my $shell_command = $scheduled_operation->{command};
 
     my $dry_run = $scheduled_operation->{dry_run};
 
@@ -6706,7 +6706,7 @@ sub execute_scheduled_operation_option_dry_run
 
     if ($dry_run =~ /^[0-9]+$/)
     {
-	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
+	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$shell_command'\n";
 
 	if ($option_details)
 	{
@@ -6729,7 +6729,7 @@ sub execute_scheduled_operation_option_dry_run
 
 sub identify_interaction_roles
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $executable_command = shift;
 
@@ -6858,7 +6858,7 @@ sub execute_option_interactions
 
     my $all = shift;
 
-    my $command = $scheduled_operation->{command};
+    my $shell_command = $scheduled_operation->{command};
 
     my $executable_command = $scheduled_operation->{executable_command};
 
@@ -6902,7 +6902,7 @@ sub execute_option_interactions
     {
 	# print the command without indentation
 
-	print "$command\n";
+	print "$shell_command\n";
     }
 
     # else with a defined interaction_role
@@ -6981,11 +6981,11 @@ sub _print_interaction_header
 
 sub _process_cd_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $result;
 
-    if ($command =~ /^\s*chdir\s+(.*?)\s*(.*)$/)
+    if ($shell_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/)
     {
 	$result
 	    = {
@@ -6994,7 +6994,7 @@ sub _process_cd_command
 	       rest_of_command_line => $2,
 	      };
     }
-    elsif ($command =~ /^\s*cd\s*$/)
+    elsif ($shell_command =~ /^\s*cd\s*$/)
     {
 	$result
 	    = {
@@ -7002,7 +7002,7 @@ sub _process_cd_command
 	       argument => $1,
 	      };
     }
-    elsif ($command =~ /^\s*cd\s+([^\s]*)\s*(.*)$/)
+    elsif ($shell_command =~ /^\s*cd\s+([^\s]*)\s*(.*)$/)
     {
 	$result
 	    = {
@@ -7847,7 +7847,7 @@ sub execute_shell_command
 
     # apply the remoting prefix, always local
 
-    ($command, $export_sh_command) = apply_remote_record_exported_command($global_interaction_roles, $remote_prefix, $command, $option_export_remote, $export_sh_command);
+    ($command, $export_sh_command) = apply_remote_record_exported_shell_command($global_interaction_roles, $remote_prefix, $command, $option_export_remote, $export_sh_command);
 
     # apply the timeout prefix, always local
 
