@@ -167,7 +167,7 @@ my $GROUP_ID = `id -g`; chomp $GROUP_ID;
 our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null` =~ m'Inside a Docker' ? 'y' : 'n';
 
 
-our $global_scheduled_commands = [];
+our $global_scheduled_operations = [];
 
 my $global_builtin_operations
     = {
@@ -6677,21 +6677,21 @@ sub compute_timeout
 }
 
 
-sub execute_scheduled_command_option_dry_run
+sub execute_scheduled_operation_option_dry_run
 {
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
-    my $command = $scheduled_command->{command};
+    my $command = $scheduled_operation->{command};
 
-    my $dry_run = $scheduled_command->{dry_run};
+    my $dry_run = $scheduled_operation->{dry_run};
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $export_sh = $scheduled_command->{export_sh};
+    my $export_sh = $scheduled_operation->{export_sh};
 
-    my $interaction_role = $scheduled_command->{interaction_role};
+    my $interaction_role = $scheduled_operation->{interaction_role};
 
-    my $options = $scheduled_command->{options};
+    my $options = $scheduled_operation->{options};
 
     if ($export_sh
 	and exists $export_sh->{prefix})
@@ -6853,15 +6853,15 @@ sub execute_option_interactions
 {
     my $interaction_roles = shift;
 
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
     my $all = shift;
 
-    my $command = $scheduled_command->{command};
+    my $command = $scheduled_operation->{command};
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $interaction_role_arg = $scheduled_command->{interaction_role};
+    my $interaction_role_arg = $scheduled_operation->{interaction_role};
 
     # we must have a valid interaction role
 
@@ -7019,15 +7019,15 @@ sub execute_option_export_sh
 {
     my $interaction_roles = shift;
 
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $export_sh = $scheduled_command->{export_sh};
+    my $export_sh = $scheduled_operation->{export_sh};
 
-    my $export_sh_command = $scheduled_command->{export_sh_command};
+    my $export_sh_command = $scheduled_operation->{export_sh_command};
 
-    my $interaction_role = $scheduled_command->{interaction_role};
+    my $interaction_role = $scheduled_operation->{interaction_role};
 
     if (not defined $global_exported_sh_file)
     {
@@ -7211,11 +7211,11 @@ sub _execute_option_export_sh_variables_select
 		next;
 	    }
 
-	    foreach my $scheduled_command (@$global_scheduled_commands)
+	    foreach my $scheduled_operation (@$global_scheduled_operations)
 	    {
 		# substitute the variable value with its name in the command
 
-		my $export_sh_command = $scheduled_command->{export_sh_command};
+		my $export_sh_command = $scheduled_operation->{export_sh_command};
 
 		#! some interaction roles add single quotes, we remove them here.
 
@@ -7368,19 +7368,19 @@ sub _system_bash
 }
 
 
-sub execute_scheduled_command
+sub execute_scheduled_operation
 {
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
-    my $command = $scheduled_command->{command};
+    my $command = $scheduled_operation->{command};
 
-    my $dry_run = $scheduled_command->{dry_run};
+    my $dry_run = $scheduled_operation->{dry_run};
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $interaction_role = $scheduled_command->{interaction_role};
+    my $interaction_role = $scheduled_operation->{interaction_role};
 
-    my $options = $scheduled_command->{options};
+    my $options = $scheduled_operation->{options};
 
     my $exit_status;
 
@@ -7399,9 +7399,9 @@ sub execute_scheduled_command
     }
     elsif ($dry_run)
     {
-	#! this should never be called, this is already called from execute_all_scheduled_commands()
+	#! this should never be called, this is already called from execute_all_scheduled_operations()
 
-	execute_scheduled_command_option_dry_run($scheduled_command);
+	execute_scheduled_operation_option_dry_run($scheduled_operation);
     }
     else
     {
@@ -7533,7 +7533,7 @@ sub execute_scheduled_command
 	    print $global_exported_times_file "\n";
 	}
 
-	#! we could add the output to $scheduled_command->{output} or something similar
+	#! we could add the output to $scheduled_operation->{output} or something similar
 
 	if ($export_output)
 	{
@@ -7608,7 +7608,7 @@ sub schedule_real_command
 
     my $export_sh_command = shift;
 
-    my $scheduled_command
+    my $scheduled_operation
 	= {
 	   command => $command,
 	   dry_run => $dry_run,
@@ -7619,13 +7619,13 @@ sub schedule_real_command
 	   options => $options,
 	  };
 
-    push @$global_scheduled_commands, $scheduled_command;
+    push @$global_scheduled_operations, $scheduled_operation;
 
     return '';
 }
 
 
-sub execute_all_scheduled_commands
+sub execute_all_scheduled_operations
 {
     my $interaction_roles = shift;
 
@@ -7635,7 +7635,7 @@ sub execute_all_scheduled_commands
     {
 	use Data::Dumper;
 
-	print Dumper( { scheduled_commands => $global_scheduled_commands, }, );
+	print Dumper( { scheduled_operations => $global_scheduled_operations, }, );
     }
     elsif ($option_dump_interaction_roles)
     {
@@ -7649,15 +7649,15 @@ sub execute_all_scheduled_commands
     }
     else
     {
-	foreach my $scheduled_command (@$global_scheduled_commands)
+	foreach my $scheduled_operation (@$global_scheduled_operations)
 	{
 	    # we are either in dry-run ...
 
 	    if ($option_dry_run =~ /^[0-9]+$/)
 	    {
-		my $result = execute_scheduled_command_option_dry_run($scheduled_command);
+		my $result = execute_scheduled_operation_option_dry_run($scheduled_operation);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7669,9 +7669,9 @@ sub execute_all_scheduled_commands
 		   or $option_interactions_module
 		   or $option_interactions_module_all_roles)
 	    {
-		my $result = execute_option_interactions($interaction_roles, $scheduled_command, $option_interactions_module_all_roles || $option_interactions_all);
+		my $result = execute_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_module_all_roles || $option_interactions_all);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7680,9 +7680,9 @@ sub execute_all_scheduled_commands
 
 	    elsif (defined $option_export_sh)
 	    {
-		my $result = execute_option_export_sh($interaction_roles, $scheduled_command);
+		my $result = execute_option_export_sh($interaction_roles, $scheduled_operation);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7691,9 +7691,9 @@ sub execute_all_scheduled_commands
 
 	    else
 	    {
-		my $result = execute_scheduled_command($scheduled_command);
+		my $result = execute_scheduled_operation($scheduled_operation);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -9794,14 +9794,14 @@ sub main
 
 		    # add a header to the schedule / diagram for this command
 
-		    my $scheduled_command
+		    my $scheduled_operation
 			= {
 			   command => "---\nCOMMAND: $short_command$has_help",
 			   dry_run => $dry_run_module_commands,
 			   interaction_role => 'none',
 			  };
 
-		    push @$global_scheduled_commands, $scheduled_command;
+		    push @$global_scheduled_operations, $scheduled_operation;
 
 		    # add the command to the schedule / diagram
 
@@ -9813,14 +9813,14 @@ sub main
 
 		    # end the command in the schedule / diagram
 
-		    $scheduled_command
+		    $scheduled_operation
 			= {
 			   command => "\n\n---\n",
 			   dry_run => $dry_run_module_commands,
 			   interaction_role => 'none',
 			  };
 
-		    push @$global_scheduled_commands, $scheduled_command;
+		    push @$global_scheduled_operations, $scheduled_operation;
 		}
 	    }
 	}
@@ -9984,7 +9984,7 @@ sub main
 	    }
 	}
 
-	Engine::execute_all_scheduled_commands($global_interaction_roles);
+	Engine::execute_all_scheduled_operations($global_interaction_roles);
     }
 }
 
