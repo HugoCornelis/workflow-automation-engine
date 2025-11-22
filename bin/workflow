@@ -4676,7 +4676,7 @@ sub _file_contains_regex
 # This sub reads and parses the workflows written in perl or python.
 #
 
-sub _workflow_commands_initialize
+sub _workflow_operations_initialize
 {
     my $commands_seen;
 
@@ -9051,17 +9051,17 @@ sub bash_completion
 
 	    my $completion_sub = "Command::${target}_${operation}_completions";
 
-	    my $command_hash = operation_hash_typed_generate('with completion subs');
+	    my $operation_hash = operation_hash_typed_generate('with completion subs');
 
 	    # have the command generate the data structure that lists the completions
 
-	    my $external_commands
+	    my $external_completions
 		= {
 		   "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
 		   "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
 		  };
 
-	    if (exists $command_hash->{"$target ${operation}_completions"})
+	    if (exists $operation_hash->{"$target ${operation}_completions"})
 	    {
 		no strict "refs";
 
@@ -9071,10 +9071,10 @@ sub bash_completion
 		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
 		$operation_name =~ s(_completions$)();
 
-		$external_commands = &$completion_sub($operation_name, $arguments);
+		$external_completions = &$completion_sub($operation_name, $arguments);
 	    }
 
-	    $result = bash_completion_generate($target_operation, $external_commands, $comp_cword - 2, $debug_completion);
+	    $result = bash_completion_generate($target_operation, $external_completions, $comp_cword - 2, $debug_completion);
 
 	    if ($debug_completion->{bash_completion})
 	    {
@@ -9097,8 +9097,8 @@ sub bash_completion
 
 		print STDERR Dumper(
 				    {
-				     command_hash => $command_hash,
-				     external_commands => $external_commands,
+				     operation_hash => $operation_hash,
+				     external_completions => $external_completions,
 				     result => $result,
 				    },
 				   );
@@ -9347,19 +9347,19 @@ sub operation_hash_with_structure_generate
 {
     my $all_typed_operations = shift;
 
-    my $commands = [ keys %$all_typed_operations, ];
+    my $operations = [ keys %$all_typed_operations, ];
 
     # set default result
 
     my $result = {};
 
-    # loop over all the found targets and commands
+    # loop over all the found targets and operations
 
-    foreach my $command (@$commands)
+    foreach my $operation (@$operations)
     {
 	# extract the target and the subroutine from the generated string
 
-	$command =~ m(([^ ]+) ([^ ]+))g;
+	$operation =~ m(([^ ]+) ([^ ]+))g;
 
 	my $target = $1;
 
@@ -9367,7 +9367,7 @@ sub operation_hash_with_structure_generate
 
 	# insert them into the result
 
-	$result->{$target}->{$subroutine} = $command;
+	$result->{$target}->{$subroutine} = $operation;
     }
 
     # return result
@@ -9388,28 +9388,28 @@ sub operation_hash_typed_generate
 
     my $result = {};
 
-    my $commands_subs = operation_hash_subs_generate("Command::", $with_feature);
+    my $operations_subs = operation_hash_subs_generate("Command::", $with_feature);
 
     $result
 	= {
 	   %$result,
-	   %$commands_subs,
+	   %$operations_subs,
 	  };
 
-    my $commands_shell = operation_hash_shell_generate($with_feature);
+    my $operations_shell = operation_hash_shell_generate($with_feature);
 
     $result
 	= {
 	   %$result,
-	   %$commands_shell,
+	   %$operations_shell,
 	  };
 
-    my $commands_yaml = operation_hash_yaml_generate($with_feature);
+    my $operations_yaml = operation_hash_yaml_generate($with_feature);
 
     $result
 	= {
 	   %$result,
-	   %$commands_yaml,
+	   %$operations_yaml,
 	  };
 
     return $result;
@@ -9494,7 +9494,7 @@ sub operation_hash_subs_generate
 
     my $with_feature = shift;
 
-    # generate a list of the available command subroutines
+    # generate a list of the available operation subroutines
 
     my $all_references;
 
@@ -9527,7 +9527,7 @@ sub operation_hash_subs_generate
 	   @$all_references
 	  ];
 
-    # rework, select and sort these commands
+    # rework, select and sort these operations
 
     my $targets = $global_technical_project_configuration->{targets};
 
@@ -9538,7 +9538,7 @@ sub operation_hash_subs_generate
 	       $_ => { type => 'sub' };
 	   }
 
-	   # remove internal commands and commands that don't belong to a target
+	   # remove internal operations and operations that don't belong to a target
 
 	   grep
 	   {
@@ -9588,7 +9588,7 @@ sub operation_hash_subs_generate
 	       $result;
 	   }
 
-	   # all internal commands
+	   # all internal operations
 
 	   sort @$all_subroutines,
 	  };
@@ -9633,7 +9633,7 @@ sub main
     {
 	# initialize the command module
 
-	Command::_workflow_commands_initialize();
+	Command::_workflow_operations_initialize();
     }
 
     # parse command line
@@ -9662,13 +9662,13 @@ sub main
 	#! bash_completion() never returns
     }
 
-    # figure out the target and the command
+    # figure out the target and the operation
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
     $global_output_filename_template = join '-', $requested_target, ($global_operation || ''), @ARGV;
 
-    # given the requested target and the command generate a useful filename for exporting commands to a shell script
+    # given the requested target and the operation, generate a useful filename for exporting commands to a shell script
 
     if (defined $option_export_sh)
     {
@@ -9687,7 +9687,7 @@ sub main
 	$option_export_sh =~ s/_/-/g;
     }
 
-    # given the requested target and the command generate a useful filename for exporting execution times to a log file
+    # given the requested target and the operation, generate a useful filename for exporting execution times to a log file
 
     if (defined $option_export_times)
     {
@@ -9707,7 +9707,7 @@ sub main
     }
 
     {
-	# are we dry running all the commands of a module (target)?
+	# are we dry running all the operations of a module / target?
 
 	my $dry_run_module_commands;
 
@@ -9791,20 +9791,20 @@ sub main
 
 		    $operation_implementation =~ /Command::(.*)/;
 
-		    my $short_command = $1;
+		    my $short_operation = $1;
 
-		    # add a header to the schedule / diagram for this command
+		    # add a header to the schedule / diagram for this operation
 
 		    my $scheduled_operation
 			= {
-			   command => "---\nCOMMAND: $short_command$has_help",
+			   command => "---\nCOMMAND: $short_operation$has_help",
 			   dry_run => $dry_run_module_commands,
 			   interaction_role => 'none',
 			  };
 
 		    push @$global_scheduled_operations, $scheduled_operation;
 
-		    # add the command to the schedule / diagram
+		    # add the operation to the schedule / diagram
 
 		    {
 			no strict "refs";
@@ -9826,7 +9826,7 @@ sub main
 	    }
 	}
 
-	# we are not dry running, but really will execute the commands
+	# we are not dry running, but really will execute the operations
 
 	else
 	{
@@ -10066,23 +10066,23 @@ options:
     {
 	use YAML;
 
-	my $command_hash = operation_hash_typed_generate();
+	my $operation_hash = operation_hash_typed_generate();
 
-	my $commands = [ keys %$command_hash, ];
+	my $operations = [ keys %$operation_hash, ];
 
 	if ($global_target)
 	{
-	    $commands
+	    $operations
 		= [
 		   grep
 		   {
 		       /$global_target/;
 		   }
-		   @$commands,
+		   @$operations,
 		  ];
 	}
 
-	$commands
+	$operations
 	    = [
 	       sort
 	       {
@@ -10092,7 +10092,7 @@ options:
 	       {
 		   "$global_program_name $_";
 	       }
-	       @$commands,
+	       @$operations,
 	      ];
 
 	print Dump(
@@ -10101,7 +10101,7 @@ options:
   (copy-paste the one you would like to execute,
    try them with the --dry-run and --interactions options,
    some commands may implement a usage message available with the --help option):",
-		    '1_commmands' => $commands,
+		    '1_commmands' => $operations,
 		   },
 		  );
 
@@ -10242,7 +10242,7 @@ options:
 	$status = $FieldProject::status;
     }
 
-    # always allow the builtin commands (start a new project, add a new target, ...)
+    # always allow the builtin operations (start a new project, add a new target, ...)
 
     #! they should do their own checking for a valid
     #! field_configuration, project_name as required.
