@@ -10101,7 +10101,7 @@ options:
   (copy-paste the one you would like to execute,
    try them with the --dry-run and --interactions options,
    some commands may implement a usage message available with the --help option):",
-		    '1_commmands' => $operations,
+		    '1_commands' => $operations,
 		   },
 		  );
 

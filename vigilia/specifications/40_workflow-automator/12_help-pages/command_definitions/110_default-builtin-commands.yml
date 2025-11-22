@@ -10,7 +10,7 @@ command_tests:
           (copy-paste the one you would like to execute,
            try them with the --dry-run and --interactions options,
            some commands may implement a usage message available with the --help option):
-      1_commmands:
+      1_commands:
         - workflow builtin add_role
         - workflow builtin add_target
         - workflow builtin archive_configuration

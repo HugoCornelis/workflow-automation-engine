@@ -518,7 +518,7 @@ conf.workflow-tests-configuration
     (copy-paste the one you would like to execute,
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
-1_commmands:
+1_commands:
   - workflow-tests-workflow builtin add_role
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
@@ -558,7 +558,7 @@ conf.workflow-tests-configuration
     (copy-paste the one you would like to execute,
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
-1_commmands:
+1_commands:
   - workflow-tests-workflow builtin add_role
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
