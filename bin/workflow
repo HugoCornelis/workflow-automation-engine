@@ -1584,14 +1584,15 @@ sub _builtin_project_configuration_roles_create
 
     my $configuration_file_part
 	= "---
-# Target servers identify roles that execute command on different hosts.
-# Each host has a 'remote_policy' that is prefixed to the command to be executed.
-# For some roles the remote_policy is dynamically built.  A typical example is an remote ssh server.
+# Roles identify hosts and accounts that execute commands.
+# Each host has a 'remote_policy' that is added (e.g. with a prefix string) to the command to be executed.
+# For some roles the remote_policy is dynamically built (e.g. a remote ssh server).
 #
 # A role that has a 'localuser' set to 'yes' has no remote_policy.
 #
-# A tmux remote_policy requires its name to have a 'tmux_' prefix.
-# This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
+# A tmux or Docker remote_policy requires its name to have a 'tmux_' or 'docker_' prefix respectively.
+# This is recognized by the workflow engine and,
+# for instance, allows tmux sessions to be automatically created.
 
 roles:
   build:
