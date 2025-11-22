@@ -528,6 +528,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin known_command_filenames
+  - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project
@@ -568,6 +569,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin known_command_filenames
+  - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project

@@ -20,6 +20,7 @@ command_tests:
         - workflow builtin grep
         - workflow builtin install_scripts
         - workflow builtin known_command_filenames
+        - workflow builtin manual
         - workflow builtin print_configuration_directory
         - workflow builtin pull_scripts
         - workflow builtin rename_project
