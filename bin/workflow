@@ -3711,6 +3711,41 @@ sub builtin_known_command_filenames
 }
 
 
+sub builtin_manual
+{
+    my $operations = command_hash_typed_generate();
+
+    my $target = 'builtin ';
+
+    $commands
+	= [
+	   grep
+	   {
+	       /$target/;
+	   }
+	   keys %$commands,
+	  ];
+    
+}
+
+
+sub builtin_manual_help
+{
+    my $command = shift;
+
+    return "$command : print the manual to stdout.
+
+synopsis:
+
+$command <type>
+
+arguments:
+
+    ARGV[0]: The type of manual (now always specification, later maybe also user).
+";
+}
+
+
 sub builtin_known_command_filenames_completions
 {
     return
