@@ -2408,14 +2408,6 @@ sub _install_script_symbolic_link_to_engine
 }
 
 
-sub builtin_help
-{
-    my $command = shift;
-
-    return "module $command: Builtin functions for maintenance of a workflow project configuration.";
-}
-
-
 sub builtin_add_role
 {
     my $arguments = shift || [];
@@ -3452,6 +3444,14 @@ arguments:
     ARGV[1] and following: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
+}
+
+
+sub builtin_help
+{
+    my $command = shift;
+
+    return "module $command: Builtin functions for maintenance of a workflow project configuration.";
 }
 
 
