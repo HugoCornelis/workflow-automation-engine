@@ -8933,13 +8933,13 @@ sub bash_completion
 
     my $command_line_word = $arguments->[$comp_cword];
 
-    my $command = shift @$arguments;
+    my $shell_command = shift @$arguments;
 
     my $result;
 
     # either generate completions for the configuration browser ...
 
-    if ($command =~ /configuration/)
+    if ($shell_command =~ /configuration/)
     {
 	$result = bash_completion_generate($arguments, $global_technical_project_configuration, $comp_cword, $debug_completion);
 
@@ -8950,7 +8950,7 @@ sub bash_completion
 
     # ... or generate completions for the workflow engine with or without configuration
 
-    elsif ($command =~ /workflow/)
+    elsif ($shell_command =~ /workflow/)
     {
 	my $perform_option_completion;
 
@@ -9026,7 +9026,7 @@ sub bash_completion
 				    {
 				     command_arguments => {
 							   arguments => $arguments,
-							   command => $command,
+							   command => $shell_command,
 							   command_line => $command_line,
 							   command_line_word => $command_line_word,
 							   target_operation => $target_operation,
@@ -9082,7 +9082,7 @@ sub bash_completion
 				    {
 				     command_arguments => {
 							   arguments => $arguments,
-							   command => $command,
+							   command => $shell_command,
 							   command_line => $command_line,
 							   command_line_word => $command_line_word,
 							   target_operation => $target_operation,
