@@ -1868,12 +1868,12 @@ configuration for the $project_name project.
 The workflow automation engine offers the following functions:
 
 - Easy to start a new _project_, and add new _targets_ and new
-  _commands_ to a project.
+  _operations_ to a project.
 - Integration with `bash` completion allows exploring and browsing
-  project specific _targets_, project specific _commands_ and project
+  project specific _targets_, project specific _operations_ and project
   specific _configuration_.
 - Integration with `grc` for project specific _keyword highlighting_.
-- The use of different _roles_ allows remote execution of commands
+- The use of different _roles_ allows operations to be executed remotely
   over an ssh session, in a Docker container or a `tmux` session.
 - Modular construction of complex worfklow that combine several
   features of the workflow engine.
@@ -1938,7 +1938,7 @@ if executed without options:
 ```
 
 You are ready to use this configuration.  Don't forget to use bash
-completion to explore the available targets and commands.
+completion to explore the available targets and operations.
 ";
 
     my $error = '';
