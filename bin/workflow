@@ -3061,17 +3061,10 @@ sub builtin_archive_configuration_completions
 
     my $completions_hash
 	= {
-	   ".tar.gz" => 'abc',
+	   ".tar.gz" => '',
 	  };
 
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
+    return $completions_hash;
 }
 
 
