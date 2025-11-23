@@ -9807,23 +9807,23 @@ sub main
 
 	else
 	{
-	    my $command = $global_operation;
+	    my $operation_or_package = $global_operation;
 
 	    my $operation_implementation;
 
 	    my $type_package_builtin;
 
-	    if (defined $command
-		and exists $global_known_operation_packages_builtin->{$command})
+	    if (defined $operation_or_package
+		and exists $global_known_operation_packages_builtin->{$operation_or_package})
 	    {
 		my $sub_name = shift @ARGV;
 
 		if (!defined $sub_name)
 		{
-		    die "$0: *** Error: No function name given while trying to use a builtin package '$command'";
+		    die "$0: *** Error: No function name given while trying to use a builtin package '$operation_or_package'";
 		}
 
-		$type_package_builtin = $command;
+		$type_package_builtin = $operation_or_package;
 
 		# if help was requested for this command
 
@@ -9834,9 +9834,9 @@ sub main
 		    $sub_name .= "_help";
 		}
 
-		$operation_implementation = "$command::$sub_name";
+		$operation_implementation = "$operation_or_package::$sub_name";
 	    }
-	    elsif (defined $command)
+	    elsif (defined $operation_or_package)
 	    {
 		# if help was requested for this command
 
@@ -9844,10 +9844,10 @@ sub main
 		{
 		    # call the subroutine that implements the help function
 
-		    $command .= "_help";
+		    $operation_or_package .= "_help";
 		}
 
-		$operation_implementation = "Command::${requested_target}_${command}";
+		$operation_implementation = "Command::${requested_target}_${operation_or_package}";
 	    }
 	    else
 	    {
@@ -9857,9 +9857,9 @@ sub main
 		{
 		    # call the subroutine that implements the help function for the target
 
-		    $command = "help";
+		    $operation_or_package = "help";
 
-		    $operation_implementation = "Command::${requested_target}_${command}";
+		    $operation_implementation = "Command::${requested_target}_${operation_or_package}";
 		}
 	    }
 
@@ -9878,7 +9878,7 @@ sub main
 
 	    # if this command exists ...
 
-	    if (exists $all_typed_operations->{"$requested_target $command"}
+	    if (exists $all_typed_operations->{"$requested_target $operation_or_package"}
 	        or $type_package_builtin)
 	    {
 		# ... either invoke the --help sub
@@ -9908,7 +9908,7 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $all_typed_operations->{"$requested_target $command"}->{type};
+		    my $type = $all_typed_operations->{"$requested_target $operation_or_package"}->{type};
 
 		    # ... either as a regular perl sub ...
 
@@ -9925,7 +9925,7 @@ sub main
 
 			if ($error)
 			{
-			    warn "$global_program_name: *** Warning: $requested_target $command generated an warning response ($error)";
+			    warn "$global_program_name: *** Warning: $requested_target $operation_or_package generated an warning response ($error)";
 			}
 		    }
 
@@ -9937,7 +9937,7 @@ sub main
 
 			my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
 
-			my $shell_script = "$commands_data_directory/$requested_target/$command";
+			my $shell_script = "$commands_data_directory/$requested_target/$operation_or_package";
 
 			Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @ARGV );
 		    }
@@ -9952,13 +9952,13 @@ sub main
 
 		    else
 		    {
-			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $command'";
+			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $operation_or_package'";
 		    }
 		}
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$command'.";
+		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$operation_or_package'.";
 	    }
 	}
 
