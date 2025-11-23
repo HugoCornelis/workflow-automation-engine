@@ -3674,6 +3674,32 @@ sub builtin_known_command_filenames
 
 sub builtin_manual
 {
+    my $arguments = shift || [];
+
+    my $option_input_rst = 1;
+    my $option_input_md;
+    my $option_output_rst;
+    my $option_output_pdf = 1;
+
+    our $options
+	= {
+	   'input-rst!' => \$option_input_rst,
+	   'input-md!' => \$option_input_md,
+	   'output-rst!' => \$option_output_rst,
+	   'output-pdf!' => \$option_output_pdf,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
+
     my $operations_help = main::operation_hash_typed_generate('with help subs');
 
     my $target = 'builtin ';
@@ -3688,7 +3714,9 @@ sub builtin_manual
 	   keys %$operations_help,
 	  ];
 
-    my $debug_builtin_manual = 3;
+    my $debug_builtin_manual = 0;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'workflow';
 
     if ($debug_builtin_manual > 2)
     {
@@ -3696,26 +3724,105 @@ sub builtin_manual
 
 	print STDERR Dumper(
 			    {
+			     field_project_name => $field_project_name,
 			     global_output_filename_template => $global_output_filename_template,
 			     operations_help => $operations_help,
 			    } );
     }
 
-    my $manual_string = '';
+    # see https://docs.beagleboard.org/intro/contribution/rst-cheat-sheet.html
+
+    my $rst_H1 = '#';
+    my $rst_H2 = '*';
+    my $rst_H3 = '=';
+    my $rst_H4 = '-';
+    my $rst_H5 = '~';
+
+    my $headers
+	= {
+	   rst => {
+		   H1 => $rst_H1,
+		   H2 => $rst_H2,
+		   H3 => $rst_H3,
+		   H4 => $rst_H4,
+		   H5 => $rst_H5,
+		  },
+	  };
+
+    my $header = uc $field_project_name;
+
+    $header =~ s(-)( )g;
+
+    my $underline = $rst_H1 x length($header);
+
+    $header .= "\n$underline\n";
+
+    my $manual_string = "$header\n\n";
 
     foreach my $operation_help (@$operations_help)
     {
-	my $help_string;
+	my $header = $operation_help;
 
-	{
-	    no strict "refs";
+	my $underline = $rst_H2 x length($operations_help);
 
-	    $help_string = &$operation_help();
-	}
+	$header .= "\n$underline\n";
 
-	$manual_string .= $help_string;
+	my $operation_help_with_package = "Command::$operation_help";
+
+	$operation_help_with_package =~ s( )(_)g;
+
+	my $help_string = main::call_help_implementation($operation_help_with_package, [ 'manual' ]);
+
+	$manual_string .= "$header\n$help_string\n";
     }
 
+    my $manual_filename = "$field_project_name-manual.rst";
+
+    my $manual_file;
+
+    my $ok = open($manual_file, ">", $manual_filename);
+
+    if (not $ok)
+    {
+	die "*** Error: $global_program_name: cannot open $manual_filename for writing ($!)";
+    }
+
+    print $manual_file $manual_string;
+
+    $ok = close($manual_file);
+
+    if ($ok)
+    {
+	if ($option_output_pdf
+	    and $option_input_rst)
+	{
+	    my $commands
+		= [
+		   "pandoc '$manual_filename' -o '$field_project_name-manual.pdf'",
+		   # "pandoc '$manual_filename' -o '$field_project_name-manual.pdf' && rm '$manual_filename'",
+		  ];
+
+	    execute_shell_command_array($commands);
+	}
+    }
+
+    # return the error (code)
+
+    return not $ok;
+}
+
+
+sub builtin_manual_completions
+{
+    my $options_completions
+	= {
+	   '--' => {
+		    '--input-rst' => '',
+		    '--input-md' => '',
+		    '--output-rst' => '',
+		    '--output-pdf' => '',
+		   },
+	  };
 }
 
 
@@ -3727,11 +3834,22 @@ sub builtin_manual_help
 
 synopsis:
 
-$command <type>
+$command \[ <target> \] \[ -- <--options> \]
+
+options:
+
+    --input-md         Assume an input format of MarkDown.
+    --input-rst        Assume an input format of ReStructuredText, this is the default.
+    --output-md        Generate an MarkDown document.
+    --output-pdf       Generate a PDF document.
+    --output-rst       Generate an ReStructuredText document.
 
 arguments:
 
-    ARGV[0]: The type of manual (now always specification, later maybe also user).
+    ARGV[0]: The target to which to build a manual.
+             Without a project the default is 'builtin'.
+             With a project the default is everything except 'builtin'.
+    ARGV[1]: The type of manual (now always specification, later maybe also user).
 ";
 }
 
