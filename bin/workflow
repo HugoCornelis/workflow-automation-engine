@@ -4332,19 +4332,25 @@ sub builtin_tmux_create_sessions
 
 sub builtin_tmux_create_sessions_completions
 {
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    return
-    {
-     "1.Type-the-name-of-a-known-tmux-session:" => '',
-     "_all" => '',
-     # '--force' => '',
-     map
-     {
-	 $_ => ''
-     }
-     @$tmux_sessions,
-    };
+    my $completions
+	= {
+	   ((scalar @$complete_arguments_array == 2) ? ("1.Type-the-name-of-a-known-tmux-session:" => '') : ()),
+	   "_all" => '',
+	   # '--force' => '',
+	   map
+	   {
+	       $_ => ''
+	   }
+	   @$tmux_sessions,
+	  };
+
+    return $completions;
 }
 
 
