@@ -9590,6 +9590,53 @@ sub operation_hash_subs_generate
 }
 
 
+sub call_operation_implementation
+{
+    my $operation_implementation = shift;
+
+    my $arguments = shift;
+
+    no strict "refs";
+
+    #! utf8::upgrade works in place
+
+    map { utf8::upgrade($_) } @$arguments;
+
+    my $error = &$operation_implementation($arguments);
+
+    return $error;
+
+}
+
+
+sub call_help_implementation
+{
+    my $operation_implementation = shift;
+
+    my $arguments = shift;
+
+    my $operation_name = $operation_implementation;
+
+    $operation_name =~ s(^Command::)();
+    $operation_name =~ s(^([a-z0-9]+?)_)($1 );
+    $operation_name =~ s(_help$)();
+
+    #! utf8::upgrade works in place
+
+    map { utf8::upgrade($_) } @$arguments, $operation_name;
+
+    my $help_string;
+
+    {
+	no strict "refs";
+
+	$help_string = &$operation_implementation($operation_name, $arguments);
+    }
+
+    return $help_string;
+}
+
+
 sub main
 {
     # this is YAML related, see for instance https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=707229
@@ -9885,19 +9932,7 @@ sub main
 
 		if ($option_help)
 		{
-		    no strict "refs";
-
-		    my $operation_name = $operation_implementation;
-
-		    $operation_name =~ s(^Command::)();
-		    $operation_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $operation_name =~ s(_help$)();
-
-		    #! utf8::upgrade works in place
-
-		    map { utf8::upgrade($_) } @ARGV, $operation_name;
-
-		    my $help_string = &$operation_implementation($operation_name, \@ARGV);
+		    my $help_string = call_help_implementation($operation_implementation, \@ARGV);
 
 		    print "$global_program_name $help_string\n";
 		}
@@ -9915,13 +9950,7 @@ sub main
 		    if ($type_package_builtin
 			or $type eq 'sub')
 		    {
-			no strict "refs";
-
-			#! utf8::upgrade works in place
-
-			map { utf8::upgrade($_) } @ARGV;
-
-			my $error = &$operation_implementation(\@ARGV);
+			my $error = call_operation_implementation($operation_implementation, \@ARGV);
 
 			if ($error)
 			{
