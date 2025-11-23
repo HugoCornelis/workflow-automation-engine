@@ -167,9 +167,9 @@ my $GROUP_ID = `id -g`; chomp $GROUP_ID;
 our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null` =~ m'Inside a Docker' ? 'y' : 'n';
 
 
-our $global_scheduled_commands = [];
+our $global_scheduled_operations = [];
 
-my $global_builtin_commands
+my $global_builtin_operations
     = {
        add_target => 1,
        archive_configuration => 1,
@@ -185,7 +185,7 @@ my $global_builtin_commands
        tmux_kill_sessions => 1,
       };
 
-my $global_known_command_packages_builtin
+my $global_known_operation_packages_builtin
     = {
        'Command::Buildroot' => {
 				description => 'workflows for working with Buildroot',
@@ -236,7 +236,7 @@ our $global_technical_project_configuration;
 
 our $global_target;
 
-our $global_command;
+our $global_operation;
 
 
 package Command;
@@ -292,7 +292,7 @@ sub _builtin_add_command_filename
 
     # read the commands configuration file
 
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
 
     # add the commands filename corresponding to the new target name
 
@@ -1139,7 +1139,7 @@ sub _builtin_project_commands_sh_create
 
     my $target_name = shift;
 
-    my $command_name = shift;
+    my $operation_name = shift;
 
     my $sh_string = shift;
 
@@ -1159,7 +1159,7 @@ sub _builtin_project_commands_sh_create
     {
 	use IO::File;
 
-	my $filename = "$directory/$command_name.sh";
+	my $filename = "$directory/$operation_name.sh";
 
 	my $file = IO::File->new("> $filename");
 
@@ -1251,7 +1251,7 @@ sub _builtin_project_commands_yml_create
 
     my $target_name = shift;
 
-    my $command_name = shift;
+    my $operation_name = shift;
 
     my $yml_string = shift;
 
@@ -1271,7 +1271,7 @@ sub _builtin_project_commands_yml_create
     {
 	use IO::File;
 
-	my $filename = "$directory/$command_name.yml";
+	my $filename = "$directory/$operation_name.yml";
 
 	my $file = IO::File->new("> $filename");
 
@@ -1584,14 +1584,15 @@ sub _builtin_project_configuration_roles_create
 
     my $configuration_file_part
 	= "---
-# Target servers identify roles that execute command on different hosts.
-# Each host has a 'remote_policy' that is prefixed to the command to be executed.
-# For some roles the remote_policy is dynamically built.  A typical example is an remote ssh server.
+# Roles identify hosts and accounts that execute commands.
+# Each host has a 'remote_policy' that is added (e.g. with a prefix string) to the command to be executed.
+# For some roles the remote_policy is dynamically built (e.g. a remote ssh server).
 #
 # A role that has a 'localuser' set to 'yes' has no remote_policy.
 #
-# A tmux remote_policy requires its name to have a 'tmux_' prefix.
-# This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
+# A tmux or Docker remote_policy requires its name to have a 'tmux_' or 'docker_' prefix respectively.
+# This is recognized by the workflow engine and,
+# for instance, allows tmux sessions to be automatically created.
 
 roles:
   build:
@@ -1867,12 +1868,12 @@ configuration for the $project_name project.
 The workflow automation engine offers the following functions:
 
 - Easy to start a new _project_, and add new _targets_ and new
-  _commands_ to a project.
+  _operations_ to a project.
 - Integration with `bash` completion allows exploring and browsing
-  project specific _targets_, project specific _commands_ and project
+  project specific _targets_, project specific _operations_ and project
   specific _configuration_.
 - Integration with `grc` for project specific _keyword highlighting_.
-- The use of different _roles_ allows remote execution of commands
+- The use of different _roles_ allows operations to be executed remotely
   over an ssh session, in a Docker container or a `tmux` session.
 - Modular construction of complex worfklow that combine several
   features of the workflow engine.
@@ -1937,7 +1938,7 @@ if executed without options:
 ```
 
 You are ready to use this configuration.  Don't forget to use bash
-completion to explore the available targets and commands.
+completion to explore the available targets and operations.
 ";
 
     my $error = '';
@@ -2405,14 +2406,6 @@ sub _install_script_symbolic_link_to_engine
 
 	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
     }
-}
-
-
-sub builtin_help
-{
-    my $command = shift;
-
-    return "module $command: Builtin functions for maintenance of a workflow project configuration.";
 }
 
 
@@ -3413,7 +3406,7 @@ sub builtin_grep
 
 	# generate the list of command filenames
 
-	my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
+	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
 
 	$command_filenames = $command_filenames->{command_filenames};
 
@@ -3452,6 +3445,14 @@ arguments:
     ARGV[1] and following: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
+}
+
+
+sub builtin_help
+{
+    my $command = shift;
+
+    return "module $command: Builtin functions for maintenance of a workflow project configuration.";
 }
 
 
@@ -3699,7 +3700,7 @@ sub builtin_known_command_filenames
 
     my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
 
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
 
     $command_filenames = $command_filenames->{command_filenames};
 
@@ -3708,6 +3709,41 @@ sub builtin_known_command_filenames
     print Dump( { known_command_filenames => $command_filenames } );
 
     return 0;
+}
+
+
+sub builtin_manual
+{
+    my $operations = operation_hash_typed_generate();
+
+    my $target = 'builtin ';
+
+    $operations
+	= [
+	   grep
+	   {
+	       /$target/;
+	   }
+	   keys %$operations,
+	  ];
+    
+}
+
+
+sub builtin_manual_help
+{
+    my $command = shift;
+
+    return "$command : print the manual to stdout.
+
+synopsis:
+
+$command <type>
+
+arguments:
+
+    ARGV[0]: The type of manual (now always specification, later maybe also user).
+";
 }
 
 
@@ -3890,7 +3926,7 @@ sub builtin_rename_project
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
-    my $command_filenames = main::command_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
 
     $command_filenames
 	= [
@@ -4640,7 +4676,7 @@ sub _file_contains_regex
 # This sub reads and parses the workflows written in perl or python.
 #
 
-sub _workflow_commands_initialize
+sub _workflow_operations_initialize
 {
     my $commands_seen;
 
@@ -5874,9 +5910,9 @@ sub working_directory_for_interaction_role_apply
 {
     my $interaction_role = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
-    my $result = $command;
+    my $result = $shell_command;
 
     if ($interaction_role eq "localuser\@localhost")
     {
@@ -5896,13 +5932,13 @@ sub working_directory_for_interaction_role_apply
 	{
 	    #! quoting is a problem here
 
-	    $result = "'cd $current_working_directory && $command'";
+	    $result = "'cd $current_working_directory && $shell_command'";
 	}
     }
 
     if ($interaction_role =~ m(^tmux_))
     {
-	$result = "'$command' ENTER";
+	$result = "'$shell_command' ENTER";
     }
 
     return $result;
@@ -6157,7 +6193,7 @@ sub build_tree_needs_rebuild
 
 sub display_commented_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $options = shift;
 
@@ -6172,9 +6208,9 @@ sub display_commented_command
 	    print "$annotation\n";
 	}
 
-	# print "# $command (length: $command_length)\n#\n";
+	# print "# $shell_command (length: $shell_command_length)\n#\n";
 
-	print "# $command\n#\n";
+	print "# $shell_command\n#\n";
     }
 }
 
@@ -6188,13 +6224,13 @@ my $current_interaction_role;
 
 # apply the remoting prefix
 
-sub apply_remote_record_exported_command
+sub apply_remote_record_exported_shell_command
 {
     my $interaction_roles = shift;
 
     my $remote_prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     my $export_remote = shift;
 
@@ -6212,7 +6248,7 @@ sub apply_remote_record_exported_command
 	{
 	    # we export the command without the remoting information
 
-	    $export_sh_command = $command;
+	    $export_sh_command = $shell_command;
 	}
 
 	# this is a command for a different role
@@ -6223,11 +6259,11 @@ sub apply_remote_record_exported_command
 
 	    if ($remote_prefix)
 	    {
-		$export_sh_command = "# <remote command at $remote_prefix: $command>";
+		$export_sh_command = "# <remote command at $remote_prefix: $shell_command>";
 	    }
 	    else
 	    {
-		$export_sh_command = "# <local command: $command>";
+		$export_sh_command = "# <local command: $shell_command>";
 	    }
 	}
 
@@ -6242,7 +6278,7 @@ sub apply_remote_record_exported_command
     if ($remote_prefix)
     {
 
-	$command = "$remote_prefix   $command";
+	$shell_command = "$remote_prefix   $shell_command";
     }
 
     # if we are exporting all roles
@@ -6252,10 +6288,10 @@ sub apply_remote_record_exported_command
     {
 	# we export the command with the remoting information prefixed
 
-	$export_sh_command = $command;
+	$export_sh_command = $shell_command;
     }
 
-    return ($command, $export_sh_command);
+    return ($shell_command, $export_sh_command);
 }
 
 
@@ -6265,7 +6301,7 @@ sub apply_sudo
 {
     my $sudo_prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_export_sudo = shift;
 
@@ -6273,15 +6309,15 @@ sub apply_sudo
 
     if ($sudo_prefix)
     {
-	$command = "$sudo_prefix   $command";
+	$shell_command = "$sudo_prefix   $shell_command";
 
 	if ($option_export_sudo)
 	{
-	    $export_sh_command = $command;
+	    $export_sh_command = $shell_command;
 	}
     }
 
-    return ($command, $export_sh_command);
+    return ($shell_command, $export_sh_command);
 }
 
 
@@ -6291,7 +6327,7 @@ sub apply_timeout
 {
     my $timeout_prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_export_timeout = shift;
 
@@ -6299,18 +6335,18 @@ sub apply_timeout
 
     if ($timeout_prefix)
     {
-	$command = "$timeout_prefix   $command";
+	$shell_command = "$timeout_prefix   $shell_command";
 
-	$export_sh_command = $command;
+	$export_sh_command = $shell_command;
     }
 
-    return ($command, $export_sh_command);
+    return ($shell_command, $export_sh_command);
 }
 
 
 sub compute_remote_and_interaction_role
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $options_remote = shift;
 
@@ -6336,9 +6372,9 @@ sub compute_remote_and_interaction_role
 	    (
 	     {
 	      compute_remote_and_interaction_role => {
-						      command => $command,
 						      options_remote => $options_remote,
 						      remote_policy => $remote_policy,
+						      shell_command => $shell_command,
 						     },
 	     },
 	    );
@@ -6363,7 +6399,7 @@ sub compute_remote_and_interaction_role
 	# if we need to skip remoting for this command?
 
 	if (exists $options_remote->{skip}
-	    and $command =~ /$options_remote->{skip}/)
+	    and $shell_command =~ /$options_remote->{skip}/)
 	{
 	    # use the localuser interaction role to prevent remoting
 
@@ -6522,7 +6558,7 @@ sub compute_remote_and_interaction_role
 
 sub compute_sudo
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_sudo = shift;
 
@@ -6558,7 +6594,7 @@ sub compute_sudo
 	    # if we need to skip sudo information
 
 	    if (exists $option_sudo->{skip}
-		and $command =~ /$option_sudo->{skip}/)
+		and $shell_command =~ /$option_sudo->{skip}/)
 	    {
 		# remember to skip
 
@@ -6575,7 +6611,7 @@ sub compute_sudo
 
 	# if the command matches the sudo pattern
 
-	if ($command =~ /$sudo_pattern/)
+	if ($shell_command =~ /$sudo_pattern/)
 	{
 	    # construct the sudo command prefix
 
@@ -6593,7 +6629,7 @@ sub compute_sudo
 
 sub compute_timeout
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $option_timeout = shift;
 
@@ -6606,7 +6642,7 @@ sub compute_timeout
 	# if we need to skip timeout information
 
 	if (exists $option_timeout->{skip}
-	    and $command =~ /$option_timeout->{skip}/)
+	    and $shell_command =~ /$option_timeout->{skip}/)
 	{
 	}
 
@@ -6629,7 +6665,7 @@ sub compute_timeout
 
 	    if (not exists $option_timeout->{duration})
 	    {
-		die "*** Error: $global_program_name: the timeout option of '$command' does not have the mandatory duration specified";
+		die "*** Error: $global_program_name: the timeout option of '$shell_command' does not have the mandatory duration specified";
 	    }
 
 	    $result .= "$option_timeout->{duration} ";
@@ -6642,21 +6678,21 @@ sub compute_timeout
 }
 
 
-sub execute_scheduled_command_option_dry_run
+sub execute_scheduled_operation_option_dry_run
 {
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
-    my $command = $scheduled_command->{command};
+    my $shell_command = $scheduled_operation->{command};
 
-    my $dry_run = $scheduled_command->{dry_run};
+    my $dry_run = $scheduled_operation->{dry_run};
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $export_sh = $scheduled_command->{export_sh};
+    my $export_sh = $scheduled_operation->{export_sh};
 
-    my $interaction_role = $scheduled_command->{interaction_role};
+    my $interaction_role = $scheduled_operation->{interaction_role};
 
-    my $options = $scheduled_command->{options};
+    my $options = $scheduled_operation->{options};
 
     if ($export_sh
 	and exists $export_sh->{prefix})
@@ -6670,7 +6706,7 @@ sub execute_scheduled_command_option_dry_run
 
     if ($dry_run =~ /^[0-9]+$/)
     {
-	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$command'\n";
+	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$shell_command'\n";
 
 	if ($option_details)
 	{
@@ -6693,7 +6729,7 @@ sub execute_scheduled_command_option_dry_run
 
 sub identify_interaction_roles
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $executable_command = shift;
 
@@ -6818,15 +6854,15 @@ sub execute_option_interactions
 {
     my $interaction_roles = shift;
 
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
     my $all = shift;
 
-    my $command = $scheduled_command->{command};
+    my $shell_command = $scheduled_operation->{command};
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $interaction_role_arg = $scheduled_command->{interaction_role};
+    my $interaction_role_arg = $scheduled_operation->{interaction_role};
 
     # we must have a valid interaction role
 
@@ -6866,7 +6902,7 @@ sub execute_option_interactions
     {
 	# print the command without indentation
 
-	print "$command\n";
+	print "$shell_command\n";
     }
 
     # else with a defined interaction_role
@@ -6945,11 +6981,11 @@ sub _print_interaction_header
 
 sub _process_cd_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $result;
 
-    if ($command =~ /^\s*chdir\s+(.*?)\s*(.*)$/)
+    if ($shell_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/)
     {
 	$result
 	    = {
@@ -6958,7 +6994,7 @@ sub _process_cd_command
 	       rest_of_command_line => $2,
 	      };
     }
-    elsif ($command =~ /^\s*cd\s*$/)
+    elsif ($shell_command =~ /^\s*cd\s*$/)
     {
 	$result
 	    = {
@@ -6966,7 +7002,7 @@ sub _process_cd_command
 	       argument => $1,
 	      };
     }
-    elsif ($command =~ /^\s*cd\s+([^\s]*)\s*(.*)$/)
+    elsif ($shell_command =~ /^\s*cd\s+([^\s]*)\s*(.*)$/)
     {
 	$result
 	    = {
@@ -6984,15 +7020,15 @@ sub execute_option_export_sh
 {
     my $interaction_roles = shift;
 
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $export_sh = $scheduled_command->{export_sh};
+    my $export_sh = $scheduled_operation->{export_sh};
 
-    my $export_sh_command = $scheduled_command->{export_sh_command};
+    my $export_sh_command = $scheduled_operation->{export_sh_command};
 
-    my $interaction_role = $scheduled_command->{interaction_role};
+    my $interaction_role = $scheduled_operation->{interaction_role};
 
     if (not defined $global_exported_sh_file)
     {
@@ -7021,7 +7057,7 @@ sub execute_option_export_sh
 	{
 	    my $command_line = [ split '\s', $global_command_line ];
 
-	    my $command = $command_line->[0];
+	    my $shell_command = $command_line->[0];
 	    my $target = $command_line->[1];
 	    my $operation = $command_line->[2];
 
@@ -7042,7 +7078,7 @@ sub execute_option_export_sh
 		# there is no help available, that is ok
 
 		my $help_page = "#
-# '$command $target $operation --help' is not implemented.
+# '$shell_command $target $operation --help' is not implemented.
 #
 #
 ";
@@ -7055,7 +7091,7 @@ sub execute_option_export_sh
 		$help_string =~ s(\n)(\n#    )gs;
 
 		my $help_page = "#
-# $command $target $operation --help
+# $shell_command $target $operation --help
 #
 $help_string
 #
@@ -7176,11 +7212,11 @@ sub _execute_option_export_sh_variables_select
 		next;
 	    }
 
-	    foreach my $scheduled_command (@$global_scheduled_commands)
+	    foreach my $scheduled_operation (@$global_scheduled_operations)
 	    {
 		# substitute the variable value with its name in the command
 
-		my $export_sh_command = $scheduled_command->{export_sh_command};
+		my $export_sh_command = $scheduled_operation->{export_sh_command};
 
 		#! some interaction roles add single quotes, we remove them here.
 
@@ -7333,19 +7369,19 @@ sub _system_bash
 }
 
 
-sub execute_scheduled_command
+sub execute_scheduled_operation
 {
-    my $scheduled_command = shift;
+    my $scheduled_operation = shift;
 
-    my $command = $scheduled_command->{command};
+    my $shell_command = $scheduled_operation->{command};
 
-    my $dry_run = $scheduled_command->{dry_run};
+    my $dry_run = $scheduled_operation->{dry_run};
 
-    my $executable_command = $scheduled_command->{executable_command};
+    my $executable_command = $scheduled_operation->{executable_command};
 
-    my $interaction_role = $scheduled_command->{interaction_role};
+    my $interaction_role = $scheduled_operation->{interaction_role};
 
-    my $options = $scheduled_command->{options};
+    my $options = $scheduled_operation->{options};
 
     my $exit_status;
 
@@ -7358,15 +7394,15 @@ sub execute_scheduled_command
     {
 	my $cd_argument = $cd_command->{argument};
 
-	display_commented_command($command, $options);
+	display_commented_command($shell_command, $options);
 
 	$exit_status = not chdir $cd_argument;
     }
     elsif ($dry_run)
     {
-	#! this should never be called, this is already called from execute_all_scheduled_commands()
+	#! this should never be called, this is already called from execute_all_scheduled_operations()
 
-	execute_scheduled_command_option_dry_run($scheduled_command);
+	execute_scheduled_operation_option_dry_run($scheduled_operation);
     }
     else
     {
@@ -7414,7 +7450,7 @@ sub execute_scheduled_command
 	{
 	    if (not $export_output)
 	    {
-		display_commented_command($command, $options);
+		display_commented_command($shell_command, $options);
 
 		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
 
@@ -7422,11 +7458,11 @@ sub execute_scheduled_command
 		{
 		    # _system_bash('diff <(ls -l) <(ls -al)');
 
-		    _system_bash($command);
+		    _system_bash($shell_command);
 		}
 		else
 		{
-		    $exit_status = system "$command";
+		    $exit_status = system "$shell_command";
 		}
 
 		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
@@ -7448,10 +7484,10 @@ sub execute_scheduled_command
 		    }
 		    else
 		    {
-			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+			die "$0: Illegal suffix in the timestamp specification of command '$shell_command'.";
 		    }
 
-		    my $timestamp_command = "$command";
+		    my $timestamp_command = "$shell_command";
 
 		    my $timestamp_filename = ".timestamp__${suffix}_$timestamp_command";
 
@@ -7473,13 +7509,13 @@ sub execute_scheduled_command
 		    }
 		    else
 		    {
-			die "$0: Illegal suffix in the timestamp specification of command '$command'.";
+			die "$0: Illegal suffix in the timestamp specification of command '$shell_command'.";
 		    }
 		}
 	    }
 	    else
 	    {
-		$output .= capture($command);
+		$output .= capture($shell_command);
 
 		$exit_status = $IPC::System::Simple::EXITVAL;
 	    }
@@ -7489,20 +7525,20 @@ sub execute_scheduled_command
 
 	if ($export_times)
 	{
-	    print $global_exported_times_file "$0: *** Starting ('$command') at " . localtime($start_time) . "\n";
+	    print $global_exported_times_file "$0: *** Starting ('$shell_command') at " . localtime($start_time) . "\n";
 
-	    print $global_exported_times_file "$0: *** Ended    ('$command') at " . localtime($end_time) . "\n";
+	    print $global_exported_times_file "$0: *** Ended    ('$shell_command') at " . localtime($end_time) . "\n";
 
 	    print $global_exported_times_file "$0: *** Duration (s): " . ($end_time - $start_time) . "\n";
 
 	    print $global_exported_times_file "\n";
 	}
 
-	#! we could add the output to $scheduled_command->{output} or something similar
+	#! we could add the output to $scheduled_operation->{output} or something similar
 
 	if ($export_output)
 	{
-	    my $filename = generate_output_filename($global_output_filename_template, $command);
+	    my $filename = generate_output_filename($global_output_filename_template, $shell_command);
 
 	    my $output_file;
 
@@ -7513,7 +7549,7 @@ sub execute_scheduled_command
 		die "*** Error: $global_program_name: cannot open $filename for writing ($!)";
 	    }
 
-	    print $output_file "# $command\n#\n";
+	    print $output_file "# $shell_command\n#\n";
 
 	    print $output_file $output;
 
@@ -7527,7 +7563,7 @@ sub execute_scheduled_command
 
     my $output_path = $options->{output_path};
 
-#     my $exit_status = system "( $command ) >>$output_path 2>&1";
+#     my $exit_status = system "( $shell_command ) >>$output_path 2>&1";
 
     if ($exit_status)
     {
@@ -7537,9 +7573,9 @@ sub execute_scheduled_command
 
 	if ($allow_fail)
 	{
-# 	    system "echo >>$output_path 2>&1 failed with $exit_status: $command\n";
+# 	    system "echo >>$output_path 2>&1 failed with $exit_status: $shell_command\n";
 
-	    print "$global_program_name: *** Note: $command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	    print "$global_program_name: *** Note: $shell_command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
 	}
 	elsif ($allow_fail_silent)
 	{
@@ -7547,7 +7583,7 @@ sub execute_scheduled_command
 	}
 	else
 	{
-	    die "$global_program_name: *** Fatal: $command failed with exit status $exit_status\n";
+	    die "$global_program_name: *** Fatal: $shell_command failed with exit status $exit_status\n";
 	}
     }
 
@@ -7559,7 +7595,7 @@ sub execute_scheduled_command
 
 sub schedule_real_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $executable_command = shift;
 
@@ -7573,9 +7609,9 @@ sub schedule_real_command
 
     my $export_sh_command = shift;
 
-    my $scheduled_command
+    my $scheduled_operation
 	= {
-	   command => $command,
+	   command => $shell_command,
 	   dry_run => $dry_run,
 	   executable_command => $executable_command,
 	   export_sh => $export_sh,
@@ -7584,13 +7620,13 @@ sub schedule_real_command
 	   options => $options,
 	  };
 
-    push @$global_scheduled_commands, $scheduled_command;
+    push @$global_scheduled_operations, $scheduled_operation;
 
     return '';
 }
 
 
-sub execute_all_scheduled_commands
+sub execute_all_scheduled_operations
 {
     my $interaction_roles = shift;
 
@@ -7600,7 +7636,7 @@ sub execute_all_scheduled_commands
     {
 	use Data::Dumper;
 
-	print Dumper( { scheduled_commands => $global_scheduled_commands, }, );
+	print Dumper( { scheduled_operations => $global_scheduled_operations, }, );
     }
     elsif ($option_dump_interaction_roles)
     {
@@ -7614,15 +7650,15 @@ sub execute_all_scheduled_commands
     }
     else
     {
-	foreach my $scheduled_command (@$global_scheduled_commands)
+	foreach my $scheduled_operation (@$global_scheduled_operations)
 	{
 	    # we are either in dry-run ...
 
 	    if ($option_dry_run =~ /^[0-9]+$/)
 	    {
-		my $result = execute_scheduled_command_option_dry_run($scheduled_command);
+		my $result = execute_scheduled_operation_option_dry_run($scheduled_operation);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7634,9 +7670,9 @@ sub execute_all_scheduled_commands
 		   or $option_interactions_module
 		   or $option_interactions_module_all_roles)
 	    {
-		my $result = execute_option_interactions($interaction_roles, $scheduled_command, $option_interactions_module_all_roles || $option_interactions_all);
+		my $result = execute_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_module_all_roles || $option_interactions_all);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7645,9 +7681,9 @@ sub execute_all_scheduled_commands
 
 	    elsif (defined $option_export_sh)
 	    {
-		my $result = execute_option_export_sh($interaction_roles, $scheduled_command);
+		my $result = execute_option_export_sh($interaction_roles, $scheduled_operation);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7656,9 +7692,9 @@ sub execute_all_scheduled_commands
 
 	    else
 	    {
-		my $result = execute_scheduled_command($scheduled_command);
+		my $result = execute_scheduled_operation($scheduled_operation);
 
-		$scheduled_command->{result} = $result;
+		$scheduled_operation->{result} = $result;
 
 		push @$results, $result;
 	    }
@@ -7671,17 +7707,17 @@ sub execute_all_scheduled_commands
 
 sub execute_shell_command
 {
-    my $command = shift;
+    my $shell_command = shift;
 
     my $options = shift;
 
     # keep a record of the command that will be executed
 
-    my $executable_command = $command;
+    my $executable_command = $shell_command;
 
     $executable_command =~ s(^\s*#.*)()g;
 
-    my $command_length = length $executable_command;
+    my $shell_command_length = length $executable_command;
 
     # option preprocessing
 
@@ -7689,7 +7725,7 @@ sub execute_shell_command
 
     # the command to be exported defaults to the command given
 
-    my $export_sh_command = defined $option_export_sh ? $command : undef;
+    my $export_sh_command = defined $option_export_sh ? $shell_command : undef;
 
     if (defined $verbose
 	and $verbose =~ /^[0-9]+$/)
@@ -7768,25 +7804,25 @@ sub execute_shell_command
 
     # if there is remoting information
 
-    my $remote_and_interaction_role = compute_remote_and_interaction_role($command, $options->{remote});
+    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $options->{remote});
 
     my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
     # identify the interaction roles
 
-    identify_interaction_roles($command, $executable_command);
+    identify_interaction_roles($shell_command, $executable_command);
 
     # now that we know the remote, apply the working directory for the remote on the command to be executed
 
-    $command = working_directory_for_interaction_role_apply($current_interaction_role, $command);
+    $shell_command = working_directory_for_interaction_role_apply($current_interaction_role, $shell_command);
 
     # prefix the command with appropriate sudo options
 
-    my $sudo_prefix = compute_sudo($command, $options->{sudo});
+    my $sudo_prefix = compute_sudo($shell_command, $options->{sudo});
 
     # prefix the command with appropriate timeout options
 
-    my $timeout_prefix = compute_timeout($command, $options->{timeout});
+    my $timeout_prefix = compute_timeout($shell_command, $options->{timeout});
 
     # if we need to rebuild according to the (optionally remote) build_tree
 
@@ -7807,22 +7843,22 @@ sub execute_shell_command
 
     # apply the sudo prefix, possibly remote
 
-    ($command, $export_sh_command) = apply_sudo($sudo_prefix, $command, $option_export_sudo, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_sudo($sudo_prefix, $shell_command, $option_export_sudo, $export_sh_command);
 
     # apply the remoting prefix, always local
 
-    ($command, $export_sh_command) = apply_remote_record_exported_command($global_interaction_roles, $remote_prefix, $command, $option_export_remote, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($global_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
 
     # apply the timeout prefix, always local
 
-    ($command, $export_sh_command) = apply_timeout($timeout_prefix, $command, undef, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_timeout($timeout_prefix, $shell_command, undef, $export_sh_command);
 
     # schedule the given command
 
     my $exit_code
 	= schedule_real_command
 	  (
-	   $command,
+	   $shell_command,
 	   $executable_command,
 	   $current_interaction_role,
 	   $options,
@@ -7837,7 +7873,7 @@ sub execute_shell_command
 
 sub execute_shell_command_array
 {
-    my $commands = shift;
+    my $shell_commands = shift;
 
     my $options = shift;
 
@@ -7850,7 +7886,7 @@ sub execute_shell_command_array
 
     my $first = 'true';
 
-    foreach my $command (@$commands)
+    foreach my $shell_command (@$shell_commands)
     {
 	my $individual_options = { %$options, };
 
@@ -7859,7 +7895,7 @@ sub execute_shell_command_array
 	    delete $individual_options->{annotation};
 	}
 
-	execute_shell_command($command, $individual_options);
+	execute_shell_command($shell_command, $individual_options);
 
 	$first = '';
     }
@@ -7872,7 +7908,7 @@ sub execute_shell_command_schedule
 {
     my $schedule = shift;
 
-    my $command_array = $schedule->{commands};
+    my $shell_command_array = $schedule->{commands};
 
     my $option_array = $schedule->{options};
 
@@ -7883,7 +7919,7 @@ sub execute_shell_command_schedule
 
     foreach my $options (@$option_array)
     {
-	execute_shell_command_array($command_array, $options);
+	execute_shell_command_array($shell_command_array, $options);
     }
 
     return '';
@@ -7912,7 +7948,7 @@ sub generate_output_filename
 {
     my $prefix = shift;
 
-    my $command = shift;
+    my $shell_command = shift;
 
     # a command three alphanumeric sequences that are used to
     # construct an abbreviation of the command for use in the
@@ -7922,7 +7958,7 @@ sub generate_output_filename
     #! believe the regex is correct, it seems to miss anchors between
     #! the alphanumeric sequences.
 
-    $command =~ /([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)/i;
+    $shell_command =~ /([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)([a-z0-9]){0,5}(?:[a-z0-9]*)/i;
 
     my $one = defined $1 ? $1 : "one";
 
@@ -8145,7 +8181,7 @@ sub _init_do_eval_perl_file
 
 	if ($@)
 	{
-	    $status = "$global_program_name: *** Error: no valid configuration file '$filename' (syntax error: $@)\n";
+	    $status = "$global_program_name: *** Error: not a valid configuration file '$filename' (syntax error: $@)\n";
 	}
 
 	# do error processing: file problems.
@@ -8456,7 +8492,7 @@ sub _init_do_eval_yaml_command_file
 
     if ($@)
     {
-	$status = "$global_program_name: *** Error: no valid configuration file '$filename' found (syntax error: $@)\n";
+	$status = "$global_program_name: *** Error: not a valid configuration file '$filename' found (syntax error: $@)\n";
     }
 
     # do error processing: file problems.
@@ -8541,8 +8577,8 @@ sub _init_get_field_project_configuration
 	my $technical_project_configuration_directories
 	    = [
 	       ".",
-	       $global_program_rel_directory,
-	       $global_program_abs_directory,
+	       # $global_program_rel_directory,
+	       # $global_program_abs_directory,
 	      ];
 
 	my $search_path_workflow_executable_directory;
@@ -8612,9 +8648,9 @@ sub _init_get_field_project_configuration
 	    }
 	    else
 	    {
-		$status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+		# $status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
 
-		return undef;
+		# return undef;
 	    }
 	}
     }
@@ -8855,7 +8891,7 @@ sub bash_completion
     # position is at the end of the current command, the value of this
     # variable is equal to ${#COMP_LINE}
 
-    my $comp_point = $global_command || 0;
+    my $comp_point = $global_operation || 0;
 
     my $string_before_point = substr $command_line, 0, $comp_point;
     my $string_after_point = substr $command_line, $comp_point;
@@ -8897,13 +8933,13 @@ sub bash_completion
 
     my $command_line_word = $arguments->[$comp_cword];
 
-    my $command = shift @$arguments;
+    my $shell_command = shift @$arguments;
 
     my $result;
 
     # either generate completions for the configuration browser ...
 
-    if ($command =~ /configuration/)
+    if ($shell_command =~ /configuration/)
     {
 	$result = bash_completion_generate($arguments, $global_technical_project_configuration, $comp_cword, $debug_completion);
 
@@ -8914,13 +8950,13 @@ sub bash_completion
 
     # ... or generate completions for the workflow engine with or without configuration
 
-    elsif ($command =~ /workflow/)
+    elsif ($shell_command =~ /workflow/)
     {
 	my $perform_option_completion;
 
 	my $position = 0;
 
-	my $target_command = [];
+	my $target_operation = [];
 
 	if ($comp_cword > 0)
 	{
@@ -8932,7 +8968,7 @@ sub bash_completion
 		{
 		    if ($arguments->[$index] eq '--')
 		    {
-			$target_command->[$position] = $arguments->[$index];
+			$target_operation->[$position] = $arguments->[$index];
 
 			$position++;
 		    }
@@ -8942,7 +8978,7 @@ sub bash_completion
 		    }
 		    else
 		    {
-			$target_command->[$position] = $arguments->[$index];
+			$target_operation->[$position] = $arguments->[$index];
 
 			$position++;
 		    }
@@ -8973,11 +9009,11 @@ sub bash_completion
 	    }
 	    else
 	    {
-		my $all_typed_commands = command_hash_typed_generate();
+		my $all_typed_operations = operation_hash_typed_generate();
 
-		my $internal_commands = command_hash_with_structure_generate($all_typed_commands);
+		my $internal_operations = operation_hash_with_structure_generate($all_typed_operations);
 
-		$result = bash_completion_generate($arguments, $internal_commands, $comp_cword, $debug_completion);
+		$result = bash_completion_generate($arguments, $internal_operations, $comp_cword, $debug_completion);
 
 		# make sure the user gets a hint that options are also possible
 
@@ -8990,10 +9026,10 @@ sub bash_completion
 				    {
 				     command_arguments => {
 							   arguments => $arguments,
-							   command => $command,
+							   command => $shell_command,
 							   command_line => $command_line,
 							   command_line_word => $command_line_word,
-							   target_command => $target_command,
+							   target_operation => $target_operation,
 							  },
 				     position => {
 						  comp_cword => $comp_cword,
@@ -9010,35 +9046,35 @@ sub bash_completion
 	}
 	else
 	{
-	    my $internal_command = shift @$target_command;
-	    my $internal_operation = shift @$target_command;
+	    my $target = shift @$target_operation;
+	    my $operation = shift @$target_operation;
 
-	    my $completion_sub = "Command::${internal_command}_${internal_operation}_completions";
+	    my $completion_sub = "Command::${target}_${operation}_completions";
 
-	    my $command_hash = command_hash_typed_generate('with completion subs');
+	    my $operation_hash = operation_hash_typed_generate('with completion subs');
 
 	    # have the command generate the data structure that lists the completions
 
-	    my $external_commands
+	    my $external_completions
 		= {
 		   "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
 		   "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
 		  };
 
-	    if (exists $command_hash->{"$internal_command ${internal_operation}_completions"})
+	    if (exists $operation_hash->{"$target ${operation}_completions"})
 	    {
 		no strict "refs";
 
-		my $command_name = $completion_sub;
+		my $operation_name = $completion_sub;
 
-		$command_name =~ s(^Command::)();
-		$command_name =~ s(^([a-z0-9]+?)_)($1 );
-		$command_name =~ s(_completions$)();
+		$operation_name =~ s(^Command::)();
+		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
+		$operation_name =~ s(_completions$)();
 
-		$external_commands = &$completion_sub($command_name, $arguments);
+		$external_completions = &$completion_sub($operation_name, $arguments);
 	    }
 
-	    $result = bash_completion_generate($target_command, $external_commands, $comp_cword - 2, $debug_completion);
+	    $result = bash_completion_generate($target_operation, $external_completions, $comp_cword - 2, $debug_completion);
 
 	    if ($debug_completion->{bash_completion})
 	    {
@@ -9046,10 +9082,10 @@ sub bash_completion
 				    {
 				     command_arguments => {
 							   arguments => $arguments,
-							   command => $command,
+							   command => $shell_command,
 							   command_line => $command_line,
 							   command_line_word => $command_line_word,
-							   target_command => $target_command,
+							   target_operation => $target_operation,
 							  },
 				     position => {
 						  comp_cword => $comp_cword,
@@ -9061,8 +9097,8 @@ sub bash_completion
 
 		print STDERR Dumper(
 				    {
-				     command_hash => $command_hash,
-				     external_commands => $external_commands,
+				     operation_hash => $operation_hash,
+				     external_completions => $external_completions,
 				     result => $result,
 				    },
 				   );
@@ -9255,7 +9291,7 @@ sub bash_completion_generate_options
 }
 
 
-sub command_filenames_file_read
+sub operation_filenames_file_read
 {
     my $sources_configuration_directory = shift;
 
@@ -9307,23 +9343,23 @@ sub command_filenames_file_read
 
 # generate a hash mapping targets and subroutine names to their full names.
 
-sub command_hash_with_structure_generate
+sub operation_hash_with_structure_generate
 {
-    my $all_typed_commands = shift;
+    my $all_typed_operations = shift;
 
-    my $commands = [ keys %$all_typed_commands, ];
+    my $operations = [ keys %$all_typed_operations, ];
 
     # set default result
 
     my $result = {};
 
-    # loop over all the found targets and commands
+    # loop over all the found targets and operations
 
-    foreach my $command (@$commands)
+    foreach my $operation (@$operations)
     {
 	# extract the target and the subroutine from the generated string
 
-	$command =~ m(([^ ]+) ([^ ]+))g;
+	$operation =~ m(([^ ]+) ([^ ]+))g;
 
 	my $target = $1;
 
@@ -9331,7 +9367,7 @@ sub command_hash_with_structure_generate
 
 	# insert them into the result
 
-	$result->{$target}->{$subroutine} = $command;
+	$result->{$target}->{$subroutine} = $operation;
     }
 
     # return result
@@ -9341,52 +9377,50 @@ sub command_hash_with_structure_generate
 
 
 # generate a hash that maps each known command to a description with
-# information:
+# information.
 #
-# type: one of 'sub', 'sh', 'yml'.
-#
-# arguments is either undef, 'with completions subs' or 'with help subs'.
+# with_feature is either undef, 'with completions subs' or 'with help subs'.
 #
 
-sub command_hash_typed_generate
+sub operation_hash_typed_generate
 {
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
     my $result = {};
 
-    my $commands_subs = command_hash_subs_generate("Command::", $with_feature_subs);
+    my $operations_subs = operation_hash_subs_generate("Command::", $with_feature);
 
     $result
 	= {
 	   %$result,
-	   %$commands_subs,
+	   %$operations_subs,
 	  };
 
-    my $commands_shell = command_hash_shell_generate($with_feature_subs);
+    my $operations_shell = operation_hash_shell_generate($with_feature);
 
     $result
 	= {
 	   %$result,
-	   %$commands_shell,
+	   %$operations_shell,
 	  };
 
-    my $commands_yaml = command_hash_yaml_generate($with_feature_subs);
+    my $operations_yaml = operation_hash_yaml_generate($with_feature);
 
     $result
 	= {
 	   %$result,
-	   %$commands_yaml,
+	   %$operations_yaml,
 	  };
 
     return $result;
 }
 
 
-sub command_hash_data_directory_generate
+sub operation_hash_data_directory_generate
 {
     my $type = shift;
 
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
     my $result = {};
 
@@ -9427,21 +9461,21 @@ sub command_hash_data_directory_generate
 }
 
 
-sub command_hash_shell_generate
+sub operation_hash_shell_generate
 {
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
-    my $result = command_hash_data_directory_generate('sh', $with_feature_subs);
+    my $result = operation_hash_data_directory_generate('sh', $with_feature);
 
     return $result;
 }
 
 
-sub command_hash_yaml_generate
+sub operation_hash_yaml_generate
 {
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
-    my $result = command_hash_data_directory_generate('yml', $with_feature_subs);
+    my $result = operation_hash_data_directory_generate('yml', $with_feature);
 
     return $result;
 }
@@ -9451,17 +9485,16 @@ sub command_hash_yaml_generate
 # generate all the subs in the given package and return them as a hash
 # with the values defining their type.
 #
-# with_feature_subs is either "with help subs" or "with completion
-# subs".
+# with_feature is either "with help subs" or "with completion subs".
 #
 
-sub command_hash_subs_generate
+sub operation_hash_subs_generate
 {
     my $package_name = shift;
 
-    my $with_feature_subs = shift;
+    my $with_feature = shift;
 
-    # generate a list of the available command subroutines
+    # generate a list of the available operation subroutines
 
     my $all_references;
 
@@ -9494,18 +9527,18 @@ sub command_hash_subs_generate
 	   @$all_references
 	  ];
 
-    # rework, select and sort these commands
+    # rework, select and sort these operations
 
     my $targets = $global_technical_project_configuration->{targets};
 
-    my $all_commands
+    my $all_operations
 	= {
 	   map
 	   {
 	       $_ => { type => 'sub' };
 	   }
 
-	   # remove internal commands and commands that don't belong to a target
+	   # remove internal operations and operations that don't belong to a target
 
 	   grep
 	   {
@@ -9541,9 +9574,9 @@ sub command_hash_subs_generate
 
 	       my $allow_none = 'always';
 
-	       my $allow_help = defined $with_feature_subs && $with_feature_subs eq 'with help subs';
+	       my $allow_help = defined $with_feature && $with_feature eq 'with help subs';
 
-	       my $allow_completion = defined $with_feature_subs && $with_feature_subs eq 'with completion subs';
+	       my $allow_completion = defined $with_feature && $with_feature eq 'with completion subs';
 
 	       my $result;
 
@@ -9555,7 +9588,7 @@ sub command_hash_subs_generate
 	       $result;
 	   }
 
-	   # all internal commands
+	   # all internal operations
 
 	   sort @$all_subroutines,
 	  };
@@ -9567,7 +9600,7 @@ sub command_hash_subs_generate
 
 	print Dumper(
 		     {
-		      all_commands => $all_commands,
+		      all_operations => $all_operations,
 		      all_references => $all_references,
 		      all_subroutines => $all_subroutines,
 		      all_targets => $targets,
@@ -9576,7 +9609,7 @@ sub command_hash_subs_generate
 		    );
     }
 
-    return $all_commands;
+    return $all_operations;
 }
 
 
@@ -9600,7 +9633,7 @@ sub main
     {
 	# initialize the command module
 
-	Command::_workflow_commands_initialize();
+	Command::_workflow_operations_initialize();
     }
 
     # parse command line
@@ -9629,13 +9662,13 @@ sub main
 	#! bash_completion() never returns
     }
 
-    # figure out the target and the command
+    # figure out the target and the operation
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
-    $global_output_filename_template = join '-', $requested_target, ($global_command || ''), @ARGV;
+    $global_output_filename_template = join '-', $requested_target, ($global_operation || ''), @ARGV;
 
-    # given the requested target and the command generate a useful filename for exporting commands to a shell script
+    # given the requested target and the operation, generate a useful filename for exporting commands to a shell script
 
     if (defined $option_export_sh)
     {
@@ -9654,7 +9687,7 @@ sub main
 	$option_export_sh =~ s/_/-/g;
     }
 
-    # given the requested target and the command generate a useful filename for exporting execution times to a log file
+    # given the requested target and the operation, generate a useful filename for exporting execution times to a log file
 
     if (defined $option_export_times)
     {
@@ -9674,7 +9707,7 @@ sub main
     }
 
     {
-	# are we dry running all the commands of a module (target)?
+	# are we dry running all the operations of a module / target?
 
 	my $dry_run_module_commands;
 
@@ -9698,13 +9731,13 @@ sub main
 	    $option_dry_run = 'option_dump_module_interaction_roles';
 	}
 
-	my $all_typed_commands = command_hash_typed_generate('with help subs');
+	my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
 	if ($dry_run_module_commands)
 	{
 	    # generate the list of all commands
 
-	    my $all_commands = command_hash_with_structure_generate($all_typed_commands);
+	    my $all_operations = operation_hash_with_structure_generate($all_typed_operations);
 
 	    # loop over all the matching targets
 
@@ -9720,11 +9753,11 @@ sub main
 	    {
 		# reference subroutine names specific for the given target: they belong together
 
-		my $target_subroutines = $all_commands->{$defined_target};
+		my $target_subroutines = $all_operations->{$defined_target};
 
 		# collect the subroutine names
 
-		my $command_implementations
+		my $operation_implementations
 		    = [
 		       map
 		       {
@@ -9737,74 +9770,74 @@ sub main
 
 		# invoke all these subroutines in dry run mode to have them either generate or report the module roles
 
-		foreach my $command_implementation (sort @$command_implementations)
+		foreach my $operation_implementation (sort @$operation_implementations)
 		{
 		    if ($option_verbose)
 		    {
-			print "Invoking ($command_implementation)\n";
+			print "Invoking ($operation_implementation)\n";
 		    }
 
-		    if ($command_implementation =~ /_help$/)
+		    if ($operation_implementation =~ /_help$/)
 		    {
 			next;
 		    }
 
 		    my $has_help = '';
 
-		    if (grep(/^${command_implementation}_help$/, @$command_implementations))
+		    if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
 		    {
 			$has_help = " (use --help to see the help page)";
 		    }
 
-		    $command_implementation =~ /Command::(.*)/;
+		    $operation_implementation =~ /Command::(.*)/;
 
-		    my $short_command = $1;
+		    my $short_operation = $1;
 
-		    # add a header to the schedule / diagram for this command
+		    # add a header to the schedule / diagram for this operation
 
-		    my $scheduled_command
+		    my $scheduled_operation
 			= {
-			   command => "---\nCOMMAND: $short_command$has_help",
+			   command => "---\nCOMMAND: $short_operation$has_help",
 			   dry_run => $dry_run_module_commands,
 			   interaction_role => 'none',
 			  };
 
-		    push @$global_scheduled_commands, $scheduled_command;
+		    push @$global_scheduled_operations, $scheduled_operation;
 
-		    # add the command to the schedule / diagram
+		    # add the operation to the schedule / diagram
 
 		    {
 			no strict "refs";
 
-			&$command_implementation([]);
+			&$operation_implementation([]);
 		    }
 
 		    # end the command in the schedule / diagram
 
-		    $scheduled_command
+		    $scheduled_operation
 			= {
 			   command => "\n\n---\n",
 			   dry_run => $dry_run_module_commands,
 			   interaction_role => 'none',
 			  };
 
-		    push @$global_scheduled_commands, $scheduled_command;
+		    push @$global_scheduled_operations, $scheduled_operation;
 		}
 	    }
 	}
 
-	# we are not dry running, but really will execute the commands
+	# we are not dry running, but really will execute the operations
 
 	else
 	{
-	    my $command = $global_command;
+	    my $command = $global_operation;
 
-	    my $command_implementation;
+	    my $operation_implementation;
 
 	    my $type_package_builtin;
 
 	    if (defined $command
-		and exists $global_known_command_packages_builtin->{$command})
+		and exists $global_known_operation_packages_builtin->{$command})
 	    {
 		my $sub_name = shift @ARGV;
 
@@ -9824,7 +9857,7 @@ sub main
 		    $sub_name .= "_help";
 		}
 
-		$command_implementation = "$command::$sub_name";
+		$operation_implementation = "$command::$sub_name";
 	    }
 	    elsif (defined $command)
 	    {
@@ -9837,7 +9870,7 @@ sub main
 		    $command .= "_help";
 		}
 
-		$command_implementation = "Command::${requested_target}_${command}";
+		$operation_implementation = "Command::${requested_target}_${command}";
 	    }
 	    else
 	    {
@@ -9849,13 +9882,13 @@ sub main
 
 		    $command = "help";
 
-		    $command_implementation = "Command::${requested_target}_${command}";
+		    $operation_implementation = "Command::${requested_target}_${command}";
 		}
 	    }
 
 	    if ($option_verbose)
 	    {
-		print "Invoking ($command_implementation)\n";
+		print "Invoking ($operation_implementation)\n";
 	    }
 
 	    if (defined $option_verbose
@@ -9863,12 +9896,12 @@ sub main
 	    {
 		use Data::Dumper;
 
-		print Dumper( { all_typed_commands_with_help_subs => $all_typed_commands, }, );
+		print Dumper( { all_typed_operations_with_help_subs => $all_typed_operations, }, );
 	    }
 
 	    # if this command exists ...
 
-	    if (exists $all_typed_commands->{"$requested_target $command"}
+	    if (exists $all_typed_operations->{"$requested_target $command"}
 	        or $type_package_builtin)
 	    {
 		# ... either invoke the --help sub
@@ -9877,17 +9910,17 @@ sub main
 		{
 		    no strict "refs";
 
-		    my $command_name = $command_implementation;
+		    my $operation_name = $operation_implementation;
 
-		    $command_name =~ s(^Command::)();
-		    $command_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $command_name =~ s(_help$)();
+		    $operation_name =~ s(^Command::)();
+		    $operation_name =~ s(^([a-z0-9]+?)_)($1 );
+		    $operation_name =~ s(_help$)();
 
 		    #! utf8::upgrade works in place
 
-		    map { utf8::upgrade($_) } @ARGV, $command_name;
+		    map { utf8::upgrade($_) } @ARGV, $operation_name;
 
-		    my $help_string = &$command_implementation($command_name, \@ARGV);
+		    my $help_string = &$operation_implementation($operation_name, \@ARGV);
 
 		    print "$global_program_name $help_string\n";
 		}
@@ -9898,7 +9931,7 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $all_typed_commands->{"$requested_target $command"}->{type};
+		    my $type = $all_typed_operations->{"$requested_target $command"}->{type};
 
 		    # ... either as a regular perl sub ...
 
@@ -9911,7 +9944,7 @@ sub main
 
 			map { utf8::upgrade($_) } @ARGV;
 
-			my $error = &$command_implementation(\@ARGV);
+			my $error = &$operation_implementation(\@ARGV);
 
 			if ($error)
 			{
@@ -9952,7 +9985,7 @@ sub main
 	    }
 	}
 
-	Engine::execute_all_scheduled_commands($global_interaction_roles);
+	Engine::execute_all_scheduled_operations($global_interaction_roles);
     }
 }
 
@@ -9969,9 +10002,9 @@ sub parse_command_line
     # try to make sure there is a target and command early on
 
     $global_target = shift @ARGV;
-    $global_command = shift @ARGV;
+    $global_operation = shift @ARGV;
 
-    if ($option_help and (not $global_target) and (not $global_command))
+    if ($option_help and (not $global_target) and (not $global_operation))
     {
         print
             "
@@ -10033,23 +10066,23 @@ options:
     {
 	use YAML;
 
-	my $command_hash = command_hash_typed_generate();
+	my $operation_hash = operation_hash_typed_generate();
 
-	my $commands = [ keys %$command_hash, ];
+	my $operations = [ keys %$operation_hash, ];
 
 	if ($global_target)
 	{
-	    $commands
+	    $operations
 		= [
 		   grep
 		   {
 		       /$global_target/;
 		   }
-		   @$commands,
+		   @$operations,
 		  ];
 	}
 
-	$commands
+	$operations
 	    = [
 	       sort
 	       {
@@ -10059,7 +10092,7 @@ options:
 	       {
 		   "$global_program_name $_";
 	       }
-	       @$commands,
+	       @$operations,
 	      ];
 
 	print Dump(
@@ -10068,7 +10101,7 @@ options:
   (copy-paste the one you would like to execute,
    try them with the --dry-run and --interactions options,
    some commands may implement a usage message available with the --help option):",
-		    '1_commmands' => $commands,
+		    '1_commands' => $operations,
 		   },
 		  );
 
@@ -10084,31 +10117,31 @@ options:
 	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-module' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
 	}
 
-	my $known_command_packages
+	my $known_operation_packages
 	    = {
 	       'Command' => {
-			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_command_packages_builtin ) . ')',
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_operation_packages_builtin ) . ')',
 			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
 			    },
-	       %$global_known_command_packages_builtin,
+	       %$global_known_operation_packages_builtin,
 	      };
 
 	my $all_module_all_subs
 	    = {
 	       map
 	       {
-		   $_ => command_hash_subs_generate($_ . "::", "with help subs");
+		   $_ => operation_hash_subs_generate($_ . "::", "with help subs");
 	       }
-	       sort keys %$known_command_packages,
+	       sort keys %$known_operation_packages,
 	      };
 
 	if ($option_help_module)
 	{
-	    if (exists $known_command_packages->{$global_target})
+	    if (exists $known_operation_packages->{$global_target})
 	    {
 		use YAML;
 
-		print Dump( { $global_target => $known_command_packages->{$global_target}, }, );
+		print Dump( { $global_target => $known_operation_packages->{$global_target}, }, );
 
 		print Dump( { $global_target => $all_module_all_subs->{$global_target} } );
 
@@ -10123,7 +10156,7 @@ options:
 	{
 	    use YAML;
 
-	    print Dump( { help_module_all => $known_command_packages, }, );
+	    print Dump( { help_module_all => $known_operation_packages, }, );
 
 	    exit 0;
 	}
@@ -10209,16 +10242,16 @@ options:
 	$status = $FieldProject::status;
     }
 
-    # always allow the builtin commands (start a new project, add a new target, ...)
+    # always allow the builtin operations (start a new project, add a new target, ...)
 
     #! they should do their own checking for a valid
     #! field_configuration, project_name as required.
 
     if ($global_target eq 'builtin'
-	and (defined $global_command
-	     and exists $global_builtin_commands->{$global_command})
-	or (defined $global_command
-	    and exists $global_known_command_packages_builtin->{$global_command}))
+	and (defined $global_operation
+	     and exists $global_builtin_operations->{$global_operation})
+	or (defined $global_operation
+	    and exists $global_known_operation_packages_builtin->{$global_operation}))
     {
     }
     else

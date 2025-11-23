@@ -518,7 +518,7 @@ conf.workflow-tests-configuration
     (copy-paste the one you would like to execute,
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
-1_commmands:
+1_commands:
   - workflow-tests-workflow builtin add_role
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
@@ -528,6 +528,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin known_command_filenames
+  - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project
@@ -558,7 +559,7 @@ conf.workflow-tests-configuration
     (copy-paste the one you would like to execute,
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
-1_commmands:
+1_commands:
   - workflow-tests-workflow builtin add_role
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
@@ -568,6 +569,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin known_command_filenames
+  - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project

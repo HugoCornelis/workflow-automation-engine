@@ -9,7 +9,7 @@ command_tests:
           (copy-paste the one you would like to execute,
            try them with the --dry-run and --interactions options,
            some commands may implement a usage message available with the --help option):
-      1_commmands:
+      1_commands:
         - feature-testing-workflow build operation1
         - feature-testing-workflow build operation2
         - feature-testing-workflow build operation3
@@ -22,6 +22,7 @@ command_tests:
         - feature-testing-workflow builtin grep
         - feature-testing-workflow builtin install_scripts
         - feature-testing-workflow builtin known_command_filenames
+        - feature-testing-workflow builtin manual
         - feature-testing-workflow builtin print_configuration_directory
         - feature-testing-workflow builtin pull_scripts
         - feature-testing-workflow builtin rename_project
