@@ -4065,25 +4065,6 @@ sub builtin_rename_project
 		    );
     }
 
-    my $some_string = '
-./workflow-project.pl 9:       field_project_name => "neurospaces",
-./conf.neurospaces-configuration 17:# # neurospaces configuration
-./conf.neurospaces-configuration 18:# (^|[/\w\.]+/)neurospaces-configuration
-./conf.neurospaces-configuration 19:# conf.neurospaces-configuration
-./conf.neurospaces-configuration 31:regexp=neurospaces
-./neurospaces-bash-completion.sh 2:_neurospaces_configuration_completions()
-./neurospaces-bash-completion.sh 6:    COMPLETIONS=`neurospaces-workflow --bash-completion "$COMP_LINE" $COMP_CWORD $COMP_POINT | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g"`
-./neurospaces-bash-completion.sh 11:complete -F _neurospaces_configuration_completions neurospaces-configuration
-./neurospaces-bash-completion.sh 12:complete -F _neurospaces_configuration_completions ./neurospaces-configuration
-./neurospaces-bash-completion.sh 15:_neurospaces_workflow_completions()
-./neurospaces-bash-completion.sh 19:    COMPLETIONS=`neurospaces-workflow --bash-completion "$COMP_LINE" $COMP_CWORD $COMP_POINT | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g"`
-./neurospaces-bash-completion.sh 24:# complete -F _neurospaces_workflow_completions workflow
-./neurospaces-bash-completion.sh 25:# complete -F _neurospaces_workflow_completions ./workflow
-./neurospaces-bash-completion.sh 27:complete -F _neurospaces_workflow_completions neurospaces-workflow
-./neurospaces-bash-completion.sh 28:complete -F _neurospaces_workflow_completions ./neurospaces-workflow
-./conf.workflow 17:# # neurospaces workflow
-';
-
     0;
 }
 
