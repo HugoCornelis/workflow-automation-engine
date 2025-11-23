@@ -3711,6 +3711,7 @@ sub builtin_known_command_filenames_completions
 {
     return
     {
+     "1.Type-one-of:" => '',
      "full-paths" => '',
      "relative-paths" => '',
     };
