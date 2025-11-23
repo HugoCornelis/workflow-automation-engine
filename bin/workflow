@@ -815,6 +815,7 @@ sub ${target_name}_single_command_help
     return \"\$command: an example of the invocation a single command.
 
 arguments:
+----------
 
     force: command arguments can be parsed from \@ARGV.
 \";
@@ -875,6 +876,7 @@ sub ${target_name}_array_of_commands_help
     return \"\$command: an example of the invocation an array of commands.
 
 arguments:
+----------
 
     force: command arguments can be parsed from \\\@ARGV.
 \";
@@ -963,6 +965,7 @@ sub ${target_name}_array_of_commands_remote_execution_help
     return \"\$command: an example of the invocation an array of commands that are executed on a remote machine.
 
 arguments:
+----------
 
     none.
 \";
@@ -1025,6 +1028,7 @@ sub ${target_name}_sequencing_and_composition_help
     return \"\$command: an example that composes other examples into one sequence of commands.
 
 arguments:
+----------
 
     none.
 \";
@@ -2668,29 +2672,46 @@ sub builtin_add_role_help
     return "$command: add a new role and update the configuration to integrate it.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <role-name> <role-description> [-- <options>]
 
 arguments:
+----------
 
-    ARGV[0]: name of the new role.
-    ARGV[1]: description of the new role.
+    ``ARGV[0]``: name of the new role.
+
+    ``ARGV[1]``: description of the new role.
 
 options:
+--------
 
-    --dockerfile: A reference to a docker file.  This also configures the new role as a docker role.
-    --localuser: Set this for a local user role.
-    --scp-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-    --ssh-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-    --ssh-password: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
-    --ssh-port: This defaults to 22.
-    --ssh-server: An IP address or known host name.
-    --ssh-user: The ssh user name.
-    --tmux-session: The tmux session name.
+    ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
+
+    ``--localuser``: Set this for a local user role.
+
+    ``--scp-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+
+    ``--ssh-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+
+    ``--ssh-password``: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
+
+    ``--ssh-port``: This defaults to 22.
+
+    ``--ssh-server``: An IP address or known host name.
+
+    ``--ssh-user``: The ssh user name.
+
+    ``--tmux-session``: The tmux session name.
 
 notes:
+------
 
 It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
+
+.. code-block:: bash
 
   tmux_ssh_cd:
     description: interaction with the combined ssh / tmux session to test cd commands
@@ -2906,19 +2927,14 @@ sub builtin_add_target_completions
 	   "1.<target_name>" => '',
 	   "2.<target_description>" => '',
 	   "'3.[--_<options>_]'" => '',
-	   "--install-commands-pl" => '',
-	   "--install-commands-py" => '',
-	   "--install-commands-sh" => '',
+	   '--' => {
+		    "--install-commands-pl" => '',
+		    "--install-commands-py" => '',
+		    "--install-commands-sh" => '',
+		   },
 	  };
 
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
+    return $completions_hash;
 }
 
 
@@ -2929,19 +2945,27 @@ sub builtin_add_target_help
     return "$command: add a new target and update the configuration to integrate it.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <target-name> <target-description> [-- <options>]
 
 arguments:
+----------
 
-    ARGV[0]: name of the new target.
-    ARGV[1]: description of the new target.
+    ``ARGV[0]``: name of the new target.
+
+    ``ARGV[1]``: description of the new target.
 
 options:
+--------
 
-    --install-commands-pl: install a perl command file template.
-    --install-commands-py: install a python command file template.
-    --install-commands-sh: install a shell command file template.
+    ``--install-commands-pl``: install a perl command file template.
+
+    ``--install-commands-py``: install a python command file template.
+
+    ``--install-commands-sh``: install a shell command file template.
 ";
 }
 
@@ -3066,17 +3090,10 @@ sub builtin_archive_configuration_completions
 
     my $completions_hash
 	= {
-	   ".tar.gz" => 'abc',
+	   ".tar.gz" => '',
 	  };
 
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
+    return $completions_hash;
 }
 
 
@@ -3087,12 +3104,16 @@ sub builtin_archive_configuration_help
     return "$command: create a tarball with the configuration of the current workflow project.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <tarball-name>
 
 arguments:
+----------
 
-    ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+    ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
 
 ";
 }
@@ -3436,13 +3457,18 @@ sub builtin_grep_help
     return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 
 arguments:
+----------
 
-    ARGV[0]: A regular expression to search for.
-    ARGV[1] and following: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+    ``ARGV[0]``: A regular expression to search for.
+
+    ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
 }
@@ -3600,63 +3626,35 @@ sub builtin_install_scripts_completions
 
     my $complete_arguments_array = shift;
 
-    if (scalar @$complete_arguments_array > 2)
+    my $options_completions_hash
+	= {
+	   '--' => {
+		    '0.Available_options:' => '',
+		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
+		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
+		    '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
+		    '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
+		    '--force' => "don't use this.",
+		    '--git' => "create a git repository for the workflow configuration.",
+		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
+		    '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
+		    '--report' => "report on what is being done.",
+		   },
+	  };
+
+    foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
     {
-	# insert all your completions here when there are arguments to complete,
-	# bash will select those that apply to the current argument to be completed.
-
-	my $options_completions_hash
+	$options_completions_hash->{'--'}->{$options_completion}
 	    = {
-	       '--' => {
-			'--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
-			'--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-			'--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
-			'--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
-			'--force' => "don't use this.",
-			'--git' => "create a git repository for the workflow configuration.",
-			'--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-			'--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
-			'--report' => "report on what is being done.",
-		       },
+	       map
+	       {
+		   $_ => '';
+	       }
+	       keys %{$options_completions_hash->{'--'}}
 	      };
-
-	foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
-	{
-	    $options_completions_hash->{'--'}->{$options_completion}
-		= {
-		   map
-		   {
-		       $_ => '';
-		   }
-		   keys %{$options_completions_hash->{'--'}}
-		  };
-	}
-
-	# use Data::Dumper; print STDERR Dumper($options_completions_hash);
-
-	return $options_completions_hash;
     }
-    else
-    {
-	my $arguments_completions_hash
-	    = {
-	       'There-are-no-arguments-possible-but-options-are-available-after-a-double-dash.' => '',
-	       '--' => {
-			'0.Available_options:' => '',
-			'--aliasses' => '',
-			'--bash-completion' => '',
-			'--commands' => '',
-			'--engine' => '',
-			'--force' => '',
-			'--git' => '',
-			'--grc-configuration' => '',
-			'--path-in-bashrc' => '',
-			'--report' => '',
-		       },
-	      };
 
-	return $arguments_completions_hash;
-    }
+    return $options_completions_hash;
 }
 
 
@@ -3667,16 +3665,26 @@ sub builtin_install_scripts_help
     return "$command : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
+--------
 
-    --aliasses           configure the grc aliases in .bashrc if they are not there yet.
-    --bash-completion    configure bash completion in .bashrc if they are not there yet.
-    --commands           install or upgrade the command configuration to ~/bin or ~/.local/bin.
-    --engine             create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
-    --force              don't use this.
-    --git                create a git repository for the workflow configuration.
-    --grc-configuration  install symbolic links for grc configuration to color code the workflow output (requires sudo access).
-    --path-in-bashrc     update .bashrc to include ~/bin or ~/.local/bin in PATH.
-    --report             report on what is being done.
+    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
+
+    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
+
+    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
+
+    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
+
+    ``--force``: don't use this.
+
+    ``--git``: create a git repository for the workflow configuration.
+
+    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
+
+    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
+
+    ``--report``: report on what is being done.
+
 
 Note that grc configuration files will also be installed and configured.
 
@@ -3714,19 +3722,155 @@ sub builtin_known_command_filenames
 
 sub builtin_manual
 {
-    my $operations = operation_hash_typed_generate();
+    my $arguments = shift || [];
+
+    my $option_input_rst = 1;
+    my $option_input_md;
+    my $option_output_rst;
+    my $option_output_pdf = 1;
+
+    our $options
+	= {
+	   'input-rst!' => \$option_input_rst,
+	   'input-md!' => \$option_input_md,
+	   'output-rst!' => \$option_output_rst,
+	   'output-pdf!' => \$option_output_pdf,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
+
+    my $operations_help = main::operation_hash_typed_generate('with help subs');
 
     my $target = 'builtin ';
 
-    $operations
+    $operations_help
 	= [
+	   sort
 	   grep
 	   {
-	       /$target/;
+	       /$target.*_help$/;
 	   }
-	   keys %$operations,
+	   keys %$operations_help,
 	  ];
-    
+
+    my $debug_builtin_manual = 0;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'workflow';
+
+    if ($debug_builtin_manual > 2)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper(
+			    {
+			     field_project_name => $field_project_name,
+			     global_output_filename_template => $global_output_filename_template,
+			     operations_help => $operations_help,
+			    } );
+    }
+
+    # see https://docs.beagleboard.org/intro/contribution/rst-cheat-sheet.html
+
+    my $rst_H1 = '#';
+    my $rst_H2 = '*';
+    my $rst_H3 = '=';
+    my $rst_H4 = '-';
+    my $rst_H5 = '~';
+
+    my $headers
+	= {
+	   rst => {
+		   H1 => $rst_H1,
+		   H2 => $rst_H2,
+		   H3 => $rst_H3,
+		   H4 => $rst_H4,
+		   H5 => $rst_H5,
+		  },
+	  };
+
+    my $header = uc $field_project_name;
+
+    $header =~ s(-)( )g;
+
+    my $underline = $rst_H1 x length($header);
+
+    $header .= "\n$underline\n";
+
+    my $manual_string = "$header\n\n";
+
+    foreach my $operation_help (@$operations_help)
+    {
+	my $header = $operation_help;
+
+	my $underline = $rst_H2 x length($operation_help);
+
+	$header .= "\n$underline\n";
+
+	my $operation_help_with_package = "Command::$operation_help";
+
+	$operation_help_with_package =~ s( )(_)g;
+
+	my $help_string = main::call_help_implementation($operation_help_with_package, [ 'manual' ]);
+
+	$manual_string .= "$header\n$help_string\n";
+    }
+
+    my $manual_filename = "$field_project_name-manual.rst";
+
+    my $manual_file;
+
+    my $ok = open($manual_file, ">", $manual_filename);
+
+    if (not $ok)
+    {
+	die "*** Error: $global_program_name: cannot open $manual_filename for writing ($!)";
+    }
+
+    print $manual_file $manual_string;
+
+    $ok = close($manual_file);
+
+    if ($ok)
+    {
+	if ($option_output_pdf
+	    and $option_input_rst)
+	{
+	    my $commands
+		= [
+		   "pandoc '$manual_filename' -o '$field_project_name-manual.pdf'",
+		   # "pandoc '$manual_filename' -o '$field_project_name-manual.pdf' && rm '$manual_filename'",
+		  ];
+
+	    execute_shell_command_array($commands);
+	}
+    }
+
+    # return the error (code)
+
+    return not $ok;
+}
+
+
+sub builtin_manual_completions
+{
+    my $options_completions
+	= {
+	   '--' => {
+		    '--input-rst' => '',
+		    '--input-md' => '',
+		    '--output-rst' => '',
+		    '--output-pdf' => '',
+		   },
+	  };
 }
 
 
@@ -3737,12 +3881,34 @@ sub builtin_manual_help
     return "$command : print the manual to stdout.
 
 synopsis:
+---------
 
-$command <type>
+.. code-block:: bash
+
+$command \[ <target> \] \[ -- <--options> \]
 
 arguments:
+----------
 
-    ARGV[0]: The type of manual (now always specification, later maybe also user).
+    ``ARGV[0]``: The target to which to build a manual.
+             Without a project the default is 'builtin'.
+             With a project the default is everything except 'builtin'.
+
+    ``ARGV[1]``: The type of manual (now always specification, later maybe also user).
+
+options:
+--------
+
+    ``--input-md``: Assume an input format of MarkDown.
+
+    ``--input-rst``: Assume an input format of ReStructuredText, this is the default.
+
+    ``--output-md``: Generate an MarkDown document.
+
+    ``--output-pdf``: Generate a PDF document.
+
+    ``--output-rst``: Generate an ReStructuredText document.
+
 ";
 }
 
@@ -3751,6 +3917,7 @@ sub builtin_known_command_filenames_completions
 {
     return
     {
+     "1.Type-one-of:" => '',
      "full-paths" => '',
      "relative-paths" => '',
     };
@@ -3778,6 +3945,7 @@ sub builtin_print_configuration_directory_help
     return "$command : print the directory where the configuration of this project is found.
 
 arguments:
+----------
 
     none.
 ";
@@ -4104,25 +4272,6 @@ sub builtin_rename_project
 		    );
     }
 
-    my $some_string = '
-./workflow-project.pl 9:       field_project_name => "neurospaces",
-./conf.neurospaces-configuration 17:# # neurospaces configuration
-./conf.neurospaces-configuration 18:# (^|[/\w\.]+/)neurospaces-configuration
-./conf.neurospaces-configuration 19:# conf.neurospaces-configuration
-./conf.neurospaces-configuration 31:regexp=neurospaces
-./neurospaces-bash-completion.sh 2:_neurospaces_configuration_completions()
-./neurospaces-bash-completion.sh 6:    COMPLETIONS=`neurospaces-workflow --bash-completion "$COMP_LINE" $COMP_CWORD $COMP_POINT | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g"`
-./neurospaces-bash-completion.sh 11:complete -F _neurospaces_configuration_completions neurospaces-configuration
-./neurospaces-bash-completion.sh 12:complete -F _neurospaces_configuration_completions ./neurospaces-configuration
-./neurospaces-bash-completion.sh 15:_neurospaces_workflow_completions()
-./neurospaces-bash-completion.sh 19:    COMPLETIONS=`neurospaces-workflow --bash-completion "$COMP_LINE" $COMP_CWORD $COMP_POINT | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g"`
-./neurospaces-bash-completion.sh 24:# complete -F _neurospaces_workflow_completions workflow
-./neurospaces-bash-completion.sh 25:# complete -F _neurospaces_workflow_completions ./workflow
-./neurospaces-bash-completion.sh 27:complete -F _neurospaces_workflow_completions neurospaces-workflow
-./neurospaces-bash-completion.sh 28:complete -F _neurospaces_workflow_completions ./neurospaces-workflow
-./conf.workflow 17:# # neurospaces workflow
-';
-
     0;
 }
 
@@ -4134,9 +4283,11 @@ sub builtin_rename_project_help
     return "$command: Rename the project from which this command is invoked (the 'current' project).
 
 arguments:
+----------
 
-    ARGV[0]: the new project name.
-    ARGV[1]: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+    ``ARGV[0]``: the new project name.
+
+    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
 ";
 }
 
@@ -4334,8 +4485,9 @@ This will create a project descriptor, a configuration file and an
 empty command file in the current working directory.
 
 arguments:
+----------
 
-    name: name of the new project.
+    ``ARGV[0]``: name of the new project.
 ";
 }
 
@@ -4390,19 +4542,25 @@ sub builtin_tmux_create_sessions
 
 sub builtin_tmux_create_sessions_completions
 {
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    return
-    {
-     "1.Type-the-name-of-a-known-tmux-session:" => '',
-     "_all" => '',
-     # '--force' => '',
-     map
-     {
-	 $_ => ''
-     }
-     @$tmux_sessions,
-    };
+    my $completions
+	= {
+	   ((scalar @$complete_arguments_array == 2) ? ("1.Type-the-name-of-a-known-tmux-session:" => '') : ()),
+	   "_all" => '',
+	   # '--force' => '',
+	   map
+	   {
+	       $_ => ''
+	   }
+	   @$tmux_sessions,
+	  };
+
+    return $completions;
 }
 
 
@@ -5238,13 +5396,19 @@ you use:
 'sudo apt install git-filter-repo'
 
 arguments:
+----------
 
-    ARGV[0]: source_repo
-    ARGV[1]: source_branch with the file
-    ARGV[2]: target_repo
-    ARGV[3]: target working branch
-    ARGV[4]: working_directory, when '0' or an empty string, /tmp/working-directory is used
-    ARGV[5] ... : filenames
+    ``ARGV[0]``: source_repo
+
+    ``ARGV[1]``: source_branch with the file
+
+    ``ARGV[2]``: target_repo
+
+    ``ARGV[3]``: target working branch
+
+    ``ARGV[4]``: working_directory, when '0' or an empty string, /tmp/working-directory is used
+
+    ``ARGV[5] ... ``: filenames
 
 After the command has completed, you likely want to do:
 
@@ -5879,13 +6043,18 @@ sub builtin_qemu_qcow2_mount_help
     return "$command: Mount a qcow2 image.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <file-name> [ <number-of-partitions> ]
 
 arguments:
+----------
 
-    ARGV[0]: The filename of a qcow2 image.
-    ARGV[1]: An optional number of partitions inside the qcow2 image to mount.
+    ``ARGV[0]``: The filename of a qcow2 image.
+
+    ``ARGV[1]``: An optional number of partitions inside the qcow2 image to mount.
 
 ";
 }
@@ -9613,6 +9782,53 @@ sub operation_hash_subs_generate
 }
 
 
+sub call_operation_implementation
+{
+    my $operation_implementation = shift;
+
+    my $arguments = shift;
+
+    no strict "refs";
+
+    #! utf8::upgrade works in place
+
+    map { utf8::upgrade($_) } @$arguments;
+
+    my $error = &$operation_implementation($arguments);
+
+    return $error;
+
+}
+
+
+sub call_help_implementation
+{
+    my $operation_implementation = shift;
+
+    my $arguments = shift;
+
+    my $operation_name = $operation_implementation;
+
+    $operation_name =~ s(^Command::)();
+    $operation_name =~ s(^([a-z0-9]+?)_)($1 );
+    $operation_name =~ s(_help$)();
+
+    #! utf8::upgrade works in place
+
+    map { utf8::upgrade($_) } @$arguments, $operation_name;
+
+    my $help_string;
+
+    {
+	no strict "refs";
+
+	$help_string = &$operation_implementation($operation_name, $arguments);
+    }
+
+    return $help_string;
+}
+
+
 sub main
 {
     # this is YAML related, see for instance https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=707229
@@ -9830,23 +10046,23 @@ sub main
 
 	else
 	{
-	    my $command = $global_operation;
+	    my $operation_or_package = $global_operation;
 
 	    my $operation_implementation;
 
 	    my $type_package_builtin;
 
-	    if (defined $command
-		and exists $global_known_operation_packages_builtin->{$command})
+	    if (defined $operation_or_package
+		and exists $global_known_operation_packages_builtin->{$operation_or_package})
 	    {
 		my $sub_name = shift @ARGV;
 
 		if (!defined $sub_name)
 		{
-		    die "$0: *** Error: No function name given while trying to use a builtin package '$command'";
+		    die "$0: *** Error: No function name given while trying to use a builtin package '$operation_or_package'";
 		}
 
-		$type_package_builtin = $command;
+		$type_package_builtin = $operation_or_package;
 
 		# if help was requested for this command
 
@@ -9857,9 +10073,9 @@ sub main
 		    $sub_name .= "_help";
 		}
 
-		$operation_implementation = "$command::$sub_name";
+		$operation_implementation = "$operation_or_package::$sub_name";
 	    }
-	    elsif (defined $command)
+	    elsif (defined $operation_or_package)
 	    {
 		# if help was requested for this command
 
@@ -9867,10 +10083,10 @@ sub main
 		{
 		    # call the subroutine that implements the help function
 
-		    $command .= "_help";
+		    $operation_or_package .= "_help";
 		}
 
-		$operation_implementation = "Command::${requested_target}_${command}";
+		$operation_implementation = "Command::${requested_target}_${operation_or_package}";
 	    }
 	    else
 	    {
@@ -9880,9 +10096,9 @@ sub main
 		{
 		    # call the subroutine that implements the help function for the target
 
-		    $command = "help";
+		    $operation_or_package = "help";
 
-		    $operation_implementation = "Command::${requested_target}_${command}";
+		    $operation_implementation = "Command::${requested_target}_${operation_or_package}";
 		}
 	    }
 
@@ -9901,26 +10117,14 @@ sub main
 
 	    # if this command exists ...
 
-	    if (exists $all_typed_operations->{"$requested_target $command"}
+	    if (exists $all_typed_operations->{"$requested_target $operation_or_package"}
 	        or $type_package_builtin)
 	    {
 		# ... either invoke the --help sub
 
 		if ($option_help)
 		{
-		    no strict "refs";
-
-		    my $operation_name = $operation_implementation;
-
-		    $operation_name =~ s(^Command::)();
-		    $operation_name =~ s(^([a-z0-9]+?)_)($1 );
-		    $operation_name =~ s(_help$)();
-
-		    #! utf8::upgrade works in place
-
-		    map { utf8::upgrade($_) } @ARGV, $operation_name;
-
-		    my $help_string = &$operation_implementation($operation_name, \@ARGV);
+		    my $help_string = call_help_implementation($operation_implementation, \@ARGV);
 
 		    print "$global_program_name $help_string\n";
 		}
@@ -9931,24 +10135,18 @@ sub main
 		{
 		    # ... depending on the type of the requested command ...
 
-		    my $type = $all_typed_operations->{"$requested_target $command"}->{type};
+		    my $type = $all_typed_operations->{"$requested_target $operation_or_package"}->{type};
 
 		    # ... either as a regular perl sub ...
 
 		    if ($type_package_builtin
 			or $type eq 'sub')
 		    {
-			no strict "refs";
-
-			#! utf8::upgrade works in place
-
-			map { utf8::upgrade($_) } @ARGV;
-
-			my $error = &$operation_implementation(\@ARGV);
+			my $error = call_operation_implementation($operation_implementation, \@ARGV);
 
 			if ($error)
 			{
-			    warn "$global_program_name: *** Warning: $requested_target $command generated an warning response ($error)";
+			    warn "$global_program_name: *** Warning: $requested_target $operation_or_package generated an warning response ($error)";
 			}
 		    }
 
@@ -9960,7 +10158,7 @@ sub main
 
 			my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
 
-			my $shell_script = "$commands_data_directory/$requested_target/$command";
+			my $shell_script = "$commands_data_directory/$requested_target/$operation_or_package";
 
 			Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @ARGV );
 		    }
@@ -9975,13 +10173,13 @@ sub main
 
 		    else
 		    {
-			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $command'";
+			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $operation_or_package'";
 		    }
 		}
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$command'.";
+		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$operation_or_package'.";
 	    }
 	}
 
@@ -10025,6 +10223,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
   \$ $global_program_name --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
 
 options:
+
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
