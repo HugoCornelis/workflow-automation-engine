@@ -177,6 +177,7 @@ my $global_builtin_operations
        grep => 1,
        install_scripts => 1,
        known_command_filenames => 1,
+       manual => 1,
        print_configuration_directory => 1,
        pull_scripts => 1,
        rename_project => 1,
