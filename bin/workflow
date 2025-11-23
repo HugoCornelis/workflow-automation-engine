@@ -3723,7 +3723,7 @@ sub builtin_known_command_filenames
 
 sub builtin_manual
 {
-    my $arguments = shift || [];
+    my $arguments = shift;
 
     my $option_input_rst = 1;
     my $option_input_md;
@@ -3749,23 +3749,29 @@ sub builtin_manual
 
     #t should we move operation_hash_typed_generate() and family to an Operation:: package?
 
-    my $operations_help = main::operation_hash_typed_generate('with help subs');
+    my $operations = main::operation_hash_typed_generate('with help subs');
 
-    my $target = 'builtin ';
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-    $operations_help
+    my $target = $arguments->[0] || 'builtin';
+
+    my $operations_help = [ grep { /_help$/ } keys %$operations, ];
+
+    my $operations_help_filtered
 	= [
 	   sort
 	   grep
 	   {
-	       /$target.*_help$/;
+	       my $operation = $_;
+
+	       my $result = ($operation =~ /$target.*_help$/ );
+
+	       $result;
 	   }
-	   keys %$operations_help,
+	   @$operations_help,
 	  ];
 
-    my $debug_builtin_manual = 0;
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'workflow';
+    my $debug_builtin_manual = 3;
 
     if ($debug_builtin_manual > 2)
     {
@@ -3776,7 +3782,15 @@ sub builtin_manual
 			     field_project_name => $field_project_name,
 			     global_output_filename_template => $global_output_filename_template,
 			     operations_help => $operations_help,
-			    } );
+			     operations_help_filtered => $operations_help_filtered,
+			     options => {
+					 option_input_rst => $option_input_rst,
+					 option_input_md => $option_input_md,
+					 option_output_rst => $option_output_rst,
+					 option_output_pdf => $option_output_pdf,
+					},
+			    }
+			   );
     }
 
     # see https://docs.beagleboard.org/intro/contribution/rst-cheat-sheet.html
@@ -3787,34 +3801,72 @@ sub builtin_manual
     my $rst_H4 = '-';
     my $rst_H5 = '~';
 
-    my $headers
-	= {
-	   rst => {
-		   H1 => $rst_H1,
-		   H2 => $rst_H2,
-		   H3 => $rst_H3,
-		   H4 => $rst_H4,
-		   H5 => $rst_H5,
-		  },
-	  };
+    # see https://www.markdownguide.org/basic-syntax/
 
-    my $header = uc $field_project_name;
+    my $md_H1 = '#';
+    my $md_H2 = '##';
+    my $md_H3 = '###';
+    my $md_H4 = '####';
+    my $md_H5 = '#####';
+    my $md_H6 = '######';
+
+    my $header;
+
+    if (not defined $field_project_name)
+    {
+	$field_project_name = "workflow-engine";
+
+	if ($option_input_rst)
+	{
+	    $header = '``workflow`` engine';
+	}
+	elsif ($option_input_md)
+	{
+	    $header = '`workflow` engine';
+	}
+	else
+	{
+	    $header = 'workflow engine';
+	}
+    }
+
+    $header = ucfirst $header;
 
     $header =~ s(-)( )g;
 
-    my $underline = $rst_H1 x length($header);
-
-    $header .= "\n$underline\n";
-
-    my $manual_string = "$header\n\n";
-
-    foreach my $operation_help (@$operations_help)
+    if ($option_input_rst)
     {
-	my $header = $operation_help;
-
-	my $underline = $rst_H2 x length($operation_help);
+	my $underline = $rst_H1 x length($header);
 
 	$header .= "\n$underline\n";
+    }
+    elsif ($option_input_md)
+    {
+	$header = "$md_H1 $header\n";
+    }
+
+    my $manual_string = "$header\n\nThis manual was automatically generated with the command line:
+
+.. code-block:: bash
+
+$global_command_line
+
+";
+
+    foreach my $operation_help (@$operations_help_filtered)
+    {
+	my $subheader = $operation_help;
+
+	if ($option_input_rst)
+	{
+	    my $underline = $rst_H2 x length($subheader);
+
+	    $subheader .= "\n$underline\n";
+	}
+	elsif ($option_input_md)
+	{
+	    $subheader = "$md_H2 $subheader\n";
+	}
 
 	my $operation_help_with_package = "Command::$operation_help";
 
@@ -3822,10 +3874,10 @@ sub builtin_manual
 
 	my $help_string = main::call_help_implementation($operation_help_with_package, [ 'manual' ]);
 
-	$manual_string .= "$header\n$help_string\n";
+	$manual_string .= "$subheader\n$help_string\n";
     }
 
-    my $manual_filename = "$field_project_name-manual.rst";
+    my $manual_filename = "$field_project_name-manual" . ($option_input_rst ? ".rst" : ($option_input_md ? ".md" : ""));;
 
     my $manual_file;
 
@@ -3891,7 +3943,7 @@ $command \[ <target> \] \[ -- <--options> \]
 arguments:
 ----------
 
-    ``ARGV[0]``: The target to which to build a manual.
+    ``ARGV[0]``: The regex target to which to build a manual.
              Without a project the default is 'builtin'.
              With a project the default is everything except 'builtin'.
 
