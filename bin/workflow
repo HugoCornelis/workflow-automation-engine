@@ -815,6 +815,7 @@ sub ${target_name}_single_command_help
     return \"\$command: an example of the invocation a single command.
 
 arguments:
+----------
 
     force: command arguments can be parsed from \@ARGV.
 \";
@@ -875,6 +876,7 @@ sub ${target_name}_array_of_commands_help
     return \"\$command: an example of the invocation an array of commands.
 
 arguments:
+----------
 
     force: command arguments can be parsed from \\\@ARGV.
 \";
@@ -963,6 +965,7 @@ sub ${target_name}_array_of_commands_remote_execution_help
     return \"\$command: an example of the invocation an array of commands that are executed on a remote machine.
 
 arguments:
+----------
 
     none.
 \";
@@ -1025,6 +1028,7 @@ sub ${target_name}_sequencing_and_composition_help
     return \"\$command: an example that composes other examples into one sequence of commands.
 
 arguments:
+----------
 
     none.
 \";
@@ -2668,29 +2672,46 @@ sub builtin_add_role_help
     return "$command: add a new role and update the configuration to integrate it.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <role-name> <role-description> [-- <options>]
 
 arguments:
+----------
 
-    ARGV[0]: name of the new role.
-    ARGV[1]: description of the new role.
+    ``ARGV[0]``: name of the new role.
+
+    ``ARGV[1]``: description of the new role.
 
 options:
+--------
 
-    --dockerfile: A reference to a docker file.  This also configures the new role as a docker role.
-    --localuser: Set this for a local user role.
-    --scp-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-    --ssh-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-    --ssh-password: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
-    --ssh-port: This defaults to 22.
-    --ssh-server: An IP address or known host name.
-    --ssh-user: The ssh user name.
-    --tmux-session: The tmux session name.
+    ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
+
+    ``--localuser``: Set this for a local user role.
+
+    ``--scp-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+
+    ``--ssh-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+
+    ``--ssh-password``: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
+
+    ``--ssh-port``: This defaults to 22.
+
+    ``--ssh-server``: An IP address or known host name.
+
+    ``--ssh-user``: The ssh user name.
+
+    ``--tmux-session``: The tmux session name.
 
 notes:
+------
 
 It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
+
+.. code-block:: bash
 
   tmux_ssh_cd:
     description: interaction with the combined ssh / tmux session to test cd commands
@@ -2924,19 +2945,27 @@ sub builtin_add_target_help
     return "$command: add a new target and update the configuration to integrate it.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <target-name> <target-description> [-- <options>]
 
 arguments:
+----------
 
-    ARGV[0]: name of the new target.
-    ARGV[1]: description of the new target.
+    ``ARGV[0]``: name of the new target.
+
+    ``ARGV[1]``: description of the new target.
 
 options:
+--------
 
-    --install-commands-pl: install a perl command file template.
-    --install-commands-py: install a python command file template.
-    --install-commands-sh: install a shell command file template.
+    ``--install-commands-pl``: install a perl command file template.
+
+    ``--install-commands-py``: install a python command file template.
+
+    ``--install-commands-sh``: install a shell command file template.
 ";
 }
 
@@ -3075,12 +3104,16 @@ sub builtin_archive_configuration_help
     return "$command: create a tarball with the configuration of the current workflow project.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <tarball-name>
 
 arguments:
+----------
 
-    ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+    ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
 
 ";
 }
@@ -3424,13 +3457,18 @@ sub builtin_grep_help
     return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 
 arguments:
+----------
 
-    ARGV[0]: A regular expression to search for.
-    ARGV[1] and following: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+    ``ARGV[0]``: A regular expression to search for.
+
+    ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
 }
@@ -3627,16 +3665,26 @@ sub builtin_install_scripts_help
     return "$command : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
+--------
 
-    --aliasses           configure the grc aliases in .bashrc if they are not there yet.
-    --bash-completion    configure bash completion in .bashrc if they are not there yet.
-    --commands           install or upgrade the command configuration to ~/bin or ~/.local/bin.
-    --engine             create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
-    --force              don't use this.
-    --git                create a git repository for the workflow configuration.
-    --grc-configuration  install symbolic links for grc configuration to color code the workflow output (requires sudo access).
-    --path-in-bashrc     update .bashrc to include ~/bin or ~/.local/bin in PATH.
-    --report             report on what is being done.
+    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
+
+    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
+
+    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
+
+    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
+
+    ``--force``: don't use this.
+
+    ``--git``: create a git repository for the workflow configuration.
+
+    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
+
+    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
+
+    ``--report``: report on what is being done.
+
 
 Note that grc configuration files will also be installed and configured.
 
@@ -3763,7 +3811,7 @@ sub builtin_manual
     {
 	my $header = $operation_help;
 
-	my $underline = $rst_H2 x length($operations_help);
+	my $underline = $rst_H2 x length($operation_help);
 
 	$header .= "\n$underline\n";
 
@@ -3833,23 +3881,34 @@ sub builtin_manual_help
     return "$command : print the manual to stdout.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command \[ <target> \] \[ -- <--options> \]
 
-options:
-
-    --input-md         Assume an input format of MarkDown.
-    --input-rst        Assume an input format of ReStructuredText, this is the default.
-    --output-md        Generate an MarkDown document.
-    --output-pdf       Generate a PDF document.
-    --output-rst       Generate an ReStructuredText document.
-
 arguments:
+----------
 
-    ARGV[0]: The target to which to build a manual.
+    ``ARGV[0]``: The target to which to build a manual.
              Without a project the default is 'builtin'.
              With a project the default is everything except 'builtin'.
-    ARGV[1]: The type of manual (now always specification, later maybe also user).
+
+    ``ARGV[1]``: The type of manual (now always specification, later maybe also user).
+
+options:
+--------
+
+    ``--input-md``: Assume an input format of MarkDown.
+
+    ``--input-rst``: Assume an input format of ReStructuredText, this is the default.
+
+    ``--output-md``: Generate an MarkDown document.
+
+    ``--output-pdf``: Generate a PDF document.
+
+    ``--output-rst``: Generate an ReStructuredText document.
+
 ";
 }
 
@@ -3886,6 +3945,7 @@ sub builtin_print_configuration_directory_help
     return "$command : print the directory where the configuration of this project is found.
 
 arguments:
+----------
 
     none.
 ";
@@ -4223,9 +4283,11 @@ sub builtin_rename_project_help
     return "$command: Rename the project from which this command is invoked (the 'current' project).
 
 arguments:
+----------
 
-    ARGV[0]: the new project name.
-    ARGV[1]: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+    ``ARGV[0]``: the new project name.
+
+    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
 ";
 }
 
@@ -4423,8 +4485,9 @@ This will create a project descriptor, a configuration file and an
 empty command file in the current working directory.
 
 arguments:
+----------
 
-    name: name of the new project.
+    ``ARGV[0]``: name of the new project.
 ";
 }
 
@@ -5333,13 +5396,19 @@ you use:
 'sudo apt install git-filter-repo'
 
 arguments:
+----------
 
-    ARGV[0]: source_repo
-    ARGV[1]: source_branch with the file
-    ARGV[2]: target_repo
-    ARGV[3]: target working branch
-    ARGV[4]: working_directory, when '0' or an empty string, /tmp/working-directory is used
-    ARGV[5] ... : filenames
+    ``ARGV[0]``: source_repo
+
+    ``ARGV[1]``: source_branch with the file
+
+    ``ARGV[2]``: target_repo
+
+    ``ARGV[3]``: target working branch
+
+    ``ARGV[4]``: working_directory, when '0' or an empty string, /tmp/working-directory is used
+
+    ``ARGV[5] ... ``: filenames
 
 After the command has completed, you likely want to do:
 
@@ -5974,13 +6043,18 @@ sub builtin_qemu_qcow2_mount_help
     return "$command: Mount a qcow2 image.
 
 synopsis:
+---------
+
+.. code-block:: bash
 
 $command <file-name> [ <number-of-partitions> ]
 
 arguments:
+----------
 
-    ARGV[0]: The filename of a qcow2 image.
-    ARGV[1]: An optional number of partitions inside the qcow2 image to mount.
+    ``ARGV[0]``: The filename of a qcow2 image.
+
+    ``ARGV[1]``: An optional number of partitions inside the qcow2 image to mount.
 
 ";
 }
@@ -10149,6 +10223,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
   \$ $global_program_name --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
 
 options:
+
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
