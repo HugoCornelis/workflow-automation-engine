@@ -3674,19 +3674,48 @@ sub builtin_known_command_filenames
 
 sub builtin_manual
 {
-    my $operations = operation_hash_typed_generate();
+    my $operations_help = main::operation_hash_typed_generate('with help subs');
 
     my $target = 'builtin ';
 
-    $operations
+    $operations_help
 	= [
+	   sort
 	   grep
 	   {
-	       /$target/;
+	       /$target.*_help$/;
 	   }
-	   keys %$operations,
+	   keys %$operations_help,
 	  ];
-    
+
+    my $debug_builtin_manual = 3;
+
+    if ($debug_builtin_manual > 2)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper(
+			    {
+			     global_output_filename_template => $global_output_filename_template,
+			     operations_help => $operations_help,
+			    } );
+    }
+
+    my $manual_string = '';
+
+    foreach my $operation_help (@$operations_help)
+    {
+	my $help_string;
+
+	{
+	    no strict "refs";
+
+	    $help_string = &$operation_help();
+	}
+
+	$manual_string .= $help_string;
+    }
+
 }
 
 
