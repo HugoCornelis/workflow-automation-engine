@@ -2906,19 +2906,14 @@ sub builtin_add_target_completions
 	   "1.<target_name>" => '',
 	   "2.<target_description>" => '',
 	   "'3.[--_<options>_]'" => '',
-	   "--install-commands-pl" => '',
-	   "--install-commands-py" => '',
-	   "--install-commands-sh" => '',
+	   '--' => {
+		    "--install-commands-pl" => '',
+		    "--install-commands-py" => '',
+		    "--install-commands-sh" => '',
+		   },
 	  };
 
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
+    return $completions_hash;
 }
 
 
