@@ -10384,6 +10384,43 @@ sub main
 	#! bash_completion() never returns
     }
 
+    if (not defined $global_target)
+    {
+	report_error_exit("no target defined");
+    }
+
+    if (not exists $global_technical_project_configuration->{targets}->{$global_target})
+    {
+	report_error_exit("Target $global_target does not exist");
+    }
+
+    if ((not defined $option_interactions_all
+	 and not defined $option_interactions_module_all_roles)
+	and not defined $global_target)
+    {
+	die "$global_program_name: *** Error: neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-module-all-roles), try --help";
+    }
+
+    # always allow the builtin operations (start a new project, add a new target, ...)
+
+    #! they should do their own checking for a valid
+    #! field_configuration, project_name as required.
+
+    if ($global_target eq 'builtin'
+	and (defined $global_operation
+	     and exists $global_builtin_operations->{$global_operation})
+	or (defined $global_operation
+	    and exists $global_known_operation_packages_builtin->{$global_operation}))
+    {
+    }
+    else
+    {
+	if ($status)
+	{
+	    die $status;
+	}
+    }
+
     # figure out the target and the operation
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
@@ -10935,36 +10972,9 @@ options:
 	exit 0;
     }
 
-    if ((not defined $option_interactions_all
-	 and not defined $option_interactions_module_all_roles)
-	and not defined $global_target)
-    {
-	die "$global_program_name: *** Error: neither a target option nor target argument given, try --help";
-    }
-
     if ($FieldProject::status)
     {
 	$status = $FieldProject::status;
-    }
-
-    # always allow the builtin operations (start a new project, add a new target, ...)
-
-    #! they should do their own checking for a valid
-    #! field_configuration, project_name as required.
-
-    if ($global_target eq 'builtin'
-	and (defined $global_operation
-	     and exists $global_builtin_operations->{$global_operation})
-	or (defined $global_operation
-	    and exists $global_known_operation_packages_builtin->{$global_operation}))
-    {
-    }
-    else
-    {
-	if ($status)
-	{
-	    die $status;
-	}
     }
 }
 
@@ -10986,6 +10996,20 @@ sub project_name_2_configuration_data_directory
     my $configuration_data_directory = "$field_project_configuration->{sources_configuration_filename}-data";
 
     return ($sources_configuration_directory, $configuration_data_directory);
+}
+
+
+sub report_error_exit
+{
+    my $error = shift;
+
+    my $exit_code = shift;
+
+    my $error_message = "$0: *** Error: $error";
+
+    print STDERR "$error_message\n\n\n";
+
+    die $error_message;
 }
 
 
