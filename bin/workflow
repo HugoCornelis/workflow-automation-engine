@@ -816,7 +816,7 @@ sub ${target_name}_single_command_help
     return \"\$command: an example of the invocation a single command.
 
 arguments:
-----------
+~~~~~~~~~~
 
     force: command arguments can be parsed from \@ARGV.
 \";
@@ -877,7 +877,7 @@ sub ${target_name}_array_of_commands_help
     return \"\$command: an example of the invocation an array of commands.
 
 arguments:
-----------
+~~~~~~~~~~
 
     force: command arguments can be parsed from \\\@ARGV.
 \";
@@ -966,7 +966,7 @@ sub ${target_name}_array_of_commands_remote_execution_help
     return \"\$command: an example of the invocation an array of commands that are executed on a remote machine.
 
 arguments:
-----------
+~~~~~~~~~~
 
     none.
 \";
@@ -1029,7 +1029,7 @@ sub ${target_name}_sequencing_and_composition_help
     return \"\$command: an example that composes other examples into one sequence of commands.
 
 arguments:
-----------
+~~~~~~~~~~
 
     none.
 \";
@@ -2673,21 +2673,21 @@ sub builtin_add_role_help
     return "$command: add a new role and update the configuration to integrate it.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <role-name> <role-description> [-- <options>]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the new role.
 
     ``ARGV[1]``: description of the new role.
 
 options:
---------
+~~~~~~~~
 
     ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
 
@@ -2708,7 +2708,7 @@ options:
     ``--tmux-session``: The tmux session name.
 
 notes:
-------
+~~~~~~
 
 It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
 
@@ -2946,21 +2946,21 @@ sub builtin_add_target_help
     return "$command: add a new target and update the configuration to integrate it.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <target-name> <target-description> [-- <options>]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the new target.
 
     ``ARGV[1]``: description of the new target.
 
 options:
---------
+~~~~~~~~
 
     ``--install-commands-pl``: install a perl command file template.
 
@@ -3105,14 +3105,14 @@ sub builtin_archive_configuration_help
     return "$command: create a tarball with the configuration of the current workflow project.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <tarball-name>
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
 
@@ -3458,14 +3458,14 @@ sub builtin_grep_help
     return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: A regular expression to search for.
 
@@ -3666,7 +3666,7 @@ sub builtin_install_scripts_help
     return "$command : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
---------
+~~~~~~~~
 
     ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
 
@@ -4192,14 +4192,14 @@ sub builtin_manual_help
     return "$command : print the manual to stdout.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command \[ <target> \] \[ -- <--options> \]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: The regular expression target to which to build a manual.
              Without a project the default is 'builtin'.
@@ -4208,7 +4208,7 @@ arguments:
     ``ARGV[1]``: The type of manual (now always specification, later maybe also user).
 
 options:
---------
+~~~~~~~~
 
     ``--input-md``: Assume an input format of MarkDown.
 
@@ -4255,7 +4255,7 @@ sub builtin_print_configuration_directory_help
     return "$command : print the directory where the configuration of this project is found.
 
 arguments:
-----------
+~~~~~~~~~~
 
     none.
 ";
@@ -4593,7 +4593,7 @@ sub builtin_rename_project_help
     return "$command: Rename the project from which this command is invoked (the 'current' project).
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: the new project name.
 
@@ -4795,7 +4795,7 @@ This will create a project descriptor, a configuration file and an
 empty command file in the current working directory.
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the new project.
 ";
@@ -5706,7 +5706,7 @@ you use:
 'sudo apt install git-filter-repo'
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: source_repo
 
@@ -6353,14 +6353,14 @@ sub builtin_qemu_qcow2_mount_help
     return "$command: Mount a qcow2 image.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <file-name> [ <number-of-partitions> ]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: The filename of a qcow2 image.
 

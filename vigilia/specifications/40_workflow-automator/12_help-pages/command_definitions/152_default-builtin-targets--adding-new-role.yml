@@ -6,21 +6,21 @@ command_tests:
       workflow builtin add_role: add a new role and update the configuration to integrate it.
       
       synopsis:
-      ---------
+      ~~~~~~~~~
       
       .. code-block:: bash
       
       builtin add_role <role-name> <role-description> [-- <options>]
       
       arguments:
-      ----------
+      ~~~~~~~~~~
       
           ``ARGV[0]``: name of the new role.
       
           ``ARGV[1]``: description of the new role.
       
       options:
-      --------
+      ~~~~~~~~
       
           ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
       
@@ -41,7 +41,7 @@ command_tests:
           ``--tmux-session``: The tmux session name.
       
       notes:
-      ------
+      ~~~~~~
       
       It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
       

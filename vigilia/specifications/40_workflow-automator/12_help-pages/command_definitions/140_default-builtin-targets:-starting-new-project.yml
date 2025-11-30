@@ -9,7 +9,7 @@ command_tests:
       empty command file in the current working directory.
       
       arguments:
-      ----------
+      ~~~~~~~~~~
       
           ``ARGV[0]``: name of the new project.
       

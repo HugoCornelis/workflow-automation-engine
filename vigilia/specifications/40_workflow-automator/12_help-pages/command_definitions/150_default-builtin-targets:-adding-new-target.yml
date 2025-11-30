@@ -6,21 +6,21 @@ command_tests:
       workflow builtin add_target: add a new target and update the configuration to integrate it.
       
       synopsis:
-      ---------
+      ~~~~~~~~~
       
       .. code-block:: bash
       
       builtin add_target <target-name> <target-description> [-- <options>]
       
       arguments:
-      ----------
+      ~~~~~~~~~~
       
           ``ARGV[0]``: name of the new target.
       
           ``ARGV[1]``: description of the new target.
       
       options:
-      --------
+      ~~~~~~~~
       
           ``--install-commands-pl``: install a perl command file template.
       
