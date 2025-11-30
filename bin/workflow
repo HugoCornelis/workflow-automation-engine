@@ -1548,6 +1548,8 @@ targets:
     description: used for processing of target files that are produced by other targets
   docker:
     description: interaction with the docker build container
+  examples_sh:
+    description: these are shell script examples for demonstration how they provide integrated workflows
   perl_examples:
     description: these are perl examples that explain how to use the APIs
   python_examples:
