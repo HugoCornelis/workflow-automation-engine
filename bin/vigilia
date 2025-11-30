@@ -24,7 +24,6 @@ my $option_dump_yaml;
 my $option_dump_file_structured_json;
 my $option_dump_file_structured_yaml;
 my $option_email = defined $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} ? $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL} : 0 ;
-my $option_flattenout;
 my $option_help;
 my $option_images_clean;
 my $option_input_command_tests = [];
@@ -108,9 +107,6 @@ options:
     --dump-yaml                  Dump test specifications to yaml files (by default in '$default_specification_dump_directory').
     --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories (by default in '$default_specification_dump_directory').
     --email                      Allow to send emails, the default is taken from \$ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
-    --flattenout                 Flattenout the test definitions before testing,
-                                 this experimental feature might increase test performance,
-                                 by recycling test definitions.
     --help                       Print usage information.
     --images-clean               Remove the images and containers that are referenced by the specifications (also enable --show-images for this to work).
     --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
@@ -160,7 +156,6 @@ options:
 					    "dump-file-structured-json!" => \$option_dump_file_structured_json,
 					    "dump-file-structured-yaml!" => \$option_dump_file_structured_yaml,
 					    "email" => \$option_email,
-					    "flattenout" => \$option_flattenout,
 					    "help!" => \$option_help,
 					    "images-clean!" => \$option_images_clean,
 					    "input-command-tests=s" => $option_input_command_tests,
@@ -601,7 +596,6 @@ sub parse_options
 	   dump_file_structured_json => $option_dump_file_structured_json,
 	   dump_file_structured_yaml => $option_dump_file_structured_yaml,
 	   email => $option_email,
-	   flattenout => $option_flattenout,
 	   help => $option_help,
 	   images_clean => $option_images_clean,
 	   input_commands => $option_input_commands,
@@ -7152,145 +7146,7 @@ sub expand
 	}
     }
 
-    if ($option_flattenout)
-    {
-	$module_definitions = flatten_out($module_definitions);
-    }
-
     $self->{test_modules} = $module_definitions;
-}
-
-
-sub flatten_out
-{
-    my $test_modules = shift;
-
-    # sort modules
-
-    #t first need to transform: select command_definitions, flatten
-    #t out, keep the module names (for referencing errors).
-
-    my $transformator
-	= Data::Transformator->new
-	  (
-	   apply_identity_transformation => 0,
-	   name => 'test-module-selector',
-	   contents => $test_modules,
-	   separator => '`',
-	   array_filter =>
-	   sub
-	   {
-	       my ($context, $component) = @_;
-
-	       # never filter for the first two component in the path
-
-	       my $depth = $context->{array};
-
-	       $depth = $#$depth;
-
-	       if ($depth < 2)
-	       {
-		   return 1;
-	       }
-
-	       # extract the data: command definitions with test commands
-
-	       $context->{path} =~ m|^[^/]*/([^/]*)/([^/]*)|;
-
-	       my $content = Data::Transformator::_context_get_current_content($context);
-
-	       # push it onto the result
-
-	       my $result = Data::Transformator::_context_get_main_result($context);
-
-	       if (!$result->{content})
-	       {
-		   $result->{content} = [];
-	       }
-
-	       push @{$result->{content}}, $content;
-
-	       # add the module name
-
-	       my $module_name = $context->{array}->[1]->{content}->{name};
-
-	       $content->{module_name} = $module_name;
-
-	       # add the module description
-
-	       my $module_description = $context->{array}->[1]->{content}->{description};
-
-	       $content->{module_description} = $module_description;
-
-	       # result is known, everything gets filtered
-
-	       0;
-	   },
-	  );
-
-    #t for an empty array as content, the transformator returns an
-    #t undef, this is a bug that still needs fixing.
-
-    my $tests = $transformator->transform() || [];
-
-    # sort the flattened test definitions
-
-    $tests
-	= [
-	   sort
-	   {
-	       my $module1 = $a;
-	       my $module2 = $b;
-
-	       my $command1 = $module1->{command};
-	       my $command2 = $module2->{command};
-
-	       my $command1_arguments = $module1->{arguments} || [];
-	       my $command2_arguments = $module2->{arguments} || [];
-
-	       my $command1_string = join ' ', $command1, @$command1_arguments;
-	       my $command2_string = join ' ', $command2, @$command2_arguments;
-
-	       my $comparison = $command1_string cmp $command2_string;
-
-	       if ($module1->{tester_head})
-	       {
-		   $comparison = -1;
-	       } elsif ($module2->{tester_head})
-	       {
-		   $comparison = 1;
-	       }
-
-	       $comparison;
-	   }
-	   @$tests,
-	  ];
-
-    # transform back to the regular test module format by putting
-    # every command definition in its own module
-
-    $tests
-	= [
-	   map
-	   {
-	       my $command_definition = $_;
-
-	       (
-		{
-		 command_definitions => [
-					 $command_definition,
-					],
-		 description => $command_definition->{module_description},
-		 name => $command_definition->{module_name},
-		}
-	       );
-	   }
-	   @$tests,
-	  ];
-
-    # set result
-
-    return $tests;
 }
 
 

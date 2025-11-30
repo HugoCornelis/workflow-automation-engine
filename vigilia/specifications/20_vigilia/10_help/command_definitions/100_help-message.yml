@@ -32,9 +32,6 @@ command_tests:
           --dump-yaml                  Dump test specifications to yaml files (by default in '/tmp').
           --dump-file-structured-yaml  Dump test specifications to well structured yaml files and directories (by default in '/tmp').
           --email                      Allow to send emails, the default is taken from $ENV{NEUROSPACES_HARNESS_OPTION_EMAIL}.
-          --flattenout                 Flattenout the test definitions before testing,
-                                       this experimental feature might increase test performance,
-                                       by recycling test definitions.
           --help                       Print usage information.
           --images-clean               Remove the images and containers that are referenced by the specifications (also enable --show-images for this to work).
           --input-command-tests        Merge the given file or directory as command tests to be executed (can be given several times).
