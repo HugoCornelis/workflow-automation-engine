@@ -1,5 +1,5 @@
 ---
-command: workflow builtin add_role --help
+command: bin/workflow builtin add_role --help
 command_tests:
   - description: 'default builtin targets: adding a new role'
     read: |+
