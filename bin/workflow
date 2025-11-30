@@ -10391,14 +10391,14 @@ sub main
 
     if (not exists $global_technical_project_configuration->{targets}->{$global_target})
     {
-	report_error_exit("Target $global_target does not exist");
+	report_error_exit("target '$global_target' does not exist");
     }
 
     if ((not defined $option_interactions_all
 	 and not defined $option_interactions_module_all_roles)
 	and not defined $global_target)
     {
-	die "$global_program_name: *** Error: neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-module-all-roles), try --help";
+	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-module-all-roles), try --help");
     }
 
     # always allow the builtin operations (start a new project, add a new target, ...)
@@ -10417,7 +10417,7 @@ sub main
     {
 	if ($fp_status)
 	{
-	    die $fp_status;
+	    report_error_exit($fp_status);
 	}
     }
 
@@ -10602,7 +10602,7 @@ sub main
 
 		if (!defined $sub_name)
 		{
-		    die "$0: *** Error: No function name given while trying to use a builtin package '$operation_or_package'";
+		    report_error_exit("no function name given while trying to use a builtin package '$operation_or_package'");
 		}
 
 		$type_package_builtin = $operation_or_package;
@@ -10716,13 +10716,13 @@ sub main
 
 		    else
 		    {
-			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $operation_or_package'";
+			report_error_exit("unknown command type $type when invoking command '$requested_target $operation_or_package'");
 		    }
 		}
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$operation_or_package'.";
+		report_error_exit("target '$requested_target' does not provide command '$operation_or_package'.");
 	    }
 	}
 
@@ -11005,7 +11005,7 @@ sub report_error_exit
 
     my $exit_code = shift;
 
-    my $error_message = "$0: *** Error: $error";
+    my $error_message = "$global_program_name: *** Error: $error";
 
     print STDERR "$error_message\n\n\n";
 
