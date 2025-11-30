@@ -8658,7 +8658,7 @@ sub generate_output_filename
 package FieldProject;
 
 
-our $status;
+our $fp_status;
 
 
 sub _configuration_export
@@ -9233,7 +9233,7 @@ sub _init_get_field_project_configuration
 	}
 	else
 	{
-	    $status = "$global_program_name: *** Error: '$search_path_workflow_executable_filename cannot be read\n";
+	    $fp_status = "$global_program_name: *** Error: '$search_path_workflow_executable_filename cannot be read\n";
 
 	    return undef;
 	}
@@ -9284,7 +9284,7 @@ sub _init_get_field_project_configuration
 
 	    my $field_project_name = $field_project_configuration->{field_project_name};
 
-	    $status = $eval_status;
+	    $fp_status = $eval_status;
 
 	    # resolve the symbolic link from ~/bin/* or ~/.local/bin/* to its absolute path it refers to
 
@@ -9323,7 +9323,7 @@ sub _init_get_field_project_configuration
 	    }
 	    else
 	    {
-		# $status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+		# $fp_status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
 
 		# return undef;
 	    }
@@ -9369,7 +9369,7 @@ sub _init_get_technical_configuration
 
     if (not defined $search_path_workflow_executable_directory)
     {
-	$status = "$global_program_name: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
+	$fp_status = "$global_program_name: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
 
 	return undef;
     }
@@ -9394,7 +9394,7 @@ sub _init_get_technical_configuration
 	($technical_configuration, $eval_status) = _init_do_eval_perl_file($technical_configuration_filename);
     }
 
-    $status = $eval_status;
+    $fp_status = $eval_status;
 
     return $technical_configuration;
 }
@@ -10415,9 +10415,9 @@ sub main
     }
     else
     {
-	if ($status)
+	if ($fp_status)
 	{
-	    die $status;
+	    die $fp_status;
 	}
     }
 
@@ -10972,9 +10972,9 @@ options:
 	exit 0;
     }
 
-    if ($FieldProject::status)
+    if ($FieldProject::fp_status)
     {
-	$status = $FieldProject::status;
+	$status = $FieldProject::fp_status;
     }
 }
 
