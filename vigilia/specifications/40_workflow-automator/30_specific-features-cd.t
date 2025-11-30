@@ -113,7 +113,7 @@ feature-testing-workflow builtin add_target source_code "Operations on the sourc
 				command_tests => [
 						  {
 						   description => "Do we get a reasonable error message when invoking the engine without arguments?",
-						   read => 'feature-testing-workflow: *** Error: neither a target option nor target argument given, try --help',
+						   read => 'feature-testing-workflow: *** Error: no target defined',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
