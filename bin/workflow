@@ -3721,6 +3721,80 @@ sub builtin_known_command_filenames
 }
 
 
+sub strings_remove
+{
+    my $strings = shift;
+
+    my $options = shift;
+
+    my $sentence = shift;
+
+    if ($options eq 'with-dash-keep')
+    {
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s(-$string-)(-)ig;
+	    $sentence =~ s(^$string-)()ig;
+	    $sentence =~ s($string$)()ig;
+	}
+    }
+    elsif ($options eq 'without-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)()ig;
+	}
+    }
+    elsif ($options eq 'replace-with-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)(-)ig;
+	}
+    }
+    else
+    {
+	die "$0: Internal error in strings_remove()";
+    }
+
+    return $sentence;
+}
+
+
+sub sentence_summarize
+{
+    my $sentence = shift;
+
+    my $maximum_length = shift || 80;
+
+    my $result = "$sentence";
+
+    $result =~ s(\s+)(-)g;
+
+    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+
+    $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
+
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
+
+    $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
+
+    my $remove_these_chars = [ '<', '>', '\'' ];
+
+    $result = strings_remove($remove_these_chars, 'without-dash', $result);
+
+    $result = substr($result, 0, $maximum_length);
+
+    $result =~ s(-$)();
+
+    return $result;
+}
+
+
 sub builtin_manual
 {
     my $arguments = shift || [];
@@ -3757,7 +3831,7 @@ sub builtin_manual
 
     my $matcher;
 
-    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'workflow engine';
+    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'The workflow engine';
 
     my $filename_suffix = '';
 
@@ -3852,14 +3926,17 @@ sub builtin_manual
     if ($option_input_rst)
     {
 	$manual_string .= "This manual was automatically generated with the command line:
+
 .. code-block:: bash
 
-$global_command_line
+    $global_command_line
+
 ";
     }
     elsif ($option_input_md)
     {
 	$manual_string .= "This manual was automatically generated with the command line:
+
 ```bash
 $global_command_line
 ```
@@ -4003,7 +4080,7 @@ $global_command_line
 
 	if ($option_input_rst)
 	{
-	    my $underline = $rst_H4 x length($operation_help);
+	    my $underline = $rst_H4 x length($header);
 
 	    $header = "\n$header\n$underline\n";
 	}
@@ -4027,7 +4104,9 @@ $global_command_line
 	$last_target = $this_target;
     }
 
-    my $manual_basename = "$field_project_name-manual$filename_suffix";
+    my $manual_basename = sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual$filename_suffix";
 
     my $manual_filename = "$manual_basename.rst";
 
