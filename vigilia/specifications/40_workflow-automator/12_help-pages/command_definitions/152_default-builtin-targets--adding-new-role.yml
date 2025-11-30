@@ -6,29 +6,46 @@ command_tests:
       workflow builtin add_role: add a new role and update the configuration to integrate it.
       
       synopsis:
+      ---------
+      
+      .. code-block:: bash
       
       builtin add_role <role-name> <role-description> [-- <options>]
       
       arguments:
+      ----------
       
-          ARGV[0]: name of the new role.
-          ARGV[1]: description of the new role.
+          ``ARGV[0]``: name of the new role.
+      
+          ``ARGV[1]``: description of the new role.
       
       options:
+      --------
       
-          --dockerfile: A reference to a docker file.  This also configures the new role as a docker role.
-          --localuser: Set this for a local user role.
-          --scp-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-          --ssh-options: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-          --ssh-password: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
-          --ssh-port: This defaults to 22.
-          --ssh-server: An IP address or known host name.
-          --ssh-user: The ssh user name.
-          --tmux-session: The tmux session name.
+          ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
+      
+          ``--localuser``: Set this for a local user role.
+      
+          ``--scp-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+      
+          ``--ssh-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+      
+          ``--ssh-password``: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
+      
+          ``--ssh-port``: This defaults to 22.
+      
+          ``--ssh-server``: An IP address or known host name.
+      
+          ``--ssh-user``: The ssh user name.
+      
+          ``--tmux-session``: The tmux session name.
       
       notes:
+      ------
       
       It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
+      
+      .. code-block:: bash
       
         tmux_ssh_cd:
           description: interaction with the combined ssh / tmux session to test cd commands
@@ -40,5 +57,5 @@ command_tests:
           ssh_server: 172.18.0.22
           ssh_user: root
       
-
+      
 description: 'default builtin targets: adding a new role'

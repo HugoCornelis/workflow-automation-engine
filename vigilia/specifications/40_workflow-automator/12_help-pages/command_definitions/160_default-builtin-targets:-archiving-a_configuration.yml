@@ -6,11 +6,16 @@ command_tests:
       workflow builtin archive_configuration: create a tarball with the configuration of the current workflow project.
       
       synopsis:
+      ---------
+      
+      .. code-block:: bash
       
       builtin archive_configuration <tarball-name>
       
       arguments:
+      ----------
       
-          ARGV[0]: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
-
+          ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+      
+      
 description: 'default builtin targets: archiving a_configuration'

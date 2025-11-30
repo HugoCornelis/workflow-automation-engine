@@ -284,6 +284,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
   $ workflow --dry-run ssp build                                  # display the shell commands that would be executed to \'build\' the \'ssp\' target.
 
 options:
+
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
