@@ -9,19 +9,19 @@ command_tests:
       /home/neurospaces/new-project/abcd-commands-perl_examples:50:sub perl_examples_single_command_completions
       /home/neurospaces/new-project/abcd-commands-perl_examples:61:	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
       /home/neurospaces/new-project/abcd-commands-perl_examples:101:sub perl_examples_single_command_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:114:sub perl_examples_array_of_commands
-      /home/neurospaces/new-project/abcd-commands-perl_examples:130:sub perl_examples_array_of_commands_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:161:sub perl_examples_array_of_commands_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:176:sub perl_examples_array_of_commands_remote_execution
-      /home/neurospaces/new-project/abcd-commands-perl_examples:218:sub perl_examples_array_of_commands_remote_execution_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:249:sub perl_examples_array_of_commands_remote_execution_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:262:sub perl_examples_sequencing_and_composition
-      /home/neurospaces/new-project/abcd-commands-perl_examples:270:	   'echo this examples composes other examples into one sequence of commands',
-      /home/neurospaces/new-project/abcd-commands-perl_examples:275:    perl_examples_single_command();
-      /home/neurospaces/new-project/abcd-commands-perl_examples:276:    perl_examples_array_of_commands();
-      /home/neurospaces/new-project/abcd-commands-perl_examples:280:sub perl_examples_sequencing_and_composition_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:311:sub perl_examples_sequencing_and_composition_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:315:    return "$command: an example that composes other examples into one sequence of commands.
+      /home/neurospaces/new-project/abcd-commands-perl_examples:115:sub perl_examples_array_of_commands
+      /home/neurospaces/new-project/abcd-commands-perl_examples:131:sub perl_examples_array_of_commands_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:162:sub perl_examples_array_of_commands_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:178:sub perl_examples_array_of_commands_remote_execution
+      /home/neurospaces/new-project/abcd-commands-perl_examples:220:sub perl_examples_array_of_commands_remote_execution_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:251:sub perl_examples_array_of_commands_remote_execution_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:265:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:273:	   'echo this examples composes other examples into one sequence of commands',
+      /home/neurospaces/new-project/abcd-commands-perl_examples:278:    perl_examples_single_command();
+      /home/neurospaces/new-project/abcd-commands-perl_examples:279:    perl_examples_array_of_commands();
+      /home/neurospaces/new-project/abcd-commands-perl_examples:283:sub perl_examples_sequencing_and_composition_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:314:sub perl_examples_sequencing_and_composition_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:318:    return "$command: an example that composes other examples into one sequence of commands.
       /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
       /home/neurospaces/new-project/abcd-commands-python_examples.py:13:def python_examples_python_command_completions(command, argv):
       /home/neurospaces/new-project/abcd-commands-python_examples.py:18:           "4._Look_at_the_completion_function_of_python_examples_single_command_completions_to_understand_how_it_works": "further_explanation",

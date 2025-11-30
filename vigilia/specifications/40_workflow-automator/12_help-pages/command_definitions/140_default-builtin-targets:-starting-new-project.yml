@@ -9,6 +9,8 @@ command_tests:
       empty command file in the current working directory.
       
       arguments:
+      ~~~~~~~~~~
       
-          name: name of the new project.
+          ``ARGV[0]``: name of the new project.
+      
 description: 'default builtin targets: starting a new project'

@@ -177,6 +177,7 @@ my $global_builtin_operations
        grep => 1,
        install_scripts => 1,
        known_command_filenames => 1,
+       manual => 1,
        print_configuration_directory => 1,
        pull_scripts => 1,
        rename_project => 1,
@@ -815,7 +816,7 @@ sub ${target_name}_single_command_help
     return \"\$command: an example of the invocation a single command.
 
 arguments:
-----------
+~~~~~~~~~~
 
     force: command arguments can be parsed from \@ARGV.
 \";
@@ -876,7 +877,7 @@ sub ${target_name}_array_of_commands_help
     return \"\$command: an example of the invocation an array of commands.
 
 arguments:
-----------
+~~~~~~~~~~
 
     force: command arguments can be parsed from \\\@ARGV.
 \";
@@ -965,7 +966,7 @@ sub ${target_name}_array_of_commands_remote_execution_help
     return \"\$command: an example of the invocation an array of commands that are executed on a remote machine.
 
 arguments:
-----------
+~~~~~~~~~~
 
     none.
 \";
@@ -1028,7 +1029,7 @@ sub ${target_name}_sequencing_and_composition_help
     return \"\$command: an example that composes other examples into one sequence of commands.
 
 arguments:
-----------
+~~~~~~~~~~
 
     none.
 \";
@@ -2672,21 +2673,21 @@ sub builtin_add_role_help
     return "$command: add a new role and update the configuration to integrate it.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <role-name> <role-description> [-- <options>]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the new role.
 
     ``ARGV[1]``: description of the new role.
 
 options:
---------
+~~~~~~~~
 
     ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
 
@@ -2707,7 +2708,7 @@ options:
     ``--tmux-session``: The tmux session name.
 
 notes:
-------
+~~~~~~
 
 It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
 
@@ -2945,21 +2946,21 @@ sub builtin_add_target_help
     return "$command: add a new target and update the configuration to integrate it.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <target-name> <target-description> [-- <options>]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the new target.
 
     ``ARGV[1]``: description of the new target.
 
 options:
---------
+~~~~~~~~
 
     ``--install-commands-pl``: install a perl command file template.
 
@@ -3104,14 +3105,14 @@ sub builtin_archive_configuration_help
     return "$command: create a tarball with the configuration of the current workflow project.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <tarball-name>
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
 
@@ -3457,14 +3458,14 @@ sub builtin_grep_help
     return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: A regular expression to search for.
 
@@ -3665,7 +3666,7 @@ sub builtin_install_scripts_help
     return "$command : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
---------
+~~~~~~~~
 
     ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
 
@@ -3720,21 +3721,97 @@ sub builtin_known_command_filenames
 }
 
 
+sub strings_remove
+{
+    my $strings = shift;
+
+    my $options = shift;
+
+    my $sentence = shift;
+
+    if ($options eq 'with-dash-keep')
+    {
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s(-$string-)(-)ig;
+	    $sentence =~ s(^$string-)()ig;
+	    $sentence =~ s($string$)()ig;
+	}
+    }
+    elsif ($options eq 'without-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)()ig;
+	}
+    }
+    elsif ($options eq 'replace-with-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)(-)ig;
+	}
+    }
+    else
+    {
+	die "$0: Internal error in strings_remove()";
+    }
+
+    return $sentence;
+}
+
+
+sub sentence_summarize
+{
+    my $sentence = shift;
+
+    my $maximum_length = shift || 80;
+
+    my $result = "$sentence";
+
+    $result =~ s(\s+)(-)g;
+
+    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+
+    $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
+
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
+
+    $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
+
+    my $remove_these_chars = [ '<', '>', '\'' ];
+
+    $result = strings_remove($remove_these_chars, 'without-dash', $result);
+
+    $result = substr($result, 0, $maximum_length);
+
+    $result =~ s(-$)();
+
+    return $result;
+}
+
+
 sub builtin_manual
 {
     my $arguments = shift || [];
 
     my $option_input_rst = 1;
     my $option_input_md;
-    my $option_output_rst;
     my $option_output_pdf = 1;
+    my $option_remove_intermediate_files;
+    my $option_view = 1;
 
     our $options
 	= {
 	   'input-rst!' => \$option_input_rst,
 	   'input-md!' => \$option_input_md,
-	   'output-rst!' => \$option_output_rst,
 	   'output-pdf!' => \$option_output_pdf,
+	   "remove-intermediate-files!" => \$option_remove_intermediate_files,
+	   'view!' => \$option_view,
 	  };
 
     use Getopt::Long qw(GetOptionsFromArray);;
@@ -3748,23 +3825,51 @@ sub builtin_manual
 
     #t should we move operation_hash_typed_generate() and family to an Operation:: package?
 
-    my $operations_help = main::operation_hash_typed_generate('with help subs');
+    my $operations = main::operation_hash_typed_generate('with help subs');
 
-    my $target = 'builtin ';
+    my $target = $arguments->[0];
 
-    $operations_help
+    my $matcher;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'The workflow engine';
+
+    my $filename_suffix = '';
+
+    if (not defined $field_project_name)
+    {
+	$matcher = "builtin.*_help";
+    }
+    else
+    {
+	$matcher = "(?!builtin).*_help";
+    }
+
+    if (defined $target)
+    {
+	$matcher = "$target.*_help";
+
+	$filename_suffix = "-$target";
+
+	# remove all special characters that could confuse a shell
+
+	# $filename_suffix =~ s([\n.^$*+?(){}\[\]\\|])()g;
+
+	# or better: keep all the regular characters that cannot confuse a shell (user)
+
+	$filename_suffix =~ s/[^A-Za-z0-9._-]+//g;
+    }
+
+    my $operations_help
 	= [
 	   sort
 	   grep
 	   {
-	       /$target.*_help$/;
+	       /^$matcher$/;
 	   }
-	   keys %$operations_help,
+	   keys %$operations,
 	  ];
 
-    my $debug_builtin_manual = 0;
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'workflow';
+    my $debug_builtin_manual = 3;
 
     if ($debug_builtin_manual > 2)
     {
@@ -3773,7 +3878,9 @@ sub builtin_manual
 	print STDERR Dumper(
 			    {
 			     field_project_name => $field_project_name,
+			     filename_suffix => $filename_suffix,
 			     global_output_filename_template => $global_output_filename_template,
+			     matcher => $matcher,
 			     operations_help => $operations_help,
 			    } );
     }
@@ -3786,34 +3893,205 @@ sub builtin_manual
     my $rst_H4 = '-';
     my $rst_H5 = '~';
 
-    my $headers
-	= {
-	   rst => {
-		   H1 => $rst_H1,
-		   H2 => $rst_H2,
-		   H3 => $rst_H3,
-		   H4 => $rst_H4,
-		   H5 => $rst_H5,
-		  },
-	  };
+    # see https://www.markdownguide.org/basic-syntax/
+
+    my $md_H1 = '#';
+    my $md_H2 = '##';
+    my $md_H3 = '###';
+    my $md_H4 = '####';
+    my $md_H5 = '#####';
+    my $md_H6 = '######';
 
     my $header = uc $field_project_name;
 
     $header =~ s(-)( )g;
 
-    my $underline = $rst_H1 x length($header);
+    if ($option_input_rst)
+    {
+	my $underline_header = $rst_H1 x length($header);
 
-    $header .= "\n$underline\n";
+	$header .= "\n$underline_header\n\n";
+    }
+    elsif ($option_input_md)
+    {
+	$header = "$md_H1 $header\n";
+    }
+    else
+    {
+	# no op
+    }
 
     my $manual_string = "$header\n\n";
 
+    if ($option_input_rst)
+    {
+	$manual_string .= "This manual was automatically generated with the command line:
+
+.. code-block:: bash
+
+    $global_command_line
+
+";
+    }
+    elsif ($option_input_md)
+    {
+	$manual_string .= "This manual was automatically generated with the command line:
+
+```bash
+$global_command_line
+```
+";
+    }
+    else
+    {
+	$manual_string .= "This manual was automatically generated with the command line:
+
+\$ $global_command_line
+
+";
+    }
+
+    my $subheader = "Complete Draft Specification Manual";
+
+    if ($target)
+    {
+	$subheader = "Draft Specification Manual: target";
+
+	if ($option_input_rst)
+	{
+	    $subheader .= "``$target``";
+
+	    my $underline_subheader = $rst_H2 x length($subheader);
+
+	    $subheader .= "\n$underline_subheader\n\n";
+	}
+	elsif ($option_input_md)
+	{
+	    $subheader .= "`$target`";
+
+	    $subheader = "$md_H2 $subheader\n\n";
+	}
+	else
+	{
+	    $subheader .= "$target";
+	}
+    }
+
+    $manual_string .= "$subheader\n\n";
+
+    # now loop over all the targets and operations and document them
+
+    my $all_targets = $global_technical_project_configuration->{targets};
+
+    my $last_target = '';
+
     foreach my $operation_help (@$operations_help)
     {
-	my $header = $operation_help;
+	$operation_help =~ m(([^\s]+)\s+([^\s]+));
 
-	my $underline = $rst_H2 x length($operation_help);
+	my $this_target = $1;
 
-	$header .= "\n$underline\n";
+	my $this_operator = $2;
+
+	if ($last_target ne $this_target)
+	{
+	    {
+		if ($debug_builtin_manual > 2)
+		{
+		    use Data::Dumper;
+
+		    print STDERR Dumper(
+					{
+					 description => $all_targets->{$this_target}->{description},
+					 this_target => $this_target,
+					} );
+		}
+
+		my $target_header;
+
+		if ($option_input_rst)
+		{
+		    $target_header = "Target: $this_target";
+
+		    my $underline = $rst_H3 x length($target_header);
+
+		    $target_header .= "\n$underline\n\n";
+		}
+		elsif ($option_input_md)
+		{
+		    $target_header = "$md_H3 Target: $this_target";
+		}
+		else
+		{
+		    $target_header = "Target: $this_target\n";
+		}
+
+		$manual_string .= "\n$target_header\n\n";
+
+		my $description = $all_targets->{$this_target}->{description};
+
+		if ($description)
+		{
+		    $manual_string .= "$description\n\n";
+		}
+
+		my $documentation = $all_targets->{$this_target}->{documentation};
+
+		if ($documentation)
+		{
+		    $manual_string .= "$documentation\n\n";
+		}
+	    }
+
+	    {
+		my $target_header;
+
+		if ($option_input_rst)
+		{
+		    $target_header = "Alphabetical list of ``$this_target`` operations";
+
+		    my $underline = $rst_H3 x length($target_header);
+
+		    $target_header = "\n$target_header\n$underline\n";
+		}
+		elsif ($option_input_md)
+		{
+		    $target_header = "$md_H3 Alphabetical list of `$this_target` operations";
+		}
+		else
+		{
+		    $target_header = "Alphabetical list of $this_target operations";
+		}
+
+		$manual_string .= "\n$target_header\n\n";
+
+		my $description = "";
+
+		if ($description)
+		{
+		    $manual_string .= "$description\n\n";
+		}
+	    }
+	}
+
+	my $header = "$operation_help";
+
+	$header =~ s(_help$)();
+
+	if ($option_input_rst)
+	{
+	    my $underline = $rst_H4 x length($header);
+
+	    $header = "\n$header\n$underline\n";
+	}
+	elsif ($option_input_md)
+	{
+	    $header = "$md_H4 $header";
+	}
+	else
+	{
+	    # no op
+	}
 
 	my $operation_help_with_package = "Command::$operation_help";
 
@@ -3822,36 +4100,68 @@ sub builtin_manual
 	my $help_string = main::call_help_implementation($operation_help_with_package, [ 'manual' ]);
 
 	$manual_string .= "$header\n$help_string\n";
+
+	$last_target = $this_target;
     }
 
-    my $manual_filename = "$field_project_name-manual.rst";
+    my $manual_basename = sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual$filename_suffix";
+
+    my $manual_filename = "$manual_basename.rst";
 
     my $manual_file;
 
-    my $ok = open($manual_file, ">", $manual_filename);
+    my $ok = 'by default';
 
-    if (not $ok)
+    if (not $option_dry_run
+        and not $option_interactions_module_all_roles
+	and not $option_interactions)
     {
-	die "*** Error: $global_program_name: cannot open $manual_filename for writing ($!)";
+	$ok = open($manual_file, ">", $manual_filename);
+
+	if (not $ok)
+	{
+	    die "*** Error: $global_program_name: cannot open $manual_filename for writing ($!)";
+	}
+
+	print $manual_file $manual_string;
+
+	$ok = close($manual_file);
     }
+    else
+    {
+	my $commands
+	    = [
+	       "echo Internal commands to generate '$manual_filename'",
+	      ];
 
-    print $manual_file $manual_string;
-
-    $ok = close($manual_file);
+	execute_shell_command_array($commands);
+    }
 
     if ($ok)
     {
+	my $commands = [];
+
 	if ($option_output_pdf
 	    and $option_input_rst)
 	{
-	    my $commands
+	    $commands
 		= [
-		   "pandoc '$manual_filename' -o '$field_project_name-manual.pdf'",
-		   # "pandoc '$manual_filename' -o '$field_project_name-manual.pdf' && rm '$manual_filename'",
+		   "pandoc '$manual_filename' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
+		   ($option_remove_intermediate_files ? "rm '$manual_filename'" : ()),,
+		   ($option_view ? "okular '$manual_basename.pdf'" : ()),
 		  ];
-
-	    execute_shell_command_array($commands);
 	}
+	elsif ($option_output_pdf)
+	{
+	    $commands
+		= [
+		   ($option_view ? "okular '$manual_basename.pdf'" : ()),
+		  ];
+	}
+
+	execute_shell_command_array($commands);
     }
 
     # return the error (code)
@@ -3865,10 +4175,11 @@ sub builtin_manual_completions
     my $options_completions
 	= {
 	   '--' => {
-		    '--input-rst' => '',
 		    '--input-md' => '',
-		    '--output-rst' => '',
+		    '--input-rst' => '',
 		    '--output-pdf' => '',
+		    '--remove-intermediate-files' => '',
+		    '--view' => '',
 		   },
 	  };
 }
@@ -3881,34 +4192,33 @@ sub builtin_manual_help
     return "$command : print the manual to stdout.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command \[ <target> \] \[ -- <--options> \]
 
 arguments:
-----------
+~~~~~~~~~~
 
-    ``ARGV[0]``: The target to which to build a manual.
+    ``ARGV[0]``: The regular expression target to which to build a manual.
              Without a project the default is 'builtin'.
              With a project the default is everything except 'builtin'.
 
     ``ARGV[1]``: The type of manual (now always specification, later maybe also user).
 
 options:
---------
+~~~~~~~~
 
     ``--input-md``: Assume an input format of MarkDown.
 
     ``--input-rst``: Assume an input format of ReStructuredText, this is the default.
 
-    ``--output-md``: Generate an MarkDown document.
-
     ``--output-pdf``: Generate a PDF document.
 
-    ``--output-rst``: Generate an ReStructuredText document.
+    ``--remove-intermediate-files``: Remove intermediate files.
 
+    ``--view``: Start the ``okular`` viewer on the generated ``pdf`` document.
 ";
 }
 
@@ -3945,7 +4255,7 @@ sub builtin_print_configuration_directory_help
     return "$command : print the directory where the configuration of this project is found.
 
 arguments:
-----------
+~~~~~~~~~~
 
     none.
 ";
@@ -4283,7 +4593,7 @@ sub builtin_rename_project_help
     return "$command: Rename the project from which this command is invoked (the 'current' project).
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: the new project name.
 
@@ -4485,7 +4795,7 @@ This will create a project descriptor, a configuration file and an
 empty command file in the current working directory.
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: name of the new project.
 ";
@@ -5396,7 +5706,7 @@ you use:
 'sudo apt install git-filter-repo'
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: source_repo
 
@@ -6043,14 +6353,14 @@ sub builtin_qemu_qcow2_mount_help
     return "$command: Mount a qcow2 image.
 
 synopsis:
----------
+~~~~~~~~~
 
 .. code-block:: bash
 
 $command <file-name> [ <number-of-partitions> ]
 
 arguments:
-----------
+~~~~~~~~~~
 
     ``ARGV[0]``: The filename of a qcow2 image.
 
