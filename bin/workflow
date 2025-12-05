@@ -3290,6 +3290,81 @@ options:
 }
 
 
+sub builtin_docker_exec
+{
+    my $arguments = shift || [];
+
+    my $roles = $global_technical_project_configuration->{roles};
+
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
+    my $docker_command = 'docker';
+
+    my $configuration_directory = "$::global_field_project_configuration->{sources_configuration_directory}";
+
+    my $role = $arguments->[0];
+
+    my $command_inside = $arguments->[1];
+
+    my $docker_container = $roles->{$role};
+
+    my $name_container = $docker_container->{name_container} || $role . "_container";
+
+    my $commands
+	= [
+	   "cd $configuration_directory",
+	   "$docker_command exec -it $name_container $command_inside",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_docker_exec_completions
+{
+    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
+
+    my $result
+	= {
+	   ( "1.Type-a-role-name:" => ''),
+	   map
+	   {
+	       $_ => '';
+	   }
+	   @$docker_roles,
+	  };
+
+    return $result;
+}
+
+
+sub builtin_docker_exec_help
+{
+    my $command = shift;
+
+    return "$command: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <docker-role-name> '<command-to-run-inside-the-container>'
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+    ``ARGV[1]``: A command to run inside the container, likely quoted.
+
+";
+}
+
+
 sub builtin_docker_images_build
 {
     my $arguments = shift || [];

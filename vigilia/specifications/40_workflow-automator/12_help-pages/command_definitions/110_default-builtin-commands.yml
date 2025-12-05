@@ -15,6 +15,7 @@ command_tests:
         - workflow builtin add_target
         - workflow builtin archive_configuration
         - workflow builtin docker_containers_start
+        - workflow builtin docker_exec
         - workflow builtin docker_images_build
         - workflow builtin fetch_scripts
         - workflow builtin grep

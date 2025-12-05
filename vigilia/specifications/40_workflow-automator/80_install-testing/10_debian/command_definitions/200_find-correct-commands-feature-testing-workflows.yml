@@ -17,6 +17,7 @@ command_tests:
         - feature-testing-workflow builtin add_target
         - feature-testing-workflow builtin archive_configuration
         - feature-testing-workflow builtin docker_containers_start
+        - feature-testing-workflow builtin docker_exec
         - feature-testing-workflow builtin docker_images_build
         - feature-testing-workflow builtin fetch_scripts
         - feature-testing-workflow builtin grep
