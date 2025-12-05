@@ -7,6 +7,8 @@ targets:
     description: 'Operations on the build target, here this is used to test bash completion features.'
   docker_testing:
     description: Docker role testing
+  examples_sh:
+    description: Shell examples
   features:
     description: testing of workflow features
   more_python:

@@ -24,7 +24,9 @@ my $test
 				command_tests => [
 						  {
 						   description => "Do we get a sensible error message when an non-existent target is invoked ?",
-						   read => 'workflow: *** Error: Either target \'start_project\' does not exist or it does not provide command \'mosart-beethoven\'.',
+						   read => 'workflow: *** Error: target \'start_project\' does not exist
+
+',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
@@ -35,7 +37,9 @@ my $test
 				command_tests => [
 						  {
 						   description => "Do we get a sensible error message when an non-existent command is invoked ?",
-						   read => 'workflow: *** Error: Either target \'builtin\' does not exist or it does not provide command \'mosart-beethoven\'.',
+						   read => 'workflow: *** Error: target \'builtin\' does not provide command \'mosart-beethoven\'.
+
+',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],

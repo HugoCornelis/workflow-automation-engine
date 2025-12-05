@@ -1548,6 +1548,8 @@ targets:
     description: used for processing of target files that are produced by other targets
   docker:
     description: interaction with the docker build container
+  examples_sh:
+    description: these are shell script examples for demonstration how they provide integrated workflows
   perl_examples:
     description: these are perl examples that explain how to use the APIs
   python_examples:
@@ -8658,7 +8660,7 @@ sub generate_output_filename
 package FieldProject;
 
 
-our $status;
+our $fp_status;
 
 
 sub _configuration_export
@@ -9233,7 +9235,7 @@ sub _init_get_field_project_configuration
 	}
 	else
 	{
-	    $status = "$global_program_name: *** Error: '$search_path_workflow_executable_filename cannot be read\n";
+	    $fp_status = "$global_program_name: *** Error: '$search_path_workflow_executable_filename cannot be read\n";
 
 	    return undef;
 	}
@@ -9284,7 +9286,7 @@ sub _init_get_field_project_configuration
 
 	    my $field_project_name = $field_project_configuration->{field_project_name};
 
-	    $status = $eval_status;
+	    $fp_status = $eval_status;
 
 	    # resolve the symbolic link from ~/bin/* or ~/.local/bin/* to its absolute path it refers to
 
@@ -9323,7 +9325,7 @@ sub _init_get_field_project_configuration
 	    }
 	    else
 	    {
-		# $status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
+		# $fp_status = "$global_program_name: *** Error: no valid configuration file '$field_project_configuration_filename' found in any of the configuration directories ('.', 'global_program_rel_directory' or '$global_program_abs_directory')\n";
 
 		# return undef;
 	    }
@@ -9369,7 +9371,7 @@ sub _init_get_technical_configuration
 
     if (not defined $search_path_workflow_executable_directory)
     {
-	$status = "$global_program_name: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
+	$fp_status = "$global_program_name: *** Error: no configuration file '$project_name-configuration' found in any of the searched directories (would prefer this to be in $global_program_rel_directory)\n";
 
 	return undef;
     }
@@ -9394,7 +9396,7 @@ sub _init_get_technical_configuration
 	($technical_configuration, $eval_status) = _init_do_eval_perl_file($technical_configuration_filename);
     }
 
-    $status = $eval_status;
+    $fp_status = $eval_status;
 
     return $technical_configuration;
 }
@@ -10384,6 +10386,43 @@ sub main
 	#! bash_completion() never returns
     }
 
+    if (not defined $global_target)
+    {
+	report_error_exit("no target defined");
+    }
+
+    if (not exists $global_technical_project_configuration->{targets}->{$global_target})
+    {
+	report_error_exit("target '$global_target' does not exist");
+    }
+
+    if ((not defined $option_interactions_all
+	 and not defined $option_interactions_module_all_roles)
+	and not defined $global_target)
+    {
+	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-module-all-roles), try --help");
+    }
+
+    # always allow the builtin operations (start a new project, add a new target, ...)
+
+    #! they should do their own checking for a valid
+    #! field_configuration, project_name as required.
+
+    if ($global_target eq 'builtin'
+	and (defined $global_operation
+	     and exists $global_builtin_operations->{$global_operation})
+	or (defined $global_operation
+	    and exists $global_known_operation_packages_builtin->{$global_operation}))
+    {
+    }
+    else
+    {
+	if ($fp_status)
+	{
+	    report_error_exit($fp_status);
+	}
+    }
+
     # figure out the target and the operation
 
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
@@ -10565,7 +10604,7 @@ sub main
 
 		if (!defined $sub_name)
 		{
-		    die "$0: *** Error: No function name given while trying to use a builtin package '$operation_or_package'";
+		    report_error_exit("no function name given while trying to use a builtin package '$operation_or_package'");
 		}
 
 		$type_package_builtin = $operation_or_package;
@@ -10679,13 +10718,13 @@ sub main
 
 		    else
 		    {
-			die "$global_program_name: *** Error: unknown command type $type when invoking command '$requested_target $operation_or_package'";
+			report_error_exit("unknown command type $type when invoking command '$requested_target $operation_or_package'");
 		    }
 		}
 	    }
 	    else
 	    {
-		die "$global_program_name: *** Error: Either target '$requested_target' does not exist or it does not provide command '$operation_or_package'.";
+		report_error_exit("target '$requested_target' does not provide command '$operation_or_package'.");
 	    }
 	}
 
@@ -10935,36 +10974,9 @@ options:
 	exit 0;
     }
 
-    if ((not defined $option_interactions_all
-	 and not defined $option_interactions_module_all_roles)
-	and not defined $global_target)
+    if ($FieldProject::fp_status)
     {
-	die "$global_program_name: *** Error: neither a target option nor target argument given, try --help";
-    }
-
-    if ($FieldProject::status)
-    {
-	$status = $FieldProject::status;
-    }
-
-    # always allow the builtin operations (start a new project, add a new target, ...)
-
-    #! they should do their own checking for a valid
-    #! field_configuration, project_name as required.
-
-    if ($global_target eq 'builtin'
-	and (defined $global_operation
-	     and exists $global_builtin_operations->{$global_operation})
-	or (defined $global_operation
-	    and exists $global_known_operation_packages_builtin->{$global_operation}))
-    {
-    }
-    else
-    {
-	if ($status)
-	{
-	    die $status;
-	}
+	$status = $FieldProject::fp_status;
     }
 }
 
@@ -10986,6 +10998,20 @@ sub project_name_2_configuration_data_directory
     my $configuration_data_directory = "$field_project_configuration->{sources_configuration_filename}-data";
 
     return ($sources_configuration_directory, $configuration_data_directory);
+}
+
+
+sub report_error_exit
+{
+    my $error = shift;
+
+    my $exit_code = shift;
+
+    my $error_message = "$global_program_name: *** Error: $error";
+
+    print STDERR "$error_message\n\n\n";
+
+    die $error_message;
 }
 
 
