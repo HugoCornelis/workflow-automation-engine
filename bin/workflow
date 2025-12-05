@@ -1611,11 +1611,11 @@ roles:
     remote_policy: 'docker exec -it docker_build_container'
     shared_volumes_examples:
       - description: This is an example for sharing ssh keys read-only (use with caution).
-        inside: /home/$USER_NAME/.ssh
-        outside: /home/$USER_NAME/.ssh:ro
+        inside: %%HOME_DIRECTORY%%/.ssh:ro
+        outside: %%HOME_DIRECTORY%%/.ssh
       - description: This is another example for some directory
-        inside: /home/$USER_NAME/directory_inside_the_container
-        outside: /home/$USER_NAME/directory_outside_the_container
+        inside: %%HOME_DIRECTORY%%/directory_inside_the_container
+        outside: %%HOME_DIRECTORY%%/directory_outside_the_container
   laptop:
     description: the local computer of the developer
     localuser: yes
@@ -2013,6 +2013,11 @@ return \$configuration;
 sub _builtin_tmux_sessions
 {
     my $roles = $global_technical_project_configuration->{roles};
+
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
 
     my $tmux_sessions = [];
 
@@ -3120,21 +3125,35 @@ arguments:
 }
 
 
-sub _builtin_docker_roles
+sub _builtin_roles_select
 {
+    my $matcher = shift;
+
     my $roles = $global_technical_project_configuration->{roles};
 
-    my $docker_roles = [];
-
-    foreach my $role_name (sort keys %$roles)
+    if (not defined $roles)
     {
-	if ($role_name =~ m(^docker_))
-	{
-	    push @$docker_roles, $role_name;
-	}
+	$roles = $global_technical_project_configuration->{target_servers};
     }
 
-    return $docker_roles;
+    my $matching_roles
+	= {
+	   map
+	   {
+	       my $role_name = $_;
+
+	       my $result = { $role_name => $roles->{$role_name} };
+
+	       %$result;
+	   }
+	   grep
+	   {
+	       /$matcher/;
+	   }
+	   sort keys %$roles,
+	  };
+
+    return $matching_roles;
 }
 
 
@@ -3160,9 +3179,14 @@ sub builtin_docker_containers_start
 
     my $roles = $global_technical_project_configuration->{roles};
 
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
     my $docker_command = 'docker';
 
-    my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
+    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     foreach my $role (@$docker_roles)
     {
@@ -3189,8 +3213,10 @@ sub builtin_docker_containers_start
 
 	foreach my $shared_volume (@$shared_volumes)
 	{
-	    $shared_volumes_option .= " -v $shared_volume->{inside}:$shared_volume->{outside}";
+	    $shared_volumes_option .= " -v $shared_volume->{outside}:$shared_volume->{inside}";
 	}
+
+	$shared_volumes_option =~ s(%%HOME_DIRECTORY%%)($ENV{HOME})g;
 
 	#! I have no idea when DiD whould be useful, but just leave a handle here
 
@@ -3212,7 +3238,7 @@ sub builtin_docker_containers_start
 
 sub builtin_docker_containers_start_completions
 {
-    my $docker_roles = _builtin_docker_roles();
+    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     my $option_completions
 	= {
@@ -3241,6 +3267,100 @@ sub builtin_docker_containers_start_help
     my $command = shift;
 
     return "$command: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <docker-role-name> [ -- <options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+options:
+~~~~~~~~
+
+    ``--restart``: Stop, then start the Docker container.
+
+    ``--no-restart``: Do not start the Docker container, this is the default.
+";
+}
+
+
+sub builtin_docker_exec
+{
+    my $arguments = shift || [];
+
+    my $roles = $global_technical_project_configuration->{roles};
+
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
+    my $docker_command = 'docker';
+
+    my $configuration_directory = "$::global_field_project_configuration->{sources_configuration_directory}";
+
+    my $role = $arguments->[0];
+
+    my $command_inside = $arguments->[1];
+
+    my $docker_container = $roles->{$role};
+
+    my $name_container = $docker_container->{name_container} || $role . "_container";
+
+    my $commands
+	= [
+	   "cd $configuration_directory",
+	   "$docker_command exec -it $name_container $command_inside",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_docker_exec_completions
+{
+    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
+
+    my $result
+	= {
+	   ( "1.Type-a-role-name:" => ''),
+	   map
+	   {
+	       $_ => '';
+	   }
+	   @$docker_roles,
+	  };
+
+    return $result;
+}
+
+
+sub builtin_docker_exec_help
+{
+    my $command = shift;
+
+    return "$command: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <docker-role-name> '<command-to-run-inside-the-container>'
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+    ``ARGV[1]``: A command to run inside the container, likely quoted.
+
 ";
 }
 
@@ -3251,13 +3371,18 @@ sub builtin_docker_images_build
 
     my $roles = $global_technical_project_configuration->{roles};
 
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
     my $docker_command = 'docker';
 
     my $configuration_directory = "$::global_field_project_configuration->{sources_configuration_directory}";
 
     my $project_name = "$::global_field_project_configuration->{field_project_name}";
 
-    my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
+    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     foreach my $role (@$docker_roles)
     {
@@ -3273,10 +3398,37 @@ sub builtin_docker_images_build
 
 	my $dockerfile = $docker_container->{dockerfile} || "Dockerfile.$dockerfile_suffix";
 
+	my $build_args_option = '';
+
+	my $build_args = $docker_container->{build_args};
+
+	if (defined $build_args
+	    and not ref $build_args)
+	{
+	    $build_args_option .= " --build-arg $build_args";
+	}
+	else
+	{
+	    foreach my $build_arg (@$build_args)
+	    {
+		if (not ref $build_arg)
+		{
+		    $build_args_option .= " --build-arg $build_arg";
+		}
+		else
+		{
+		    $build_args_option .= " --build-arg $build_arg->{name}=$build_arg->{value}";
+		}
+	    }
+	}
+
+	$build_args_option =~ s(%%HOME_DIRECTORY%%)($ENV{HOME})g;
+
 	my $commands
 	    = [
 	       "cd $configuration_directory",
-	       "$docker_command build --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID --file $project_name-configuration-data/dockerfiles/$dockerfile .",
+	       # "$docker_command buildx build --load --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $project_name-configuration-data/dockerfiles/$dockerfile .",
+	       "$docker_command build --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $project_name-configuration-data/dockerfiles/$dockerfile .",
 	      ];
 
 	execute_shell_command_array($commands);
@@ -3291,7 +3443,7 @@ sub builtin_docker_images_build
 
 sub builtin_docker_images_build_completions
 {
-    my $docker_roles = _builtin_docker_roles();
+    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     my $result
 	= {
@@ -3312,6 +3464,12 @@ sub builtin_docker_images_build_help
     my $command = shift;
 
     return "$command: Build the docker images that are required for the roles in this project.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
 ";
 }
 
@@ -4598,6 +4756,39 @@ arguments:
     ``ARGV[0]``: the new project name.
 
     ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+";
+}
+
+
+sub builtin_role_print
+{
+    my $arguments = shift || [];
+
+    my $matcher = $arguments->[0] || '.*';
+
+    my $matching_roles = _builtin_roles_select($matcher);
+
+    use YAML;
+
+    print Dump($matching_roles);
+
+    return 0;
+}
+
+
+sub builtin_role_print_help
+{
+    my $command = shift;
+
+    return "$command: Print the known roles.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
+                 '``^docker_``' prints Docker roles,
+                 '``^serial_``' prints serial console roles,
+                 '``^tmux_``' prints tmux roles.
 ";
 }
 
@@ -7225,6 +7416,11 @@ sub identify_interaction_roles
     elsif ($option_interactions_module_all_roles)
     {
 	my $roles = $global_technical_project_configuration->{roles};
+
+	if (not defined $roles)
+	{
+	    $roles = $global_technical_project_configuration->{target_servers};
+	}
 
 	my $interaction_indent = 4;
 
