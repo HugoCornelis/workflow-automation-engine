@@ -3398,10 +3398,37 @@ sub builtin_docker_images_build
 
 	my $dockerfile = $docker_container->{dockerfile} || "Dockerfile.$dockerfile_suffix";
 
+	my $build_args_option = '';
+
+	my $build_args = $docker_container->{build_args};
+
+	if (defined $build_args
+	    and not ref $build_args)
+	{
+	    $build_args_option .= " --build-arg $build_args";
+	}
+	else
+	{
+	    foreach my $build_arg (@$build_args)
+	    {
+		if (not ref $build_arg)
+		{
+		    $build_args_option .= " --build-arg $build_arg";
+		}
+		else
+		{
+		    $build_args_option .= " --build-arg $build_arg->{name}=$build_arg->{value}";
+		}
+	    }
+	}
+
+	$build_args_option =~ s(%%HOME_DIRECTORY%%)($ENV{HOME})g;
+
 	my $commands
 	    = [
 	       "cd $configuration_directory",
-	       "$docker_command build --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID --file $project_name-configuration-data/dockerfiles/$dockerfile .",
+	       # "$docker_command buildx build --load --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $project_name-configuration-data/dockerfiles/$dockerfile .",
+	       "$docker_command build --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $project_name-configuration-data/dockerfiles/$dockerfile .",
 	      ];
 
 	execute_shell_command_array($commands);
