@@ -2014,6 +2014,11 @@ sub _builtin_tmux_sessions
 {
     my $roles = $global_technical_project_configuration->{roles};
 
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
     my $tmux_sessions = [];
 
     foreach my $role_name (sort keys %$roles)
@@ -3160,6 +3165,11 @@ sub builtin_docker_containers_start
 
     my $roles = $global_technical_project_configuration->{roles};
 
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
     my $docker_command = 'docker';
 
     my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
@@ -3250,6 +3260,11 @@ sub builtin_docker_images_build
     my $arguments = shift || [];
 
     my $roles = $global_technical_project_configuration->{roles};
+
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
 
     my $docker_command = 'docker';
 
@@ -7225,6 +7240,11 @@ sub identify_interaction_roles
     elsif ($option_interactions_module_all_roles)
     {
 	my $roles = $global_technical_project_configuration->{roles};
+
+	if (not defined $roles)
+	{
+	    $roles = $global_technical_project_configuration->{target_servers};
+	}
 
 	my $interaction_indent = 4;
 
