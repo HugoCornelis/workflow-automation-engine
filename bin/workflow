@@ -4633,6 +4633,39 @@ arguments:
 }
 
 
+sub builtin_role_print
+{
+    my $arguments = shift || [];
+
+    my $matcher = $arguments->[0] || '.*';
+
+    my $matching_roles = _builtin_roles_select($matcher);
+
+    use YAML;
+
+    print Dump($matching_roles);
+
+    return 0;
+}
+
+
+sub builtin_role_print_help
+{
+    my $command = shift;
+
+    return "$command: Print the known roles.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
+                 '``^docker_``' prints Docker roles,
+                 '``^serial_``' prints serial console roles,
+                 '``^tmux_``' prints tmux roles.
+";
+}
+
+
 sub builtin_start_project
 {
     my $arguments = shift || [];

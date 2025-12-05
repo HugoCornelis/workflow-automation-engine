@@ -533,6 +533,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project
+  - workflow-tests-workflow builtin role_print
   - workflow-tests-workflow builtin start_project
   - workflow-tests-workflow builtin tmux_create_sessions
   - workflow-tests-workflow builtin tmux_kill_sessions
@@ -574,6 +575,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin print_configuration_directory
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project
+  - workflow-tests-workflow builtin role_print
   - workflow-tests-workflow builtin start_project
   - workflow-tests-workflow builtin tmux_create_sessions
   - workflow-tests-workflow builtin tmux_kill_sessions

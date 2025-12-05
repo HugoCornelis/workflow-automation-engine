@@ -24,6 +24,7 @@ command_tests:
         - workflow builtin print_configuration_directory
         - workflow builtin pull_scripts
         - workflow builtin rename_project
+        - workflow builtin role_print
         - workflow builtin start_project
         - workflow builtin tmux_create_sessions
         - workflow builtin tmux_kill_sessions

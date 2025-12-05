@@ -1,0 +1,35 @@
+---
+command: workflow builtin role_print --help
+command_tests:
+  - description: Do we see the help page for printing known roles?
+    read: |+
+      workflow builtin role_print: Print the known roles.
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
+                       '``^docker_``' prints Docker roles,
+                       '``^serial_``' prints serial console roles,
+                       '``^tmux_``' prints tmux roles.
+
+    white_space: convert seen 0a to 0d 0a newlines
+comment: |+
+  This type of comment element can be inserted at any level in the YAML files that define tests.
+  
+  For a concise example, see the second command definition that was generated with this one.
+  
+  The tests are defined with arrays of command definitions that each can have an array of command tests.
+  
+  Recognized key words at the level of the command definitions are (in alphabetical order):
+  
+  class: The name of a perl class that will execute the tests.
+  command: The command the must be tested, with space seperated arguments and options.
+  command_tests: An array of the tests executed against the command.
+  disable: Gives the reason why this test command is disabled.
+  description: A single line description of all the tests for the given command.
+  error: Gives the reason why this test command will always fail.
+  numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+  tag: An array of tags associated with this command.  These are matched with the tags given on the command line.
+
+description: Do we see the help page for printing known roles?
