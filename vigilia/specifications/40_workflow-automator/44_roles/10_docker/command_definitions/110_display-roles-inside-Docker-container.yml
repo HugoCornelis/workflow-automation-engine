@@ -1,0 +1,73 @@
+---
+command: feature-testing-workflow builtin role_print
+command_tests:
+  - description: Can we display the roles inside the Docker container?
+    read: |2
+      
+      build:
+        description: your build server that does builds and is used for testing
+        name: build
+        ssh_server: build.your.local.domain
+        ssh_user: tester
+      docker_source_code:
+        comment: The name of this role is the name of the target prefixed with the string 'docker_'.
+        description: interaction with the docker build container
+        name: docker_source_code
+        remote_policy: docker exec -it docker_source_code_container
+        shared_volumes_examples:
+          - description: This is an example for sharing ssh keys read-only (use with caution).
+            inside: /home/$USER_NAME/.ssh
+            outside: /home/$USER_NAME/.ssh:ro
+          - description: This is another example for some directory
+            inside: /home/$USER_NAME/directory_inside_the_container
+            outside: /home/$USER_NAME/directory_outside_the_container
+      laptop:
+        description: the local computer of the developer
+        localuser: yes
+        name: laptop
+        ssh_port: 22
+        ssh_server: 192.168.4.70
+        ssh_user: hugo
+      ssh_cd:
+        description: interaction with the combined ssh to test cd commands
+        name: ssh_cd
+        scp_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        ssh_password: harness
+        ssh_port: 22
+        ssh_server: 172.18.0.22
+        ssh_user: root
+      tmux_cd:
+        description: interaction with the tmux session to test cd commands
+        name: tmux_cd
+        remote_policy: 'tmux send-keys -t cd '
+      tmux_ssh_cd:
+        description: interaction with the combined ssh / tmux session to test cd commands
+        name: tmux_ssh_cd
+        remote_policy: 'tmux send-keys -t ssh_cd '
+        remote_policy1: 'ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@172.17.0.2 tmux send-keys -t ssh_cd '
+        ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+        ssh_password: harness
+        ssh_port: 22
+        ssh_server: 172.18.0.22
+        ssh_user: root
+    white_space: convert seen 0a to 0d 0a newlines
+comment: |+
+  This type of comment element can be inserted at any level in the YAML files that define tests.
+  
+  For a concise example, see the second command definition that was generated with this one.
+  
+  The tests are defined with arrays of command definitions that each can have an array of command tests.
+  
+  Recognized key words at the level of the command definitions are (in alphabetical order):
+  
+  class: The name of a perl class that will execute the tests.
+  command: The command the must be tested, with space seperated arguments and options.
+  command_tests: An array of the tests executed against the command.
+  disable: Gives the reason why this test command is disabled.
+  description: A single line description of all the tests for the given command.
+  error: Gives the reason why this test command will always fail.
+  numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
+  tag: An array of tags associated with this command.  These are matched with the tags given on the command line.
+
+description: Can we display the roles inside the Docker container?
