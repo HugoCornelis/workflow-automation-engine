@@ -4113,7 +4113,7 @@ $global_command_line
 
     if ($target)
     {
-	$subheader = "Draft Specification Manual: target";
+	$subheader = "Draft Specification Manual: target ";
 
 	if ($option_input_rst)
 	{
