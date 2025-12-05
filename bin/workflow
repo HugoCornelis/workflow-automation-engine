@@ -3125,21 +3125,35 @@ arguments:
 }
 
 
-sub _builtin_docker_roles
+sub _builtin_roles_select
 {
+    my $matcher = shift;
+
     my $roles = $global_technical_project_configuration->{roles};
 
-    my $docker_roles = [];
-
-    foreach my $role_name (sort keys %$roles)
+    if (not defined $roles)
     {
-	if ($role_name =~ m(^docker_))
-	{
-	    push @$docker_roles, $role_name;
-	}
+	$roles = $global_technical_project_configuration->{target_servers};
     }
 
-    return $docker_roles;
+    my $matching_roles
+	= {
+	   map
+	   {
+	       my $role_name = $_;
+
+	       my $result = { $role_name => $roles->{$role_name} };
+
+	       %$result;
+	   }
+	   grep
+	   {
+	       /$matcher/;
+	   }
+	   sort keys %$roles,
+	  };
+
+    return $matching_roles;
 }
 
 
@@ -3172,7 +3186,7 @@ sub builtin_docker_containers_start
 
     my $docker_command = 'docker';
 
-    my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
+    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     foreach my $role (@$docker_roles)
     {
@@ -3224,7 +3238,7 @@ sub builtin_docker_containers_start
 
 sub builtin_docker_containers_start_completions
 {
-    my $docker_roles = _builtin_docker_roles();
+    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     my $option_completions
 	= {
@@ -3274,7 +3288,7 @@ sub builtin_docker_images_build
 
     my $project_name = "$::global_field_project_configuration->{field_project_name}";
 
-    my $docker_roles = scalar @$arguments ? $arguments : _builtin_docker_roles();
+    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     foreach my $role (@$docker_roles)
     {
@@ -3308,7 +3322,7 @@ sub builtin_docker_images_build
 
 sub builtin_docker_images_build_completions
 {
-    my $docker_roles = _builtin_docker_roles();
+    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
 
     my $result
 	= {
