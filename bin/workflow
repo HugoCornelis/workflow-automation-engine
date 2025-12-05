@@ -3267,6 +3267,25 @@ sub builtin_docker_containers_start_help
     my $command = shift;
 
     return "$command: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <docker-role-name> [ -- <options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+options:
+~~~~~~~~
+
+    ``--restart``: Stop, then start the Docker container.
+
+    ``--no-restart``: Do not start the Docker container, this is the default.
 ";
 }
 
@@ -3343,6 +3362,12 @@ sub builtin_docker_images_build_help
     my $command = shift;
 
     return "$command: Build the docker images that are required for the roles in this project.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
 ";
 }
 
