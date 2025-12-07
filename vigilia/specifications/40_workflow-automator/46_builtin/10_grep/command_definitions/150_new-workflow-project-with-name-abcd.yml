@@ -20,7 +20,7 @@ command_tests:
       
         abcd-workflow examples array_of_commands_remote_execution --interactions
       
-        abcd-workflow examples sequencing_and_composition --interactions-module
+        abcd-workflow examples sequencing_and_composition --interactions-target
       
         abcd-workflow examples single_command --dry-run
       
