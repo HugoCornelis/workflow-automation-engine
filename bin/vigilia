@@ -1330,7 +1330,7 @@ Recognized key words are (in alphabetical order):
 
 description: Gives a general description of the test module.
 disable: Gives the reason why this test module is disabled.
-documentation: Has keywords with information for inclusion in documents.  They are not considered druing tests.
+documentation: Has keywords with information for inclusion in documents.  They are not considered during tests.
 error: Gives the reason why this test module will always fail.
 harnessing: A harnessing key word defines the container that is used to run the commands to be tested.
 
