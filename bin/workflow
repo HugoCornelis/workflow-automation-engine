@@ -10495,99 +10495,9 @@ sub main
 	    $global_execute_what_is_scheduled = '';
 	}
 
-	my $all_typed_operations = operation_hash_typed_generate('with help subs');
-
 	if ($dry_run_module_commands)
 	{
-	    # generate the list of all commands
-
-	    my $all_operations = operation_hash_with_structure_generate($all_typed_operations);
-
-	    # loop over all the matching targets
-
-	    my $all_defined_targets = $global_technical_project_configuration->{targets};
-
-	    foreach my $defined_target (
-					grep
-					{
-					    m(^$requested_target$);
-					}
-					keys %$all_defined_targets
-				       )
-	    {
-		# reference subroutine names specific for the given target: they belong together
-
-		my $target_subroutines = $all_operations->{$defined_target};
-
-		# collect the subroutine names
-
-		my $operation_implementations
-		    = [
-		       map
-		       {
-			   my $subroutine = $_;
-
-			   "Command::${defined_target}_${subroutine}";
-		       }
-		       keys %$target_subroutines,
-		      ];
-
-		# invoke all these subroutines in dry run mode to have them either generate or report the module roles
-
-		foreach my $operation_implementation (sort @$operation_implementations)
-		{
-		    if ($option_verbose)
-		    {
-			print "Invoking ($operation_implementation)\n";
-		    }
-
-		    if ($operation_implementation =~ /_help$/)
-		    {
-			next;
-		    }
-
-		    my $has_help = '';
-
-		    if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
-		    {
-			$has_help = " (use --help to see the help page)";
-		    }
-
-		    $operation_implementation =~ /Command::(.*)/;
-
-		    my $short_operation = $1;
-
-		    # add a header to the schedule / diagram for this operation
-
-		    my $scheduled_operation
-			= {
-			   command => "---\nCOMMAND: $short_operation$has_help",
-			   dry_run => $dry_run_module_commands,
-			   interaction_role => 'none',
-			  };
-
-		    push @$global_scheduled_operations, $scheduled_operation;
-
-		    # add the operation to the schedule / diagram
-
-		    {
-			no strict "refs";
-
-			&$operation_implementation([]);
-		    }
-
-		    # end the command in the schedule / diagram
-
-		    $scheduled_operation
-			= {
-			   command => "\n\n---\n",
-			   dry_run => $dry_run_module_commands,
-			   interaction_role => 'none',
-			  };
-
-		    push @$global_scheduled_operations, $scheduled_operation;
-		}
-	    }
+	    schedule_dry_run_module_commands($requested_target, $dry_run_module_commands);
 	}
 
 	# we are not dry running, but really will execute the operations
@@ -10654,6 +10564,8 @@ sub main
 	    {
 		print "Invoking ($operation_implementation)\n";
 	    }
+
+	    my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
 	    if (defined $option_verbose
 		and $option_verbose > 2)
@@ -11015,6 +10927,106 @@ sub report_error_exit
     print STDERR "$error_message\n\n\n";
 
     die $error_message;
+}
+
+
+sub schedule_dry_run_module_commands
+{
+    my $target_regex = shift;
+
+    my $dry_run_reason = shift;
+
+    my $all_typed_operations = operation_hash_typed_generate('with help subs');
+
+    # generate the list of all commands
+
+    my $all_operations = operation_hash_with_structure_generate($all_typed_operations);
+
+    # loop over all the matching targets
+
+    my $all_defined_targets = $global_technical_project_configuration->{targets};
+
+    foreach my $defined_target (
+				grep
+				{
+				    m(^$target_regex$);
+				}
+				keys %$all_defined_targets
+			       )
+    {
+	# reference subroutine names specific for the given target: they belong together
+
+	my $target_subroutines = $all_operations->{$defined_target};
+
+	# collect the subroutine names
+
+	my $operation_implementations
+	    = [
+	       map
+	       {
+		   my $subroutine = $_;
+
+		   "Command::${defined_target}_${subroutine}";
+	       }
+	       keys %$target_subroutines,
+	      ];
+
+	# invoke all these subroutines in dry run mode to have them either generate or report the module roles
+
+	foreach my $operation_implementation (sort @$operation_implementations)
+	{
+	    if ($option_verbose)
+	    {
+		print "Invoking ($operation_implementation)\n";
+	    }
+
+	    if ($operation_implementation =~ /_help$/)
+	    {
+		next;
+	    }
+
+	    my $has_help = '';
+
+	    if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
+	    {
+		$has_help = " (use --help to see the help page)";
+	    }
+
+	    $operation_implementation =~ /Command::(.*)/;
+
+	    my $short_operation = $1;
+
+	    # add a header to the schedule / diagram for this operation
+
+	    my $scheduled_operation
+		= {
+		   command => "---\nCOMMAND: $short_operation$has_help",
+		   dry_run => $dry_run_reason,
+		   interaction_role => 'none',
+		  };
+
+	    push @$global_scheduled_operations, $scheduled_operation;
+
+	    # add the operation to the schedule / diagram
+
+	    {
+		no strict "refs";
+
+		&$operation_implementation([]);
+	    }
+
+	    # end the command in the schedule / diagram
+
+	    $scheduled_operation
+		= {
+		   command => "\n\n---\n",
+		   dry_run => $dry_run_reason,
+		   interaction_role => 'none',
+		  };
+
+	    push @$global_scheduled_operations, $scheduled_operation;
+	}
+    }
 }
 
 
