@@ -78,8 +78,8 @@ our $option_help_projects;
 our $option_help_targets;
 our $option_interactions;
 our $option_interactions_all;
-our $option_interactions_module;
-our $option_interactions_module_all_roles;
+our $option_interactions_target;
+our $option_interactions_target_all_roles;
 our $option_verbose;
 
 our $global_options
@@ -108,8 +108,8 @@ our $global_options
        "help-targets!" => \$option_help_targets,
        "interactions!" => \$option_interactions,
        "interactions-all!" => \$option_interactions_all,
-       "interactions-module!" => \$option_interactions_module,
-       "interactions-module-all-roles!" => \$option_interactions_module_all_roles,
+       "interactions-target!" => \$option_interactions_target,
+       "interactions-target-all-roles!" => \$option_interactions_target_all_roles,
        "v|verbose+" => \$option_verbose,
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
@@ -4927,7 +4927,7 @@ sub builtin_start_project
 	    print "  workflow builtin install_scripts -- --commands --git\n\n";
 	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
 	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
-	    print "  $project_name-workflow examples sequencing_and_composition --interactions-module\n\n";
+	    print "  $project_name-workflow examples sequencing_and_composition --interactions-target\n\n";
 	    print "  $project_name-workflow examples single_command --dry-run\n\n";
 	    print "  $project_name-workflow examples array_of_commands --help\n\n";
 	    print "To enable bash completion after installation of the scripts, either execute:\n\n";
@@ -7413,7 +7413,7 @@ sub identify_interaction_roles
 
     # or we show the interaction diagram with all the interaction roles in the configuration.
 
-    elsif ($option_interactions_module_all_roles)
+    elsif ($option_interactions_target_all_roles)
     {
 	my $roles = $global_technical_project_configuration->{roles};
 
@@ -8353,10 +8353,10 @@ sub execute_all_scheduled_operations
 
 	    elsif ($option_interactions
 		   or $option_interactions_all
-		   or $option_interactions_module
-		   or $option_interactions_module_all_roles)
+		   or $option_interactions_target
+		   or $option_interactions_target_all_roles)
 	    {
-		my $result = execute_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_module_all_roles || $option_interactions_all);
+		my $result = execute_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
 
 		$scheduled_operation->{result} = $result;
 
@@ -9961,8 +9961,8 @@ sub bash_completion_generate_options
 			--help-targets
 			--interactions
 			--interactions-all
-			--interactions-module
-			--interactions-module-all-roles
+			--interactions-target
+			--interactions-target-all-roles
 			--verbose
 		   )
 		 ];
@@ -10400,10 +10400,10 @@ sub main
     }
 
     if ((not defined $option_interactions_all
-	 and not defined $option_interactions_module_all_roles)
+	 and not defined $option_interactions_target_all_roles)
 	and not defined $global_target)
     {
-	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-module-all-roles), try --help");
+	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
     }
 
     # always allow the builtin operations (start a new project, add a new target, ...)
@@ -10488,10 +10488,10 @@ sub main
 	    $global_execute_what_is_scheduled = '';
 	}
 	elsif ($option_interactions_all
-	    or $option_interactions_module
-	    or $option_interactions_module_all_roles)
+	    or $option_interactions_target
+	    or $option_interactions_target_all_roles)
 	{
-	    $dry_run_module_commands = 'option_interactions_module';
+	    $dry_run_module_commands = 'option_interactions_target';
 
 	    # make sure we don't actually run any commands
 
@@ -10585,8 +10585,8 @@ options:
     --help-targets                  display known targets and stop execution.
     --interactions                  show the interaction diagram of the commands.
     --interactions-all              show a diagram with all the commands and all the interaction roles.
-    --interactions-module           show the interaction diagram of all the commands in the module.
-    --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
+    --interactions-target           show the interaction diagram of all the commands in the module.
+    --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
     --verbose                       set verbosity level.
 
 ";
