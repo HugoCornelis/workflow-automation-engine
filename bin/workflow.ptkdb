@@ -1,24 +1,24 @@
 $files = {
-           '_</home/hugo/projects/workflow-automation-engine/source/snapshots/master/bin/workflow' => [
-                                                                                                        {
-                                                                                                          'expr' => undef,
-                                                                                                          'fname' => '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/bin/workflow',
-                                                                                                          'line' => 4791,
-                                                                                                          'text' => '    if (defined $export_remote)
+           '_<./bin/workflow' => [
+                                   {
+                                     'expr' => undef,
+                                     'fname' => './bin/workflow',
+                                     'line' => '11075',
+                                     'text' => 'main();
 ',
-                                                                                                          'type' => 'user',
-                                                                                                          'value' => '1'
-                                                                                                        },
-                                                                                                        {
-                                                                                                          'expr' => undef,
-                                                                                                          'fname' => '/home/hugo/projects/workflow-automation-engine/source/snapshots/master/bin/workflow',
-                                                                                                          'line' => 4779,
-                                                                                                          'text' => '    my $interaction_roles = shift;
+                                     'type' => 'user',
+                                     'value' => '1'
+                                   },
+                                   {
+                                     'expr' => undef,
+                                     'fname' => './bin/workflow',
+                                     'line' => '10536',
+                                     'text' => '    if ($option_help and (not $global_target) and (not $global_operation))
 ',
-                                                                                                          'type' => 'user',
-                                                                                                          'value' => '1'
-                                                                                                        }
-                                                                                                      ]
+                                     'type' => 'user',
+                                     'value' => '1'
+                                   }
+                                 ]
          };
 $expr_list = [
                {
@@ -48,6 +48,10 @@ $expr_list = [
                {
                  'depth' => -1,
                  'expr' => '$current_interaction_role'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$global_target'
                }
              ];
 $eval_saved_text = undef;
