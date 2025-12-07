@@ -1,5 +1,5 @@
 ---
-command: abcd-workflow features --interactions-module
+command: abcd-workflow features --interactions-target
 command_tests:
   - description: abcd project interactions of the features commands
     read: |

@@ -311,8 +311,8 @@ options:
     --help-targets                  display known targets and stop execution.
     --interactions                  show the interaction diagram of the commands.
     --interactions-all              show a diagram with all the commands and all the interaction roles.
-    --interactions-module           show the interaction diagram of all the commands in the module.
-    --interactions-module-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
+    --interactions-target           show the interaction diagram of all the commands in the module.
+    --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
     --verbose                       set verbosity level.
 
 ',
@@ -354,7 +354,7 @@ Then check if they work by inspecting the examples they provide (with various op
 
   workflow-tests-workflow examples array_of_commands_remote_execution --interactions
 
-  workflow-tests-workflow examples sequencing_and_composition --interactions-module
+  workflow-tests-workflow examples sequencing_and_composition --interactions-target
 
   workflow-tests-workflow examples single_command --dry-run
 
