@@ -169,6 +169,8 @@ our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null`
 
 our $global_scheduled_operations = [];
 
+our $global_execute_what_is_scheduled = 'yes';
+
 my $global_builtin_operations
     = {
        add_target => 1,
@@ -2606,7 +2608,7 @@ sub builtin_add_role
 
     if (!$error)
     {
-	if ($option_dry_run)
+	if (not $global_execute_what_is_scheduled)
 	{
 	    print Dump( { role => $role } );
 	}
@@ -2988,7 +2990,7 @@ sub builtin_archive_configuration
 
     # make sure the --interactions family of options works
 
-    if ($::option_dry_run)
+    if (not $global_execute_what_is_scheduled)
     {
 	return '';
     }
@@ -4274,9 +4276,7 @@ $global_command_line
 
     my $ok = 'by default';
 
-    if (not $option_dry_run
-        and not $option_interactions_module_all_roles
-	and not $option_interactions)
+    if ($global_execute_what_is_scheduled)
     {
 	$ok = open($manual_file, ">", $manual_filename);
 
@@ -4808,7 +4808,7 @@ sub builtin_start_project
 
     my $result;
 
-    if (not $::option_dry_run)
+    if ($global_execute_what_is_scheduled)
     {
 	my $project_name = $arguments->[0];
 
@@ -6672,8 +6672,6 @@ sub working_directory_for_interaction_role_parse
 {
     my $executable_command = shift;
 
-    my $dry_run = shift;
-
     my $interaction_role = shift;
 
     my $cd_argument;
@@ -8329,9 +8327,20 @@ sub execute_all_scheduled_operations
     {
 	foreach my $scheduled_operation (@$global_scheduled_operations)
 	{
-	    # we are either in dry-run ...
+	    # either we are executing the scheduled command ...
 
-	    if ($option_dry_run =~ /^[0-9]+$/)
+	    if ($global_execute_what_is_scheduled)
+	    {
+		my $result = execute_scheduled_operation($scheduled_operation);
+
+		$scheduled_operation->{result} = $result;
+
+		push @$results, $result;
+	    }
+
+	    # ... or we are either in dry-run ...
+
+	    elsif ($option_dry_run =~ /^[0-9]+$/)
 	    {
 		my $result = execute_scheduled_operation_option_dry_run($scheduled_operation);
 
@@ -8365,15 +8374,11 @@ sub execute_all_scheduled_operations
 		push @$results, $result;
 	    }
 
-	    # or real-time executing the scheduled command
+	    # ... or we have an internal error
 
 	    else
 	    {
-		my $result = execute_scheduled_operation($scheduled_operation);
-
-		$scheduled_operation->{result} = $result;
-
-		push @$results, $result;
+		report_error_exit("internal error: no interpretation of the scheduled_operations has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
 	    }
 	}
     }
@@ -8512,9 +8517,7 @@ sub execute_shell_command
 
     # force the execution of a change of the working directory to this process
 
-    my $dry_run = $options->{dry_run} || $option_dry_run;
-
-    $executable_command = working_directory_for_interaction_role_parse($executable_command, $dry_run, $current_interaction_role);
+    $executable_command = working_directory_for_interaction_role_parse($executable_command, $current_interaction_role);
 
     #! note that the order of processing determines whether the options are locally or remotely applied
 
@@ -8539,7 +8542,7 @@ sub execute_shell_command
 	   $executable_command,
 	   $current_interaction_role,
 	   $options,
-	   $dry_run,
+	   ($options->{dry_run} || $option_dry_run),
 	   $export_sh,
 	   $export_sh_command,
 	  );
@@ -10480,7 +10483,7 @@ sub main
 
 	    # make sure we don't actually run any commands
 
-	    $option_dry_run = 'option_interactions_module';
+	    $global_execute_what_is_scheduled = '';
 	}
 
 	if ($option_dump_module_interaction_roles)
@@ -10489,7 +10492,7 @@ sub main
 
 	    # make sure we don't actually run any commands
 
-	    $option_dry_run = 'option_dump_module_interaction_roles';
+	    $global_execute_what_is_scheduled = '';
 	}
 
 	my $all_typed_operations = operation_hash_typed_generate('with help subs');
