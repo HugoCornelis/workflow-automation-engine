@@ -10449,6 +10449,10 @@ sub main
 	# do not need to press the shift key
 
 	$option_export_sh =~ s/_/-/g;
+
+	# make sure we don't actually run any commands
+
+	$global_execute_what_is_scheduled = '';
     }
 
     # given the requested target and the operation, generate a useful filename for exporting execution times to a log file
@@ -10475,7 +10479,8 @@ sub main
 
 	my $dry_run_module_commands;
 
-	if ($option_interactions_all
+	if ($option_interactions
+	    or $option_interactions_all
 	    or $option_interactions_module
 	    or $option_interactions_module_all_roles)
 	{
