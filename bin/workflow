@@ -10299,13 +10299,17 @@ sub call_operation_implementation
 
     my $arguments = shift;
 
-    no strict "refs";
-
     #! utf8::upgrade works in place
 
     map { utf8::upgrade($_) } @$arguments;
 
-    my $error = &$operation_implementation($arguments);
+    my $error;
+
+    {
+	no strict "refs";
+
+	$error = &$operation_implementation($arguments);
+    }
 
     return $error;
 
@@ -10508,14 +10512,14 @@ sub main
 
 	if ($dry_run_module_commands)
 	{
-	    schedule_dry_run_module_commands($requested_target, $global_operation, $dry_run_module_commands);
+	    schedule_dry_run_target_commands($requested_target, $global_operation, $dry_run_module_commands, $option_help, \@ARGV);
 	}
 
 	# we are not dry running, but really will execute the operations
 
 	else
 	{
-	    schedule_commands_for_execution($requested_target, $global_operation, $option_help, \@ARGV);
+	    schedule_commands_for_execution($requested_target, $global_operation, $dry_run_module_commands, $option_help, \@ARGV);
 	}
 
 	Engine::execute_all_scheduled_operations($global_interaction_roles);
@@ -10811,6 +10815,8 @@ sub schedule_commands_for_execution
 
     my $operation_or_package = shift;
 
+    my $dry_run_reason = shift;
+
     my $help = shift;
 
     my $arguments = shift;
@@ -10953,13 +10959,17 @@ sub schedule_commands_for_execution
 }
 
 
-sub schedule_dry_run_module_commands
+sub schedule_dry_run_target_commands
 {
     my $target_regex = shift;
 
     my $operation = shift;
 
     my $dry_run_reason = shift;
+
+    my $help = shift;
+
+    my $arguments = shift;
 
     my $all_selected_operations = [];
 
@@ -10996,7 +11006,7 @@ sub schedule_dry_run_module_commands
 	{
 	    # reference subroutine names specific for the given target: they belong together
 
-	    my $target_subroutines = $all_operations->{$defined_target};
+	    my $target_operators = $all_operations->{$defined_target};
 
 	    # collect the subroutine names
 
@@ -11004,22 +11014,17 @@ sub schedule_dry_run_module_commands
 		= [
 		   map
 		   {
-		       my $subroutine = $_;
+		       my $operator = $_;
 
-		       "Command::${defined_target}_${subroutine}";
+		       "Command::${defined_target}_${operator}";
 		   }
-		   keys %$target_subroutines,
+		   keys %$target_operators,
 		  ];
 
 	    # invoke all these subroutines in dry run mode to have them either generate or report the module roles
 
 	    foreach my $operation_implementation (sort @$operation_implementations)
 	    {
-		if ($option_verbose)
-		{
-		    print "Invoking ($operation_implementation)\n";
-		}
-
 		if ($operation_implementation =~ /_help$/)
 		{
 		    next;
@@ -11041,6 +11046,7 @@ sub schedule_dry_run_module_commands
 		       has_help => $has_help,
 		       operation_implementation => $operation_implementation,
 		       short_operation => $short_operation,
+		       target => $defined_target,
 		      };
 
 		push @$all_selected_operations, $selected_operation;
@@ -11051,8 +11057,6 @@ sub schedule_dry_run_module_commands
     foreach my $selected_operation (@$all_selected_operations)
     {
 	my $has_help = $selected_operation->{has_help};
-
-	my $operation_implementation = $selected_operation->{operation_implementation};
 
 	my $short_operation = $selected_operation->{short_operation};
 
@@ -11069,10 +11073,15 @@ sub schedule_dry_run_module_commands
 
 	# add the operation to the schedule / diagram
 
-	{
-	    no strict "refs";
+	my $operation_implementation = $selected_operation->{operation_implementation};
 
-	    &$operation_implementation([]);
+	my $error = call_operation_implementation($operation_implementation, $arguments);
+
+	if ($error)
+	{
+	    my $target = $selected_operation->{target};
+
+	    warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
 	}
 
 	# end the command in the schedule / diagram
