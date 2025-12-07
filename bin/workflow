@@ -10479,8 +10479,15 @@ sub main
 
 	my $dry_run_module_commands;
 
-	if ($option_interactions
-	    or $option_interactions_all
+	if ($option_interactions)
+	{
+	    $dry_run_module_commands = 'option_interactions';
+
+	    # make sure we don't actually run any commands
+
+	    $global_execute_what_is_scheduled = '';
+	}
+	elsif ($option_interactions_all
 	    or $option_interactions_module
 	    or $option_interactions_module_all_roles)
 	{
@@ -10490,8 +10497,7 @@ sub main
 
 	    $global_execute_what_is_scheduled = '';
 	}
-
-	if ($option_dump_module_interaction_roles)
+	elsif ($option_dump_module_interaction_roles)
 	{
 	    $dry_run_module_commands = 'option_dump_module_interaction_roles';
 
@@ -10502,7 +10508,7 @@ sub main
 
 	if ($dry_run_module_commands)
 	{
-	    schedule_dry_run_module_commands($requested_target, $dry_run_module_commands);
+	    schedule_dry_run_module_commands($requested_target, $global_operation, $dry_run_module_commands);
 	}
 
 	# we are not dry running, but really will execute the operations
@@ -10951,98 +10957,134 @@ sub schedule_dry_run_module_commands
 {
     my $target_regex = shift;
 
+    my $operation = shift;
+
     my $dry_run_reason = shift;
 
-    my $all_typed_operations = operation_hash_typed_generate('with help subs');
+    my $all_selected_operations = [];
 
-    # generate the list of all commands
-
-    my $all_operations = operation_hash_with_structure_generate($all_typed_operations);
-
-    # loop over all the matching targets
-
-    my $all_defined_targets = $global_technical_project_configuration->{targets};
-
-    foreach my $defined_target (
-				grep
-				{
-				    m(^$target_regex$);
-				}
-				keys %$all_defined_targets
-			       )
+    if ($dry_run_reason eq 'option_interactions')
     {
-	# reference subroutine names specific for the given target: they belong together
+	my $selected_operation
+	    = {
+	       has_help => '',
+	       operation_implementation => "Command::${target_regex}_${operation}",
+	       short_operation => "${target_regex}_${operation}",
+	      };
 
-	my $target_subroutines = $all_operations->{$defined_target};
+	    push @$all_selected_operations, $selected_operation;
+    }
+    else
+    {
+	my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
-	# collect the subroutine names
+	# generate the list of all commands
 
-	my $operation_implementations
-	    = [
-	       map
-	       {
-		   my $subroutine = $_;
+	my $all_operations = operation_hash_with_structure_generate($all_typed_operations);
 
-		   "Command::${defined_target}_${subroutine}";
-	       }
-	       keys %$target_subroutines,
-	      ];
+	# loop over all the matching targets
 
-	# invoke all these subroutines in dry run mode to have them either generate or report the module roles
+	my $all_defined_targets = $global_technical_project_configuration->{targets};
 
-	foreach my $operation_implementation (sort @$operation_implementations)
+	foreach my $defined_target (
+				    grep
+				    {
+					m(^$target_regex$);
+				    }
+				    keys %$all_defined_targets
+				   )
 	{
-	    if ($option_verbose)
+	    # reference subroutine names specific for the given target: they belong together
+
+	    my $target_subroutines = $all_operations->{$defined_target};
+
+	    # collect the subroutine names
+
+	    my $operation_implementations
+		= [
+		   map
+		   {
+		       my $subroutine = $_;
+
+		       "Command::${defined_target}_${subroutine}";
+		   }
+		   keys %$target_subroutines,
+		  ];
+
+	    # invoke all these subroutines in dry run mode to have them either generate or report the module roles
+
+	    foreach my $operation_implementation (sort @$operation_implementations)
 	    {
-		print "Invoking ($operation_implementation)\n";
+		if ($option_verbose)
+		{
+		    print "Invoking ($operation_implementation)\n";
+		}
+
+		if ($operation_implementation =~ /_help$/)
+		{
+		    next;
+		}
+
+		my $has_help = '';
+
+		if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
+		{
+		    $has_help = " (use --help to see the help page)";
+		}
+
+		$operation_implementation =~ /Command::(.*)/;
+
+		my $short_operation = $1;
+
+		my $selected_operation
+		    = {
+		       has_help => $has_help,
+		       operation_implementation => $operation_implementation,
+		       short_operation => $short_operation,
+		      };
+
+		push @$all_selected_operations, $selected_operation;
 	    }
-
-	    if ($operation_implementation =~ /_help$/)
-	    {
-		next;
-	    }
-
-	    my $has_help = '';
-
-	    if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
-	    {
-		$has_help = " (use --help to see the help page)";
-	    }
-
-	    $operation_implementation =~ /Command::(.*)/;
-
-	    my $short_operation = $1;
-
-	    # add a header to the schedule / diagram for this operation
-
-	    my $scheduled_operation
-		= {
-		   command => "---\nCOMMAND: $short_operation$has_help",
-		   dry_run => $dry_run_reason,
-		   interaction_role => 'none',
-		  };
-
-	    push @$global_scheduled_operations, $scheduled_operation;
-
-	    # add the operation to the schedule / diagram
-
-	    {
-		no strict "refs";
-
-		&$operation_implementation([]);
-	    }
-
-	    # end the command in the schedule / diagram
-
-	    $scheduled_operation
-		= {
-		   command => "\n\n---\n",
-		   dry_run => $dry_run_reason,
-		   interaction_role => 'none',
-		  };
-
-	    push @$global_scheduled_operations, $scheduled_operation;
 	}
+    }
+
+    foreach my $selected_operation (@$all_selected_operations)
+    {
+	my $has_help = $selected_operation->{has_help};
+
+	my $operation_implementation = $selected_operation->{operation_implementation};
+
+	my $short_operation = $selected_operation->{short_operation};
+
+	# add a header to the schedule / diagram for this operation
+
+	my $scheduled_operation
+	    = {
+	       command => "---\nCOMMAND: $short_operation$has_help",
+	       dry_run => $dry_run_reason,
+	       interaction_role => 'none',
+	      };
+
+	push @$global_scheduled_operations, $scheduled_operation;
+
+	# add the operation to the schedule / diagram
+
+	{
+	    no strict "refs";
+
+	    &$operation_implementation([]);
+	}
+
+	# end the command in the schedule / diagram
+
+	$scheduled_operation
+	    = {
+	       command => "\n\n---\n",
+	       dry_run => $dry_run_reason,
+	       interaction_role => 'none',
+	      };
+
+	push @$global_scheduled_operations, $scheduled_operation;
     }
 }
 
