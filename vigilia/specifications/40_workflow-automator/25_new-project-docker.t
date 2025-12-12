@@ -690,8 +690,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
 						   description => "Can we generate an archive of the created configuration?",
-						   read => 'Invoking (Command::builtin_archive_configuration)
----
+						   read => '
 global_field_project_configuration:
   configuration_origin: dynamically_generated from the executable script name
   field_project_name: workflow-tests

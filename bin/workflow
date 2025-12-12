@@ -10604,7 +10604,7 @@ sub main
 
 	else
 	{
-	    schedule_commands_for_execution($requested_target, $global_operation, $dry_run_module_commands, $option_help, \@ARGV);
+	    schedule_operation_for_execution($requested_target, $global_operation, $dry_run_module_commands, $option_help, \@ARGV);
 	}
 
 	Engine::execute_all_scheduled_operations($global_interaction_roles);
@@ -10894,7 +10894,7 @@ sub report_error_exit
 }
 
 
-sub schedule_commands_for_execution
+sub schedule_operation_for_execution
 {
     my $target = shift;
 
@@ -10971,24 +10971,9 @@ sub schedule_commands_for_execution
 	}
     }
 
-    my $all_selected_operations = operation_selector($target, $operation_or_package, $dry_run_reason, $help, $arguments);
-
-    if ($option_verbose)
-    {
-	print "Invoking ($operation_implementation)\n";
-    }
+    # if this command exists ...
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
-
-    if (defined $option_verbose
-	and $option_verbose > 2)
-    {
-	use Data::Dumper;
-
-	print Dumper( { all_typed_operations_with_help_subs => $all_typed_operations, }, );
-    }
-
-    # if this command exists ...
 
     if (exists $all_typed_operations->{"$target $operation_or_package"}
 	or $type_package_builtin)
@@ -11006,9 +10991,9 @@ sub schedule_commands_for_execution
 
 	else
 	{
-	    my $selected_operation = pop @$all_selected_operations;
+	    my $all_selected_operations = operation_selector($target, $operation_or_package, $dry_run_reason, $help, $arguments);
 
-	    my $error = schedule_operation_execute($selected_operation);
+	    my $error = operation_scheduler($all_selected_operations, '');
 
 	    if ($error)
 	    {
@@ -11041,7 +11026,7 @@ sub schedule_dry_run_target_commands
 
     # schedule the selected operations for execution
 
-    return operation_scheduler($all_selected_operations);
+    return operation_scheduler($all_selected_operations, $dry_run_reason);
 }
 
 
@@ -11164,6 +11149,8 @@ sub operation_scheduler
 {
     my $all_selected_operations = shift;
 
+    my $scheduler_dry_run_reason = shift;
+
     foreach my $selected_operation (@$all_selected_operations)
     {
 	my $command_line_arguments = $selected_operation->{command_line_arguments};
@@ -11174,16 +11161,19 @@ sub operation_scheduler
 
 	my $short_operation = $selected_operation->{short_operation};
 
-	# add a header to the schedule / diagram for this operation
+	if ($scheduler_dry_run_reason)
+	{
+	    # add a header to the schedule / diagram for this operation
 
-	my $scheduled_operation
-	    = {
-	       command => "---\nCOMMAND: $short_operation$has_help",
-	       dry_run => $dry_run_reason,
-	       interaction_role => 'none',
-	      };
+	    my $scheduled_operation
+		= {
+		   command => "---\nCOMMAND: $short_operation$has_help",
+		   dry_run => $scheduler_dry_run_reason,
+		   interaction_role => 'none',
+		  };
 
-	push @$global_scheduled_operations, $scheduled_operation;
+	    push @$global_scheduled_operations, $scheduled_operation;
+	}
 
 	# add the operation to the schedule / diagram
 
@@ -11196,16 +11186,19 @@ sub operation_scheduler
 	    warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
 	}
 
-	# end the command in the schedule / diagram
+	if ($scheduler_dry_run_reason)
+	{
+	    # end the command in the schedule / diagram
 
-	$scheduled_operation
-	    = {
-	       command => "\n\n---\n",
-	       dry_run => $dry_run_reason,
-	       interaction_role => 'none',
-	      };
+	    my $scheduled_operation
+		= {
+		   command => "\n\n---\n",
+		   dry_run => $scheduler_dry_run_reason,
+		   interaction_role => 'none',
+		  };
 
-	push @$global_scheduled_operations, $scheduled_operation;
+	    push @$global_scheduled_operations, $scheduled_operation;
+	}
     }
 }
 
