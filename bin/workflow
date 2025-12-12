@@ -4259,7 +4259,7 @@ $global_command_line
 
 	$operation_help_with_package =~ s( )(_)g;
 
-	my $help_string = main::call_help_implementation($operation_help_with_package, [ 'manual' ]);
+	my $help_string = main::schedule_help_execute($operation_help_with_package, [ 'manual' ]);
 
 	$manual_string .= "$header\n$help_string\n";
 
@@ -10293,7 +10293,7 @@ sub operation_hash_subs_generate
 }
 
 
-sub call_operation_implementation
+sub schedule_operation_execute
 {
     my $operation_implementation = shift;
 
@@ -10316,7 +10316,7 @@ sub call_operation_implementation
 }
 
 
-sub call_help_implementation
+sub schedule_help_execute
 {
     my $operation_implementation = shift;
 
@@ -10905,7 +10905,7 @@ sub schedule_commands_for_execution
 
 	if ($help)
 	{
-	    my $help_string = call_help_implementation($operation_implementation, $arguments);
+	    my $help_string = schedule_help_execute($operation_implementation, $arguments);
 
 	    print "$global_program_name $help_string\n";
 	}
@@ -10923,7 +10923,7 @@ sub schedule_commands_for_execution
 	    if ($type_package_builtin
 		or $type eq 'sub')
 	    {
-		my $error = call_operation_implementation($operation_implementation, $arguments);
+		my $error = schedule_operation_execute($operation_implementation, $arguments);
 
 		if ($error)
 		{
@@ -10965,7 +10965,7 @@ sub schedule_commands_for_execution
 }
 
 
-sub schedule_dry_run_target_commands
+sub operation_selector
 {
     my $target_regex = shift;
 
@@ -10977,19 +10977,24 @@ sub schedule_dry_run_target_commands
 
     my $arguments = shift;
 
+    # construct a list of operations to execute
+
     my $all_selected_operations = [];
 
     if ($dry_run_reason eq 'option_interactions')
     {
 	my $selected_operation
 	    = {
+	       command_line_arguments => $arguments,
+	       dry_run_reason => $dry_run_reason,
 	       has_help => '',
+	       help => $help,
 	       operation_implementation => "Command::${target_regex}_${operation}",
 	       short_operation => "${target_regex}_${operation}",
 	       target => $target_regex,
 	      };
 
-	    push @$all_selected_operations, $selected_operation;
+	push @$all_selected_operations, $selected_operation;
     }
     else
     {
@@ -11003,17 +11008,17 @@ sub schedule_dry_run_target_commands
 
 	my $all_defined_targets = $global_technical_project_configuration->{targets};
 
-	foreach my $defined_target (
-				    grep
-				    {
-					m(^$target_regex$);
-				    }
-				    keys %$all_defined_targets
-				   )
+	foreach my $matching_target (
+				     grep
+				     {
+					 m(^$target_regex$);
+				     }
+				     keys %$all_defined_targets
+				    )
 	{
 	    # reference subroutine names specific for the given target: they belong together
 
-	    my $target_operators = $all_operations->{$defined_target};
+	    my $target_operators = $all_operations->{$matching_target};
 
 	    # collect the subroutine names
 
@@ -11023,12 +11028,14 @@ sub schedule_dry_run_target_commands
 		   {
 		       my $operator = $_;
 
-		       "Command::${defined_target}_${operator}";
+		       "Command::${matching_target}_${operator}";
 		   }
 		   keys %$target_operators,
 		  ];
 
-	    # invoke all these subroutines in dry run mode to have them either generate or report the module roles
+	    # select all these subroutines
+
+	    # possibly in dry run mode to have them either generate or report the target's roles
 
 	    foreach my $operation_implementation (sort @$operation_implementations)
 	    {
@@ -11037,10 +11044,14 @@ sub schedule_dry_run_target_commands
 		    next;
 		}
 
+		# if the operation has a help page ...
+
 		my $has_help = '';
 
 		if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
 		{
+		    # ... annotate the selected operation
+
 		    $has_help = " (use --help to see the help page)";
 		}
 
@@ -11050,10 +11061,13 @@ sub schedule_dry_run_target_commands
 
 		my $selected_operation
 		    = {
+		       command_line_arguments => $arguments,
+		       dry_run_reason => $dry_run_reason,
 		       has_help => $has_help,
+		       help => $help,
 		       operation_implementation => $operation_implementation,
 		       short_operation => $short_operation,
-		       target => $defined_target,
+		       target => $matching_target,
 		      };
 
 		push @$all_selected_operations, $selected_operation;
@@ -11061,8 +11075,20 @@ sub schedule_dry_run_target_commands
 	}
     }
 
+    return $all_selected_operations;
+}
+
+
+sub operation_scheduler
+{
+    my $all_selected_operations = shift;
+
     foreach my $selected_operation (@$all_selected_operations)
     {
+	my $command_line_arguments = $selected_operation->{command_line_arguments};
+
+	my $dry_run_reason = $selected_operation->{dry_run_reason};
+
 	my $has_help = $selected_operation->{has_help};
 
 	my $short_operation = $selected_operation->{short_operation};
@@ -11082,7 +11108,7 @@ sub schedule_dry_run_target_commands
 
 	my $operation_implementation = $selected_operation->{operation_implementation};
 
-	my $error = call_operation_implementation($operation_implementation, $arguments);
+	my $error = schedule_operation_execute($operation_implementation, $command_line_arguments);
 
 	if ($error)
 	{
@@ -11102,6 +11128,28 @@ sub schedule_dry_run_target_commands
 
 	push @$global_scheduled_operations, $scheduled_operation;
     }
+}
+
+
+sub schedule_dry_run_target_commands
+{
+    my $target_regex = shift;
+
+    my $operation = shift;
+
+    my $dry_run_reason = shift;
+
+    my $help = shift;
+
+    my $arguments = shift;
+
+    # construct a list of operations to execute
+
+    my $all_selected_operations = operation_selector($target_regex, $operation, $dry_run_reason, $help, $arguments);
+
+    # schedule the selected operations for execution
+
+    return operation_scheduler($all_selected_operations);
 }
 
 
