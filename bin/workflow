@@ -11200,7 +11200,7 @@ sub operation_scheduler
 
 	my $operation_implementation = $selected_operation->{operation_implementation};
 
-	my $error = schedule_operation_execute_call($operation_implementation, $command_line_arguments);
+	my $error = schedule_operation_execute('sub', $selected_operation);
 
 	if ($error)
 	{
