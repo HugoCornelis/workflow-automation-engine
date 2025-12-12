@@ -10936,7 +10936,7 @@ sub schedule_operation_for_execution
 	    $sub_name .= "_help";
 	}
 
-	$operation_implementation = "$operation_or_package::$sub_name";
+	$operation_implementation = "${operation_or_package}::$sub_name";
     }
     elsif (defined $operation_or_package)
     {
