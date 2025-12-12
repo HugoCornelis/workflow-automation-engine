@@ -10915,6 +10915,8 @@ sub schedule_operation_for_execution
 	$dry_run_reason = "option_dry_run";
     }
 
+    # first determine type_package_builtin and correct operation_implementation and operation_or_package as required
+
     if (defined $operation_or_package
 	and exists $global_known_operation_packages_builtin->{$operation_or_package})
     {
@@ -10986,8 +10988,31 @@ sub schedule_operation_for_execution
 
 	    print "$global_program_name $help_string\n";
 	}
+	elsif ($type_package_builtin)
+	{
+	    my $selected_operation
+		= {
+		   command_line_arguments => $arguments,
+		   dry_run_reason => $dry_run_reason,
+		   has_help => 'maybe',
+		   help => $help,
+		   operation_implementation => $operation_implementation,
+		   operation_or_package => $operation_or_package,
+		   operation_type => 'sub',
+		   short_operation => $operation_implementation,
+		   target => $target,
+		   type_package_builtin => '',
+		  };
 
-	# ... or invoke the implementation sub of the command ...
+	    my $error = schedule_operation_execute($selected_operation);
+
+	    if ($error)
+	    {
+		report_error_exit($error);
+	    }
+	}
+
+	# ... or invoke the implementation of the command ...
 
 	else
 	{
