@@ -10295,8 +10295,6 @@ sub operation_hash_subs_generate
 
 sub schedule_operation_execute
 {
-    my $type = shift;
-
     my $selected_operation = shift;
 
     my $debug_schedule_operation_execute = 0;
@@ -10305,12 +10303,14 @@ sub schedule_operation_execute
     {
 	use Data::Dumper;
 
-	print Dumper( { selected_operation => $selected_operation, type => $type, } );
+	print Dumper( { selected_operation => $selected_operation, } );
     }
 
     my $operation_implementation = $selected_operation->{operation_implementation};
 
     my $operation_or_package = $selected_operation->{operation_or_package};
+
+    my $operation_type = $selected_operation->{operation_type};
 
     my $arguments = $selected_operation->{command_line_arguments};
 
@@ -10333,7 +10333,7 @@ sub schedule_operation_execute
     # ... either as a regular perl sub ...
 
     if ($type_package_builtin
-	or $type eq 'sub')
+	or $operation_type eq 'sub')
     {
 	$error = schedule_operation_execute_call($operation_implementation, $arguments);
 
@@ -10345,7 +10345,7 @@ sub schedule_operation_execute
 
     # ... or as a shell script ...
 
-    elsif ($type eq 'sh')
+    elsif ($operation_type eq 'sh')
     {
 	# invoke the script as a single command
 
@@ -10358,7 +10358,7 @@ sub schedule_operation_execute
 
     # ... or as a yaml script ...
 
-    elsif ($type eq 'yml')
+    elsif ($operation_type eq 'yml')
     {
 	$error = "*** Error: YAML scripts have not been integrated yet";
     }
@@ -10367,7 +10367,7 @@ sub schedule_operation_execute
 
     else
     {
-	$error = "unknown command type $type when invoking command '$target $operation_or_package'";
+	$error = "unknown command type $operation_type when invoking command '$target $operation_or_package'";
     }
 
     return $error;
@@ -11006,11 +11006,9 @@ sub schedule_commands_for_execution
 
 	else
 	{
-	    my $type = $all_typed_operations->{"$target $operation_or_package"}->{type};
-
 	    my $selected_operation = pop @$all_selected_operations;
 
-	    my $error = schedule_operation_execute($type, $selected_operation);
+	    my $error = schedule_operation_execute($selected_operation);
 
 	    if ($error)
 	    {
@@ -11073,6 +11071,7 @@ sub operation_selector
 	       has_help => '',
 	       help => $help,
 	       operation_implementation => "Command::${target_regex}_${operation}",
+	       operation_type => 'unknown',
 	       short_operation => "${target_regex}_${operation}",
 	       target => $target_regex,
 	       type_package_builtin => '',
@@ -11149,6 +11148,14 @@ sub operation_selector
 
 		my $short_operation = $1;
 
+		#! this mess needs reimplementation
+
+		$operation_implementation =~ /Command::${matching_target}_(.*)/;
+
+		my $operator = $1;
+
+		my $operation_type = $all_typed_operations->{"$matching_target $operator"}->{type};
+
 		my $selected_operation
 		    = {
 		       command_line_arguments => $arguments,
@@ -11157,6 +11164,7 @@ sub operation_selector
 		       help => $help,
 		       operation_implementation => $operation_implementation,
 		       operation_or_package => $operation,
+		       operation_type => $operation_type,
 		       short_operation => $short_operation,
 		       target => $matching_target,
 		       type_package_builtin => '',
@@ -11198,9 +11206,7 @@ sub operation_scheduler
 
 	# add the operation to the schedule / diagram
 
-	my $operation_implementation = $selected_operation->{operation_implementation};
-
-	my $error = schedule_operation_execute('sub', $selected_operation);
+	my $error = schedule_operation_execute($selected_operation);
 
 	if ($error)
 	{
