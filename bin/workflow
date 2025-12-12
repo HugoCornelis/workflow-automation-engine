@@ -10295,6 +10295,87 @@ sub operation_hash_subs_generate
 
 sub schedule_operation_execute
 {
+    my $type = shift;
+
+    my $selected_operation = shift;
+
+    my $debug_schedule_operation_execute = 0;
+
+    if ($debug_schedule_operation_execute)
+    {
+	use Data::Dumper;
+
+	print Dumper( { selected_operation => $selected_operation, type => $type, } );
+    }
+
+    my $operation_implementation = $selected_operation->{operation_implementation};
+
+    my $operation_or_package = $selected_operation->{operation_or_package};
+
+    my $arguments = $selected_operation->{command_line_arguments};
+
+    my $type_package_builtin = $selected_operation->{type_package_builtin};
+
+    my $dry_run_reason = $selected_operation->{dry_run_reason};
+
+    my $has_help = $selected_operation->{has_help};
+
+    my $help = $selected_operation->{help};
+
+    my $short_operation = $selected_operation->{short_operation};
+
+    my $target = $selected_operation->{target};
+
+    my $error;
+
+    # ... depending on the type of the requested command ...
+
+    # ... either as a regular perl sub ...
+
+    if ($type_package_builtin
+	or $type eq 'sub')
+    {
+	$error = schedule_operation_execute_call($operation_implementation, $arguments);
+
+	if ($error)
+	{
+	    $error = "$global_program_name: *** Warning: $target $operation_or_package generated a warning response ($error)";
+	}
+    }
+
+    # ... or as a shell script ...
+
+    elsif ($type eq 'sh')
+    {
+	# invoke the script as a single command
+
+	my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
+
+	my $shell_script = "$commands_data_directory/$target/$operation_or_package";
+
+	Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @$arguments );
+    }
+
+    # ... or as a yaml script ...
+
+    elsif ($type eq 'yml')
+    {
+	$error = "*** Error: YAML scripts have not been integrated yet";
+    }
+
+    # ... or we have an error
+
+    else
+    {
+	$error = "unknown command type $type when invoking command '$target $operation_or_package'";
+    }
+
+    return $error;
+}
+
+
+sub schedule_operation_execute_call
+{
     my $operation_implementation = shift;
 
     my $arguments = shift;
@@ -10496,6 +10577,10 @@ sub main
 	    or $option_interactions_target_all_roles)
 	{
 	    $dry_run_module_commands = 'option_interactions_target';
+
+	    # make sure we select operations
+
+	    $global_operation = ".*";
 
 	    # make sure we don't actually run any commands
 
@@ -10823,7 +10908,12 @@ sub schedule_commands_for_execution
 
     my $operation_implementation;
 
-    my $type_package_builtin;
+    my $type_package_builtin = '';
+
+    if ($option_dry_run)
+    {
+	$dry_run_reason = "option_dry_run";
+    }
 
     if (defined $operation_or_package
 	and exists $global_known_operation_packages_builtin->{$operation_or_package})
@@ -10881,6 +10971,8 @@ sub schedule_commands_for_execution
 	}
     }
 
+    my $all_selected_operations = operation_selector($target, $operation_or_package, $dry_run_reason, $help, $arguments);
+
     if ($option_verbose)
     {
 	print "Invoking ($operation_implementation)\n";
@@ -10914,47 +11006,15 @@ sub schedule_commands_for_execution
 
 	else
 	{
-	    # ... depending on the type of the requested command ...
-
 	    my $type = $all_typed_operations->{"$target $operation_or_package"}->{type};
 
-	    # ... either as a regular perl sub ...
+	    my $selected_operation = pop @$all_selected_operations;
 
-	    if ($type_package_builtin
-		or $type eq 'sub')
+	    my $error = schedule_operation_execute($type, $selected_operation);
+
+	    if ($error)
 	    {
-		my $error = schedule_operation_execute($operation_implementation, $arguments);
-
-		if ($error)
-		{
-		    warn "$global_program_name: *** Warning: $target $operation_or_package generated an warning response ($error)";
-		}
-	    }
-
-	    # ... or as a shell script ...
-
-	    elsif ($type eq 'sh')
-	    {
-		# invoke the script as a single command
-
-		my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
-
-		my $shell_script = "$commands_data_directory/$target/$operation_or_package";
-
-		Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @$arguments );
-	    }
-
-	    # ... or as a yaml script ...
-
-	    elsif ($type eq 'yml')
-	    {
-	    }
-
-	    # ... or we have an error
-
-	    else
-	    {
-		report_error_exit("unknown command type $type when invoking command '$target $operation_or_package'");
+		report_error_exit($error);
 	    }
 	}
     }
@@ -11003,7 +11063,8 @@ sub operation_selector
 
     my $all_selected_operations = [];
 
-    if ($dry_run_reason eq 'option_interactions')
+    if (defined $dry_run_reason
+	and $dry_run_reason eq 'option_interactions')
     {
 	my $selected_operation
 	    = {
@@ -11014,6 +11075,7 @@ sub operation_selector
 	       operation_implementation => "Command::${target_regex}_${operation}",
 	       short_operation => "${target_regex}_${operation}",
 	       target => $target_regex,
+	       type_package_builtin => '',
 	      };
 
 	push @$all_selected_operations, $selected_operation;
@@ -11035,7 +11097,7 @@ sub operation_selector
 				     {
 					 m(^$target_regex$);
 				     }
-				     keys %$all_defined_targets
+				     sort keys %$all_defined_targets
 				    )
 	{
 	    # reference subroutine names specific for the given target: they belong together
@@ -11059,7 +11121,13 @@ sub operation_selector
 
 	    # possibly in dry run mode to have them either generate or report the target's roles
 
-	    foreach my $operation_implementation (sort @$operation_implementations)
+	    foreach my $operation_implementation (
+						  grep
+						  {
+						      m(^Command::${matching_target}_${operation}$);
+						  }
+						  sort @$operation_implementations
+						 )
 	    {
 		if ($operation_implementation =~ /_help$/)
 		{
@@ -11088,8 +11156,10 @@ sub operation_selector
 		       has_help => $has_help,
 		       help => $help,
 		       operation_implementation => $operation_implementation,
+		       operation_or_package => $operation,
 		       short_operation => $short_operation,
 		       target => $matching_target,
+		       type_package_builtin => '',
 		      };
 
 		push @$all_selected_operations, $selected_operation;
@@ -11130,7 +11200,7 @@ sub operation_scheduler
 
 	my $operation_implementation = $selected_operation->{operation_implementation};
 
-	my $error = schedule_operation_execute($operation_implementation, $command_line_arguments);
+	my $error = schedule_operation_execute_call($operation_implementation, $command_line_arguments);
 
 	if ($error)
 	{
