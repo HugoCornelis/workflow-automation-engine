@@ -10965,6 +10965,28 @@ sub schedule_commands_for_execution
 }
 
 
+sub schedule_dry_run_target_commands
+{
+    my $target_regex = shift;
+
+    my $operation = shift;
+
+    my $dry_run_reason = shift;
+
+    my $help = shift;
+
+    my $arguments = shift;
+
+    # construct a list of operations to execute
+
+    my $all_selected_operations = operation_selector($target_regex, $operation, $dry_run_reason, $help, $arguments);
+
+    # schedule the selected operations for execution
+
+    return operation_scheduler($all_selected_operations);
+}
+
+
 sub operation_selector
 {
     my $target_regex = shift;
@@ -11128,28 +11150,6 @@ sub operation_scheduler
 
 	push @$global_scheduled_operations, $scheduled_operation;
     }
-}
-
-
-sub schedule_dry_run_target_commands
-{
-    my $target_regex = shift;
-
-    my $operation = shift;
-
-    my $dry_run_reason = shift;
-
-    my $help = shift;
-
-    my $arguments = shift;
-
-    # construct a list of operations to execute
-
-    my $all_selected_operations = operation_selector($target_regex, $operation, $dry_run_reason, $help, $arguments);
-
-    # schedule the selected operations for execution
-
-    return operation_scheduler($all_selected_operations);
 }
 
 
