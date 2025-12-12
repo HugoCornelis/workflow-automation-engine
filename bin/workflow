@@ -11061,25 +11061,6 @@ sub operation_selector
 
     my $all_selected_operations = [];
 
-    if (defined $dry_run_reason
-	and $dry_run_reason eq 'option_interactions')
-    {
-	my $selected_operation
-	    = {
-	       command_line_arguments => $arguments,
-	       dry_run_reason => $dry_run_reason,
-	       has_help => '',
-	       help => $help,
-	       operation_implementation => "Command::${target_regex}_${operation}",
-	       operation_type => 'unknown',
-	       short_operation => "${target_regex}_${operation}",
-	       target => $target_regex,
-	       type_package_builtin => '',
-	      };
-
-	push @$all_selected_operations, $selected_operation;
-    }
-    else
     {
 	my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
