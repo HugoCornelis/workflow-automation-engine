@@ -10333,8 +10333,6 @@ sub schedule_operation_execute
 
     my $arguments = $selected_operation->{command_line_arguments};
 
-    my $type_package_builtin = $selected_operation->{type_package_builtin};
-
     my $dry_run_reason = $selected_operation->{dry_run_reason};
 
     my $has_help = $selected_operation->{has_help};
@@ -10349,8 +10347,7 @@ sub schedule_operation_execute
 
     # ... either as a regular perl sub ...
 
-    if ($type_package_builtin
-	or $operation_type eq 'sub')
+    if ($operation_type eq 'sub')
     {
 	$error = schedule_operation_execute_call($operation_implementation, $arguments);
 
@@ -11020,7 +11017,6 @@ sub schedule_operation_for_execution
 		   operation_implementation => $operation_implementation,
 		   operation_type => 'sub',
 		   target => $target,
-		   type_package_builtin => '',
 		  };
 
 	    $all_selected_operations = [ $selected_operation ];
@@ -11171,7 +11167,6 @@ sub operation_selector
 		       operation_implementation => $operation_implementation,
 		       operation_type => $operation_type,
 		       target => $matching_target,
-		       type_package_builtin => '',
 		      };
 
 		push @$all_selected_operations, $selected_operation;
