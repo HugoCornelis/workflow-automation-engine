@@ -10341,8 +10341,6 @@ sub schedule_operation_execute
 
     my $help = $selected_operation->{help};
 
-    my $short_operation = $selected_operation->{short_operation};
-
     my $target = $selected_operation->{target};
 
     my $error;
@@ -11021,7 +11019,6 @@ sub schedule_operation_for_execution
 		   is_help => $help,
 		   operation_implementation => $operation_implementation,
 		   operation_type => 'sub',
-		   short_operation => $operation_implementation,
 		   target => $target,
 		   type_package_builtin => '',
 		  };
@@ -11157,10 +11154,6 @@ sub operation_selector
 		    $has_help = " (use --help to see the help page)";
 		}
 
-		$operation_implementation =~ /Command::(.*)/;
-
-		my $short_operation = $1;
-
 		#! this mess needs reimplementation
 
 		$operation_implementation =~ /Command::${matching_target}_(.*)/;
@@ -11177,7 +11170,6 @@ sub operation_selector
 		       help => $help,
 		       operation_implementation => $operation_implementation,
 		       operation_type => $operation_type,
-		       short_operation => $short_operation,
 		       target => $matching_target,
 		       type_package_builtin => '',
 		      };
@@ -11207,7 +11199,11 @@ sub operation_scheduler
 
 	my $has_help = $selected_operation->{has_help};
 
-	my $short_operation = $selected_operation->{short_operation};
+	my $operation_implementation = $selected_operation->{operation_implementation};
+
+	$operation_implementation =~ /Command::(.*)/;
+
+	my $short_operation = $1;
 
 	if ($scheduler_dry_run_reason)
 	{
@@ -11225,8 +11221,6 @@ sub operation_scheduler
 
 	if ($selected_operation->{is_help})
 	{
-	    my $operation_implementation = $selected_operation->{operation_implementation};
-
 	    my $arguments = $selected_operation->{command_line_arguments};
 
 	    $result .= schedule_help_execute($operation_implementation, $arguments);
