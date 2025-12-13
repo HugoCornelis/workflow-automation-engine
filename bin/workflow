@@ -3681,6 +3681,27 @@ sub builtin_install_scripts
         die "$global_program_name: *** Error in option processing, try --help";
     }
 
+    my $debug = 0;
+
+    if ($debug)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      option_install_aliasses => $option_install_aliasses,
+		      option_install_bash_completion => $option_install_bash_completion,
+		      option_install_commands => $option_install_commands,
+		      option_install_engine => $option_install_engine,
+		      option_install_force => $option_install_force,
+		      option_install_git => $option_install_git,
+		      option_install_grc_configuration => $option_install_grc_configuration,
+		      option_install_path_in_bashrc => $option_install_path_in_bashrc,
+		      option_install_report => $option_install_report,
+		     }
+		    );
+    }
+
     # need to take these actions:
     #
     # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
