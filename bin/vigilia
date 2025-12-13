@@ -2281,6 +2281,7 @@ sub cd_construct_command_line
 	    = {
 	       arguments => $command_and_arguments,
 	       command => $command,
+	       command_prefix => $command_prefix,
 	       original_command => $command_line,
 	      };
 
@@ -2317,6 +2318,7 @@ sub cd_construct_command_line
 	    = {
 	       arguments => $command_arguments,
 	       command => $command,
+	       command_prefix => $command_prefix,
 	       original_command => $command_line,
 	      };
 
@@ -2991,9 +2993,12 @@ sub ct_run_complete
 
 	my $executed_command = $command_definition->{command} ? $command_definition->{command} : "";
 
+	my $command_prefix = $command_definition->{command_prefix} ? $command_definition->{command_prefix} : "";
+
 	$reporter->report_error_add
 		(
 		 {
+		  command_prefix => $command_prefix,
 		  context_path => $execution_context->get_context_path(),
 		  description => $description,
 		  error => $error,
@@ -11712,6 +11717,7 @@ sub _report_error_summary
 		    "020_description" => $error_report->{description},
 		    "030_subdescription" => $error_report->{subdescription},
 		    "040_executed_command" => $error_report->{executed_command},
+		    "050_command_prefix" => $error_report->{command_prefix},
 		   },
 	   error => $error_report->{error},
 	   report_error_directory => $report_error_directory,
