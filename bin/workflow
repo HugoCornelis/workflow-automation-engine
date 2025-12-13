@@ -11001,53 +11001,45 @@ sub schedule_operation_for_execution
     if (exists $all_typed_operations->{"$target $operation_or_package"}
 	or $type_package_builtin)
     {
-	my $selected_operation
-	    = {
-	       command_line_arguments => $arguments,
-	       dry_run_reason => $dry_run_reason,
-	       has_help => 'maybe',
-	       help => $help,
-	       is_help => $help,
-	       operation_implementation => $operation_implementation,
-	       operation_or_package => $operation_or_package,
-	       operation_type => 'sub',
-	       short_operation => $operation_implementation,
-	       target => $target,
-	       type_package_builtin => '',
-	      };
+	my $all_selected_operations = operation_selector($target, $operation_or_package, $dry_run_reason, $help, $arguments);
 
-	# ... either invoke the --help sub
+	if ($help
+	    or $type_package_builtin)
+	{
+	    my $selected_operation
+		= {
+		   command_line_arguments => $arguments,
+		   dry_run_reason => $dry_run_reason,
+		   has_help => 'maybe',
+		   help => $help,
+		   is_help => $help,
+		   operation_implementation => $operation_implementation,
+		   operation_or_package => $operation_or_package,
+		   operation_type => 'sub',
+		   short_operation => $operation_implementation,
+		   target => $target,
+		   type_package_builtin => '',
+		  };
+
+	    $all_selected_operations = [ $selected_operation ];
+	}
+
+	my $help_string_or_error = operation_scheduler($all_selected_operations, $dry_run_reason);
+
+	# ... either was invoked as the --help sub
 
 	if ($help)
 	{
-	    my $help_string = operation_scheduler( [ $selected_operation ], $dry_run_reason);
-
-	    print "$global_program_name $help_string\n";
+	    print "$global_program_name $help_string_or_error\n";
 	}
 
-	# ... or invoke this as a builtin package ...
-
-	elsif ($type_package_builtin)
-	{
-	    my $error = operation_scheduler( [ $selected_operation ], $dry_run_reason);
-
-	    if ($error)
-	    {
-		report_error_exit($error);
-	    }
-	}
-
-	# ... or invoke the implementation of the command ...
+	# ... or was invoked as a builtin package or simply the implementation of the command ...
 
 	else
 	{
-	    my $all_selected_operations = operation_selector($target, $operation_or_package, $dry_run_reason, $help, $arguments);
-
-	    my $error = operation_scheduler($all_selected_operations, '');
-
-	    if ($error)
+	    if ($help_string_or_error)
 	    {
-		report_error_exit($error);
+		report_error_exit($help_string_or_error);
 	    }
 	}
     }
