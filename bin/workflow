@@ -10329,8 +10329,6 @@ sub schedule_operation_execute
 
     my $operation_implementation = $selected_operation->{operation_implementation};
 
-    my $operation_or_package = $selected_operation->{operation_or_package};
-
     my $operation_type = $selected_operation->{operation_type};
 
     my $arguments = $selected_operation->{command_line_arguments};
@@ -10360,7 +10358,7 @@ sub schedule_operation_execute
 
 	if ($error)
 	{
-	    $error = "$global_program_name: *** Warning: $target $operation_or_package generated a warning response ($error)";
+	    $error = "$global_program_name: *** Warning: $operation_implementation generated a warning response ($error)";
 	}
     }
 
@@ -10372,7 +10370,14 @@ sub schedule_operation_execute
 
 	my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
 
-	my $shell_script = "$commands_data_directory/$target/$operation_or_package";
+	# the operation_implementation is always prefixed with Command::
+	# this is an internal bug that we correct here.
+
+	my $operator = $operation_implementation;
+
+	$operator =~ s(^Command::$target.)();
+
+	my $shell_script = "$commands_data_directory/$target/$operator";
 
 	Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @$arguments );
     }
@@ -10388,7 +10393,7 @@ sub schedule_operation_execute
 
     else
     {
-	$error = "unknown command type $operation_type when invoking command '$target $operation_or_package'";
+	$error = "unknown command type $operation_type when invoking command '$operation_implementation'";
     }
 
     return $error;
@@ -10929,17 +10934,20 @@ sub schedule_operation_for_execution
 
     my $operation_implementation;
 
-    my $type_package_builtin = '';
+    my $type_package_builtin
+	= ((defined $operation_or_package
+	    and exists $global_known_operation_packages_builtin->{$operation_or_package})
+	   ? $operation_or_package
+	   : '');
 
     if ($option_dry_run)
     {
 	$dry_run_reason = "option_dry_run";
     }
 
-    # first determine type_package_builtin and correct operation_implementation and operation_or_package as required
+    # first correct operation_implementation and operation_or_package as required
 
-    if (defined $operation_or_package
-	and exists $global_known_operation_packages_builtin->{$operation_or_package})
+    if ($type_package_builtin)
     {
 	my $sub_name = shift @$arguments;
 
@@ -10947,8 +10955,6 @@ sub schedule_operation_for_execution
 	{
 	    report_error_exit("no function name given while trying to use a builtin package '$global_operation'");
 	}
-
-	$type_package_builtin = $operation_or_package;
 
 	# if help was requested for this command
 
@@ -10959,7 +10965,7 @@ sub schedule_operation_for_execution
 	    $sub_name .= "_help";
 	}
 
-	$operation_implementation = "${operation_or_package}::$sub_name";
+	$operation_implementation = "${type_package_builtin}::$sub_name";
     }
     elsif (defined $operation_or_package)
     {
@@ -11014,7 +11020,6 @@ sub schedule_operation_for_execution
 		   help => $help,
 		   is_help => $help,
 		   operation_implementation => $operation_implementation,
-		   operation_or_package => $operation_or_package,
 		   operation_type => 'sub',
 		   short_operation => $operation_implementation,
 		   target => $target,
@@ -11171,7 +11176,6 @@ sub operation_selector
 		       has_help => $has_help,
 		       help => $help,
 		       operation_implementation => $operation_implementation,
-		       operation_or_package => $operation,
 		       operation_type => $operation_type,
 		       short_operation => $short_operation,
 		       target => $matching_target,
