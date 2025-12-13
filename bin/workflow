@@ -10986,6 +10986,7 @@ sub schedule_dry_run_target_commands
 	       has_help => '',
 	       operation_implementation => "Command::${target_regex}_${operation}",
 	       short_operation => "${target_regex}_${operation}",
+	       target => $target_regex,
 	      };
 
 	    push @$all_selected_operations, $selected_operation;
