@@ -10980,31 +10980,35 @@ sub schedule_operation_for_execution
     if (exists $all_typed_operations->{"$target $operation_or_package"}
 	or $type_package_builtin)
     {
+	my $selected_operation
+	    = {
+	       command_line_arguments => $arguments,
+	       dry_run_reason => $dry_run_reason,
+	       has_help => 'maybe',
+	       help => $help,
+	       is_help => $help,
+	       operation_implementation => $operation_implementation,
+	       operation_or_package => $operation_or_package,
+	       operation_type => 'sub',
+	       short_operation => $operation_implementation,
+	       target => $target,
+	       type_package_builtin => '',
+	      };
+
 	# ... either invoke the --help sub
 
 	if ($help)
 	{
-	    my $help_string = schedule_help_execute($operation_implementation, $arguments);
+	    my $help_string = operation_scheduler( [ $selected_operation ], $dry_run_reason);
 
 	    print "$global_program_name $help_string\n";
 	}
+
+	# ... or invoke this as a builtin package ...
+
 	elsif ($type_package_builtin)
 	{
-	    my $selected_operation
-		= {
-		   command_line_arguments => $arguments,
-		   dry_run_reason => $dry_run_reason,
-		   has_help => 'maybe',
-		   help => $help,
-		   operation_implementation => $operation_implementation,
-		   operation_or_package => $operation_or_package,
-		   operation_type => 'sub',
-		   short_operation => $operation_implementation,
-		   target => $target,
-		   type_package_builtin => '',
-		  };
-
-	    my $error = schedule_operation_execute($selected_operation);
+	    my $error = operation_scheduler( [ $selected_operation ], $dry_run_reason);
 
 	    if ($error)
 	    {
@@ -11176,6 +11180,8 @@ sub operation_scheduler
 
     my $scheduler_dry_run_reason = shift;
 
+    my $result = '';
+
     foreach my $selected_operation (@$all_selected_operations)
     {
 	my $command_line_arguments = $selected_operation->{command_line_arguments};
@@ -11200,15 +11206,26 @@ sub operation_scheduler
 	    push @$global_scheduled_operations, $scheduled_operation;
 	}
 
-	# add the operation to the schedule / diagram
-
-	my $error = schedule_operation_execute($selected_operation);
-
-	if ($error)
+	if ($selected_operation->{is_help})
 	{
-	    my $target = $selected_operation->{target};
+	    my $operation_implementation = $selected_operation->{operation_implementation};
 
-	    warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
+	    my $arguments = $selected_operation->{command_line_arguments};
+
+	    $result .= schedule_help_execute($operation_implementation, $arguments);
+	}
+	else
+	{
+	    # add the operation to the schedule / diagram
+
+	    my $error = schedule_operation_execute($selected_operation);
+
+	    if ($error)
+	    {
+		my $target = $selected_operation->{target};
+
+		warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
+	    }
 	}
 
 	if ($scheduler_dry_run_reason)
@@ -11225,6 +11242,10 @@ sub operation_scheduler
 	    push @$global_scheduled_operations, $scheduled_operation;
 	}
     }
+
+    # return either a help string or an error message
+
+    return $result;
 }
 
 
