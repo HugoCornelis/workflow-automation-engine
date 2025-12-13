@@ -10863,7 +10863,7 @@ sub schedule_commands_for_execution
     }
     else
     {
-	# if help was requested for this command
+	# if help was requested for this target
 
 	if ($help)
 	{
@@ -10872,6 +10872,12 @@ sub schedule_commands_for_execution
 	    $operation_or_package = "help";
 
 	    $operation_implementation = "Command::${target}_${operation_or_package}";
+	}
+	else
+	{
+	    #! we should not reach this
+
+	    report_error_exit("internal error");
 	}
     }
 
