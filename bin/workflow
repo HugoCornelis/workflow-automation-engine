@@ -3681,6 +3681,27 @@ sub builtin_install_scripts
         die "$global_program_name: *** Error in option processing, try --help";
     }
 
+    my $debug = 0;
+
+    if ($debug)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      option_install_aliasses => $option_install_aliasses,
+		      option_install_bash_completion => $option_install_bash_completion,
+		      option_install_commands => $option_install_commands,
+		      option_install_engine => $option_install_engine,
+		      option_install_force => $option_install_force,
+		      option_install_git => $option_install_git,
+		      option_install_grc_configuration => $option_install_grc_configuration,
+		      option_install_path_in_bashrc => $option_install_path_in_bashrc,
+		      option_install_report => $option_install_report,
+		     }
+		    );
+    }
+
     # need to take these actions:
     #
     # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
@@ -4259,7 +4280,7 @@ $global_command_line
 
 	$operation_help_with_package =~ s( )(_)g;
 
-	my $help_string = main::call_help_implementation($operation_help_with_package, [ 'manual' ]);
+	my $help_string = main::schedule_help_execute($operation_help_with_package, [ 'manual' ]);
 
 	$manual_string .= "$header\n$help_string\n";
 
@@ -10293,26 +10314,111 @@ sub operation_hash_subs_generate
 }
 
 
-sub call_operation_implementation
+sub schedule_operation_execute
+{
+    my $selected_operation = shift;
+
+    my $debug_schedule_operation_execute = 0;
+
+    if ($debug_schedule_operation_execute)
+    {
+	use Data::Dumper;
+
+	print Dumper( { selected_operation => $selected_operation, } );
+    }
+
+    my $operation_implementation = $selected_operation->{operation_implementation};
+
+    my $operation_type = $selected_operation->{operation_type};
+
+    my $arguments = $selected_operation->{command_line_arguments};
+
+    my $dry_run_reason = $selected_operation->{dry_run_reason};
+
+    my $has_help = $selected_operation->{has_help};
+
+    my $help = $selected_operation->{help};
+
+    my $target = $selected_operation->{target};
+
+    my $error;
+
+    # ... depending on the type of the requested command ...
+
+    # ... either as a regular perl sub ...
+
+    if ($operation_type eq 'sub')
+    {
+	$error = schedule_operation_execute_call($operation_implementation, $arguments);
+
+	if ($error)
+	{
+	    $error = "$global_program_name: *** Warning: $operation_implementation generated a warning response ($error)";
+	}
+    }
+
+    # ... or as a shell script ...
+
+    elsif ($operation_type eq 'sh')
+    {
+	# invoke the script as a single command
+
+	my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
+
+	# the operation_implementation is always prefixed with Command::
+	# this is an internal bug that we correct here.
+
+	my $operator = $operation_implementation;
+
+	$operator =~ s(^Command::$target.)();
+
+	my $shell_script = "$commands_data_directory/$target/$operator";
+
+	Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @$arguments );
+    }
+
+    # ... or as a yaml script ...
+
+    elsif ($operation_type eq 'yml')
+    {
+	$error = "*** Error: YAML scripts have not been integrated yet";
+    }
+
+    # ... or we have an error
+
+    else
+    {
+	$error = "unknown command type $operation_type when invoking command '$operation_implementation'";
+    }
+
+    return $error;
+}
+
+
+sub schedule_operation_execute_call
 {
     my $operation_implementation = shift;
 
     my $arguments = shift;
 
-    no strict "refs";
-
     #! utf8::upgrade works in place
 
     map { utf8::upgrade($_) } @$arguments;
 
-    my $error = &$operation_implementation($arguments);
+    my $error;
+
+    {
+	no strict "refs";
+
+	$error = &$operation_implementation($arguments);
+    }
 
     return $error;
 
 }
 
 
-sub call_help_implementation
+sub schedule_help_execute
 {
     my $operation_implementation = shift;
 
@@ -10474,52 +10580,47 @@ sub main
 	$option_export_times =~ s/_/-/g;
     }
 
+    # are we dry running all the operations of a module / target?
+
+    my $dry_run_module_commands;
+
+    if ($option_interactions)
     {
-	# are we dry running all the operations of a module / target?
+	$dry_run_module_commands = 'option_interactions';
 
-	my $dry_run_module_commands;
+	# make sure we don't actually run any commands
 
-	if ($option_interactions)
-	{
-	    $dry_run_module_commands = 'option_interactions';
-
-	    # make sure we don't actually run any commands
-
-	    $global_execute_what_is_scheduled = '';
-	}
-	elsif ($option_interactions_all
-	    or $option_interactions_target
-	    or $option_interactions_target_all_roles)
-	{
-	    $dry_run_module_commands = 'option_interactions_target';
-
-	    # make sure we don't actually run any commands
-
-	    $global_execute_what_is_scheduled = '';
-	}
-	elsif ($option_dump_module_interaction_roles)
-	{
-	    $dry_run_module_commands = 'option_dump_module_interaction_roles';
-
-	    # make sure we don't actually run any commands
-
-	    $global_execute_what_is_scheduled = '';
-	}
-
-	if ($dry_run_module_commands)
-	{
-	    schedule_dry_run_module_commands($requested_target, $global_operation, $dry_run_module_commands);
-	}
-
-	# we are not dry running, but really will execute the operations
-
-	else
-	{
-	    schedule_commands_for_execution($requested_target, $global_operation, $option_help, \@ARGV);
-	}
-
-	Engine::execute_all_scheduled_operations($global_interaction_roles);
+	$global_execute_what_is_scheduled = '';
     }
+    elsif ($option_interactions_all
+	   or $option_interactions_target
+	   or $option_interactions_target_all_roles)
+    {
+	$dry_run_module_commands = 'option_interactions_target';
+
+	# make sure we select operations
+
+	$global_operation = ".*";
+
+	# make sure we don't actually run any commands
+
+	$global_execute_what_is_scheduled = '';
+    }
+    elsif ($option_dump_module_interaction_roles)
+    {
+	$dry_run_module_commands = 'option_dump_module_interaction_roles';
+
+	# make sure we don't actually run any commands
+
+	$global_execute_what_is_scheduled = '';
+    }
+
+    my ($builtin_package, $operation_implementation, $operation)
+	= package_operation_2_package_type_operation_implementation($requested_target, $global_operation, $option_help, \@ARGV);
+
+    schedule_operations_for_execution($builtin_package, $requested_target, $operation, $operation_implementation, $dry_run_module_commands, $option_help, \@ARGV);
+
+    Engine::execute_all_scheduled_operations($global_interaction_roles);
 }
 
 
@@ -10805,7 +10906,7 @@ sub report_error_exit
 }
 
 
-sub schedule_commands_for_execution
+sub package_operation_2_package_type_operation_implementation
 {
     my $target = shift;
 
@@ -10817,10 +10918,15 @@ sub schedule_commands_for_execution
 
     my $operation_implementation;
 
-    my $type_package_builtin;
+    my $builtin_package
+	= ((defined $operation_or_package
+	    and exists $global_known_operation_packages_builtin->{$operation_or_package})
+	   ? $operation_or_package
+	   : '');
 
-    if (defined $operation_or_package
-	and exists $global_known_operation_packages_builtin->{$operation_or_package})
+    # first correct operation_implementation and operation_or_package as required
+
+    if ($builtin_package)
     {
 	my $sub_name = shift @$arguments;
 
@@ -10828,8 +10934,6 @@ sub schedule_commands_for_execution
 	{
 	    report_error_exit("no function name given while trying to use a builtin package '$global_operation'");
 	}
-
-	$type_package_builtin = $operation_or_package;
 
 	# if help was requested for this command
 
@@ -10840,7 +10944,7 @@ sub schedule_commands_for_execution
 	    $sub_name .= "_help";
 	}
 
-	$operation_implementation = "$operation_or_package::$sub_name";
+	$operation_implementation = "${builtin_package}::$sub_name";
     }
     elsif (defined $operation_or_package)
     {
@@ -10857,7 +10961,7 @@ sub schedule_commands_for_execution
     }
     else
     {
-	# if help was requested for this command
+	# if help was requested for this target
 
 	if ($help)
 	{
@@ -10867,93 +10971,94 @@ sub schedule_commands_for_execution
 
 	    $operation_implementation = "Command::${target}_${operation_or_package}";
 	}
+	else
+	{
+	    #! we should not reach this
+
+	    report_error_exit("internal error");
+	}
     }
 
-    if ($option_verbose)
+    return ($builtin_package, $operation_implementation, $operation_or_package);
+}
+
+
+sub schedule_operations_for_execution
+{
+    my $builtin_package = shift;
+
+    my $target = shift;
+
+    my $operation = shift;
+
+    my $operation_implementation = shift;
+
+    my $dry_run_reason = shift;
+
+    my $help = shift;
+
+    my $arguments = shift;
+
+    if ($option_dry_run)
     {
-	print "Invoking ($operation_implementation)\n";
-    }
-
-    my $all_typed_operations = operation_hash_typed_generate('with help subs');
-
-    if (defined $option_verbose
-	and $option_verbose > 2)
-    {
-	use Data::Dumper;
-
-	print Dumper( { all_typed_operations_with_help_subs => $all_typed_operations, }, );
+	$dry_run_reason = "option_dry_run";
     }
 
     # if this command exists ...
 
-    if (exists $all_typed_operations->{"$target $operation_or_package"}
-	or $type_package_builtin)
+    my $all_typed_operations = operation_hash_typed_generate('with help subs');
+
+    if (exists $all_typed_operations->{"$target $operation"}
+	or $builtin_package
+	or $option_interactions_target)
     {
-	# ... either invoke the --help sub
+	my $all_selected_operations = operation_selector($target, $operation, $dry_run_reason, $help, $arguments);
+
+	if ($help
+	    or $builtin_package)
+	{
+	    my $selected_operation
+		= {
+		   command_line_arguments => $arguments,
+		   dry_run_reason => $dry_run_reason,
+		   has_help => 'maybe',
+		   help => $help,
+		   is_help => $help,
+		   operation_implementation => $operation_implementation,
+		   operation_type => 'sub',
+		   target => $target,
+		  };
+
+	    $all_selected_operations = [ $selected_operation ];
+	}
+
+	my $help_string_or_error = operation_scheduler($all_selected_operations, $dry_run_reason);
+
+	# ... either was invoked as the --help sub
 
 	if ($help)
 	{
-	    my $help_string = call_help_implementation($operation_implementation, $arguments);
-
-	    print "$global_program_name $help_string\n";
+	    print "$global_program_name $help_string_or_error\n";
 	}
 
-	# ... or invoke the implementation sub of the command ...
+	# ... or was invoked as a builtin package or simply the implementation of the command ...
 
 	else
 	{
-	    # ... depending on the type of the requested command ...
-
-	    my $type = $all_typed_operations->{"$target $operation_or_package"}->{type};
-
-	    # ... either as a regular perl sub ...
-
-	    if ($type_package_builtin
-		or $type eq 'sub')
+	    if ($help_string_or_error)
 	    {
-		my $error = call_operation_implementation($operation_implementation, $arguments);
-
-		if ($error)
-		{
-		    warn "$global_program_name: *** Warning: $target $operation_or_package generated an warning response ($error)";
-		}
-	    }
-
-	    # ... or as a shell script ...
-
-	    elsif ($type eq 'sh')
-	    {
-		# invoke the script as a single command
-
-		my $commands_data_directory = $global_field_project_configuration->{sources_configuration_data_directory};
-
-		my $shell_script = "$commands_data_directory/$target/$operation_or_package";
-
-		Command::execute_shell_command(join ' ', "$shell_script.sh", map { "'$_'" } @$arguments );
-	    }
-
-	    # ... or as a yaml script ...
-
-	    elsif ($type eq 'yml')
-	    {
-	    }
-
-	    # ... or we have an error
-
-	    else
-	    {
-		report_error_exit("unknown command type $type when invoking command '$target $operation_or_package'");
+		report_error_exit($help_string_or_error);
 	    }
 	}
     }
     else
     {
-	report_error_exit("target '$target' does not provide command '$operation_or_package'.");
+	report_error_exit("target '$target' does not provide command '$operation'.");
     }
 }
 
 
-sub schedule_dry_run_module_commands
+sub operation_selector
 {
     my $target_regex = shift;
 
@@ -10961,20 +11066,14 @@ sub schedule_dry_run_module_commands
 
     my $dry_run_reason = shift;
 
+    my $help = shift;
+
+    my $arguments = shift;
+
+    # construct a list of operations to execute
+
     my $all_selected_operations = [];
 
-    if ($dry_run_reason eq 'option_interactions')
-    {
-	my $selected_operation
-	    = {
-	       has_help => '',
-	       operation_implementation => "Command::${target_regex}_${operation}",
-	       short_operation => "${target_regex}_${operation}",
-	      };
-
-	    push @$all_selected_operations, $selected_operation;
-    }
-    else
     {
 	my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
@@ -10986,17 +11085,17 @@ sub schedule_dry_run_module_commands
 
 	my $all_defined_targets = $global_technical_project_configuration->{targets};
 
-	foreach my $defined_target (
-				    grep
-				    {
-					m(^$target_regex$);
-				    }
-				    keys %$all_defined_targets
-				   )
+	foreach my $matching_target (
+				     grep
+				     {
+					 m(^$target_regex$);
+				     }
+				     sort keys %$all_defined_targets
+				    )
 	{
 	    # reference subroutine names specific for the given target: they belong together
 
-	    my $target_subroutines = $all_operations->{$defined_target};
+	    my $target_operators = $all_operations->{$matching_target};
 
 	    # collect the subroutine names
 
@@ -11004,43 +11103,58 @@ sub schedule_dry_run_module_commands
 		= [
 		   map
 		   {
-		       my $subroutine = $_;
+		       my $operator = $_;
 
-		       "Command::${defined_target}_${subroutine}";
+		       "Command::${matching_target}_${operator}";
 		   }
-		   keys %$target_subroutines,
+		   keys %$target_operators,
 		  ];
 
-	    # invoke all these subroutines in dry run mode to have them either generate or report the module roles
+	    # select all these subroutines
 
-	    foreach my $operation_implementation (sort @$operation_implementations)
+	    # possibly in dry run mode to have them either generate or report the target's roles
+
+	    foreach my $operation_implementation (
+						  grep
+						  {
+						      m(^Command::${matching_target}_${operation}$);
+						  }
+						  sort @$operation_implementations
+						 )
 	    {
-		if ($option_verbose)
-		{
-		    print "Invoking ($operation_implementation)\n";
-		}
-
 		if ($operation_implementation =~ /_help$/)
 		{
 		    next;
 		}
 
+		# if the operation has a help page ...
+
 		my $has_help = '';
 
 		if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
 		{
+		    # ... annotate the selected operation
+
 		    $has_help = " (use --help to see the help page)";
 		}
 
-		$operation_implementation =~ /Command::(.*)/;
+		#! this mess needs reimplementation
 
-		my $short_operation = $1;
+		$operation_implementation =~ /Command::${matching_target}_(.*)/;
+
+		my $operator = $1;
+
+		my $operation_type = $all_typed_operations->{"$matching_target $operator"}->{type};
 
 		my $selected_operation
 		    = {
+		       command_line_arguments => $arguments,
+		       dry_run_reason => $dry_run_reason,
 		       has_help => $has_help,
+		       help => $help,
 		       operation_implementation => $operation_implementation,
-		       short_operation => $short_operation,
+		       operation_type => $operation_type,
+		       target => $matching_target,
 		      };
 
 		push @$all_selected_operations, $selected_operation;
@@ -11048,44 +11162,84 @@ sub schedule_dry_run_module_commands
 	}
     }
 
+    return $all_selected_operations;
+}
+
+
+sub operation_scheduler
+{
+    my $all_selected_operations = shift;
+
+    my $scheduler_dry_run_reason = shift;
+
+    my $result = '';
+
     foreach my $selected_operation (@$all_selected_operations)
     {
+	my $command_line_arguments = $selected_operation->{command_line_arguments};
+
+	my $dry_run_reason = $selected_operation->{dry_run_reason};
+
 	my $has_help = $selected_operation->{has_help};
 
 	my $operation_implementation = $selected_operation->{operation_implementation};
 
-	my $short_operation = $selected_operation->{short_operation};
+	$operation_implementation =~ /Command::(.*)/;
 
-	# add a header to the schedule / diagram for this operation
+	my $short_operation = $1;
 
-	my $scheduled_operation
-	    = {
-	       command => "---\nCOMMAND: $short_operation$has_help",
-	       dry_run => $dry_run_reason,
-	       interaction_role => 'none',
-	      };
-
-	push @$global_scheduled_operations, $scheduled_operation;
-
-	# add the operation to the schedule / diagram
-
+	if ($scheduler_dry_run_reason)
 	{
-	    no strict "refs";
+	    # add a header to the schedule / diagram for this operation
 
-	    &$operation_implementation([]);
+	    my $scheduled_operation
+		= {
+		   command => "---\nCOMMAND: $short_operation$has_help",
+		   dry_run => $scheduler_dry_run_reason,
+		   interaction_role => 'none',
+		  };
+
+	    push @$global_scheduled_operations, $scheduled_operation;
 	}
 
-	# end the command in the schedule / diagram
+	if ($selected_operation->{is_help})
+	{
+	    my $arguments = $selected_operation->{command_line_arguments};
 
-	$scheduled_operation
-	    = {
-	       command => "\n\n---\n",
-	       dry_run => $dry_run_reason,
-	       interaction_role => 'none',
-	      };
+	    $result .= schedule_help_execute($operation_implementation, $arguments);
+	}
+	else
+	{
+	    # add the operation to the schedule / diagram
 
-	push @$global_scheduled_operations, $scheduled_operation;
+	    my $error = schedule_operation_execute($selected_operation);
+
+	    if ($error)
+	    {
+		my $target = $selected_operation->{target};
+
+		warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
+	    }
+	}
+
+	if ($scheduler_dry_run_reason)
+	{
+	    # end the command in the schedule / diagram
+
+	    my $scheduled_operation
+		= {
+		   command => "\n\n---\n",
+		   dry_run => $scheduler_dry_run_reason,
+		   interaction_role => 'none',
+		  };
+
+	    push @$global_scheduled_operations, $scheduled_operation;
+	}
     }
+
+    # return either a help string or an error message
+
+    return $result;
 }
 
 

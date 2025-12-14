@@ -1,0 +1,49 @@
+---
+command: bin/workflow builtin Command::Git builtin_git_move_file_across_keep_history --help
+command_tests:
+  - description: Do we see the help page of the builtin command Command::Git builtin_git_move_file_across_keep_history?
+    read: |+
+      workflow Git::builtin_git_move_file_across_keep_history: given a source and target git repository and a file in the
+      source, copy the file with its Git history to the target repository.
+      
+      This workflow:
+      
+      (1) clones the two given repositories in the working_directory
+      
+      (2) in the cloned source repository, removes all files in the source
+      branch, except the given file,
+      
+      (3) adds the cloned source repository as a remote to the cloned target
+      repository
+      
+      (4) merges the source branch with the target branch.
+      
+      This workflow depends on 'git-filter-repo'.  To install it on Ubuntu
+      you use:
+      
+      'sudo apt install git-filter-repo'
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: source_repo
+      
+          ``ARGV[1]``: source_branch with the file
+      
+          ``ARGV[2]``: target_repo
+      
+          ``ARGV[3]``: target working branch
+      
+          ``ARGV[4]``: working_directory, when '0' or an empty string, /tmp/working-directory is used
+      
+          ``ARGV[5] ... ``: filenames
+      
+      After the command has completed, you likely want to do:
+      
+      $ git pull <your-remote> $git_source_branch
+      
+      where <your-remote> repository is your base repository which may be
+      the same as your source repository.
+      
+
+description: Do we see the help page of the builtin command Command::Git builtin_git_move_file_across_keep_history?
