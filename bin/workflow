@@ -11011,7 +11011,8 @@ sub schedule_operations_for_execution
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
     if (exists $all_typed_operations->{"$target $operation"}
-	or $builtin_package)
+	or $builtin_package
+	or $option_interactions_target)
     {
 	my $all_selected_operations = operation_selector($target, $operation, $dry_run_reason, $help, $arguments);
 
