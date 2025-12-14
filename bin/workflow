@@ -10915,13 +10915,11 @@ sub report_error_exit
 }
 
 
-sub schedule_operation_for_execution
+sub package_operation_2_package_type_operation_implementation
 {
     my $target = shift;
 
     my $operation_or_package = shift;
-
-    my $dry_run_reason = shift;
 
     my $help = shift;
 
@@ -10929,20 +10927,15 @@ sub schedule_operation_for_execution
 
     my $operation_implementation;
 
-    my $type_package_builtin
+    my $builtin_package
 	= ((defined $operation_or_package
 	    and exists $global_known_operation_packages_builtin->{$operation_or_package})
 	   ? $operation_or_package
 	   : '');
 
-    if ($option_dry_run)
-    {
-	$dry_run_reason = "option_dry_run";
-    }
-
     # first correct operation_implementation and operation_or_package as required
 
-    if ($type_package_builtin)
+    if ($builtin_package)
     {
 	my $sub_name = shift @$arguments;
 
@@ -10960,7 +10953,7 @@ sub schedule_operation_for_execution
 	    $sub_name .= "_help";
 	}
 
-	$operation_implementation = "${type_package_builtin}::$sub_name";
+	$operation_implementation = "${builtin_package}::$sub_name";
     }
     elsif (defined $operation_or_package)
     {
@@ -10995,17 +10988,41 @@ sub schedule_operation_for_execution
 	}
     }
 
+    return ($builtin_package, $operation_implementation, $operation_or_package);
+}
+
+
+sub schedule_operation_for_execution
+{
+    my $target = shift;
+
+    my $operation_or_package = shift;
+
+    my $dry_run_reason = shift;
+
+    my $help = shift;
+
+    my $arguments = shift;
+
+    if ($option_dry_run)
+    {
+	$dry_run_reason = "option_dry_run";
+    }
+
+    my ($builtin_package, $operation_implementation, $operation)
+	= package_operation_2_package_type_operation_implementation($target, $operation_or_package, $help, $arguments);
+
     # if this command exists ...
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
-    if (exists $all_typed_operations->{"$target $operation_or_package"}
-	or $type_package_builtin)
+    if (exists $all_typed_operations->{"$target $operation"}
+	or $builtin_package)
     {
-	my $all_selected_operations = operation_selector($target, $operation_or_package, $dry_run_reason, $help, $arguments);
+	my $all_selected_operations = operation_selector($target, $operation, $dry_run_reason, $help, $arguments);
 
 	if ($help
-	    or $type_package_builtin)
+	    or $builtin_package)
 	{
 	    my $selected_operation
 		= {
@@ -11043,7 +11060,7 @@ sub schedule_operation_for_execution
     }
     else
     {
-	report_error_exit("target '$target' does not provide command '$operation_or_package'.");
+	report_error_exit("target '$target' does not provide command '$operation'.");
     }
 }
 
