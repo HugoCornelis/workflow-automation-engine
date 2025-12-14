@@ -10616,17 +10616,10 @@ sub main
 	    $global_execute_what_is_scheduled = '';
 	}
 
-	if ($dry_run_module_commands)
-	{
-	    schedule_dry_run_target_commands($requested_target, $global_operation, $dry_run_module_commands, $option_help, \@ARGV);
-	}
+	my ($builtin_package, $operation_implementation, $operation)
+	    = package_operation_2_package_type_operation_implementation($requested_target, $global_operation, $option_help, \@ARGV);
 
-	# we are not dry running, but really will execute the operations
-
-	else
-	{
-	    schedule_operation_for_execution($requested_target, $global_operation, $dry_run_module_commands, $option_help, \@ARGV);
-	}
+	schedule_operations_for_execution($builtin_package, $requested_target, $operation, $operation_implementation, $dry_run_module_commands, $option_help, \@ARGV);
 
 	Engine::execute_all_scheduled_operations($global_interaction_roles);
     }
@@ -10992,11 +10985,15 @@ sub package_operation_2_package_type_operation_implementation
 }
 
 
-sub schedule_operation_for_execution
+sub schedule_operations_for_execution
 {
+    my $builtin_package = shift;
+
     my $target = shift;
 
-    my $operation_or_package = shift;
+    my $operation = shift;
+
+    my $operation_implementation = shift;
 
     my $dry_run_reason = shift;
 
@@ -11008,9 +11005,6 @@ sub schedule_operation_for_execution
     {
 	$dry_run_reason = "option_dry_run";
     }
-
-    my ($builtin_package, $operation_implementation, $operation)
-	= package_operation_2_package_type_operation_implementation($target, $operation_or_package, $help, $arguments);
 
     # if this command exists ...
 
@@ -11062,28 +11056,6 @@ sub schedule_operation_for_execution
     {
 	report_error_exit("target '$target' does not provide command '$operation'.");
     }
-}
-
-
-sub schedule_dry_run_target_commands
-{
-    my $target_regex = shift;
-
-    my $operation = shift;
-
-    my $dry_run_reason = shift;
-
-    my $help = shift;
-
-    my $arguments = shift;
-
-    # construct a list of operations to execute
-
-    my $all_selected_operations = operation_selector($target_regex, $operation, $dry_run_reason, $help, $arguments);
-
-    # schedule the selected operations for execution
-
-    return operation_scheduler($all_selected_operations, $dry_run_reason);
 }
 
 
