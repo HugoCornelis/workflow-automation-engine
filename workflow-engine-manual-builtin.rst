@@ -7,10 +7,10 @@ This manual was automatically generated with the command line:
 
 .. code-block:: bash
 
-    bin/workflow builtin manual builtin
+    /usr/local/bin/workflow builtin manual builtin
 
-Draft Specification Manual: target``builtin``
-*********************************************
+Draft Specification Manual: target ``builtin``
+**********************************************
 
 
 
@@ -141,11 +141,57 @@ builtin docker_containers_start
 
 builtin docker_containers_start: Start the docker images / containers that are required for the roles in this project.
 
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin docker_containers_start <docker-role-name> [ -- <options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+options:
+~~~~~~~~
+
+    ``--restart``: Stop, then start the Docker container.
+
+    ``--no-restart``: Do not start the Docker container, this is the default.
+
+
+builtin docker_exec
+-------------------
+
+builtin docker_exec: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin docker_exec <docker-role-name> '<command-to-run-inside-the-container>'
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+    ``ARGV[1]``: A command to run inside the container, likely quoted.
+
+
 
 builtin docker_images_build
 ---------------------------
 
 builtin docker_images_build: Build the docker images that are required for the roles in this project.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
 
 
 builtin fetch_scripts
@@ -269,6 +315,20 @@ arguments:
     ``ARGV[0]``: the new project name.
 
     ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+
+
+builtin role_print
+------------------
+
+builtin role_print: Print the known roles.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
+                 '``^docker_``' prints Docker roles,
+                 '``^serial_``' prints serial console roles,
+                 '``^tmux_``' prints tmux roles.
 
 
 builtin start_project
