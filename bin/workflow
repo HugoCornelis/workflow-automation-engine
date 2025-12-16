@@ -5807,7 +5807,7 @@ package Command::Git;
 
 # Based on https://gist.github.com/bonovoxly/b4f7502f2b6cdb26a779dbfb73d4d134
 
-sub builtin_git_move_file_across_keep_history
+sub builtin_git_move_files_across_keep_history
 {
     my $arguments = shift || [];
 
@@ -5963,7 +5963,7 @@ sub builtin_git_move_file_across_keep_history
 }
 
 
-sub builtin_git_move_file_across_keep_history_help
+sub builtin_git_move_files_across_keep_history_help
 {
     my $command = shift;
 
@@ -6009,7 +6009,92 @@ After the command has completed, you likely want to do:
 where <your-remote> repository is your base repository which may be
 the same as your source repository.
 
-"; }
+";
+}
+
+
+sub builtin_git_remove_all_history
+{
+    my $arguments = shift || [];
+
+    my $directory = $arguments->[0] || 'new-repository';
+
+    if (!defined $directory)
+    {
+	die "$0: *** Error: directory, ARGV[0] is not defined.";
+    }
+
+    my $initial_commit = $arguments->[1] || 'Initial commit (git_remove_all_history)';
+
+    if (!defined $initial_commit)
+    {
+	die "$0: *** Error: intial_commit, ARGV[1] is not defined.";
+    }
+
+    my $repository = $arguments->[2];
+
+    # what follows is the equivalent of:
+    # git archive HEAD | (mkdir $directory && cd $directory && tar -xf - && git init && git add . && git commit -m '$intial_commit')
+
+    # create a tarball of the current tracked files
+
+    my $commands_tarball
+	= [
+	   "git archive --format=tar.gz --output=$directory.tar.gz HEAD",
+	  ];
+
+    # extract into a new folder
+
+    my $commands_extract
+	= [
+	   "mkdir $directory",
+	   "tar -xf $directory.tar.gz -C $directory",
+	   "cd $directory",
+	  ];
+
+    # initialize a new repository
+
+    my $commands_new_repository
+	= [
+	   "git init",
+	   "git add .",
+	   "git commit -m '$initial_commit'",
+	  ];
+
+    Command::execute_shell_command_array( [ @$commands_tarball, @$commands_extract, @$commands_new_repository ] );
+
+    # optionally add a new remote and push
+
+    if ($repository)
+    {
+	my $commands_push
+	    = [
+	       "git remote add origin $repository",
+	       "git branch -M main",
+	       "git push -u origin main",
+	      ];
+
+	Command::execute_shell_command_array( [ @$commands_push ] );
+    }
+}
+
+
+sub builtin_git_remove_all_history_help
+{
+    my $command = shift;
+
+    return "$command: in a working directory with a git repository, create a new git repository with the same content but without any history.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: A directory name to hold the new repository, this will also be used for the intermediate tarball, it is useful to prefix it with '``../``'.
+
+    ``ARGV[1]``: The commit message to use when adding the files to the new repository.
+
+    ``ARGV[2]``: Optional, the URL of a repository where to push, if this is not given, no push is performed.
+";
+}
 
 
 package Command::Git::RepositorySet;

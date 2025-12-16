@@ -8,8 +8,12 @@ command_tests:
         documentation: These workflows implement convenience interactions with Git.
       ---
       Command::Git:
-        builtin git_move_file_across_keep_history:
+        builtin git_move_files_across_keep_history:
           type: sub
-        builtin git_move_file_across_keep_history_help:
+        builtin git_move_files_across_keep_history_help:
+          type: sub
+        builtin git_remove_all_history:
+          type: sub
+        builtin git_remove_all_history_help:
           type: sub
 description: help of the Command::Git builtin convenience module

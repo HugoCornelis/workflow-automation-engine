@@ -1,9 +1,9 @@
 ---
-command: bin/workflow builtin Command::Git builtin_git_move_file_across_keep_history --help
+command: bin/workflow builtin Command::Git builtin_git_move_files_across_keep_history --help
 command_tests:
-  - description: Do we see the help page of the builtin command Command::Git builtin_git_move_file_across_keep_history?
+  - description: Do we see the help page of the builtin command Command::Git builtin_git_move_files_across_keep_history?
     read: |+
-      workflow Git::builtin_git_move_file_across_keep_history: given a source and target git repository and a file in the
+      workflow Git::builtin_git_move_files_across_keep_history: given a source and target git repository and a file in the
       source, copy the file with its Git history to the target repository.
       
       This workflow:
@@ -46,4 +46,4 @@ command_tests:
       the same as your source repository.
       
 
-description: Do we see the help page of the builtin command Command::Git builtin_git_move_file_across_keep_history?
+description: Do we see the help page of the builtin command Command::Git builtin_git_move_files_across_keep_history?
