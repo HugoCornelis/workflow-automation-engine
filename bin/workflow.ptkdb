@@ -3,8 +3,8 @@ $files = {
                                    {
                                      'expr' => undef,
                                      'fname' => './bin/workflow',
-                                     'line' => '11075',
-                                     'text' => 'main();
+                                     'line' => 10925,
+                                     'text' => '    my $operation_implementation;
 ',
                                      'type' => 'user',
                                      'value' => '1'
@@ -12,8 +12,8 @@ $files = {
                                    {
                                      'expr' => undef,
                                      'fname' => './bin/workflow',
-                                     'line' => '10536',
-                                     'text' => '    if ($option_help and (not $global_target) and (not $global_operation))
+                                     'line' => '11027',
+                                     'text' => '    if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
 ',
                                      'type' => 'user',
                                      'value' => '1'
@@ -55,4 +55,4 @@ $expr_list = [
                }
              ];
 $eval_saved_text = undef;
-$main_win_geometry = '1920x1001+0+0';
+$main_win_geometry = '1920x899+0+0';

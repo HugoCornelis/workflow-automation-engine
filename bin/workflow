@@ -10926,9 +10926,13 @@ sub package_operation_2_package_type_operation_implementation
 
     # first correct operation_implementation and operation_or_package as required
 
+    my $package = "Command";
+
+    my $sub_name;
+
     if ($builtin_package)
     {
-	my $sub_name = shift @$arguments;
+	$sub_name = shift @$arguments;
 
 	if (not defined $sub_name)
 	{
@@ -10944,20 +10948,20 @@ sub package_operation_2_package_type_operation_implementation
 	    $sub_name .= "_help";
 	}
 
-	$operation_implementation = "${builtin_package}::$sub_name";
+	$package = $builtin_package;
     }
     elsif (defined $operation_or_package)
     {
+	$sub_name = "${target}_${operation_or_package}";
+
 	# if help was requested for this operation
 
 	if ($help)
 	{
 	    # call the subroutine that implements the help function for the operation
 
-	    $operation_or_package .= "_help";
+	    $sub_name .= "_help";
 	}
-
-	$operation_implementation = "Command::${target}_${operation_or_package}";
     }
     else
     {
@@ -10965,11 +10969,13 @@ sub package_operation_2_package_type_operation_implementation
 
 	if ($help)
 	{
+	    $sub_name = "${target}";
+
 	    # call the subroutine that implements the global help function for the target
 
-	    $operation_or_package = "help";
+	    $sub_name .= "_help";
 
-	    $operation_implementation = "Command::${target}_${operation_or_package}";
+	    $operation_or_package = 'help';
 	}
 	else
 	{
@@ -10978,6 +10984,8 @@ sub package_operation_2_package_type_operation_implementation
 	    report_error_exit("internal error");
 	}
     }
+
+    $operation_implementation = "${package}::${sub_name}";
 
     return ($builtin_package, $operation_implementation, $operation_or_package);
 }
@@ -11008,7 +11016,7 @@ sub schedule_operations_for_execution
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
-    if (exists $all_typed_operations->{"$target $operation"}
+    if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
 	or $builtin_package
 	or $option_interactions_target)
     {
