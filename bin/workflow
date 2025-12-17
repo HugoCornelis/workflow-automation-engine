@@ -7546,7 +7546,7 @@ sub identify_interaction_roles
 }
 
 
-sub execute_option_interactions
+sub execute_scheduled_operation_option_interactions
 {
     my $interaction_roles = shift;
 
@@ -7712,7 +7712,7 @@ sub _process_cd_command
 }
 
 
-sub execute_option_export_sh
+sub execute_scheduled_operation_option_export_sh
 {
     my $interaction_roles = shift;
 
@@ -8377,7 +8377,7 @@ sub execute_all_scheduled_operations
 		   or $option_interactions_target
 		   or $option_interactions_target_all_roles)
 	    {
-		my $result = execute_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
+		my $result = execute_scheduled_operation_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
 
 		$scheduled_operation->{result} = $result;
 
@@ -8388,7 +8388,7 @@ sub execute_all_scheduled_operations
 
 	    elsif (defined $option_export_sh)
 	    {
-		my $result = execute_option_export_sh($interaction_roles, $scheduled_operation);
+		my $result = execute_scheduled_operation_option_export_sh($interaction_roles, $scheduled_operation);
 
 		$scheduled_operation->{result} = $result;
 
