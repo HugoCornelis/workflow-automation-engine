@@ -7404,16 +7404,23 @@ sub execute_scheduled_operation_option_dry_run
 	}
     }
 
-    my $cd_command = _process_cd_command($executable_command);
+    # markers in the schedule do not have an executable_command, skip them
 
-    if ($cd_command)
+    if (defined $executable_command)
     {
-	my $cd_argument = $cd_command->{argument};
+	# execute a cd regardless of dry_running
 
-	my $exit_status = not chdir $cd_argument;
-    }
-    else
-    {
+	my $cd_command = _process_cd_command($executable_command);
+
+	if ($cd_command)
+	{
+	    my $cd_argument = $cd_command->{argument};
+
+	    my $exit_status = not chdir $cd_argument;
+	}
+	else
+	{
+	}
     }
 }
 
@@ -7680,6 +7687,17 @@ sub _process_cd_command
     my $shell_command = shift;
 
     my $result;
+
+    if (not defined $shell_command)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper( { shell_command => $shell_command } );
+
+	require Carp;
+
+	print STDERR Carp::longmess(@_);
+    }
 
     if ($shell_command =~ /^\s*chdir\s+(.*?)\s*(.*)$/)
     {
