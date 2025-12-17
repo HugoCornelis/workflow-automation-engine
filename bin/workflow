@@ -11029,7 +11029,7 @@ sub schedule_operations_for_execution
 		= {
 		   command_line_arguments => $arguments,
 		   dry_run_reason => $dry_run_reason,
-		   has_help => 'maybe',
+		   has_help => '',
 		   help => $help,
 		   is_help => $help,
 		   operation_implementation => $operation_implementation,
