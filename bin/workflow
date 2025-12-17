@@ -10614,6 +10614,12 @@ sub main
 
 	$global_execute_what_is_scheduled = '';
     }
+    elsif ($option_dry_run)
+    {
+	# make sure we don't actually run any commands
+
+	$global_execute_what_is_scheduled = '';
+    }
 
     my ($builtin_package, $operation_implementation, $operation)
 	= package_operation_2_package_type_operation_implementation($requested_target, $global_operation, $option_help, \@ARGV);
