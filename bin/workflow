@@ -10641,10 +10641,9 @@ sub main
 	$global_execute_what_is_scheduled = '';
     }
 
-    my ($builtin_package, $operation_implementation, $operation)
-	= package_operation_2_package_type_operation_implementation($requested_target, $global_operation, $option_help, \@ARGV);
+    my $operation_selector_type = package_operation_2_operation_selector_type($requested_target, $global_operation, $option_help, \@ARGV);
 
-    schedule_operations_for_execution($builtin_package, $requested_target, $operation, $operation_implementation, $dry_run_reason, $option_help, \@ARGV);
+    schedule_operations_for_execution($operation_selector_type, $dry_run_reason, $option_help, \@ARGV);
 
     Engine::execute_all_scheduled_operations($global_interaction_roles);
 }
@@ -10932,7 +10931,7 @@ sub report_error_exit
 }
 
 
-sub package_operation_2_package_type_operation_implementation
+sub package_operation_2_operation_selector_type
 {
     my $target = shift;
 
@@ -11013,25 +11012,35 @@ sub package_operation_2_package_type_operation_implementation
 
     $operation_implementation = "${package}::${sub_name}";
 
-    return ($builtin_package, $operation_implementation, $operation_or_package);
+    my $operation_selector_type
+	= {
+	   builtin_package => $builtin_package,
+	   operation => $operation_or_package,
+	   operation_implementation => $operation_implementation,
+	   target => $target,
+	  };
+
+    return $operation_selector_type;
 }
 
 
 sub schedule_operations_for_execution
 {
-    my $builtin_package = shift;
-
-    my $target = shift;
-
-    my $operation = shift;
-
-    my $operation_implementation = shift;
+    my $operation_selector_type = shift;
 
     my $dry_run_reason = shift;
 
     my $help = shift;
 
     my $arguments = shift;
+
+    my $builtin_package = $operation_selector_type->{builtin_package};
+
+    my $target = $operation_selector_type->{target};
+
+    my $operation = $operation_selector_type->{operation};
+
+    my $operation_implementation = $operation_selector_type->{operation_implementation};
 
     # if this command exists ...
 
@@ -11041,7 +11050,7 @@ sub schedule_operations_for_execution
 	or $builtin_package
 	or $option_interactions_target)
     {
-	my $all_selected_operations = operation_selector($target, $operation, $dry_run_reason, $help, $arguments);
+	my $all_selected_operations = operation_selector($operation_selector_type, $dry_run_reason, $help, $arguments);
 
 	if ($help
 	    or $builtin_package)
@@ -11089,9 +11098,15 @@ sub schedule_operations_for_execution
 
 sub operation_selector
 {
-    my $target_regex = shift;
+    my $operation_selector_type = shift;
 
-    my $operation = shift;
+    my $builtin_package = $operation_selector_type->{builtin_package};
+
+    my $target_regex = $operation_selector_type->{target};
+
+    my $operation = $operation_selector_type->{operation};
+
+    # my $operation_implementation = $operation_selector_type->{operation_implementation};
 
     my $dry_run_reason = shift;
 
