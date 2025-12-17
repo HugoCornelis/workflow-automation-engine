@@ -10580,13 +10580,21 @@ sub main
 	$option_export_times =~ s/_/-/g;
     }
 
-    # are we dry running all the operations of a module / target?
+    # are we dry running for any reason?
 
-    my $dry_run_module_commands;
+    my $dry_run_reason;
 
-    if ($option_interactions)
+    if ($option_dry_run)
     {
-	$dry_run_module_commands = 'option_interactions';
+	$dry_run_reason = 'option_dry_run';
+
+	# make sure we don't actually run any commands
+
+	$global_execute_what_is_scheduled = '';
+    }
+    elsif ($option_interactions)
+    {
+	$dry_run_reason = 'option_interactions';
 
 	# make sure we don't actually run any commands
 
@@ -10596,7 +10604,7 @@ sub main
 	   or $option_interactions_target
 	   or $option_interactions_target_all_roles)
     {
-	$dry_run_module_commands = 'option_interactions_target';
+	$dry_run_reason = 'option_interactions_target';
 
 	# make sure we select operations
 
@@ -10608,14 +10616,8 @@ sub main
     }
     elsif ($option_dump_module_interaction_roles)
     {
-	$dry_run_module_commands = 'option_dump_module_interaction_roles';
+	$dry_run_reason = 'option_dump_module_interaction_roles';
 
-	# make sure we don't actually run any commands
-
-	$global_execute_what_is_scheduled = '';
-    }
-    elsif ($option_dry_run)
-    {
 	# make sure we don't actually run any commands
 
 	$global_execute_what_is_scheduled = '';
@@ -10624,7 +10626,7 @@ sub main
     my ($builtin_package, $operation_implementation, $operation)
 	= package_operation_2_package_type_operation_implementation($requested_target, $global_operation, $option_help, \@ARGV);
 
-    schedule_operations_for_execution($builtin_package, $requested_target, $operation, $operation_implementation, $dry_run_module_commands, $option_help, \@ARGV);
+    schedule_operations_for_execution($builtin_package, $requested_target, $operation, $operation_implementation, $dry_run_reason, $option_help, \@ARGV);
 
     Engine::execute_all_scheduled_operations($global_interaction_roles);
 }
@@ -11012,11 +11014,6 @@ sub schedule_operations_for_execution
     my $help = shift;
 
     my $arguments = shift;
-
-    if ($option_dry_run)
-    {
-	$dry_run_reason = "option_dry_run";
-    }
 
     # if this command exists ...
 
