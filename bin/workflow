@@ -175,7 +175,7 @@ my $global_builtin_operations
     = {
        target_add => 1,
        configuration_archive => 1,
-       fetch_scripts => 1,
+       scripts_fetch => 1,
        grep => 1,
        install_scripts => 1,
        known_command_filenames => 1,
@@ -3478,7 +3478,7 @@ arguments:
 }
 
 
-sub builtin_fetch_scripts
+sub builtin_scripts_fetch
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
@@ -3492,7 +3492,7 @@ sub builtin_fetch_scripts
 }
 
 
-sub builtin_fetch_scripts_help
+sub builtin_scripts_fetch_help
 {
     my $command = shift;
 

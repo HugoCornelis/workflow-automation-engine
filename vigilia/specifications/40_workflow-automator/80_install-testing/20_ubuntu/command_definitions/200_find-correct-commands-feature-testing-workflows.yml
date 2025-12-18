@@ -19,7 +19,7 @@ command_tests:
         - feature-testing-workflow builtin docker_containers_start
         - feature-testing-workflow builtin docker_exec
         - feature-testing-workflow builtin docker_images_build
-        - feature-testing-workflow builtin fetch_scripts
+        - feature-testing-workflow builtin scripts_fetch
         - feature-testing-workflow builtin grep
         - feature-testing-workflow builtin install_scripts
         - feature-testing-workflow builtin known_command_filenames

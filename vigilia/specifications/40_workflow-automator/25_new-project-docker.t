@@ -526,7 +526,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin fetch_scripts
+  - workflow-tests-workflow builtin scripts_fetch
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin known_command_filenames
@@ -569,7 +569,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin fetch_scripts
+  - workflow-tests-workflow builtin scripts_fetch
   - workflow-tests-workflow builtin grep
   - workflow-tests-workflow builtin install_scripts
   - workflow-tests-workflow builtin known_command_filenames
