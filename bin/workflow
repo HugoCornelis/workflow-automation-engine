@@ -173,7 +173,7 @@ our $global_execute_what_is_scheduled = 'yes';
 
 my $global_builtin_operations
     = {
-       add_target => 1,
+       target_add => 1,
        archive_configuration => 1,
        fetch_scripts => 1,
        grep => 1,
@@ -2737,7 +2737,7 @@ It is possible to combine options but you may have to tweak the remote policy af
 }
 
 
-sub builtin_add_target
+sub builtin_target_add
 {
     my $arguments = shift || [];
 
@@ -2767,7 +2767,7 @@ sub builtin_add_target
     {
 	use Data::Dumper;
 
-	print "$global_program_name: builtin_add_target, installation options:\n";
+	print "$global_program_name: builtin_target_add, installation options:\n";
 
 	print Dumper( { install_options => $install_options, }, );
     }
@@ -2913,7 +2913,7 @@ sub builtin_add_target
 }
 
 
-sub builtin_add_target_completions
+sub builtin_target_add_completions
 {
     my $complete_command_string = shift;
 
@@ -2948,7 +2948,7 @@ sub builtin_add_target_completions
 }
 
 
-sub builtin_add_target_help
+sub builtin_target_add_help
 {
     my $command = shift;
 
@@ -3795,7 +3795,7 @@ sub builtin_install_scripts
 	       # "echo",
 	       "echo Or/and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
 	       "echo",
-	       "echo   $project_name-workflow builtin add_target source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
+	       "echo   $project_name-workflow builtin target_add source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
 	       "echo",
 	      ];
 

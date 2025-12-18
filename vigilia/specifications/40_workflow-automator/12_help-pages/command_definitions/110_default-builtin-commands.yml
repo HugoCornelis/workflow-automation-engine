@@ -12,7 +12,7 @@ command_tests:
            some commands may implement a usage message available with the --help option):
       1_commands:
         - workflow builtin role_add
-        - workflow builtin add_target
+        - workflow builtin target_add
         - workflow builtin archive_configuration
         - workflow builtin docker_containers_start
         - workflow builtin docker_exec

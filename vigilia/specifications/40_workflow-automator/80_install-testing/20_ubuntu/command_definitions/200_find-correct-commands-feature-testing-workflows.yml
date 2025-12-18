@@ -14,7 +14,7 @@ command_tests:
         - feature-testing-workflow build operation2
         - feature-testing-workflow build operation3
         - feature-testing-workflow builtin role_add
-        - feature-testing-workflow builtin add_target
+        - feature-testing-workflow builtin target_add
         - feature-testing-workflow builtin archive_configuration
         - feature-testing-workflow builtin docker_containers_start
         - feature-testing-workflow builtin docker_exec

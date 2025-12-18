@@ -44,7 +44,7 @@ command_tests:
       
       Or/and maybe followed with a command to add or modify a first target, here, for the target named source_code:
       
-      abcd-workflow builtin add_target source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
+      abcd-workflow builtin target_add source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
 
     white_space: convert seen 0a to 0d 0a newlines
 description: Can we install the scripts of the new workflow project with name abcd?

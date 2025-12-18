@@ -521,7 +521,7 @@ conf.workflow-tests-configuration
      some commands may implement a usage message available with the --help option):
 1_commands:
   - workflow-tests-workflow builtin role_add
-  - workflow-tests-workflow builtin add_target
+  - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin archive_configuration
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
@@ -564,7 +564,7 @@ conf.workflow-tests-configuration
      some commands may implement a usage message available with the --help option):
 1_commands:
   - workflow-tests-workflow builtin role_add
-  - workflow-tests-workflow builtin add_target
+  - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin archive_configuration
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
@@ -638,7 +638,7 @@ an example of the invocation of a single command
 				description => 'execution of the workflow templates from a different directory',
 			       },
 			       {
-				command => 'workflow-tests-workflow builtin add_target -- new_target "Add commands to this new target that do new things" --install-commands-sh',
+				command => 'workflow-tests-workflow builtin target_add -- new_target "Add commands to this new target that do new things" --install-commands-sh',
 				command_tests => [
 						  {
 						   description => "Can we add a new target and workflow template?",
@@ -653,7 +653,7 @@ workflow-tests-workflow: created the shell command file for target new_target',
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'workflow-tests-workflow builtin add_target -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
+				command => 'workflow-tests-workflow builtin target_add -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
 				command_tests => [
 						  {
 						   description => "Can we add more targets and workflow templates?",
