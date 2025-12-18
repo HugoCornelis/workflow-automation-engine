@@ -1,5 +1,5 @@
 ---
-command: cd new-project && workflow builtin start_project 'abcd'
+command: cd new-project && workflow builtin project_start 'abcd'
 command_tests:
   - description: Can we create a new workflow project with name abcd?
     read: |+

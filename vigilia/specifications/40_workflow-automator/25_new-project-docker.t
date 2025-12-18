@@ -322,7 +322,7 @@ options:
 				description => "help page of the workflow engine",
 			       },
 			       {
-				command => 'mkdir workflow-test-non-empty-directory && cd workflow-test-non-empty-directory && touch abc && workflow builtin start_project workflow-tests',
+				command => 'mkdir workflow-test-non-empty-directory && cd workflow-test-non-empty-directory && touch abc && workflow builtin project_start workflow-tests',
 				command_tests => [
 						  {
 						   description => "Can we start a new project in a non-empty directory (we should not)?",
@@ -333,7 +333,7 @@ options:
 				description => "failure starting a new project in a non-empty directory",
 			       },
 			       {
-				command => 'mkdir workflow-test && cd workflow-test && workflow builtin start_project workflow-tests',
+				command => 'mkdir workflow-test && cd workflow-test && workflow builtin project_start workflow-tests',
 				command_tests => [
 						  {
 						   description => "Can we start a new project?",
@@ -535,7 +535,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin scripts_pull
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin role_print
-  - workflow-tests-workflow builtin start_project
+  - workflow-tests-workflow builtin project_start
   - workflow-tests-workflow builtin tmux_create_sessions
   - workflow-tests-workflow builtin tmux_kill_sessions
   - workflow-tests-workflow examples_sh sh_array_of_commands
@@ -578,7 +578,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin scripts_pull
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin role_print
-  - workflow-tests-workflow builtin start_project
+  - workflow-tests-workflow builtin project_start
   - workflow-tests-workflow builtin tmux_create_sessions
   - workflow-tests-workflow builtin tmux_kill_sessions
   - workflow-tests-workflow examples_sh sh_array_of_commands

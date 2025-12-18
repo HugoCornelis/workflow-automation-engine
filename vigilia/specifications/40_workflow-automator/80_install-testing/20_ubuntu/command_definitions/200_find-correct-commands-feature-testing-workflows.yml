@@ -28,7 +28,7 @@ command_tests:
         - feature-testing-workflow builtin scripts_pull
         - feature-testing-workflow builtin project_rename
         - feature-testing-workflow builtin role_print
-        - feature-testing-workflow builtin start_project
+        - feature-testing-workflow builtin project_start
         - feature-testing-workflow builtin tmux_create_sessions
         - feature-testing-workflow builtin tmux_kill_sessions
         - feature-testing-workflow docker_testing where_am_i

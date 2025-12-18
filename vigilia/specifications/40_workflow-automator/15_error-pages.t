@@ -20,11 +20,11 @@ my $test
 				description => "the error message when using a non-existent option name",
 			       },
 			       {
-				command => 'workflow start_project mosart-beethoven',
+				command => 'workflow project_start mosart-beethoven',
 				command_tests => [
 						  {
 						   description => "Do we get a sensible error message when an non-existent target is invoked ?",
-						   read => 'workflow: *** Error: target \'start_project\' does not exist
+						   read => 'workflow: *** Error: target \'project_start\' does not exist
 
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',

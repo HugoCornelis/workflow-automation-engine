@@ -183,7 +183,7 @@ my $global_builtin_operations
        configuration_directory_print => 1,
        scripts_pull => 1,
        project_rename => 1,
-       start_project => 1,
+       project_start => 1,
        tmux_create_sessions => 1,
        tmux_kill_sessions => 1,
       };
@@ -4838,7 +4838,7 @@ arguments:
 }
 
 
-sub builtin_start_project
+sub builtin_project_start
 {
     my $arguments = shift || [];
 
@@ -4998,7 +4998,7 @@ sub builtin_start_project
 }
 
 
-sub builtin_start_project_completions
+sub builtin_project_start_completions
 {
     my $complete_command_string = shift;
 
@@ -5021,7 +5021,7 @@ sub builtin_start_project_completions
 }
 
 
-sub builtin_start_project_help
+sub builtin_project_start_help
 {
     my $command = shift;
 
