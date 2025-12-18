@@ -11,22 +11,22 @@ command_tests:
            try them with the --dry-run and --interactions options,
            some commands may implement a usage message available with the --help option):
       1_commands:
-        - workflow builtin role_add
-        - workflow builtin target_add
+        - workflow builtin command_filenames_known
         - workflow builtin configuration_archive
+        - workflow builtin configuration_directory_print
         - workflow builtin docker_containers_start
         - workflow builtin docker_exec
         - workflow builtin docker_images_build
-        - workflow builtin scripts_fetch
         - workflow builtin grep
-        - workflow builtin scripts_install
-        - workflow builtin command_filenames_known
         - workflow builtin manual
-        - workflow builtin configuration_directory_print
-        - workflow builtin scripts_pull
         - workflow builtin project_rename
-        - workflow builtin role_print
         - workflow builtin project_start
+        - workflow builtin role_add
+        - workflow builtin role_print
+        - workflow builtin scripts_fetch
+        - workflow builtin scripts_install
+        - workflow builtin scripts_pull
+        - workflow builtin target_add
         - workflow builtin tmux_sessions_create
         - workflow builtin tmux_sessions_kill
 description: default builtin commands

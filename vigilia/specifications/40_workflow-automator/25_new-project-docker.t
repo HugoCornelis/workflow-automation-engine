@@ -520,22 +520,22 @@ conf.workflow-tests-configuration
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
 1_commands:
-  - workflow-tests-workflow builtin role_add
-  - workflow-tests-workflow builtin target_add
+  - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin configuration_archive
+  - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin scripts_fetch
   - workflow-tests-workflow builtin grep
-  - workflow-tests-workflow builtin scripts_install
-  - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin manual
-  - workflow-tests-workflow builtin configuration_directory_print
-  - workflow-tests-workflow builtin scripts_pull
   - workflow-tests-workflow builtin project_rename
-  - workflow-tests-workflow builtin role_print
   - workflow-tests-workflow builtin project_start
+  - workflow-tests-workflow builtin role_add
+  - workflow-tests-workflow builtin role_print
+  - workflow-tests-workflow builtin scripts_fetch
+  - workflow-tests-workflow builtin scripts_install
+  - workflow-tests-workflow builtin scripts_pull
+  - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
   - workflow-tests-workflow examples_sh sh_array_of_commands
@@ -563,22 +563,22 @@ conf.workflow-tests-configuration
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
 1_commands:
-  - workflow-tests-workflow builtin role_add
-  - workflow-tests-workflow builtin target_add
+  - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin configuration_archive
+  - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin scripts_fetch
   - workflow-tests-workflow builtin grep
-  - workflow-tests-workflow builtin scripts_install
-  - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin manual
-  - workflow-tests-workflow builtin configuration_directory_print
-  - workflow-tests-workflow builtin scripts_pull
   - workflow-tests-workflow builtin project_rename
-  - workflow-tests-workflow builtin role_print
   - workflow-tests-workflow builtin project_start
+  - workflow-tests-workflow builtin role_add
+  - workflow-tests-workflow builtin role_print
+  - workflow-tests-workflow builtin scripts_fetch
+  - workflow-tests-workflow builtin scripts_install
+  - workflow-tests-workflow builtin scripts_pull
+  - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
   - workflow-tests-workflow examples_sh sh_array_of_commands
