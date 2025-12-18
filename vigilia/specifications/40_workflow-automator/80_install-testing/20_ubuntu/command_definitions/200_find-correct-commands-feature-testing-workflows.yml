@@ -13,24 +13,24 @@ command_tests:
         - feature-testing-workflow build operation1
         - feature-testing-workflow build operation2
         - feature-testing-workflow build operation3
-        - feature-testing-workflow builtin add_role
-        - feature-testing-workflow builtin add_target
-        - feature-testing-workflow builtin archive_configuration
+        - feature-testing-workflow builtin command_filenames_known
+        - feature-testing-workflow builtin configuration_archive
+        - feature-testing-workflow builtin configuration_directory_print
         - feature-testing-workflow builtin docker_containers_start
         - feature-testing-workflow builtin docker_exec
         - feature-testing-workflow builtin docker_images_build
-        - feature-testing-workflow builtin fetch_scripts
         - feature-testing-workflow builtin grep
-        - feature-testing-workflow builtin install_scripts
-        - feature-testing-workflow builtin known_command_filenames
         - feature-testing-workflow builtin manual
-        - feature-testing-workflow builtin print_configuration_directory
-        - feature-testing-workflow builtin pull_scripts
-        - feature-testing-workflow builtin rename_project
+        - feature-testing-workflow builtin project_rename
+        - feature-testing-workflow builtin project_start
+        - feature-testing-workflow builtin role_add
         - feature-testing-workflow builtin role_print
-        - feature-testing-workflow builtin start_project
-        - feature-testing-workflow builtin tmux_create_sessions
-        - feature-testing-workflow builtin tmux_kill_sessions
+        - feature-testing-workflow builtin scripts_fetch
+        - feature-testing-workflow builtin scripts_install
+        - feature-testing-workflow builtin scripts_pull
+        - feature-testing-workflow builtin target_add
+        - feature-testing-workflow builtin tmux_sessions_create
+        - feature-testing-workflow builtin tmux_sessions_kill
         - feature-testing-workflow docker_testing where_am_i
         - feature-testing-workflow examples_sh sh_array_of_commands
         - feature-testing-workflow examples_sh sh_remote_execution

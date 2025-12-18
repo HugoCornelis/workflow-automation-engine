@@ -1,16 +1,16 @@
 ---
-command: bin/workflow builtin archive_configuration --help
+command: bin/workflow builtin configuration_archive --help
 command_tests:
   - description: Do we see the help page for archiving a workflow configuration?
     read: |+
-      workflow builtin archive_configuration: create a tarball with the configuration of the current workflow project.
+      workflow builtin configuration_archive: create a tarball with the configuration of the current workflow project.
       
       synopsis:
       ~~~~~~~~~
       
       .. code-block:: bash
       
-      builtin archive_configuration <tarball-name>
+      builtin configuration_archive <tarball-name>
       
       arguments:
       ~~~~~~~~~~

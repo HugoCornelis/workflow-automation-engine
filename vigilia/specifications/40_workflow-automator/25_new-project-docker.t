@@ -322,7 +322,7 @@ options:
 				description => "help page of the workflow engine",
 			       },
 			       {
-				command => 'mkdir workflow-test-non-empty-directory && cd workflow-test-non-empty-directory && touch abc && workflow builtin start_project workflow-tests',
+				command => 'mkdir workflow-test-non-empty-directory && cd workflow-test-non-empty-directory && touch abc && workflow builtin project_start workflow-tests',
 				command_tests => [
 						  {
 						   description => "Can we start a new project in a non-empty directory (we should not)?",
@@ -333,7 +333,7 @@ options:
 				description => "failure starting a new project in a non-empty directory",
 			       },
 			       {
-				command => 'mkdir workflow-test && cd workflow-test && workflow builtin start_project workflow-tests',
+				command => 'mkdir workflow-test && cd workflow-test && workflow builtin project_start workflow-tests',
 				command_tests => [
 						  {
 						   description => "Can we start a new project?",
@@ -348,7 +348,7 @@ Test it with the command:
 
 Afterwards install the scripts on your system using the command:
 
-  workflow builtin install_scripts -- --commands --git
+  workflow builtin scripts_install -- --commands --git
 
 Then check if they work by inspecting the examples they provide (with various options):
 
@@ -453,7 +453,7 @@ global_field_project_configuration:
 				description => "correct creation of the field project file",
 			       },
 			       {
-				command => 'cd workflow-test && workflow builtin install_scripts -- --no-aliasses --commands',
+				command => 'cd workflow-test && workflow builtin scripts_install -- --no-aliasses --commands',
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
@@ -520,24 +520,24 @@ conf.workflow-tests-configuration
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
 1_commands:
-  - workflow-tests-workflow builtin add_role
-  - workflow-tests-workflow builtin add_target
-  - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin command_filenames_known
+  - workflow-tests-workflow builtin configuration_archive
+  - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin grep
-  - workflow-tests-workflow builtin install_scripts
-  - workflow-tests-workflow builtin known_command_filenames
   - workflow-tests-workflow builtin manual
-  - workflow-tests-workflow builtin print_configuration_directory
-  - workflow-tests-workflow builtin pull_scripts
-  - workflow-tests-workflow builtin rename_project
+  - workflow-tests-workflow builtin project_rename
+  - workflow-tests-workflow builtin project_start
+  - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin role_print
-  - workflow-tests-workflow builtin start_project
-  - workflow-tests-workflow builtin tmux_create_sessions
-  - workflow-tests-workflow builtin tmux_kill_sessions
+  - workflow-tests-workflow builtin scripts_fetch
+  - workflow-tests-workflow builtin scripts_install
+  - workflow-tests-workflow builtin scripts_pull
+  - workflow-tests-workflow builtin target_add
+  - workflow-tests-workflow builtin tmux_sessions_create
+  - workflow-tests-workflow builtin tmux_sessions_kill
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
   - workflow-tests-workflow examples_sh sh_single_command
@@ -563,24 +563,24 @@ conf.workflow-tests-configuration
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
 1_commands:
-  - workflow-tests-workflow builtin add_role
-  - workflow-tests-workflow builtin add_target
-  - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin command_filenames_known
+  - workflow-tests-workflow builtin configuration_archive
+  - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin fetch_scripts
   - workflow-tests-workflow builtin grep
-  - workflow-tests-workflow builtin install_scripts
-  - workflow-tests-workflow builtin known_command_filenames
   - workflow-tests-workflow builtin manual
-  - workflow-tests-workflow builtin print_configuration_directory
-  - workflow-tests-workflow builtin pull_scripts
-  - workflow-tests-workflow builtin rename_project
+  - workflow-tests-workflow builtin project_rename
+  - workflow-tests-workflow builtin project_start
+  - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin role_print
-  - workflow-tests-workflow builtin start_project
-  - workflow-tests-workflow builtin tmux_create_sessions
-  - workflow-tests-workflow builtin tmux_kill_sessions
+  - workflow-tests-workflow builtin scripts_fetch
+  - workflow-tests-workflow builtin scripts_install
+  - workflow-tests-workflow builtin scripts_pull
+  - workflow-tests-workflow builtin target_add
+  - workflow-tests-workflow builtin tmux_sessions_create
+  - workflow-tests-workflow builtin tmux_sessions_kill
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
   - workflow-tests-workflow examples_sh sh_single_command
@@ -638,7 +638,7 @@ an example of the invocation of a single command
 				description => 'execution of the workflow templates from a different directory',
 			       },
 			       {
-				command => 'workflow-tests-workflow builtin add_target -- new_target "Add commands to this new target that do new things" --install-commands-sh',
+				command => 'workflow-tests-workflow builtin target_add -- new_target "Add commands to this new target that do new things" --install-commands-sh',
 				command_tests => [
 						  {
 						   description => "Can we add a new target and workflow template?",
@@ -653,7 +653,7 @@ workflow-tests-workflow: created the shell command file for target new_target',
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'workflow-tests-workflow builtin add_target -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
+				command => 'workflow-tests-workflow builtin target_add -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh',
 				command_tests => [
 						  {
 						   description => "Can we add more targets and workflow templates?",
@@ -685,7 +685,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => 'listing the known workflow projects using the workflow executable',
 			       },
 			       {
-				command => 'workflow-tests-workflow --verbose builtin archive_configuration /tmp/wtw.tar.gz',
+				command => 'workflow-tests-workflow --verbose builtin configuration_archive /tmp/wtw.tar.gz',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",
@@ -816,7 +816,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --commands --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin scripts_install -- --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",
@@ -875,7 +875,7 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'workflow-tests-workflow builtin print_configuration_directory',
+				command => 'workflow-tests-workflow builtin configuration_directory_print',
 				command_tests => [
 						  {
 						   description => "Is the installed workflow configuration found and correct?",

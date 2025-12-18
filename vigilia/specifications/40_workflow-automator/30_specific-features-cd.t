@@ -34,7 +34,7 @@ my $test
 			  },
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin scripts_install -- --bash --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation configuration for the cd feature tests?",
@@ -87,7 +87,7 @@ Bash completion can be enabled using:
 
 Or/and maybe followed with a command to add or modify a first target, here, for the target named source_code:
 
-feature-testing-workflow builtin add_target source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
+feature-testing-workflow builtin target_add source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
 ',
 						   wait => 2,
 						   white_space => 'convert seen 0a to 0d 0a newlines',
@@ -160,7 +160,7 @@ feature-testing-workflow builtin add_target source_code "Operations on the sourc
 				description => "correct changes in directory during a workflow execution that uses the 'cd' command",
 			       },
 			       {
-				command => 'feature-testing-workflow builtin tmux_create_sessions',
+				command => 'feature-testing-workflow builtin tmux_sessions_create',
 				command_tests => [
 						  {
 						   description => "Can we create the tmux sessions for testing workflow cd commands?",

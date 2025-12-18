@@ -1,16 +1,16 @@
 ---
-command: bin/workflow builtin add_role --help
+command: bin/workflow builtin role_add --help
 command_tests:
   - description: 'default builtin targets: adding a new role'
     read: |+
-      workflow builtin add_role: add a new role and update the configuration to integrate it.
+      workflow builtin role_add: add a new role and update the configuration to integrate it.
       
       synopsis:
       ~~~~~~~~~
       
       .. code-block:: bash
       
-      builtin add_role <role-name> <role-description> [-- <options>]
+      builtin role_add <role-name> <role-description> [-- <options>]
       
       arguments:
       ~~~~~~~~~~

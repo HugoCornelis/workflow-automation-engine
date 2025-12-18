@@ -1,16 +1,16 @@
 ---
-command: bin/workflow builtin add_target --help
+command: bin/workflow builtin target_add --help
 command_tests:
   - description: Do we see the help page for adding a new target to a project?
     read: |+
-      workflow builtin add_target: add a new target and update the configuration to integrate it.
+      workflow builtin target_add: add a new target and update the configuration to integrate it.
       
       synopsis:
       ~~~~~~~~~
       
       .. code-block:: bash
       
-      builtin add_target <target-name> <target-description> [-- <options>]
+      builtin target_add <target-name> <target-description> [-- <options>]
       
       arguments:
       ~~~~~~~~~~

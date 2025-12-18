@@ -1,5 +1,5 @@
 ---
-command: feature-testing-workflow builtin rename_project abcd
+command: feature-testing-workflow builtin project_rename abcd
 command_tests:
   - description: rename the project from feature-testing to abcd
     read: |
@@ -59,7 +59,7 @@ command_tests:
       #
       # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
       #
-      # workflow builtin install_scripts -- --commands --no-aliasses
+      # workflow builtin scripts_install -- --commands --no-aliasses
       #
       # mkdir --parents /home/neurospaces/bin
       #
@@ -104,7 +104,7 @@ command_tests:
       
       Or/and maybe followed with a command to add or modify a first target, here, for the target named source_code:
       
-      abcd-workflow builtin add_target source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
+      abcd-workflow builtin target_add source_code "Operations on the source code, such as git checkout, build and installation." -- --install-commands-py
       
       ========================================================================================================================
       ========================================================================================================================
