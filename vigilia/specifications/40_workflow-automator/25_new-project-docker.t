@@ -536,7 +536,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin role_print
   - workflow-tests-workflow builtin project_start
-  - workflow-tests-workflow builtin tmux_create_sessions
+  - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_kill_sessions
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
@@ -579,7 +579,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin role_print
   - workflow-tests-workflow builtin project_start
-  - workflow-tests-workflow builtin tmux_create_sessions
+  - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_kill_sessions
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution

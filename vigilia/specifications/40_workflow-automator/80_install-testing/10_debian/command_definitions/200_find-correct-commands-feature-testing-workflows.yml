@@ -29,7 +29,7 @@ command_tests:
         - feature-testing-workflow builtin project_rename
         - feature-testing-workflow builtin role_print
         - feature-testing-workflow builtin project_start
-        - feature-testing-workflow builtin tmux_create_sessions
+        - feature-testing-workflow builtin tmux_sessions_create
         - feature-testing-workflow builtin tmux_kill_sessions
         - feature-testing-workflow docker_testing where_am_i
         - feature-testing-workflow examples_sh sh_array_of_commands

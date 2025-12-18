@@ -160,7 +160,7 @@ feature-testing-workflow builtin target_add source_code "Operations on the sourc
 				description => "correct changes in directory during a workflow execution that uses the 'cd' command",
 			       },
 			       {
-				command => 'feature-testing-workflow builtin tmux_create_sessions',
+				command => 'feature-testing-workflow builtin tmux_sessions_create',
 				command_tests => [
 						  {
 						   description => "Can we create the tmux sessions for testing workflow cd commands?",
