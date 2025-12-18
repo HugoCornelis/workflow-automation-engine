@@ -7,7 +7,7 @@ This manual was automatically generated with the command line:
 
 .. code-block:: bash
 
-    /usr/local/bin/workflow builtin manual builtin
+    bin/workflow builtin manual builtin
 
 Draft Specification Manual: target ``builtin``
 **********************************************
@@ -29,17 +29,207 @@ Alphabetical list of ``builtin`` operations
 
 
 
-builtin add_role
-----------------
+Operation: builtin command_filenames_known
+------------------------------------------
 
-builtin add_role: add a new role and update the configuration to integrate it.
+builtin command_filenames_known : print the known command filenames to stdout.
 
 synopsis:
 ~~~~~~~~~
 
 .. code-block:: bash
 
-builtin add_role <role-name> <role-description> [-- <options>]
+builtin command_filenames_known [ <full-or-relative-paths> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
+
+
+
+Operation: builtin configuration_archive
+----------------------------------------
+
+builtin configuration_archive: create a tarball with the configuration of the current workflow project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin configuration_archive <tarball-name>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+
+
+
+Operation: builtin configuration_directory_print
+------------------------------------------------
+
+builtin configuration_directory_print : print the directory where the configuration of this project is found.
+
+arguments:
+~~~~~~~~~~
+
+    none.
+
+
+Operation: builtin docker_containers_start
+------------------------------------------
+
+builtin docker_containers_start: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin docker_containers_start <docker-role-name> [ -- <options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+options:
+~~~~~~~~
+
+    ``--restart``: Stop, then start the Docker container.
+
+    ``--no-restart``: Do not start the Docker container, this is the default.
+
+
+Operation: builtin docker_exec
+------------------------------
+
+builtin docker_exec: Start the docker images / containers that are required for the roles in this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin docker_exec <docker-role-name> '<command-to-run-inside-the-container>'
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+    ``ARGV[1]``: A command to run inside the container, likely quoted.
+
+
+
+Operation: builtin docker_images_build
+--------------------------------------
+
+builtin docker_images_build: Build the docker images that are required for the roles in this project.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of a Docker role.
+
+
+
+Operation: builtin grep
+-----------------------
+
+builtin grep: Grep for a regex in the workflow scripts of the selected workflow projects.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin grep <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: A regular expression to search for.
+
+    ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+
+
+
+Operation: builtin manual
+-------------------------
+
+builtin manual : print the manual to stdout.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin manual [ <target> ] [ -- <--options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The regular expression target to which to build a manual.
+             Without a project the default is 'builtin'.
+             With a project the default is everything except 'builtin'.
+
+    ``ARGV[1]``: The type of manual (now always specification, later maybe also user).
+
+options:
+~~~~~~~~
+
+    ``--input-md``: Assume an input format of MarkDown.
+
+    ``--input-rst``: Assume an input format of ReStructuredText, this is the default.
+
+    ``--output-pdf``: Generate a PDF document.
+
+    ``--remove-intermediate-files``: Remove intermediate files.
+
+    ``--view``: Start the ``okular`` viewer on the generated ``pdf`` document.
+
+
+Operation: builtin project_rename
+---------------------------------
+
+builtin project_rename: Rename the project from which this command is invoked (the 'current' project).
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: the new project name.
+
+    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+
+
+Operation: builtin project_start
+--------------------------------
+
+builtin project_start: start a new project with a given name in the current directory.
+
+This will create a project descriptor, a configuration file and an
+empty command file in the current working directory.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: name of the new project.
+
+
+Operation: builtin role_add
+---------------------------
+
+builtin role_add: add a new role and update the configuration to integrate it.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin role_add <role-name> <role-description> [-- <options>]
 
 arguments:
 ~~~~~~~~~~
@@ -88,143 +278,30 @@ It is possible to combine options but you may have to tweak the remote policy af
 
 
 
-builtin add_target
-------------------
-
-builtin add_target: add a new target and update the configuration to integrate it.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-builtin add_target <target-name> <target-description> [-- <options>]
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: name of the new target.
-
-    ``ARGV[1]``: description of the new target.
-
-options:
-~~~~~~~~
-
-    ``--install-commands-pl``: install a perl command file template.
-
-    ``--install-commands-py``: install a python command file template.
-
-    ``--install-commands-sh``: install a shell command file template.
-
-
-builtin archive_configuration
+Operation: builtin role_print
 -----------------------------
 
-builtin archive_configuration: create a tarball with the configuration of the current workflow project.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-builtin archive_configuration <tarball-name>
+builtin role_print: Print the known roles.
 
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
+    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
+                 '``^docker_``' prints Docker roles,
+                 '``^serial_``' prints serial console roles,
+                 '``^tmux_``' prints tmux roles.
 
 
+Operation: builtin scripts_fetch
+--------------------------------
 
-builtin docker_containers_start
--------------------------------
-
-builtin docker_containers_start: Start the docker images / containers that are required for the roles in this project.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-builtin docker_containers_start <docker-role-name> [ -- <options> ]
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: The name of a Docker role.
-
-options:
-~~~~~~~~
-
-    ``--restart``: Stop, then start the Docker container.
-
-    ``--no-restart``: Do not start the Docker container, this is the default.
+builtin scripts_fetch: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
 
 
-builtin docker_exec
--------------------
+Operation: builtin scripts_install
+----------------------------------
 
-builtin docker_exec: Start the docker images / containers that are required for the roles in this project.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-builtin docker_exec <docker-role-name> '<command-to-run-inside-the-container>'
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: The name of a Docker role.
-
-    ``ARGV[1]``: A command to run inside the container, likely quoted.
-
-
-
-builtin docker_images_build
----------------------------
-
-builtin docker_images_build: Build the docker images that are required for the roles in this project.
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: The name of a Docker role.
-
-
-
-builtin fetch_scripts
----------------------
-
-builtin fetch_scripts: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
-
-
-builtin grep
-------------
-
-builtin grep: Grep for a regex in the workflow scripts of the selected workflow projects.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-builtin grep <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: A regular expression to search for.
-
-    ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
-
-
-
-builtin install_scripts
------------------------
-
-builtin install_scripts : install or upgrade the workflow scripts that are found in the current directory.
+builtin scripts_install : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
 ~~~~~~~~
@@ -252,103 +329,56 @@ Note that grc configuration files will also be installed and configured.
 
 
 
-builtin manual
---------------
+Operation: builtin scripts_pull
+-------------------------------
 
-builtin manual : print the manual to stdout.
+builtin scripts_pull: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
+
+
+Operation: builtin target_add
+-----------------------------
+
+builtin target_add: add a new target and update the configuration to integrate it.
 
 synopsis:
 ~~~~~~~~~
 
 .. code-block:: bash
 
-builtin manual [ <target> ] [ -- <--options> ]
+builtin target_add <target-name> <target-description> [-- <options>]
 
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: The regular expression target to which to build a manual.
-             Without a project the default is 'builtin'.
-             With a project the default is everything except 'builtin'.
+    ``ARGV[0]``: name of the new target.
 
-    ``ARGV[1]``: The type of manual (now always specification, later maybe also user).
+    ``ARGV[1]``: description of the new target.
 
 options:
 ~~~~~~~~
 
-    ``--input-md``: Assume an input format of MarkDown.
+    ``--install-commands-pl``: install a perl command file template.
 
-    ``--input-rst``: Assume an input format of ReStructuredText, this is the default.
+    ``--install-commands-py``: install a python command file template.
 
-    ``--output-pdf``: Generate a PDF document.
-
-    ``--remove-intermediate-files``: Remove intermediate files.
-
-    ``--view``: Start the ``okular`` viewer on the generated ``pdf`` document.
+    ``--install-commands-sh``: install a shell command file template.
 
 
-builtin print_configuration_directory
+Operation: builtin tmux_sessions_create
+---------------------------------------
+
+builtin tmux_sessions_create: Create one or more configured tmux session(s).
+
+    ARGV[0]: Optional name of a configured tmux session (the default is all configured sessions).
+
+Configured tmux sessions are:
+    
+
+
+Operation: builtin tmux_sessions_kill
 -------------------------------------
 
-builtin print_configuration_directory : print the directory where the configuration of this project is found.
-
-arguments:
-~~~~~~~~~~
-
-    none.
-
-
-builtin pull_scripts
---------------------
-
-builtin pull_scripts: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
-
-
-builtin rename_project
-----------------------
-
-builtin rename_project: Rename the project from which this command is invoked (the 'current' project).
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: the new project name.
-
-    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
-
-
-builtin role_print
-------------------
-
-builtin role_print: Print the known roles.
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
-                 '``^docker_``' prints Docker roles,
-                 '``^serial_``' prints serial console roles,
-                 '``^tmux_``' prints tmux roles.
-
-
-builtin start_project
----------------------
-
-builtin start_project: start a new project with a given name in the current directory.
-
-This will create a project descriptor, a configuration file and an
-empty command file in the current working directory.
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: name of the new project.
-
-
-builtin tmux_create_sessions
-----------------------------
-
-builtin tmux_create_sessions: Create one or more configured tmux session(s).
+builtin tmux_sessions_kill: Kill one or more configured tmux session(s).
 
     ARGV[0]: Optional name of a configured tmux session (the default is all configured sessions).
 
