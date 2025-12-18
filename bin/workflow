@@ -180,6 +180,7 @@ my $global_builtin_operations
        manual => 1,
        project_rename => 1,
        project_start => 1,
+       role_add => 1,
        scripts_fetch => 1,
        scripts_install => 1,
        scripts_pull => 1,
