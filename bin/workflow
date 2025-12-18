@@ -2423,7 +2423,7 @@ sub _install_script_symbolic_link_to_engine
 }
 
 
-sub builtin_add_role
+sub builtin_role_add
 {
     my $arguments = shift || [];
 
@@ -2629,7 +2629,7 @@ sub builtin_add_role
 
 
 
-sub builtin_add_role_completions
+sub builtin_role_add_completions
 {
     my $complete_command_string = shift;
 
@@ -2675,7 +2675,7 @@ sub builtin_add_role_completions
 }
 
 
-sub builtin_add_role_help
+sub builtin_role_add_help
 {
     my $command = shift;
 

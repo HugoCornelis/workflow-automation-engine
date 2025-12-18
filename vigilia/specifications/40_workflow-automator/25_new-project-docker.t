@@ -520,7 +520,7 @@ conf.workflow-tests-configuration
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
 1_commands:
-  - workflow-tests-workflow builtin add_role
+  - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
   - workflow-tests-workflow builtin docker_containers_start
@@ -563,7 +563,7 @@ conf.workflow-tests-configuration
      try them with the --dry-run and --interactions options,
      some commands may implement a usage message available with the --help option):
 1_commands:
-  - workflow-tests-workflow builtin add_role
+  - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin add_target
   - workflow-tests-workflow builtin archive_configuration
   - workflow-tests-workflow builtin docker_containers_start
