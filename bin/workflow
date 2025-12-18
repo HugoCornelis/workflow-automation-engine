@@ -2048,6 +2048,316 @@ sub _builtin_tmux_sessions
 }
 
 
+sub _file_append_string
+{
+    my $filename = shift;
+
+    my $string = shift;
+
+    my $options = shift;
+
+    $string =~ s(")(\\")g;
+
+    my $command = "bash -c \"echo '$string' | cat >>$filename\"";
+
+    execute_shell_command($command, $options);
+
+    # open(my $fh, ">>$filename");
+
+    # print $fh $string;
+
+    # close $fh;
+}
+
+
+sub _file_contains_regex
+{
+    my $filename = shift;
+
+    my $string = shift;
+
+    if (!-e $filename)
+    {
+	return '';
+    }
+
+    my $data
+	= do {
+	    open my $fh, '<', $filename;
+	    local $/;
+	    <$fh>;
+	};
+
+    my $result = ($data =~ /$string/);
+
+    if ($option_verbose
+	and $option_verbose > 1)
+    {
+	if ($result)
+	{
+	    print "$global_program_name: _file_contains_regex(): match file '$filename' with '$string' (result is $result)\n";
+	}
+	else
+	{
+	    print "$global_program_name: _file_contains_regex(): no match file '$filename' with '$string' (result is $result)\n";
+	}
+    }
+
+    return $result;
+}
+
+
+#
+# construct the command filename list, then:
+#
+# if full_paths is the empty string: nothing more is done.
+#
+# if full_paths is 'true-paths': the ~/bin or ~/.local/bin directory is prefixed.
+#
+# if full_paths is 'full-paths': the sources_configuration_directory is prefixed.
+#
+# Only command filenames containing the string '-commands' are
+# returned.
+
+sub _init_command_filenames_configured
+{
+    # full_paths is either the empty string '' or 'full-paths' or 'true-paths'.
+
+    my $full_paths = shift;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    # when invoked as just 'workflow' the directory where to search
+    # for command files will not necessarily be /usr/local/bin'
+    # it may also be the current working directory
+
+    # default to the directory with the main executable
+
+    my $command_filename_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $command_filenames = $global_technical_project_configuration->{command_filenames};
+
+    my $command_filenames_full_paths
+	= [
+	   map
+	   {
+	       # map the command filename to its full path
+
+	       $full_paths ? "$command_filename_directory/$_" : "$_";
+	   }
+	   @$command_filenames,
+	  ];
+
+    my $command_filenames_full_paths_selected
+	= [
+	   grep
+	   {
+	       # select filenames with the correct project name prefix
+
+	       /$field_project_name-commands[-\._a-z0-9]*$/;
+	   }
+	   grep
+	   {
+	       my $command_filename = $_;
+
+	       # select filenames that have the string -commands
+
+	       my $result = ($command_filename =~ m(-commands));
+
+	       if (not $result)
+	       {
+		   print STDERR "$global_program_name: *** Error: $command_filename does not follow command filename conventions (must have '-commands')\n";
+	       }
+
+	       $result;
+	   }
+	   @$command_filenames_full_paths,
+	  ];
+
+    # print STDERR Dumper(@$command_filenames_full_paths_selected);
+
+    my $result
+	= [
+	   sort
+	   map
+	   {
+	       # map the command filename to its true path if this was requested
+
+	       my $command_filename = $_;
+
+	       # if (not defined $command_filename)
+	       # {
+	       # 	   use Data::Dumper;
+
+	       # 	   print Dumper(
+	       # 			{
+	       # 			 command_filenames_full_paths => $command_filenames_full_paths,
+	       # 			 command_filenames_full_paths_selected => $command_filenames_full_paths_selected,
+	       # 			 command_filenames => $command_filenames,
+	       # 			 full_paths => $full_paths,
+	       # 			},
+	       # 		       );
+	       # }
+
+	       #! this returns undef if the file does not exist
+
+	       if ($full_paths eq 'true-paths')
+	       {
+		   use Cwd;
+
+ 		   $command_filename = Cwd::abs_path($command_filename);
+
+		   # print STDERR $!;
+	       }
+
+	       defined $command_filename ? $command_filename : ();
+	   }
+	   @$command_filenames_full_paths_selected
+	  ];
+
+    #! options haven't been processed yet for some execution paths
+
+    if ($option_verbose
+	and $option_verbose > 1)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper(
+			    {
+			     _init_command_filenames_configured => $result,
+			     command_filename_directory => $command_filename_directory,
+			     command_filenames => $global_technical_project_configuration->{command_filenames},
+			     command_filenames_full_paths => $command_filenames_full_paths,
+			     command_filenames_full_paths_selected => $command_filenames_full_paths_selected,
+			     full_paths => $full_paths,
+			    },
+			   );
+    }
+
+    return $result;
+}
+
+
+# find all the command files, including those not mentioned in the
+# configuration
+#
+# full_paths is either 'full-paths' or 'full-paths-configuration'.
+#
+
+sub _init_command_filenames_found
+{
+    my $full_paths = shift;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    # when invoked as just 'workflow' the directory where to search
+    # for command files will not necessarily be /usr/local/bin'
+    # it may also be the current working directory
+
+    my $command_filename_directory = $global_field_project_configuration->{search_path_workflow_executable_directory};
+
+    my $result
+	= [
+	   sort
+	   map
+	   {
+	       chomp; $_;
+	   }
+	   ($full_paths =~ "configuration"
+	    ? `ls 2>/dev/null $command_filename_directory/$field_project_name-configuration`
+	    : `ls 2>/dev/null $command_filename_directory/$field_project_name-commands*`),
+	  ];
+
+    return $result;
+}
+
+
+# given a list of filenames, create system shell commands that create
+# symbolic links in the ~/bin or ~/.local/bin directory to each of these filenames.
+#
+# each given filename must match with *-(commands|configuration) and
+# is checked for existence.
+
+sub _init_filenames_2_symlink_commands
+{
+    my $filenames = shift;
+
+    use Data::Dumper;
+
+    if (defined $option_verbose
+	and $option_verbose > 3)
+    {
+	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
+    }
+
+    my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $commands
+	= [
+	   map
+	   {
+	       # $_ =~ m(.*/(.*)$);
+
+	       my $command_filename = $_;
+
+	       use Cwd;
+
+	       my $source = Cwd::abs_path($command_filename);
+
+	       use File::Spec;
+
+	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
+
+	       my $target = "$ENV{HOME}/$bin_path_choice/$filename";
+
+	       my $result = "ln -sf $source $target";
+
+	       if (defined $option_verbose
+		   and $option_verbose > 2)
+	       {
+		   print "$command_filename: $result\n";
+	       }
+
+	       $result;
+	   }
+	   grep
+	   {
+	       my $command_filename = $_;
+
+	       my $result = ($command_filename =~ m(-commands|-configuration));
+
+	       if (not $result)
+	       {
+		   print STDERR "$global_program_name: *** Error: $command_filename does not follow command filename conventions (must have '-commands|-configuration')\n";
+	       }
+
+	       $result;
+	   }
+	   grep
+	   {
+	       my $command_filename = $_;
+
+	       use File::Spec;
+
+	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
+
+	       my $target = "$ENV{HOME}/$bin_path_choice/$filename";
+
+	       not -e $target;
+	   }
+	   sort @$filenames,
+	  ];
+
+    if (defined $option_verbose
+	and $option_verbose > 3)
+    {
+	print Dumper( { _init_filenames_2_symlink_commands_commands => $commands, }, );
+    }
+
+    return $commands;
+}
+
+
 sub _install_script_bashrc_aliasses
 {
     my $project_name = shift;
@@ -2424,559 +2734,286 @@ sub _install_script_symbolic_link_to_engine
 }
 
 
-sub builtin_role_add
+sub _roles_select
 {
-    my $arguments = shift || [];
+    my $matcher = shift;
 
-    my $option_dockerfile;
-    my $option_localuser;
-    my $option_scp_options;
-    my $option_ssh_options;
-    my $option_ssh_password;
-    my $option_ssh_port;
-    my $option_ssh_server;
-    my $option_ssh_user;
-    my $option_tmux_session;
+    my $roles = $global_technical_project_configuration->{roles};
 
-    our $options
-      = {
-	 "dockerfile=s" => \$option_dockerfile,
-	 "localuser!" => \$option_localuser,
-	 "scp_options=s" => \$option_scp_options,
-	 "ssh_options=s" => \$option_ssh_options,
-	 "ssh_password=s" => \$option_ssh_password,
-	 "ssh_port=s" => \$option_ssh_port,
-	 "ssh_server=s" => \$option_ssh_server,
-	 "ssh_user=s" => \$option_ssh_user,
-	 "tmux-session=s" => \$option_tmux_session,
-	};
-
-    use Getopt::Long qw(GetOptionsFromArray);;
-
-    my $result = GetOptionsFromArray($arguments, %$options);
-
-    if (!$result)
+    if (not defined $roles)
     {
-        die "$global_program_name: *** error in option processing, try --help";
+	$roles = $global_technical_project_configuration->{target_servers};
     }
 
-    if ($option_verbose)
-    {
-	use Data::Dumper;
-
-	print "$global_program_name: builtin_add_role, options:\n";
-
-	print Dumper( { options => $options, }, );
-    }
-
-    my $error = '';
-
-    my $role_name = $arguments->[0];
-
-    if (not defined $role_name)
-    {
-	$error ||= 'no role_name found on the command line';
-    }
-
-    my $role_description = $arguments->[1];
-
-    if (not defined $role_description)
-    {
-	$error ||= 'no role_description found on the command line';
-    }
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name};
-
-    if (not $field_project_name)
-    {
-	$error ||= 'no valid field_project_name found in the field_project_configuration';
-    }
-
-    if ($error)
-    {
-	die "$0: *** Error: $error";
-    }
-
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
-
-    if (not $configuration_data_directory)
-    {
-	$error ||= 'no valid configuration_data_directory found in the field_project_configuration';
-    }
-
-    if ($error)
-    {
-	die "$0: *** Error: $error";
-    }
-
-    # read the targets configuration file
-
-    my $roles_configuration_filename = "$configuration_data_directory/roles.yml";
-
-    my $roles = YAML::LoadFile($roles_configuration_filename);
-
-    if (not $error)
-    {
-	if (exists $roles->{roles}->{$role_name})
-	{
-	    $error = "role $role_name already exists";
-	}
-    }
-
-    # if a docker file was given
-
-    my $remote_policy;
-
-    if ($option_dockerfile)
-    {
-	if ($role_name !~ /^docker_/)
-	{
-	    die "$0: *** Error: Docker role names must start with 'docker_'."
-	}
-
-	# copy it to the configuration
-
-	my $commands
-	    = [
-	       "mkdir -p '$configuration_data_directory'/dockerfiles",
-	       "cp -a '$option_dockerfile' '$configuration_data_directory'/dockerfiles",
-	      ];
-
-	execute_shell_command_array($commands);
-
-	my $docker_container_name = $role_name . '_container';
-
-	$remote_policy = "docker exec -it $docker_container_name";
-    }
-
-    # tmux sessions
-
-    if ($option_tmux_session)
-    {
-	if ($role_name !~ /^tmux_/)
-	{
-	    die "$0: *** Error: tmux role names must start with 'tmux_'."
-	}
-
-	$remote_policy = "tmux send-keys -t $option_tmux_session ";
-    }
-
-    if ($option_localuser)
-    {
-	if ($remote_policy)
-	{
-	    die "$0: *** Error: Roles with a remote_policy (including docker and tmux based roles) cannot have be a localuser.";
-	}
-    }
-
-    # construct the new role
-
-    my $role
+    my $matching_roles
 	= {
-	   description => $role_description,
-	   name => $role_name,
+	   map
+	   {
+	       my $role_name = $_;
 
-	   # localuser
-	   (
-	    ($option_localuser ? (localuser => 'yes') : ()),
-	   ),
+	       my $result = { $role_name => $roles->{$role_name} };
 
-	   # docker
-	   (
-	    ($option_dockerfile ? (dockerfile => $option_dockerfile ) : ()),
-	    ($option_dockerfile ? (remote_policy => $remote_policy ) : ()),
-	   ),
-
-	   # ssh
-	   (
-	    ($option_scp_options ? (scp_options => $option_scp_options ) : ()),
-	    ($option_ssh_options ? (ssh_options => $option_ssh_options ) : ()),
-	    ($option_ssh_password ? (ssh_password => $option_ssh_password ) : ()),
-	    ($option_ssh_port ? (ssh_port => $option_ssh_port ) : ()),
-	    ($option_ssh_server ? (ssh_server => $option_ssh_server ) : ()),
-	    ($option_ssh_user ? (ssh_user => $option_ssh_user ) : ()),
-	   ),
-
-	   # tmux
-	   (
-	    ($option_tmux_session ? (remote_policy => $remote_policy ) : ()),
-	   ),
+	       %$result;
+	   }
+	   grep
+	   {
+	       /$matcher/;
+	   }
+	   sort keys %$roles,
 	  };
 
-    # add the new role, we never overwrite the old description
-
-    if (!$error)
-    {
-	if (not $global_execute_what_is_scheduled)
-	{
-	    print Dump( { role => $role } );
-	}
-	else
-	{
-	    $roles->{roles}->{$role_name} = $role;
-
-	    YAML::DumpFile($roles_configuration_filename, $roles);
-
-	    print "$global_program_name: added role $role_name to $roles_configuration_filename\n";
-	}
-    }
-
-    # return errors
-
-    return $error;
+    return $matching_roles;
 }
 
 
-
-sub builtin_role_add_completions
+sub _sentence_summarize
 {
-    my $complete_command_string = shift;
+    my $sentence = shift;
 
-    my $complete_arguments_array = shift;
+    my $maximum_length = shift || 80;
 
-    my $debug_completion = 0;
+    my $result = "$sentence";
 
-    if ($debug_completion > 2)
+    $result =~ s(\s+)(-)g;
+
+    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+
+    $result = _strings_remove($replace_these_chars, 'replace-with-dash', $result);
+
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
+
+    $result = _strings_remove($remove_these_words, 'with-dash-keep', $result);
+
+    my $remove_these_chars = [ '<', '>', '\'' ];
+
+    $result = _strings_remove($remove_these_chars, 'without-dash', $result);
+
+    $result = substr($result, 0, $maximum_length);
+
+    $result =~ s(-$)();
+
+    return $result;
+}
+
+
+sub _strings_remove
+{
+    my $strings = shift;
+
+    my $options = shift;
+
+    my $sentence = shift;
+
+    if ($options eq 'with-dash-keep')
     {
-	print STDERR Dumper(
-			    {
-			     arguments => \@_,
-			     complete_arguments_array => $complete_arguments_array,
-			     complete_command_string => $complete_command_string,
-			    },
-			   );
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s(-$string-)(-)ig;
+	    $sentence =~ s(^$string-)()ig;
+	    $sentence =~ s($string$)()ig;
+	}
     }
-
-    my $completions_hash
-	= {
-	   "1.<role_name>" => '',
-	   "2.<role_description>" => '',
-	   "'3.[--_<options>_]'" => '',
-	   "--dockerfile" => '',
-	   "--localuser" => '',
-	   "--scp-options" => '',
-	   "--ssh-options" => '',
-	   "--ssh-password" => '',
-	   "--ssh-port" => '',
-	   "--ssh-server" => '',
-	   "--ssh-user" => '',
-	   "--tmux-session" => '',
-	  };
-
-    if (scalar @$complete_arguments_array > 2)
+    elsif ($options eq 'without-dash')
     {
-	return {};
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)()ig;
+	}
+    }
+    elsif ($options eq 'replace-with-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)(-)ig;
+	}
     }
     else
     {
-	return $completions_hash;
+	die "$0: Internal error in _strings_remove()";
+    }
+
+    return $sentence;
+}
+
+
+#
+# Initialize the command module.
+#
+# This sub reads and parses the workflows written in perl or python.
+#
+
+sub _workflow_operations_initialize
+{
+    my $commands_seen;
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    # only those command files mentioned in the configuration
+
+    my $command_filenames_configured = _init_command_filenames_configured('true-paths');
+
+    # print STDERR Dumper( { command_filenames_configured => $command_filenames_configured, } );
+
+    my $command_filenames_to_use
+	= [
+	   sort
+	   grep
+	   {
+	       # remove duplicate filenames to avoid duplicate command definitions
+
+	       if ($commands_seen->{$_})
+	       {
+		   print "$global_program_name: *** Warning: $_ is mentioned $commands_seen->{$_} time(s) in the configuration (hint: sort your filenames to spot such errors quickly).\n";
+	       }
+
+	       not $commands_seen->{$_}++;
+	   }
+	   @$command_filenames_configured,
+	  ];
+
+    foreach my $command_filename (@$command_filenames_to_use)
+    {
+	# print STDERR "Executing $command_filename\n";
+
+	my $file_type;
+
+	if ($command_filename =~ m(\.yml$))
+	{
+	    $file_type = 'yaml';
+	}
+	elsif ($command_filename =~ m(\.py$))
+	{
+	    $file_type = 'python';
+	}
+	else
+	{
+	    $file_type = 'perl';
+	}
+
+	if ($file_type eq 'python')
+	{
+	    my ($commands, $eval_status) = FieldProject::_init_do_eval_python_file($command_filename);
+
+	    if ($eval_status)
+	    {
+		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+	    }
+	}
+	elsif ($file_type eq 'perl')
+	{
+	    my ($commands, $eval_status) = FieldProject::_init_do_eval_perl_file($command_filename);
+
+	    if ($eval_status)
+	    {
+		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+	    }
+	}
+	elsif ($file_type eq 'yaml')
+	{
+	    my ($commands, $eval_status) = FieldProject::_init_do_eval_yaml_command_file($command_filename);
+
+	    if ($eval_status)
+	    {
+		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
+	    }
+	}
+	else
+	{
+	    die "$global_program_name: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
+	}
     }
 }
 
 
-sub builtin_role_add_help
+sub builtin_command_filenames_known
+{
+    my $arguments = shift || [ 'relative-paths' ];
+
+    my $debug_builtin_command_filenames_known = 0;
+
+    # get the configuration_data_directory
+
+    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    # generate the list of command filenames
+
+    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
+
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_command_filenames_known);
+
+    $command_filenames = $command_filenames->{command_filenames};
+
+    use YAML;
+
+    print Dump( { command_filenames_known => $command_filenames } );
+
+    return 0;
+}
+
+
+sub builtin_command_filenames_known_completions
+{
+    return
+    {
+     "1.Type-one-of:" => '',
+     "full-paths" => '',
+     "relative-paths" => '',
+    };
+}
+
+
+sub builtin_command_filenames_known_help
 {
     my $command = shift;
 
-    return "$command: add a new role and update the configuration to integrate it.
+    return "$command : print the known command filenames to stdout.
 
 synopsis:
 ~~~~~~~~~
 
 .. code-block:: bash
 
-$command <role-name> <role-description> [-- <options>]
+$command \[ <full-or-relative-paths> \]
 
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: name of the new role.
-
-    ``ARGV[1]``: description of the new role.
-
-options:
-~~~~~~~~
-
-    ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
-
-    ``--localuser``: Set this for a local user role.
-
-    ``--scp-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-
-    ``--ssh-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
-
-    ``--ssh-password``: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
-
-    ``--ssh-port``: This defaults to 22.
-
-    ``--ssh-server``: An IP address or known host name.
-
-    ``--ssh-user``: The ssh user name.
-
-    ``--tmux-session``: The tmux session name.
-
-notes:
-~~~~~~
-
-It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
-
-.. code-block:: bash
-
-  tmux_ssh_cd:
-    description: interaction with the combined ssh / tmux session to test cd commands
-    name: tmux_ssh_cd
-    remote_policy: 'tmux send-keys -t ssh_cd '
-    ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
-    ssh_password: harness
-    ssh_port: 22
-    ssh_server: 172.18.0.22
-    ssh_user: root
+    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
 
 ";
 }
 
 
-sub builtin_target_add
+sub builtin_configuration_directory_print
 {
-    my $arguments = shift || [];
+    my $project_name = shift;
 
-    my $option_install_command_pl;
-    my $option_install_command_python;
-    my $option_install_command_sh;
-    # my $option_install_command_yml;
+    use YAML;
 
-    our $install_options
-      = {
-	 "install-commands-pl!" => \$option_install_command_pl,
-	 "install-commands-python!" => \$option_install_command_python,
-	 "install-commands-sh!" => \$option_install_command_sh,
-	 # "install-commands-yml!" => \$option_install_command_yml,
-	};
-
-    use Getopt::Long qw(GetOptionsFromArray);;
-
-    my $result = GetOptionsFromArray($arguments, %$install_options);
-
-    if (!$result)
-    {
-        die "$global_program_name: *** error in option processing, try --help";
-    }
-
-    if ($option_verbose)
-    {
-	use Data::Dumper;
-
-	print "$global_program_name: builtin_target_add, installation options:\n";
-
-	print Dumper( { install_options => $install_options, }, );
-    }
+    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
 
     my $error = '';
-
-    my $target_name = $arguments->[0];
-
-    if (not $error)
-    {
-	if (not defined $target_name)
-	{
-	    $error = 'no target_name found on the command line';
-	}
-    }
-
-    my $target_description = $arguments->[1];
-
-    if (not $error)
-    {
-	if (not defined $target_description)
-	{
-	    $error = 'no target_description found on the command line';
-	}
-    }
-
-#     use Data::Dumper;
-
-#     print Dumper($global_technical_project_configuration);
-
-#     print Dumper($global_field_project_configuration);
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name};
-
-    if (not $error)
-    {
-	if (not $field_project_name)
-	{
-	    $error = 'no valid field_project_name found in the field_project_configuration';
-	}
-    }
-
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
-
-    if (not $error)
-    {
-	if (not $configuration_data_directory)
-	{
-	    $error = 'no valid configuration_data_directory found in the field_project_configuration';
-	}
-    }
-
-    # read the targets configuration file
-
-    my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
-
-    my $targets = YAML::LoadFile($targets_configuration_filename);
-
-    if (not $error)
-    {
-	if (exists $targets->{targets}->{$target_name})
-	{
-	    $error = "target $target_name already exists";
-	}
-    }
-
-    # add the new target, if the file already exists, we overwrite the old description
-
-    if (!$error
-	|| $error eq "target $target_name already exists")
-    {
-	$targets->{targets}->{$target_name}->{description} = $target_description;
-    }
-
-    # write the new targets configuration file
-
-    if (!$error
-	|| $error eq "target $target_name already exists")
-    {
-	YAML::DumpFile($targets_configuration_filename, $targets);
-
-	print "$global_program_name: added target $target_name to $targets_configuration_filename\n";
-    }
-
-    if ($option_install_command_pl)
-    {
-	my $new_command_filename = "$field_project_name-commands-$target_name";
-
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
-
-	# add a template commands file with the given name
-
-	if (not $error)
-	{
-	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
-
-	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
-	}
-    }
-
-    if ($option_install_command_python)
-    {
-	my $new_command_filename = "$field_project_name-commands-$target_name.py";
-
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
-
-	# add a template commands file with the given name
-
-	if (not $error)
-	{
-	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
-
-	    print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
-	}
-    }
-
-    if ($option_install_command_sh)
-    {
-	if (!$error
-	    || $error eq "target $target_name already exists")
-	{
-	    $error = _builtin_project_commands_sh_template_create($global_field_project_configuration, $field_project_name, $target_name);
-
-	    print "$global_program_name: created the shell command file for target $target_name\n";
-	}
-    }
-
-    # if ($option_install_command_yml)
-    # {
-    # 	if (not $error)
-    # 	{
-    # 	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
-
-    # 	    print "$global_program_name: created the yml command file for target $target_name\n";
-    # 	}
-    # }
-
-    # return errors
 
     return $error;
 }
 
 
-sub builtin_target_add_completions
-{
-    my $complete_command_string = shift;
-
-    my $complete_arguments_array = shift;
-
-    my $debug_completion = 0;
-
-    if ($debug_completion > 2)
-    {
-	print STDERR Dumper(
-			    {
-			     arguments => \@_,
-			     complete_arguments_array => $complete_arguments_array,
-			     complete_command_string => $complete_command_string,
-			    },
-			   );
-    }
-
-    my $completions_hash
-	= {
-	   "1.<target_name>" => '',
-	   "2.<target_description>" => '',
-	   "'3.[--_<options>_]'" => '',
-	   '--' => {
-		    "--install-commands-pl" => '',
-		    "--install-commands-py" => '',
-		    "--install-commands-sh" => '',
-		   },
-	  };
-
-    return $completions_hash;
-}
-
-
-sub builtin_target_add_help
+sub builtin_configuration_directory_print_help
 {
     my $command = shift;
 
-    return "$command: add a new target and update the configuration to integrate it.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-$command <target-name> <target-description> [-- <options>]
+    return "$command : print the directory where the configuration of this project is found.
 
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: name of the new target.
-
-    ``ARGV[1]``: description of the new target.
-
-options:
-~~~~~~~~
-
-    ``--install-commands-pl``: install a perl command file template.
-
-    ``--install-commands-py``: install a python command file template.
-
-    ``--install-commands-sh``: install a shell command file template.
+    none.
 ";
 }
 
@@ -3130,38 +3167,6 @@ arguments:
 }
 
 
-sub _builtin_roles_select
-{
-    my $matcher = shift;
-
-    my $roles = $global_technical_project_configuration->{roles};
-
-    if (not defined $roles)
-    {
-	$roles = $global_technical_project_configuration->{target_servers};
-    }
-
-    my $matching_roles
-	= {
-	   map
-	   {
-	       my $role_name = $_;
-
-	       my $result = { $role_name => $roles->{$role_name} };
-
-	       %$result;
-	   }
-	   grep
-	   {
-	       /$matcher/;
-	   }
-	   sort keys %$roles,
-	  };
-
-    return $matching_roles;
-}
-
-
 sub builtin_docker_containers_start
 {
     my $arguments = shift || [];
@@ -3191,7 +3196,7 @@ sub builtin_docker_containers_start
 
     my $docker_command = 'docker';
 
-    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_builtin_roles_select('^docker_')} ];
+    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_roles_select('^docker_')} ];
 
     foreach my $role (@$docker_roles)
     {
@@ -3243,7 +3248,7 @@ sub builtin_docker_containers_start
 
 sub builtin_docker_containers_start_completions
 {
-    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
+    my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
 
     my $option_completions
 	= {
@@ -3330,7 +3335,7 @@ sub builtin_docker_exec
 
 sub builtin_docker_exec_completions
 {
-    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
+    my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
 
     my $result
 	= {
@@ -3387,7 +3392,7 @@ sub builtin_docker_images_build
 
     my $project_name = "$::global_field_project_configuration->{field_project_name}";
 
-    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_builtin_roles_select('^docker_')} ];
+    my $docker_roles = scalar @$arguments ? $arguments : [ sort keys %{_roles_select('^docker_')} ];
 
     foreach my $role (@$docker_roles)
     {
@@ -3448,7 +3453,7 @@ sub builtin_docker_images_build
 
 sub builtin_docker_images_build_completions
 {
-    my $docker_roles = [ sort keys %{_builtin_roles_select('^docker_')} ];
+    my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
 
     my $result
 	= {
@@ -3475,29 +3480,6 @@ arguments:
 
     ``ARGV[0]``: The name of a Docker role.
 
-";
-}
-
-
-sub builtin_scripts_fetch
-{
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $commands
-	= [
-	   "cd '$sources_configuration_directory'",
-	   "git fetch",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
-sub builtin_scripts_fetch_help
-{
-    my $command = shift;
-
-    return "$command: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
 ";
 }
 
@@ -3643,339 +3625,6 @@ sub builtin_help
     my $command = shift;
 
     return "module $command: Builtin functions for maintenance of a workflow project configuration.";
-}
-
-
-sub builtin_scripts_install
-{
-    my $arguments = shift || [];
-
-    my $option_install_aliasses = 'by default';
-    my $option_install_bash_completion = 'by default';
-    my $option_install_commands;
-    my $option_install_engine = 'by default';
-    my $option_install_force;
-    my $option_install_git;
-    my $option_install_grc_configuration = 'by default';
-    my $option_install_path_in_bashrc;
-    my $option_install_report;
-
-    our $install_options
-	= {
-	   "aliasses!" => \$option_install_aliasses,
-	   "bash-completion!" => \$option_install_bash_completion,
-	   "commands!" => \$option_install_commands,
-	   "engine!" => \$option_install_engine,
-	   "force!" => \$option_install_force,
-	   "git!" => \$option_install_git,
-	   "grc-configuration!" => \$option_install_grc_configuration,
-	   "path-in-bashrc!" => \$option_install_path_in_bashrc,
-	   "report!" => \$option_install_report,
-	  };
-
-    use Getopt::Long qw(GetOptionsFromArray);;
-
-    my $result = GetOptionsFromArray($arguments, %$install_options);
-
-    if (!$result)
-    {
-        die "$global_program_name: *** Error in option processing, try --help";
-    }
-
-    my $debug = 0;
-
-    if ($debug)
-    {
-	use Data::Dumper;
-
-	print Dumper(
-		     {
-		      option_install_aliasses => $option_install_aliasses,
-		      option_install_bash_completion => $option_install_bash_completion,
-		      option_install_commands => $option_install_commands,
-		      option_install_engine => $option_install_engine,
-		      option_install_force => $option_install_force,
-		      option_install_git => $option_install_git,
-		      option_install_grc_configuration => $option_install_grc_configuration,
-		      option_install_path_in_bashrc => $option_install_path_in_bashrc,
-		      option_install_report => $option_install_report,
-		     }
-		    );
-    }
-
-    # need to take these actions:
-    #
-    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
-    # 2. Install to ~/bin or ~/.local/bin: symbolic links for commands
-    # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
-    # 4. Install to /etc/grc.conf: text addition
-    # 5. Install to /usr/share/grc/: symbolic links
-    # 6. Create and populate the git repository
-
-    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
-
-    my $field_configuration = FieldProject::_init_get_field_project_configuration();
-
-    if (!$field_configuration)
-    {
-        die "$global_program_name: *** error: no valid field_configuration found";
-    }
-
-    my $project_name = $field_configuration->{field_project_name};
-
-    if (!$project_name)
-    {
-        die "$global_program_name: *** error: no valid project_name in the field_configuration found";
-    }
-
-    # add the ~/bin  or ~/.local/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
-
-    if ($option_install_path_in_bashrc)
-    {
-	_install_script_path_in_bashrc($project_name);
-    }
-
-    my $bin_path_choice = Utilities::bin_path_choice();
-
-    my $command_mkdir = "mkdir --parents $ENV{HOME}/$bin_path_choice";
-
-    execute_shell_command($command_mkdir);
-
-    _install_script_symbolic_link_to_engine($project_name, $option_install_engine, $option_install_report);
-
-    _install_script_symbolic_link_to_configuration($project_name, $option_install_commands, $option_install_report);
-
-    # _install_script_symbolic_link_to_commands_in_commands_directory($project_name, $option_install_commands, $option_install_report);
-
-    _install_script_symbolic_link_to_commands_configured($project_name, $option_install_commands, $option_install_report);
-
-    if ($option_install_aliasses)
-    {
-	_install_script_bashrc_aliasses($project_name);
-    }
-
-    if ($option_install_bash_completion)
-    {
-	_install_script_bash_completion($project_name);
-    }
-
-    if ($option_install_grc_configuration)
-    {
-	_install_script_grc_conf_additions($project_name);
-
-	_install_script_grc_symbolic_links($project_name, $field_configuration);
-    }
-
-    if ($option_install_git)
-    {
-	_install_script_git_repository($project_name);
-    }
-
-    if ($option_install_engine
-	or $option_install_bash_completion)
-    {
-	my $commands
-	    = [
-	       # "echo",
-	       # "echo",
-	       # "echo  scripts for '$project_name' have been installed.",
-	       "echo",
-	       "echo Bash completion can be enabled using:",
-	       "echo",
-	       "echo   . ./$project_name-bash-completion.sh",
-	       "echo",
-	       # "echo Then maybe followed with commands removing existing commands:",
-	       # "echo",
-	       # "echo   $project_name-workflow builtin remove_commands $project_name-commands-perl_examples $project_name-commands-python_examples.py examples_sh/*",
-	       # "echo",
-	       # "echo Or/and maybe followed with commands removing existing targets:",
-	       # "echo",
-	       # "echo   $project_name-workflow builtin remove_target perl_examples $project_name-commands-python_examples.py examples_sh/*",
-	       # "echo   $project_name-workflow builtin remove_target python_examples",
-	       # "echo   $project_name-workflow builtin remove_target examples_sh\n",
-	       # "echo",
-	       "echo Or/and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
-	       "echo",
-	       "echo   $project_name-workflow builtin target_add source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
-	       "echo",
-	      ];
-
-	execute_shell_command_array($commands, { quiet => 'only show the output of the commands' } );
-    }
-}
-
-
-sub builtin_scripts_install_completions
-{
-    my $complete_command_string = shift;
-
-    my $complete_arguments_array = shift;
-
-    my $options_completions_hash
-	= {
-	   '--' => {
-		    '0.Available_options:' => '',
-		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
-		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-		    '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
-		    '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
-		    '--force' => "don't use this.",
-		    '--git' => "create a git repository for the workflow configuration.",
-		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-		    '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
-		    '--report' => "report on what is being done.",
-		   },
-	  };
-
-    foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
-    {
-	$options_completions_hash->{'--'}->{$options_completion}
-	    = {
-	       map
-	       {
-		   $_ => '';
-	       }
-	       keys %{$options_completions_hash->{'--'}}
-	      };
-    }
-
-    return $options_completions_hash;
-}
-
-
-sub builtin_scripts_install_help
-{
-    my $command = shift;
-
-    return "$command : install or upgrade the workflow scripts that are found in the current directory.
-
-options:
-~~~~~~~~
-
-    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
-
-    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
-
-    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
-
-    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
-
-    ``--force``: don't use this.
-
-    ``--git``: create a git repository for the workflow configuration.
-
-    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
-
-    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
-
-    ``--report``: report on what is being done.
-
-
-Note that grc configuration files will also be installed and configured.
-
-";
-}
-
-
-sub builtin_command_filenames_known
-{
-    my $arguments = shift || [ 'relative-paths' ];
-
-    my $debug_builtin_command_filenames_known = 0;
-
-    # get the configuration_data_directory
-
-    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
-
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
-
-    # generate the list of command filenames
-
-    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
-
-    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_command_filenames_known);
-
-    $command_filenames = $command_filenames->{command_filenames};
-
-    use YAML;
-
-    print Dump( { command_filenames_known => $command_filenames } );
-
-    return 0;
-}
-
-
-sub strings_remove
-{
-    my $strings = shift;
-
-    my $options = shift;
-
-    my $sentence = shift;
-
-    if ($options eq 'with-dash-keep')
-    {
-	foreach my $string (@$strings)
-	{
-	    $sentence =~ s(-$string-)(-)ig;
-	    $sentence =~ s(^$string-)()ig;
-	    $sentence =~ s($string$)()ig;
-	}
-    }
-    elsif ($options eq 'without-dash')
-    {
-	foreach my $string (@$strings)
-	{
-	    $strings = quotemeta($string);
-
-	    $sentence =~ s($string)()ig;
-	}
-    }
-    elsif ($options eq 'replace-with-dash')
-    {
-	foreach my $string (@$strings)
-	{
-	    $strings = quotemeta($string);
-
-	    $sentence =~ s($string)(-)ig;
-	}
-    }
-    else
-    {
-	die "$0: Internal error in strings_remove()";
-    }
-
-    return $sentence;
-}
-
-
-sub sentence_summarize
-{
-    my $sentence = shift;
-
-    my $maximum_length = shift || 80;
-
-    my $result = "$sentence";
-
-    $result =~ s(\s+)(-)g;
-
-    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
-
-    $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
-
-    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
-
-    $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
-
-    my $remove_these_chars = [ '<', '>', '\'' ];
-
-    $result = strings_remove($remove_these_chars, 'without-dash', $result);
-
-    $result = substr($result, 0, $maximum_length);
-
-    $result =~ s(-$)();
-
-    return $result;
 }
 
 
@@ -4288,7 +3937,7 @@ $global_command_line
 	$last_target = $this_target;
     }
 
-    my $manual_basename = sentence_summarize($field_project_name);
+    my $manual_basename = _sentence_summarize($field_project_name);
 
     $manual_basename = "$manual_basename-manual$filename_suffix";
 
@@ -4401,90 +4050,6 @@ options:
     ``--remove-intermediate-files``: Remove intermediate files.
 
     ``--view``: Start the ``okular`` viewer on the generated ``pdf`` document.
-";
-}
-
-
-sub builtin_command_filenames_known_completions
-{
-    return
-    {
-     "1.Type-one-of:" => '',
-     "full-paths" => '',
-     "relative-paths" => '',
-    };
-}
-
-
-sub builtin_command_filenames_known_help
-{
-    my $command = shift;
-
-    return "$command : print the known command filenames to stdout.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-$command \[ <full-or-relative-paths> \]
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
-
-";
-}
-
-
-sub builtin_configuration_directory_print
-{
-    my $project_name = shift;
-
-    use YAML;
-
-    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
-
-    my $error = '';
-
-    return $error;
-}
-
-
-sub builtin_configuration_directory_print_help
-{
-    my $command = shift;
-
-    return "$command : print the directory where the configuration of this project is found.
-
-arguments:
-~~~~~~~~~~
-
-    none.
-";
-}
-
-
-sub builtin_scripts_pull
-{
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $commands
-	= [
-	   "cd '$sources_configuration_directory'",
-	   "git pull",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
-sub builtin_scripts_pull_help
-{
-    my $command = shift;
-
-    return "$command: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
 ";
 }
 
@@ -4806,39 +4371,6 @@ arguments:
 }
 
 
-sub builtin_role_print
-{
-    my $arguments = shift || [];
-
-    my $matcher = $arguments->[0] || '.*';
-
-    my $matching_roles = _builtin_roles_select($matcher);
-
-    use YAML;
-
-    print Dump($matching_roles);
-
-    return 0;
-}
-
-
-sub builtin_role_print_help
-{
-    my $command = shift;
-
-    return "$command: Print the known roles.
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
-                 '``^docker_``' prints Docker roles,
-                 '``^serial_``' prints serial console roles,
-                 '``^tmux_``' prints tmux roles.
-";
-}
-
-
 sub builtin_project_start
 {
     my $arguments = shift || [];
@@ -5035,6 +4567,873 @@ arguments:
 ~~~~~~~~~~
 
     ``ARGV[0]``: name of the new project.
+";
+}
+
+
+sub builtin_role_add
+{
+    my $arguments = shift || [];
+
+    my $option_dockerfile;
+    my $option_localuser;
+    my $option_scp_options;
+    my $option_ssh_options;
+    my $option_ssh_password;
+    my $option_ssh_port;
+    my $option_ssh_server;
+    my $option_ssh_user;
+    my $option_tmux_session;
+
+    our $options
+      = {
+	 "dockerfile=s" => \$option_dockerfile,
+	 "localuser!" => \$option_localuser,
+	 "scp_options=s" => \$option_scp_options,
+	 "ssh_options=s" => \$option_ssh_options,
+	 "ssh_password=s" => \$option_ssh_password,
+	 "ssh_port=s" => \$option_ssh_port,
+	 "ssh_server=s" => \$option_ssh_server,
+	 "ssh_user=s" => \$option_ssh_user,
+	 "tmux-session=s" => \$option_tmux_session,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** error in option processing, try --help";
+    }
+
+    if ($option_verbose)
+    {
+	use Data::Dumper;
+
+	print "$global_program_name: builtin_add_role, options:\n";
+
+	print Dumper( { options => $options, }, );
+    }
+
+    my $error = '';
+
+    my $role_name = $arguments->[0];
+
+    if (not defined $role_name)
+    {
+	$error ||= 'no role_name found on the command line';
+    }
+
+    my $role_description = $arguments->[1];
+
+    if (not defined $role_description)
+    {
+	$error ||= 'no role_description found on the command line';
+    }
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    if (not $field_project_name)
+    {
+	$error ||= 'no valid field_project_name found in the field_project_configuration';
+    }
+
+    if ($error)
+    {
+	die "$0: *** Error: $error";
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+    if (not $configuration_data_directory)
+    {
+	$error ||= 'no valid configuration_data_directory found in the field_project_configuration';
+    }
+
+    if ($error)
+    {
+	die "$0: *** Error: $error";
+    }
+
+    # read the targets configuration file
+
+    my $roles_configuration_filename = "$configuration_data_directory/roles.yml";
+
+    my $roles = YAML::LoadFile($roles_configuration_filename);
+
+    if (not $error)
+    {
+	if (exists $roles->{roles}->{$role_name})
+	{
+	    $error = "role $role_name already exists";
+	}
+    }
+
+    # if a docker file was given
+
+    my $remote_policy;
+
+    if ($option_dockerfile)
+    {
+	if ($role_name !~ /^docker_/)
+	{
+	    die "$0: *** Error: Docker role names must start with 'docker_'."
+	}
+
+	# copy it to the configuration
+
+	my $commands
+	    = [
+	       "mkdir -p '$configuration_data_directory'/dockerfiles",
+	       "cp -a '$option_dockerfile' '$configuration_data_directory'/dockerfiles",
+	      ];
+
+	execute_shell_command_array($commands);
+
+	my $docker_container_name = $role_name . '_container';
+
+	$remote_policy = "docker exec -it $docker_container_name";
+    }
+
+    # tmux sessions
+
+    if ($option_tmux_session)
+    {
+	if ($role_name !~ /^tmux_/)
+	{
+	    die "$0: *** Error: tmux role names must start with 'tmux_'."
+	}
+
+	$remote_policy = "tmux send-keys -t $option_tmux_session ";
+    }
+
+    if ($option_localuser)
+    {
+	if ($remote_policy)
+	{
+	    die "$0: *** Error: Roles with a remote_policy (including docker and tmux based roles) cannot have be a localuser.";
+	}
+    }
+
+    # construct the new role
+
+    my $role
+	= {
+	   description => $role_description,
+	   name => $role_name,
+
+	   # localuser
+	   (
+	    ($option_localuser ? (localuser => 'yes') : ()),
+	   ),
+
+	   # docker
+	   (
+	    ($option_dockerfile ? (dockerfile => $option_dockerfile ) : ()),
+	    ($option_dockerfile ? (remote_policy => $remote_policy ) : ()),
+	   ),
+
+	   # ssh
+	   (
+	    ($option_scp_options ? (scp_options => $option_scp_options ) : ()),
+	    ($option_ssh_options ? (ssh_options => $option_ssh_options ) : ()),
+	    ($option_ssh_password ? (ssh_password => $option_ssh_password ) : ()),
+	    ($option_ssh_port ? (ssh_port => $option_ssh_port ) : ()),
+	    ($option_ssh_server ? (ssh_server => $option_ssh_server ) : ()),
+	    ($option_ssh_user ? (ssh_user => $option_ssh_user ) : ()),
+	   ),
+
+	   # tmux
+	   (
+	    ($option_tmux_session ? (remote_policy => $remote_policy ) : ()),
+	   ),
+	  };
+
+    # add the new role, we never overwrite the old description
+
+    if (!$error)
+    {
+	if (not $global_execute_what_is_scheduled)
+	{
+	    print Dump( { role => $role } );
+	}
+	else
+	{
+	    $roles->{roles}->{$role_name} = $role;
+
+	    YAML::DumpFile($roles_configuration_filename, $roles);
+
+	    print "$global_program_name: added role $role_name to $roles_configuration_filename\n";
+	}
+    }
+
+    # return errors
+
+    return $error;
+}
+
+
+
+sub builtin_role_add_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $debug_completion = 0;
+
+    if ($debug_completion > 2)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => \@_,
+			     complete_arguments_array => $complete_arguments_array,
+			     complete_command_string => $complete_command_string,
+			    },
+			   );
+    }
+
+    my $completions_hash
+	= {
+	   "1.<role_name>" => '',
+	   "2.<role_description>" => '',
+	   "'3.[--_<options>_]'" => '',
+	   "--dockerfile" => '',
+	   "--localuser" => '',
+	   "--scp-options" => '',
+	   "--ssh-options" => '',
+	   "--ssh-password" => '',
+	   "--ssh-port" => '',
+	   "--ssh-server" => '',
+	   "--ssh-user" => '',
+	   "--tmux-session" => '',
+	  };
+
+    if (scalar @$complete_arguments_array > 2)
+    {
+	return {};
+    }
+    else
+    {
+	return $completions_hash;
+    }
+}
+
+
+sub builtin_role_add_help
+{
+    my $command = shift;
+
+    return "$command: add a new role and update the configuration to integrate it.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <role-name> <role-description> [-- <options>]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: name of the new role.
+
+    ``ARGV[1]``: description of the new role.
+
+options:
+~~~~~~~~
+
+    ``--dockerfile``: A reference to a docker file.  This also configures the new role as a docker role.
+
+    ``--localuser``: Set this for a local user role.
+
+    ``--scp-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+
+    ``--ssh-options``: Something like ' -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'.
+
+    ``--ssh-password``: Be careful not to expose passwords that are sensitive (read them through a separate piece of code and insert them in the configuration afterwards).
+
+    ``--ssh-port``: This defaults to 22.
+
+    ``--ssh-server``: An IP address or known host name.
+
+    ``--ssh-user``: The ssh user name.
+
+    ``--tmux-session``: The tmux session name.
+
+notes:
+~~~~~~
+
+It is possible to combine options but you may have to tweak the remote policy after adding the role.  For example, this is a valid configuration:
+
+.. code-block:: bash
+
+  tmux_ssh_cd:
+    description: interaction with the combined ssh / tmux session to test cd commands
+    name: tmux_ssh_cd
+    remote_policy: 'tmux send-keys -t ssh_cd '
+    ssh_options: -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+    ssh_password: harness
+    ssh_port: 22
+    ssh_server: 172.18.0.22
+    ssh_user: root
+
+";
+}
+
+
+sub builtin_role_print
+{
+    my $arguments = shift || [];
+
+    my $matcher = $arguments->[0] || '.*';
+
+    my $matching_roles = _roles_select($matcher);
+
+    use YAML;
+
+    print Dump($matching_roles);
+
+    return 0;
+}
+
+
+sub builtin_role_print_help
+{
+    my $command = shift;
+
+    return "$command: Print the known roles.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: a regex to match with the roles in the output, default is '``.*``',
+                 '``^docker_``' prints Docker roles,
+                 '``^serial_``' prints serial console roles,
+                 '``^tmux_``' prints tmux roles.
+";
+}
+
+
+sub builtin_scripts_fetch
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands
+	= [
+	   "cd '$sources_configuration_directory'",
+	   "git fetch",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_scripts_fetch_help
+{
+    my $command = shift;
+
+    return "$command: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
+";
+}
+
+
+sub builtin_scripts_install
+{
+    my $arguments = shift || [];
+
+    my $option_install_aliasses = 'by default';
+    my $option_install_bash_completion = 'by default';
+    my $option_install_commands;
+    my $option_install_engine = 'by default';
+    my $option_install_force;
+    my $option_install_git;
+    my $option_install_grc_configuration = 'by default';
+    my $option_install_path_in_bashrc;
+    my $option_install_report;
+
+    our $install_options
+	= {
+	   "aliasses!" => \$option_install_aliasses,
+	   "bash-completion!" => \$option_install_bash_completion,
+	   "commands!" => \$option_install_commands,
+	   "engine!" => \$option_install_engine,
+	   "force!" => \$option_install_force,
+	   "git!" => \$option_install_git,
+	   "grc-configuration!" => \$option_install_grc_configuration,
+	   "path-in-bashrc!" => \$option_install_path_in_bashrc,
+	   "report!" => \$option_install_report,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$install_options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    my $debug = 0;
+
+    if ($debug)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      option_install_aliasses => $option_install_aliasses,
+		      option_install_bash_completion => $option_install_bash_completion,
+		      option_install_commands => $option_install_commands,
+		      option_install_engine => $option_install_engine,
+		      option_install_force => $option_install_force,
+		      option_install_git => $option_install_git,
+		      option_install_grc_configuration => $option_install_grc_configuration,
+		      option_install_path_in_bashrc => $option_install_path_in_bashrc,
+		      option_install_report => $option_install_report,
+		     }
+		    );
+    }
+
+    # need to take these actions:
+    #
+    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+    # 2. Install to ~/bin or ~/.local/bin: symbolic links for commands
+    # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
+    # 4. Install to /etc/grc.conf: text addition
+    # 5. Install to /usr/share/grc/: symbolic links
+    # 6. Create and populate the git repository
+
+    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+
+    my $field_configuration = FieldProject::_init_get_field_project_configuration();
+
+    if (!$field_configuration)
+    {
+        die "$global_program_name: *** error: no valid field_configuration found";
+    }
+
+    my $project_name = $field_configuration->{field_project_name};
+
+    if (!$project_name)
+    {
+        die "$global_program_name: *** error: no valid project_name in the field_configuration found";
+    }
+
+    # add the ~/bin  or ~/.local/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
+
+    if ($option_install_path_in_bashrc)
+    {
+	_install_script_path_in_bashrc($project_name);
+    }
+
+    my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $command_mkdir = "mkdir --parents $ENV{HOME}/$bin_path_choice";
+
+    execute_shell_command($command_mkdir);
+
+    _install_script_symbolic_link_to_engine($project_name, $option_install_engine, $option_install_report);
+
+    _install_script_symbolic_link_to_configuration($project_name, $option_install_commands, $option_install_report);
+
+    # _install_script_symbolic_link_to_commands_in_commands_directory($project_name, $option_install_commands, $option_install_report);
+
+    _install_script_symbolic_link_to_commands_configured($project_name, $option_install_commands, $option_install_report);
+
+    if ($option_install_aliasses)
+    {
+	_install_script_bashrc_aliasses($project_name);
+    }
+
+    if ($option_install_bash_completion)
+    {
+	_install_script_bash_completion($project_name);
+    }
+
+    if ($option_install_grc_configuration)
+    {
+	_install_script_grc_conf_additions($project_name);
+
+	_install_script_grc_symbolic_links($project_name, $field_configuration);
+    }
+
+    if ($option_install_git)
+    {
+	_install_script_git_repository($project_name);
+    }
+
+    if ($option_install_engine
+	or $option_install_bash_completion)
+    {
+	my $commands
+	    = [
+	       # "echo",
+	       # "echo",
+	       # "echo  scripts for '$project_name' have been installed.",
+	       "echo",
+	       "echo Bash completion can be enabled using:",
+	       "echo",
+	       "echo   . ./$project_name-bash-completion.sh",
+	       "echo",
+	       # "echo Then maybe followed with commands removing existing commands:",
+	       # "echo",
+	       # "echo   $project_name-workflow builtin remove_commands $project_name-commands-perl_examples $project_name-commands-python_examples.py examples_sh/*",
+	       # "echo",
+	       # "echo Or/and maybe followed with commands removing existing targets:",
+	       # "echo",
+	       # "echo   $project_name-workflow builtin remove_target perl_examples $project_name-commands-python_examples.py examples_sh/*",
+	       # "echo   $project_name-workflow builtin remove_target python_examples",
+	       # "echo   $project_name-workflow builtin remove_target examples_sh\n",
+	       # "echo",
+	       "echo Or/and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
+	       "echo",
+	       "echo   $project_name-workflow builtin target_add source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
+	       "echo",
+	      ];
+
+	execute_shell_command_array($commands, { quiet => 'only show the output of the commands' } );
+    }
+}
+
+
+sub builtin_scripts_install_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $options_completions_hash
+	= {
+	   '--' => {
+		    '0.Available_options:' => '',
+		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
+		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
+		    '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
+		    '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
+		    '--force' => "don't use this.",
+		    '--git' => "create a git repository for the workflow configuration.",
+		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
+		    '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
+		    '--report' => "report on what is being done.",
+		   },
+	  };
+
+    foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
+    {
+	$options_completions_hash->{'--'}->{$options_completion}
+	    = {
+	       map
+	       {
+		   $_ => '';
+	       }
+	       keys %{$options_completions_hash->{'--'}}
+	      };
+    }
+
+    return $options_completions_hash;
+}
+
+
+sub builtin_scripts_install_help
+{
+    my $command = shift;
+
+    return "$command : install or upgrade the workflow scripts that are found in the current directory.
+
+options:
+~~~~~~~~
+
+    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
+
+    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
+
+    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
+
+    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
+
+    ``--force``: don't use this.
+
+    ``--git``: create a git repository for the workflow configuration.
+
+    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
+
+    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
+
+    ``--report``: report on what is being done.
+
+
+Note that grc configuration files will also be installed and configured.
+
+";
+}
+
+
+sub builtin_scripts_pull
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands
+	= [
+	   "cd '$sources_configuration_directory'",
+	   "git pull",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_scripts_pull_help
+{
+    my $command = shift;
+
+    return "$command: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
+";
+}
+
+
+sub builtin_target_add
+{
+    my $arguments = shift || [];
+
+    my $option_install_command_pl;
+    my $option_install_command_python;
+    my $option_install_command_sh;
+    # my $option_install_command_yml;
+
+    our $install_options
+      = {
+	 "install-commands-pl!" => \$option_install_command_pl,
+	 "install-commands-python!" => \$option_install_command_python,
+	 "install-commands-sh!" => \$option_install_command_sh,
+	 # "install-commands-yml!" => \$option_install_command_yml,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$install_options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** error in option processing, try --help";
+    }
+
+    if ($option_verbose)
+    {
+	use Data::Dumper;
+
+	print "$global_program_name: builtin_target_add, installation options:\n";
+
+	print Dumper( { install_options => $install_options, }, );
+    }
+
+    my $error = '';
+
+    my $target_name = $arguments->[0];
+
+    if (not $error)
+    {
+	if (not defined $target_name)
+	{
+	    $error = 'no target_name found on the command line';
+	}
+    }
+
+    my $target_description = $arguments->[1];
+
+    if (not $error)
+    {
+	if (not defined $target_description)
+	{
+	    $error = 'no target_description found on the command line';
+	}
+    }
+
+#     use Data::Dumper;
+
+#     print Dumper($global_technical_project_configuration);
+
+#     print Dumper($global_field_project_configuration);
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    if (not $error)
+    {
+	if (not $field_project_name)
+	{
+	    $error = 'no valid field_project_name found in the field_project_configuration';
+	}
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+    if (not $error)
+    {
+	if (not $configuration_data_directory)
+	{
+	    $error = 'no valid configuration_data_directory found in the field_project_configuration';
+	}
+    }
+
+    # read the targets configuration file
+
+    my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
+
+    my $targets = YAML::LoadFile($targets_configuration_filename);
+
+    if (not $error)
+    {
+	if (exists $targets->{targets}->{$target_name})
+	{
+	    $error = "target $target_name already exists";
+	}
+    }
+
+    # add the new target, if the file already exists, we overwrite the old description
+
+    if (!$error
+	|| $error eq "target $target_name already exists")
+    {
+	$targets->{targets}->{$target_name}->{description} = $target_description;
+    }
+
+    # write the new targets configuration file
+
+    if (!$error
+	|| $error eq "target $target_name already exists")
+    {
+	YAML::DumpFile($targets_configuration_filename, $targets);
+
+	print "$global_program_name: added target $target_name to $targets_configuration_filename\n";
+    }
+
+    if ($option_install_command_pl)
+    {
+	my $new_command_filename = "$field_project_name-commands-$target_name";
+
+	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
+
+	# add a template commands file with the given name
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+
+	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_python)
+    {
+	my $new_command_filename = "$field_project_name-commands-$target_name.py";
+
+	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
+
+	# add a template commands file with the given name
+
+	if (not $error)
+	{
+	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+
+	    print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
+	}
+    }
+
+    if ($option_install_command_sh)
+    {
+	if (!$error
+	    || $error eq "target $target_name already exists")
+	{
+	    $error = _builtin_project_commands_sh_template_create($global_field_project_configuration, $field_project_name, $target_name);
+
+	    print "$global_program_name: created the shell command file for target $target_name\n";
+	}
+    }
+
+    # if ($option_install_command_yml)
+    # {
+    # 	if (not $error)
+    # 	{
+    # 	    $error = _builtin_project_commands_yml_template_create($global_field_project_configuration, $field_project_name, $target_name);
+
+    # 	    print "$global_program_name: created the yml command file for target $target_name\n";
+    # 	}
+    # }
+
+    # return errors
+
+    return $error;
+}
+
+
+sub builtin_target_add_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $debug_completion = 0;
+
+    if ($debug_completion > 2)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => \@_,
+			     complete_arguments_array => $complete_arguments_array,
+			     complete_command_string => $complete_command_string,
+			    },
+			   );
+    }
+
+    my $completions_hash
+	= {
+	   "1.<target_name>" => '',
+	   "2.<target_description>" => '',
+	   "'3.[--_<options>_]'" => '',
+	   '--' => {
+		    "--install-commands-pl" => '',
+		    "--install-commands-py" => '',
+		    "--install-commands-sh" => '',
+		   },
+	  };
+
+    return $completions_hash;
+}
+
+
+sub builtin_target_add_help
+{
+    my $command = shift;
+
+    return "$command: add a new target and update the configuration to integrate it.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <target-name> <target-description> [-- <options>]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: name of the new target.
+
+    ``ARGV[1]``: description of the new target.
+
+options:
+~~~~~~~~
+
+    ``--install-commands-pl``: install a perl command file template.
+
+    ``--install-commands-py``: install a python command file template.
+
+    ``--install-commands-sh``: install a shell command file template.
 ";
 }
 
@@ -5329,405 +5728,6 @@ sub execute_shell_script_remote
     # execute the remote file with the remote role
 
     return Engine::execute_shell_command("$remote_filename.sh $arguments", $options, @_);
-}
-
-
-sub _file_append_string
-{
-    my $filename = shift;
-
-    my $string = shift;
-
-    my $options = shift;
-
-    $string =~ s(")(\\")g;
-
-    my $command = "bash -c \"echo '$string' | cat >>$filename\"";
-
-    execute_shell_command($command, $options);
-
-    # open(my $fh, ">>$filename");
-
-    # print $fh $string;
-
-    # close $fh;
-}
-
-
-sub _file_contains_regex
-{
-    my $filename = shift;
-
-    my $string = shift;
-
-    if (!-e $filename)
-    {
-	return '';
-    }
-
-    my $data
-	= do {
-	    open my $fh, '<', $filename;
-	    local $/;
-	    <$fh>;
-	};
-
-    my $result = ($data =~ /$string/);
-
-    if ($option_verbose
-	and $option_verbose > 1)
-    {
-	if ($result)
-	{
-	    print "$global_program_name: _file_contains_regex(): match file '$filename' with '$string' (result is $result)\n";
-	}
-	else
-	{
-	    print "$global_program_name: _file_contains_regex(): no match file '$filename' with '$string' (result is $result)\n";
-	}
-    }
-
-    return $result;
-}
-
-
-#
-# Initialize the command module.
-#
-# This sub reads and parses the workflows written in perl or python.
-#
-
-sub _workflow_operations_initialize
-{
-    my $commands_seen;
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name};
-
-    # only those command files mentioned in the configuration
-
-    my $command_filenames_configured = _init_command_filenames_configured('true-paths');
-
-    # print STDERR Dumper( { command_filenames_configured => $command_filenames_configured, } );
-
-    my $command_filenames_to_use
-	= [
-	   sort
-	   grep
-	   {
-	       # remove duplicate filenames to avoid duplicate command definitions
-
-	       if ($commands_seen->{$_})
-	       {
-		   print "$global_program_name: *** Warning: $_ is mentioned $commands_seen->{$_} time(s) in the configuration (hint: sort your filenames to spot such errors quickly).\n";
-	       }
-
-	       not $commands_seen->{$_}++;
-	   }
-	   @$command_filenames_configured,
-	  ];
-
-    foreach my $command_filename (@$command_filenames_to_use)
-    {
-	# print STDERR "Executing $command_filename\n";
-
-	my $file_type;
-
-	if ($command_filename =~ m(\.yml$))
-	{
-	    $file_type = 'yaml';
-	}
-	elsif ($command_filename =~ m(\.py$))
-	{
-	    $file_type = 'python';
-	}
-	else
-	{
-	    $file_type = 'perl';
-	}
-
-	if ($file_type eq 'python')
-	{
-	    my ($commands, $eval_status) = FieldProject::_init_do_eval_python_file($command_filename);
-
-	    if ($eval_status)
-	    {
-		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
-	    }
-	}
-	elsif ($file_type eq 'perl')
-	{
-	    my ($commands, $eval_status) = FieldProject::_init_do_eval_perl_file($command_filename);
-
-	    if ($eval_status)
-	    {
-		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
-	    }
-	}
-	elsif ($file_type eq 'yaml')
-	{
-	    my ($commands, $eval_status) = FieldProject::_init_do_eval_yaml_command_file($command_filename);
-
-	    if ($eval_status)
-	    {
-		die "$global_program_name: *** Error: no valid commands file '$command_filename' found ($eval_status)\n";
-	    }
-	}
-	else
-	{
-	    die "$global_program_name: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
-	}
-    }
-}
-
-
-#
-# construct the command filename list, then:
-#
-# if full_paths is the empty string: nothing more is done.
-#
-# if full_paths is 'true-paths': the ~/bin or ~/.local/bin directory is prefixed.
-#
-# if full_paths is 'full-paths': the sources_configuration_directory is prefixed.
-#
-# Only command filenames containing the string '-commands' are
-# returned.
-
-sub _init_command_filenames_configured
-{
-    # full_paths is either the empty string '' or 'full-paths' or 'true-paths'.
-
-    my $full_paths = shift;
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name};
-
-    # when invoked as just 'workflow' the directory where to search
-    # for command files will not necessarily be /usr/local/bin'
-    # it may also be the current working directory
-
-    # default to the directory with the main executable
-
-    my $command_filename_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $command_filenames = $global_technical_project_configuration->{command_filenames};
-
-    my $command_filenames_full_paths
-	= [
-	   map
-	   {
-	       # map the command filename to its full path
-
-	       $full_paths ? "$command_filename_directory/$_" : "$_";
-	   }
-	   @$command_filenames,
-	  ];
-
-    my $command_filenames_full_paths_selected
-	= [
-	   grep
-	   {
-	       # select filenames with the correct project name prefix
-
-	       /$field_project_name-commands[-\._a-z0-9]*$/;
-	   }
-	   grep
-	   {
-	       my $command_filename = $_;
-
-	       # select filenames that have the string -commands
-
-	       my $result = ($command_filename =~ m(-commands));
-
-	       if (not $result)
-	       {
-		   print STDERR "$global_program_name: *** Error: $command_filename does not follow command filename conventions (must have '-commands')\n";
-	       }
-
-	       $result;
-	   }
-	   @$command_filenames_full_paths,
-	  ];
-
-    # print STDERR Dumper(@$command_filenames_full_paths_selected);
-
-    my $result
-	= [
-	   sort
-	   map
-	   {
-	       # map the command filename to its true path if this was requested
-
-	       my $command_filename = $_;
-
-	       # if (not defined $command_filename)
-	       # {
-	       # 	   use Data::Dumper;
-
-	       # 	   print Dumper(
-	       # 			{
-	       # 			 command_filenames_full_paths => $command_filenames_full_paths,
-	       # 			 command_filenames_full_paths_selected => $command_filenames_full_paths_selected,
-	       # 			 command_filenames => $command_filenames,
-	       # 			 full_paths => $full_paths,
-	       # 			},
-	       # 		       );
-	       # }
-
-	       #! this returns undef if the file does not exist
-
-	       if ($full_paths eq 'true-paths')
-	       {
-		   use Cwd;
-
- 		   $command_filename = Cwd::abs_path($command_filename);
-
-		   # print STDERR $!;
-	       }
-
-	       defined $command_filename ? $command_filename : ();
-	   }
-	   @$command_filenames_full_paths_selected
-	  ];
-
-    #! options haven't been processed yet for some execution paths
-
-    if ($option_verbose
-	and $option_verbose > 1)
-    {
-	use Data::Dumper;
-
-	print STDERR Dumper(
-			    {
-			     _init_command_filenames_configured => $result,
-			     command_filename_directory => $command_filename_directory,
-			     command_filenames => $global_technical_project_configuration->{command_filenames},
-			     command_filenames_full_paths => $command_filenames_full_paths,
-			     command_filenames_full_paths_selected => $command_filenames_full_paths_selected,
-			     full_paths => $full_paths,
-			    },
-			   );
-    }
-
-    return $result;
-}
-
-
-# find all the command files, including those not mentioned in the
-# configuration
-#
-# full_paths is either 'full-paths' or 'full-paths-configuration'.
-#
-
-sub _init_command_filenames_found
-{
-    my $full_paths = shift;
-
-    my $field_project_name = $global_field_project_configuration->{field_project_name};
-
-    # when invoked as just 'workflow' the directory where to search
-    # for command files will not necessarily be /usr/local/bin'
-    # it may also be the current working directory
-
-    my $command_filename_directory = $global_field_project_configuration->{search_path_workflow_executable_directory};
-
-    my $result
-	= [
-	   sort
-	   map
-	   {
-	       chomp; $_;
-	   }
-	   ($full_paths =~ "configuration"
-	    ? `ls 2>/dev/null $command_filename_directory/$field_project_name-configuration`
-	    : `ls 2>/dev/null $command_filename_directory/$field_project_name-commands*`),
-	  ];
-
-    return $result;
-}
-
-
-# given a list of filenames, create system shell commands that create
-# symbolic links in the ~/bin or ~/.local/bin directory to each of these filenames.
-#
-# each given filename must match with *-(commands|configuration) and
-# is checked for existence.
-
-sub _init_filenames_2_symlink_commands
-{
-    my $filenames = shift;
-
-    use Data::Dumper;
-
-    if (defined $option_verbose
-	and $option_verbose > 3)
-    {
-	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
-    }
-
-    my $bin_path_choice = Utilities::bin_path_choice();
-
-    my $commands
-	= [
-	   map
-	   {
-	       # $_ =~ m(.*/(.*)$);
-
-	       my $command_filename = $_;
-
-	       use Cwd;
-
-	       my $source = Cwd::abs_path($command_filename);
-
-	       use File::Spec;
-
-	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
-
-	       my $target = "$ENV{HOME}/$bin_path_choice/$filename";
-
-	       my $result = "ln -sf $source $target";
-
-	       if (defined $option_verbose
-		   and $option_verbose > 2)
-	       {
-		   print "$command_filename: $result\n";
-	       }
-
-	       $result;
-	   }
-	   grep
-	   {
-	       my $command_filename = $_;
-
-	       my $result = ($command_filename =~ m(-commands|-configuration));
-
-	       if (not $result)
-	       {
-		   print STDERR "$global_program_name: *** Error: $command_filename does not follow command filename conventions (must have '-commands|-configuration')\n";
-	       }
-
-	       $result;
-	   }
-	   grep
-	   {
-	       my $command_filename = $_;
-
-	       use File::Spec;
-
-	       my ($volume, $directories, $filename) = File::Spec->splitpath($command_filename);
-
-	       my $target = "$ENV{HOME}/$bin_path_choice/$filename";
-
-	       not -e $target;
-	   }
-	   sort @$filenames,
-	  ];
-
-    if (defined $option_verbose
-	and $option_verbose > 3)
-    {
-	print Dumper( { _init_filenames_2_symlink_commands_commands => $commands, }, );
-    }
-
-    return $commands;
 }
 
 
