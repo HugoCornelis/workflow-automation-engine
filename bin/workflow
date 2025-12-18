@@ -3702,7 +3702,7 @@ sub builtin_manual
 	   keys %$operations,
 	  ];
 
-    my $debug_builtin_manual = 3;
+    my $debug_builtin_manual = 0;
 
     if ($debug_builtin_manual > 2)
     {
@@ -3907,7 +3907,7 @@ $global_command_line
 	    }
 	}
 
-	my $header = "$operation_help";
+	my $header = "Operation: $operation_help";
 
 	$header =~ s(_help$)();
 
