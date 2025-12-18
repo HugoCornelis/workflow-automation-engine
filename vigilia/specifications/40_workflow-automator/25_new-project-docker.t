@@ -288,7 +288,7 @@ options:
     --bash-completion               compute bash completion for the given command line.
                                     hint: the bash completion script implements completion for options, targets and commands.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
-    --dry-run                       if set, do not execute system shell commands but print them to STDOUT.
+    --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
