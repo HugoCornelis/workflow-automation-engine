@@ -20,8 +20,8 @@ harnessing:
     docker:
       default_user: neurospaces
       dockerfile: ./vigilia/specifications/dockerfiles/Dockerfile.workflow-feature-testing
-      name_container: workflow_rename_project
-      name_image: workflow_rename_project_image
-    identifier: docker_harness_rename_project
+      name_container: workflow_project_rename
+      name_image: workflow_project_rename_image
+    identifier: docker_harness_project_rename
     type: Heterarch::Test::ExecutionContext::Harness::Docker
 name: 40_workflow-automator/38_rename_project/summary.yml
