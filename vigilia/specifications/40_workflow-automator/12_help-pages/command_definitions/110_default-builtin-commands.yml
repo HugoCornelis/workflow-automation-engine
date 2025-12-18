@@ -20,7 +20,7 @@ command_tests:
         - workflow builtin scripts_fetch
         - workflow builtin grep
         - workflow builtin scripts_install
-        - workflow builtin known_command_filenames
+        - workflow builtin command_filenames_known
         - workflow builtin manual
         - workflow builtin print_configuration_directory
         - workflow builtin pull_scripts

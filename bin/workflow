@@ -178,7 +178,7 @@ my $global_builtin_operations
        scripts_fetch => 1,
        grep => 1,
        scripts_install => 1,
-       known_command_filenames => 1,
+       command_filenames_known => 1,
        manual => 1,
        print_configuration_directory => 1,
        pull_scripts => 1,
@@ -3876,11 +3876,11 @@ Note that grc configuration files will also be installed and configured.
 }
 
 
-sub builtin_known_command_filenames
+sub builtin_command_filenames_known
 {
     my $arguments = shift || [ 'relative-paths' ];
 
-    my $debug_builtin_known_command_filenames = 0;
+    my $debug_builtin_command_filenames_known = 0;
 
     # get the configuration_data_directory
 
@@ -3892,13 +3892,13 @@ sub builtin_known_command_filenames
 
     my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
 
-    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_known_command_filenames);
+    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_command_filenames_known);
 
     $command_filenames = $command_filenames->{command_filenames};
 
     use YAML;
 
-    print Dump( { known_command_filenames => $command_filenames } );
+    print Dump( { command_filenames_known => $command_filenames } );
 
     return 0;
 }
@@ -4404,7 +4404,7 @@ options:
 }
 
 
-sub builtin_known_command_filenames_completions
+sub builtin_command_filenames_known_completions
 {
     return
     {
@@ -4412,6 +4412,28 @@ sub builtin_known_command_filenames_completions
      "full-paths" => '',
      "relative-paths" => '',
     };
+}
+
+
+sub builtin_command_filenames_known_help
+{
+    my $command = shift;
+
+    return "$command : print the known command filenames to stdout.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command \[ <full-or-relative-paths> \]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
+
+";
 }
 
 
