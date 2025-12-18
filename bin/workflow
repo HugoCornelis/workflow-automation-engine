@@ -185,7 +185,7 @@ my $global_builtin_operations
        project_rename => 1,
        project_start => 1,
        tmux_sessions_create => 1,
-       tmux_kill_sessions => 1,
+       tmux_sessions_kill => 1,
       };
 
 my $global_known_operation_packages_builtin
@@ -5126,7 +5126,7 @@ Configured tmux sessions are:
 }
 
 
-sub builtin_tmux_kill_sessions
+sub builtin_tmux_sessions_kill
 {
     my $arguments = shift || [];
 
@@ -5150,6 +5150,22 @@ sub builtin_tmux_kill_sessions
 	     },
 	    );
     }
+}
+
+
+sub builtin_tmux_sessions_kill_help
+{
+    my $command = shift;
+
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    return "$command: Kill one or more configured tmux session(s).
+
+    ARGV[0]: Optional name of a configured tmux session (the default is all configured sessions).
+
+Configured tmux sessions are:
+    " . (join ", ", @$tmux_sessions) . "
+";
 }
 
 

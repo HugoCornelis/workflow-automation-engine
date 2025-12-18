@@ -28,5 +28,5 @@ command_tests:
         - workflow builtin role_print
         - workflow builtin project_start
         - workflow builtin tmux_sessions_create
-        - workflow builtin tmux_kill_sessions
+        - workflow builtin tmux_sessions_kill
 description: default builtin commands
