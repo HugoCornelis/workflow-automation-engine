@@ -173,17 +173,17 @@ our $global_execute_what_is_scheduled = 'yes';
 
 my $global_builtin_operations
     = {
-       target_add => 1,
-       configuration_archive => 1,
-       scripts_fetch => 1,
-       grep => 1,
-       scripts_install => 1,
        command_filenames_known => 1,
-       manual => 1,
+       configuration_archive => 1,
        configuration_directory_print => 1,
-       scripts_pull => 1,
+       grep => 1,
+       manual => 1,
        project_rename => 1,
        project_start => 1,
+       scripts_fetch => 1,
+       scripts_install => 1,
+       scripts_pull => 1,
+       target_add => 1,
        tmux_sessions_create => 1,
        tmux_sessions_kill => 1,
       };
