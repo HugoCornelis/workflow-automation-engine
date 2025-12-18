@@ -174,7 +174,7 @@ our $global_execute_what_is_scheduled = 'yes';
 my $global_builtin_operations
     = {
        target_add => 1,
-       archive_configuration => 1,
+       configuration_archive => 1,
        fetch_scripts => 1,
        grep => 1,
        install_scripts => 1,
@@ -2980,7 +2980,7 @@ options:
 }
 
 
-sub builtin_archive_configuration
+sub builtin_configuration_archive
 {
     my $arguments = shift || [];
 
@@ -3092,7 +3092,7 @@ sub builtin_archive_configuration
 }
 
 
-sub builtin_archive_configuration_completions
+sub builtin_configuration_archive_completions
 {
     my $complete_command_string = shift;
 
@@ -3107,7 +3107,7 @@ sub builtin_archive_configuration_completions
 }
 
 
-sub builtin_archive_configuration_help
+sub builtin_configuration_archive_help
 {
     my $command = shift;
 

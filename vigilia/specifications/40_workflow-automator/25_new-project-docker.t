@@ -522,7 +522,7 @@ conf.workflow-tests-configuration
 1_commands:
   - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin target_add
-  - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin configuration_archive
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
@@ -565,7 +565,7 @@ conf.workflow-tests-configuration
 1_commands:
   - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin target_add
-  - workflow-tests-workflow builtin archive_configuration
+  - workflow-tests-workflow builtin configuration_archive
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
@@ -685,7 +685,7 @@ available_workflow automation projects (copy-paste the one you would like to get
 				description => 'listing the known workflow projects using the workflow executable',
 			       },
 			       {
-				command => 'workflow-tests-workflow --verbose builtin archive_configuration /tmp/wtw.tar.gz',
+				command => 'workflow-tests-workflow --verbose builtin configuration_archive /tmp/wtw.tar.gz',
 				command_tests => [
 						  {
 						   comment => "the expected output is missing the first two dashes that introduce the first option",

@@ -13,7 +13,7 @@ command_tests:
       1_commands:
         - workflow builtin role_add
         - workflow builtin target_add
-        - workflow builtin archive_configuration
+        - workflow builtin configuration_archive
         - workflow builtin docker_containers_start
         - workflow builtin docker_exec
         - workflow builtin docker_images_build
