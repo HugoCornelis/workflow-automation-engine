@@ -1,5 +1,5 @@
 ---
-command: abcd-workflow builtin print_configuration_directory
+command: abcd-workflow builtin configuration_directory_print
 command_tests:
   - description: abcd project configuration directory
     read: |

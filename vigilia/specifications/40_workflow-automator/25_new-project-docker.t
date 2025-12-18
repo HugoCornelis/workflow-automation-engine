@@ -531,7 +531,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin scripts_install
   - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin manual
-  - workflow-tests-workflow builtin print_configuration_directory
+  - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project
   - workflow-tests-workflow builtin role_print
@@ -574,7 +574,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin scripts_install
   - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin manual
-  - workflow-tests-workflow builtin print_configuration_directory
+  - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin pull_scripts
   - workflow-tests-workflow builtin rename_project
   - workflow-tests-workflow builtin role_print
@@ -875,7 +875,7 @@ alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'workflow-tests-workflow builtin print_configuration_directory',
+				command => 'workflow-tests-workflow builtin configuration_directory_print',
 				command_tests => [
 						  {
 						   description => "Is the installed workflow configuration found and correct?",

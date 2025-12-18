@@ -180,7 +180,7 @@ my $global_builtin_operations
        scripts_install => 1,
        command_filenames_known => 1,
        manual => 1,
-       print_configuration_directory => 1,
+       configuration_directory_print => 1,
        pull_scripts => 1,
        rename_project => 1,
        start_project => 1,
@@ -4437,7 +4437,7 @@ arguments:
 }
 
 
-sub builtin_print_configuration_directory
+sub builtin_configuration_directory_print
 {
     my $project_name = shift;
 
@@ -4451,7 +4451,7 @@ sub builtin_print_configuration_directory
 }
 
 
-sub builtin_print_configuration_directory_help
+sub builtin_configuration_directory_print_help
 {
     my $command = shift;
 
@@ -10923,7 +10923,7 @@ sub project_name_2_configuration_data_directory
 {
     my $project_name = shift;
 
-    my $output_yaml = `$project_name builtin print_configuration_directory`;
+    my $output_yaml = `$project_name builtin configuration_directory_print`;
 
     use YAML;
 
