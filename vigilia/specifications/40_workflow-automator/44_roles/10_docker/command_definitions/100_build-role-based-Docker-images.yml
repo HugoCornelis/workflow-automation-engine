@@ -132,7 +132,7 @@ command_tests:
       Step 40/46 : WORKDIR /home/${USER_NAME}/projects/feature-testing
        ---> Using cache
        ---> 29dccfb84e35
-      Step 41/46 : RUN workflow builtin install_scripts -- --commands --no-aliasses --bash-completion
+      Step 41/46 : RUN workflow builtin scripts_install -- --commands --no-aliasses --bash-completion
        ---> Using cache
        ---> 33ac328c73c2
       Step 42/46 : RUN echo 'PATH=$PATH:~/bin' >>~/.bashrc

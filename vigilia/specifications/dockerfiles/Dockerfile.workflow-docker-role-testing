@@ -184,7 +184,7 @@ RUN sudo make install
 
 WORKDIR /home/${USER_NAME}/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
 
-RUN workflow builtin install_scripts -- --bash --commands --path-in-bashrc --no-aliasses
+RUN workflow builtin scripts_install -- --bash --commands --path-in-bashrc --no-aliasses
 
 WORKDIR /home/${USER_NAME}
 

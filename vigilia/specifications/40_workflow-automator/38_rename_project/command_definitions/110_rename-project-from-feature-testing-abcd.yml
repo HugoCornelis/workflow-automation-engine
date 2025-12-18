@@ -59,7 +59,7 @@ command_tests:
       #
       # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
       #
-      # workflow builtin install_scripts -- --commands --no-aliasses
+      # workflow builtin scripts_install -- --commands --no-aliasses
       #
       # mkdir --parents /home/neurospaces/bin
       #

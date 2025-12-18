@@ -46,7 +46,7 @@ my $test
 				description => "the error message when invoking a non-existent target",
 			       },
 			       {
-				command => 'workflow builtin install_scripts -- --non-existent-option',
+				command => 'workflow builtin scripts_install -- --non-existent-option',
 				command_tests => [
 						  {
 						   description => "Do we get a sensible error message when an non-existent option name is used for an existing command ?",

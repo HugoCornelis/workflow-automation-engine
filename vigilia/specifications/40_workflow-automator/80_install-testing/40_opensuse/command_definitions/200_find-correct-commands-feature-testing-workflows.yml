@@ -21,7 +21,7 @@ command_tests:
         - feature-testing-workflow builtin docker_images_build
         - feature-testing-workflow builtin scripts_fetch
         - feature-testing-workflow builtin grep
-        - feature-testing-workflow builtin install_scripts
+        - feature-testing-workflow builtin scripts_install
         - feature-testing-workflow builtin known_command_filenames
         - feature-testing-workflow builtin manual
         - feature-testing-workflow builtin print_configuration_directory

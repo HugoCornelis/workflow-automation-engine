@@ -193,7 +193,7 @@ COPY --chown=${USER_NAME} . /home/${USER_NAME}/projects/feature-testing
 
 WORKDIR /home/${USER_NAME}/projects/feature-testing
 
-RUN workflow builtin install_scripts -- --commands --no-aliasses --bash-completion
+RUN workflow builtin scripts_install -- --commands --no-aliasses --bash-completion
 
 RUN echo 'PATH=$PATH:~/bin' >>~/.bashrc
 

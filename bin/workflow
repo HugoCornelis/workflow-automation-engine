@@ -177,7 +177,7 @@ my $global_builtin_operations
        configuration_archive => 1,
        scripts_fetch => 1,
        grep => 1,
-       install_scripts => 1,
+       scripts_install => 1,
        known_command_filenames => 1,
        manual => 1,
        print_configuration_directory => 1,
@@ -245,7 +245,7 @@ our $global_operation;
 package Command;
 
 
-sub _all_install_scripts_execute_shell_command_array
+sub _all_scripts_install_execute_shell_command_array
 {
     my $install_force = shift;
 
@@ -1901,15 +1901,15 @@ After installation of the workflow engine, use the following command
 from this directory to make this project configuration available to
 the workflow engine:
 
-`\$ workflow builtin install_scripts -- --commands --aliasses`
+`\$ workflow builtin scripts_install -- --commands --aliasses`
 
 The output of the command explains what has been done and it is
 recommended to carefully inspect it.  The help page of the command
 explains:
 
 ```
-\$ workflow builtin install_scripts --help
-workflow builtin install_scripts : install or upgrade the workflow scripts for this project.
+\$ workflow builtin scripts_install --help
+workflow builtin scripts_install : install or upgrade the workflow scripts for this project.
 
 options:
 
@@ -2068,11 +2068,11 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
     {
 	if (not $bashrc_matches)
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc has the correct alias definitions\n";
+	    print "$global_program_name: all_scripts_install: .bashrc has the correct alias definitions\n";
 	}
 	else
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc does not have the correct alias definitions, installing them\n";
+	    print "$global_program_name: all_scripts_install: .bashrc does not have the correct alias definitions, installing them\n";
 	}
     }
 
@@ -2158,11 +2158,11 @@ sub _install_script_grc_conf_additions
     {
 	if (not $grc_conf_matches)
 	{
-	    print "$global_program_name: all_install_scripts: grc_conf does not match\n";
+	    print "$global_program_name: all_scripts_install: grc_conf does not match\n";
 	}
 	else
 	{
-	    print "$global_program_name: all_install_scripts: grc_conf matches\n";
+	    print "$global_program_name: all_scripts_install: grc_conf matches\n";
 	}
     }
 
@@ -2301,11 +2301,11 @@ $bin_path_marker
     {
 	if (not $bashrc_matches)
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc does not have $bin_path_marker, installing it\n";
+	    print "$global_program_name: all_scripts_install: .bashrc does not have $bin_path_marker, installing it\n";
 	}
 	else
 	{
-	    print "$global_program_name: all_install_scripts: .bashrc already $bin_path_marker\n";
+	    print "$global_program_name: all_scripts_install: .bashrc already $bin_path_marker\n";
 	}
     }
 
@@ -2353,7 +2353,7 @@ sub _install_script_symbolic_link_to_commands_configured
 
     my $commands_configured = _init_filenames_2_symlink_commands($command_filenames_configured);
 
-    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin or .local/bin: symbolic links for commands
+    _all_scripts_install_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin or .local/bin: symbolic links for commands
 
     # 2.b. from configured filenames to symbolic links.
 ", $commands_configured);
@@ -2390,7 +2390,7 @@ sub _install_script_symbolic_link_to_configuration
 
     my $configurations_found = _init_filenames_2_symlink_commands( [ keys %$configuration_filenames_found_2, ], );
 
-    _all_install_scripts_execute_shell_command_array($option_install_commands, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic links for workflow engine configuration
+    _all_scripts_install_execute_shell_command_array($option_install_commands, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic links for workflow engine configuration
 ", $configurations_found);
 }
 
@@ -2418,7 +2418,7 @@ sub _install_script_symbolic_link_to_engine
 	    print "$global_program_name: installation of the workflow engine with (--install-engine == $option_install_engine, --install-report == $option_install_report)\n";
 	}
 
-	_all_install_scripts_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
+	_all_scripts_install_execute_shell_command_array($option_install_engine, $option_install_report, "    # 1. Install to ~/bin or .local/bin: symbolic link for the workflow engine with correct name\n", [ $command, ], );
     }
 }
 
@@ -3645,7 +3645,7 @@ sub builtin_help
 }
 
 
-sub builtin_install_scripts
+sub builtin_scripts_install
 {
     my $arguments = shift || [];
 
@@ -3804,7 +3804,7 @@ sub builtin_install_scripts
 }
 
 
-sub builtin_install_scripts_completions
+sub builtin_scripts_install_completions
 {
     my $complete_command_string = shift;
 
@@ -3842,7 +3842,7 @@ sub builtin_install_scripts_completions
 }
 
 
-sub builtin_install_scripts_help
+sub builtin_scripts_install_help
 {
     my $command = shift;
 
@@ -4705,7 +4705,7 @@ sub builtin_rename_project
 
     execute_shell_command_array($commands_remove);
 
-    # now invoke builtin_install_scripts() from the configuration
+    # now invoke builtin_scripts_install() from the configuration
     # directory to install the correct symbolic links
 
     # we assume that if aliasses were installed for the old project
@@ -4717,7 +4717,7 @@ sub builtin_rename_project
     my $commands_reinstall_scripts
 	= [
 	   "cd $sources_configuration_directory",
-	   "workflow builtin install_scripts -- --commands $aliasses",
+	   "workflow builtin scripts_install -- --commands $aliasses",
 	  ];
 
     execute_shell_command_array($commands_reinstall_scripts);
@@ -4945,7 +4945,7 @@ sub builtin_start_project
 	    print "---\nTest it with the command:\n\n";
 	    print "  workflow --help-field-project-name\n\n";
 	    print "Afterwards install the scripts on your system using the command:\n\n";
-	    print "  workflow builtin install_scripts -- --commands --git\n\n";
+	    print "  workflow builtin scripts_install -- --commands --git\n\n";
 	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
 	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
 	    print "  $project_name-workflow examples sequencing_and_composition --interactions-target\n\n";

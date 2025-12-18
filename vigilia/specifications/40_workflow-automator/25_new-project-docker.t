@@ -348,7 +348,7 @@ Test it with the command:
 
 Afterwards install the scripts on your system using the command:
 
-  workflow builtin install_scripts -- --commands --git
+  workflow builtin scripts_install -- --commands --git
 
 Then check if they work by inspecting the examples they provide (with various options):
 
@@ -453,7 +453,7 @@ global_field_project_configuration:
 				description => "correct creation of the field project file",
 			       },
 			       {
-				command => 'cd workflow-test && workflow builtin install_scripts -- --no-aliasses --commands',
+				command => 'cd workflow-test && workflow builtin scripts_install -- --no-aliasses --commands',
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
@@ -528,7 +528,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_images_build
   - workflow-tests-workflow builtin scripts_fetch
   - workflow-tests-workflow builtin grep
-  - workflow-tests-workflow builtin install_scripts
+  - workflow-tests-workflow builtin scripts_install
   - workflow-tests-workflow builtin known_command_filenames
   - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin print_configuration_directory
@@ -571,7 +571,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_images_build
   - workflow-tests-workflow builtin scripts_fetch
   - workflow-tests-workflow builtin grep
-  - workflow-tests-workflow builtin install_scripts
+  - workflow-tests-workflow builtin scripts_install
   - workflow-tests-workflow builtin known_command_filenames
   - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin print_configuration_directory
@@ -816,7 +816,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin install_scripts -- --commands --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin scripts_install -- --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",

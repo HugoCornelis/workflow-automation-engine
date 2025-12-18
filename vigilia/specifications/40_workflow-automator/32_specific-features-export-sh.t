@@ -8,7 +8,7 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin install_scripts -- --bash --commands --engine --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin scripts_install -- --bash --commands --engine --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   description => "Can we install the workflow automation configuration for the export-sh feature tests?",

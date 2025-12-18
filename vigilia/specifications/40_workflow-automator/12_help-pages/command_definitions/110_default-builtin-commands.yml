@@ -19,7 +19,7 @@ command_tests:
         - workflow builtin docker_images_build
         - workflow builtin scripts_fetch
         - workflow builtin grep
-        - workflow builtin install_scripts
+        - workflow builtin scripts_install
         - workflow builtin known_command_filenames
         - workflow builtin manual
         - workflow builtin print_configuration_directory
