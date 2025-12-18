@@ -10641,7 +10641,7 @@ sub main
 	$global_execute_what_is_scheduled = '';
     }
 
-    my $operation_selector_type = package_operation_2_operation_selector_type($requested_target, $global_operation, $option_help, \@ARGV);
+    my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $option_help, \@ARGV);
 
     schedule_operations_for_execution($operation_selector_type, $dry_run_reason, $option_help, \@ARGV);
 
@@ -10931,99 +10931,6 @@ sub report_error_exit
 }
 
 
-sub package_operation_2_operation_selector_type
-{
-    my $target = shift;
-
-    my $operation_or_package = shift;
-
-    my $help = shift;
-
-    my $arguments = shift;
-
-    my $operation_implementation;
-
-    my $builtin_package
-	= ((defined $operation_or_package
-	    and exists $global_known_operation_packages_builtin->{$operation_or_package})
-	   ? $operation_or_package
-	   : '');
-
-    # first correct operation_implementation and operation_or_package as required
-
-    my $package = "Command";
-
-    my $sub_name;
-
-    if ($builtin_package)
-    {
-	$sub_name = shift @$arguments;
-
-	if (not defined $sub_name)
-	{
-	    report_error_exit("no function name given while trying to use a builtin package '$global_operation'");
-	}
-
-	# if help was requested for this command
-
-	if ($help)
-	{
-	    # call the subroutine that implements the help function
-
-	    $sub_name .= "_help";
-	}
-
-	$package = $builtin_package;
-    }
-    elsif (defined $operation_or_package)
-    {
-	$sub_name = "${target}_${operation_or_package}";
-
-	# if help was requested for this operation
-
-	if ($help)
-	{
-	    # call the subroutine that implements the help function for the operation
-
-	    $sub_name .= "_help";
-	}
-    }
-    else
-    {
-	# if help was requested for this target
-
-	if ($help)
-	{
-	    $sub_name = "${target}";
-
-	    # call the subroutine that implements the global help function for the target
-
-	    $sub_name .= "_help";
-
-	    $operation_or_package = 'help';
-	}
-	else
-	{
-	    #! we should not reach this
-
-	    report_error_exit("internal error");
-	}
-    }
-
-    $operation_implementation = "${package}::${sub_name}";
-
-    my $operation_selector_type
-	= {
-	   builtin_package => $builtin_package,
-	   operation => $operation_or_package,
-	   operation_implementation => $operation_implementation,
-	   target => $target,
-	  };
-
-    return $operation_selector_type;
-}
-
-
 sub schedule_operations_for_execution
 {
     my $operation_selector_type = shift;
@@ -11075,6 +10982,83 @@ sub schedule_operations_for_execution
     {
 	report_error_exit("target '$target' does not provide command '$operation'.");
     }
+}
+
+
+sub operation_scheduler
+{
+    my $all_selected_operations = shift;
+
+    my $scheduler_dry_run_reason = shift;
+
+    my $result = '';
+
+    foreach my $selected_operation (@$all_selected_operations)
+    {
+	my $command_line_arguments = $selected_operation->{command_line_arguments};
+
+	my $dry_run_reason = $selected_operation->{dry_run_reason};
+
+	my $has_help = $selected_operation->{has_help};
+
+	my $operation_implementation = $selected_operation->{operation_implementation};
+
+	$operation_implementation =~ /Command::(.*)/;
+
+	my $short_operation = $1;
+
+	if ($scheduler_dry_run_reason)
+	{
+	    # add a header to the schedule / diagram for this operation
+
+	    my $scheduled_operation
+		= {
+		   command => "---\nCOMMAND: $short_operation$has_help",
+		   dry_run => $scheduler_dry_run_reason,
+		   interaction_role => 'none',
+		  };
+
+	    push @$global_scheduled_operations, $scheduled_operation;
+	}
+
+	if ($selected_operation->{is_help})
+	{
+	    my $arguments = $selected_operation->{command_line_arguments};
+
+	    $result .= schedule_help_execute($operation_implementation, $arguments);
+	}
+	else
+	{
+	    # add the operation to the schedule / diagram
+
+	    my $error = schedule_operation_execute($selected_operation);
+
+	    if ($error)
+	    {
+		my $target = $selected_operation->{target};
+
+		warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
+	    }
+	}
+
+	if ($scheduler_dry_run_reason)
+	{
+	    # end the command in the schedule / diagram
+
+	    my $scheduled_operation
+		= {
+		   command => "\n\n---\n",
+		   dry_run => $scheduler_dry_run_reason,
+		   interaction_role => 'none',
+		  };
+
+	    push @$global_scheduled_operations, $scheduled_operation;
+	}
+    }
+
+    # return either a help string or an error message
+
+    return $result;
 }
 
 
@@ -11215,80 +11199,96 @@ sub operation_selector
 }
 
 
-sub operation_scheduler
+sub operation_selector_type_construct
 {
-    my $all_selected_operations = shift;
+    my $target = shift;
 
-    my $scheduler_dry_run_reason = shift;
+    my $operation_or_package = shift;
 
-    my $result = '';
+    my $help = shift;
 
-    foreach my $selected_operation (@$all_selected_operations)
+    my $arguments = shift;
+
+    my $operation_implementation;
+
+    my $builtin_package
+	= ((defined $operation_or_package
+	    and exists $global_known_operation_packages_builtin->{$operation_or_package})
+	   ? $operation_or_package
+	   : '');
+
+    # first correct operation_implementation and operation_or_package as required
+
+    my $package = "Command";
+
+    my $sub_name;
+
+    if ($builtin_package)
     {
-	my $command_line_arguments = $selected_operation->{command_line_arguments};
+	$sub_name = shift @$arguments;
 
-	my $dry_run_reason = $selected_operation->{dry_run_reason};
-
-	my $has_help = $selected_operation->{has_help};
-
-	my $operation_implementation = $selected_operation->{operation_implementation};
-
-	$operation_implementation =~ /Command::(.*)/;
-
-	my $short_operation = $1;
-
-	if ($scheduler_dry_run_reason)
+	if (not defined $sub_name)
 	{
-	    # add a header to the schedule / diagram for this operation
-
-	    my $scheduled_operation
-		= {
-		   command => "---\nCOMMAND: $short_operation$has_help",
-		   dry_run => $scheduler_dry_run_reason,
-		   interaction_role => 'none',
-		  };
-
-	    push @$global_scheduled_operations, $scheduled_operation;
+	    report_error_exit("no function name given while trying to use a builtin package '$global_operation'");
 	}
 
-	if ($selected_operation->{is_help})
-	{
-	    my $arguments = $selected_operation->{command_line_arguments};
+	# if help was requested for this command
 
-	    $result .= schedule_help_execute($operation_implementation, $arguments);
+	if ($help)
+	{
+	    # call the subroutine that implements the help function
+
+	    $sub_name .= "_help";
+	}
+
+	$package = $builtin_package;
+    }
+    elsif (defined $operation_or_package)
+    {
+	$sub_name = "${target}_${operation_or_package}";
+
+	# if help was requested for this operation
+
+	if ($help)
+	{
+	    # call the subroutine that implements the help function for the operation
+
+	    $sub_name .= "_help";
+	}
+    }
+    else
+    {
+	# if help was requested for this target
+
+	if ($help)
+	{
+	    $sub_name = "${target}";
+
+	    # call the subroutine that implements the global help function for the target
+
+	    $sub_name .= "_help";
+
+	    $operation_or_package = 'help';
 	}
 	else
 	{
-	    # add the operation to the schedule / diagram
+	    #! we should not reach this
 
-	    my $error = schedule_operation_execute($selected_operation);
-
-	    if ($error)
-	    {
-		my $target = $selected_operation->{target};
-
-		warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
-	    }
-	}
-
-	if ($scheduler_dry_run_reason)
-	{
-	    # end the command in the schedule / diagram
-
-	    my $scheduled_operation
-		= {
-		   command => "\n\n---\n",
-		   dry_run => $scheduler_dry_run_reason,
-		   interaction_role => 'none',
-		  };
-
-	    push @$global_scheduled_operations, $scheduled_operation;
+	    report_error_exit("internal error");
 	}
     }
 
-    # return either a help string or an error message
+    $operation_implementation = "${package}::${sub_name}";
 
-    return $result;
+    my $operation_selector_type
+	= {
+	   builtin_package => $builtin_package,
+	   operation => $operation_or_package,
+	   operation_implementation => $operation_implementation,
+	   target => $target,
+	  };
+
+    return $operation_selector_type;
 }
 
 
