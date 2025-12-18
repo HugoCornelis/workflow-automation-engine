@@ -11052,24 +11052,6 @@ sub schedule_operations_for_execution
     {
 	my $all_selected_operations = operation_selector($operation_selector_type, $dry_run_reason, $help, $arguments);
 
-	if ($help
-	    or $builtin_package)
-	{
-	    my $selected_operation
-		= {
-		   command_line_arguments => $arguments,
-		   dry_run_reason => $dry_run_reason,
-		   has_help => '',
-		   help => $help,
-		   is_help => $help,
-		   operation_implementation => $operation_implementation,
-		   operation_type => 'sub',
-		   target => $target,
-		  };
-
-	    $all_selected_operations = [ $selected_operation ];
-	}
-
 	my $help_string_or_error = operation_scheduler($all_selected_operations, $dry_run_reason);
 
 	# ... either was invoked as the --help sub
@@ -11100,24 +11082,47 @@ sub operation_selector
 {
     my $operation_selector_type = shift;
 
-    my $builtin_package = $operation_selector_type->{builtin_package};
-
-    my $target_regex = $operation_selector_type->{target};
-
-    my $operation = $operation_selector_type->{operation};
-
-    # my $operation_implementation = $operation_selector_type->{operation_implementation};
-
     my $dry_run_reason = shift;
 
     my $help = shift;
 
     my $arguments = shift;
 
+    my $builtin_package = $operation_selector_type->{builtin_package};
+
+    my $target_regex = $operation_selector_type->{target};
+
+    my $operation = $operation_selector_type->{operation};
+
     # construct a list of operations to execute
 
     my $all_selected_operations = [];
 
+    # use of a builtin_package or a help always results in a single operation ...
+
+    if ($help
+	or $builtin_package)
+    {
+	my $operation_implementation = $operation_selector_type->{operation_implementation};
+
+	my $selected_operation
+	    = {
+	       command_line_arguments => $arguments,
+	       dry_run_reason => $dry_run_reason,
+	       has_help => '',
+	       help => $help,
+	       is_help => $help,
+	       operation_implementation => $operation_implementation,
+	       operation_type => 'sub',
+	       target => $target_regex,
+	      };
+
+	$all_selected_operations = [ $selected_operation ];
+    }
+
+    # ... else we may be running many operations
+
+    else
     {
 	my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
