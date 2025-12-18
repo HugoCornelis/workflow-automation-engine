@@ -181,7 +181,7 @@ my $global_builtin_operations
        command_filenames_known => 1,
        manual => 1,
        configuration_directory_print => 1,
-       pull_scripts => 1,
+       scripts_pull => 1,
        rename_project => 1,
        start_project => 1,
        tmux_create_sessions => 1,
@@ -4465,7 +4465,7 @@ arguments:
 }
 
 
-sub builtin_pull_scripts
+sub builtin_scripts_pull
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
@@ -4479,7 +4479,7 @@ sub builtin_pull_scripts
 }
 
 
-sub builtin_pull_scripts_help
+sub builtin_scripts_pull_help
 {
     my $command = shift;
 

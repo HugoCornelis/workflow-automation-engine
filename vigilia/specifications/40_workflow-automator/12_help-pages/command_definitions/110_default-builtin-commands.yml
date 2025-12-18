@@ -23,7 +23,7 @@ command_tests:
         - workflow builtin command_filenames_known
         - workflow builtin manual
         - workflow builtin configuration_directory_print
-        - workflow builtin pull_scripts
+        - workflow builtin scripts_pull
         - workflow builtin rename_project
         - workflow builtin role_print
         - workflow builtin start_project

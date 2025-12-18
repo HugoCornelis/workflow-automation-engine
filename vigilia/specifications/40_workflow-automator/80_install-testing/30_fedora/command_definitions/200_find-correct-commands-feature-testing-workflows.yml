@@ -25,7 +25,7 @@ command_tests:
         - feature-testing-workflow builtin command_filenames_known
         - feature-testing-workflow builtin manual
         - feature-testing-workflow builtin configuration_directory_print
-        - feature-testing-workflow builtin pull_scripts
+        - feature-testing-workflow builtin scripts_pull
         - feature-testing-workflow builtin rename_project
         - feature-testing-workflow builtin role_print
         - feature-testing-workflow builtin start_project
