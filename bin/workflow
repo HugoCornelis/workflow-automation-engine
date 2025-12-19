@@ -4390,12 +4390,22 @@ sub builtin_project_rename_help
 
     return "$command: Rename the project from which this command is invoked (the 'current' project).
 
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <new-project-name> [ <'also-bashrc'> ]
+
 arguments:
 ~~~~~~~~~~
 
     ``ARGV[0]``: the new project name.
 
-    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+    ``ARGV[1]``: the string 'also-bashrc' if you want your ~/.bashrc to be updated automatically.
+
+Note that carelessly updating your ``~/.bashrc`` is is risky.
+
 ";
 }
 
