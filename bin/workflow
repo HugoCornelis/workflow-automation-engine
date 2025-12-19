@@ -4182,6 +4182,8 @@ sub builtin_project_rename
 	   "$field_project_name-bash-completion.sh",
 	  ];
 
+    my $also_gitignore = (-f "$sources_configuration_directory/.gitignore") ? 'yes' : '';
+
     my $commands_string_replace
 	= [
 	   map
@@ -4195,14 +4197,39 @@ sub builtin_project_rename
 	    directory => $sources_configuration_directory,
 	    filename => "$field_project_name-configuration",
 	   },
-	   {
-	    directory => $sources_configuration_directory,
-	    filename => ".gitignore",  # but only if it exists
-	   },
+	   ($also_gitignore ? { directory => $sources_configuration_directory, filename => ".gitignore", } : ()),
 	   ($also_bashrc ? { directory => $ENV{HOME}, filename => ".bashrc" } : ()),
 	  ];
 
     execute_shell_command_array($commands_string_replace);
+
+    # bash_completion_filenames and a few others also need a string replace
+    # with underscores in $field_project_name and $new_project_name
+
+    my $field_project_name_underscores = "$field_project_name";
+
+    $field_project_name_underscores =~ s(-)(_)g;
+
+    my $new_project_name_underscores = "$new_project_name";
+
+    $new_project_name_underscores =~ s(-)(_)g;
+
+    my $commands_string_replace_underscores
+	= [
+	   map
+	   {
+	       "perl -pi -e 's/$field_project_name_underscores/$new_project_name_underscores/g' '$_->{directory}/$_->{filename}'";
+	   }
+	   @$bash_completion_filenames,
+	   {
+	    directory => $sources_configuration_directory,
+	    filename => "$field_project_name-configuration",
+	   },
+	   ($also_gitignore ? { directory => $sources_configuration_directory, filename => ".gitignore", } : ()),
+	   ($also_bashrc ? { directory => $ENV{HOME}, filename => ".bashrc" } : ()),
+	  ];
+
+    execute_shell_command_array($commands_string_replace_underscores);
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
