@@ -45,17 +45,17 @@ command_tests:
       #
       # mv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-configuration-data
       #
-      # rm /home/neurospaces/bin//feature-testing-commands-build
+      # rm /home/neurospaces/bin/feature-testing-commands-build
       #
-      # rm /home/neurospaces/bin//feature-testing-commands-docker_testing.py
+      # rm /home/neurospaces/bin/feature-testing-commands-docker_testing.py
       #
-      # rm /home/neurospaces/bin//feature-testing-commands-features
+      # rm /home/neurospaces/bin/feature-testing-commands-features
       #
-      # rm /home/neurospaces/bin//feature-testing-commands-more_python.py
+      # rm /home/neurospaces/bin/feature-testing-commands-more_python.py
       #
-      # rm /home/neurospaces/bin//feature-testing-commands-perl_examples
+      # rm /home/neurospaces/bin/feature-testing-commands-perl_examples
       #
-      # rm /home/neurospaces/bin//feature-testing-commands-python.py
+      # rm /home/neurospaces/bin/feature-testing-commands-python.py
       #
       # rm /home/neurospaces/bin/feature-testing-configuration
       #

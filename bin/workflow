@@ -4311,7 +4311,26 @@ sub builtin_project_rename
 	}
     }
 
+    # note that we remove and then install, so a renamed project does
+    # not remain in its old location
+
     my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $bin_path_choices
+	= {
+	   "$ENV{HOME}/bin" => 1,
+	   "$ENV{HOME}/.local/bin" => 1,
+	  };
+
+    foreach my $bin_path (sort keys %$bin_path_choices)
+    {
+	if (-f "$bin_path/$old_project_name-workflow")
+	{
+	    $bin_path_choice = $bin_path;
+
+	    last;
+	}
+    }
 
     my $project_bin_files
 	= [
@@ -4319,7 +4338,7 @@ sub builtin_project_rename
 	   {
 	       my $result
 		   = {
-		      directory => "$ENV{HOME}/$bin_path_choice",
+		      directory => $bin_path_choice,
 		      filename => $_,
 		     };
 
@@ -4335,7 +4354,7 @@ sub builtin_project_rename
 	   {
 	       my $result
 		   = {
-		      directory => "$ENV{HOME}/$bin_path_choice/",
+		      directory => $bin_path_choice,
 		      filename => $_->{filename},
 		     };
 
