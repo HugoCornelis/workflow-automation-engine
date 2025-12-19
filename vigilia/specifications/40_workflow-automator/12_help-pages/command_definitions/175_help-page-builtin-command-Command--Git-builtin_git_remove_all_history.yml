@@ -1,0 +1,17 @@
+---
+command: bin/workflow builtin Command::Git builtin_git_remove_all_history --help
+command_tests:
+  - description: Do we see the help page of the builtin command Command::Git builtin_git_remove_all_history?
+    read: |+
+      workflow Git::builtin_git_remove_all_history: in a working directory with a git repository, create a new git repository with the same content but without any history.
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: A directory name to hold the new repository, this will also be used for the intermediate tarball, it is useful to prefix it with '``../``'.
+      
+          ``ARGV[1]``: The commit message to use when adding the files to the new repository.
+      
+          ``ARGV[2]``: Optional, the URL of a repository where to push, if this is not given, no push is performed.
+
+description: Do we see the help page of the builtin command Command::Git builtin_git_remove_all_history?
