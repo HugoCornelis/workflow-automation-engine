@@ -4272,7 +4272,16 @@ sub builtin_project_rename
 
 	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
 
-	YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
+	use YAML;
+
+	if ($option_dry_run)
+	{
+	    print Dump( { new_command_filenames => $new_command_filenames } );
+	}
+	else
+	{
+	    YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
+	}
     }
 
     my $bin_path_choice = Utilities::bin_path_choice();
