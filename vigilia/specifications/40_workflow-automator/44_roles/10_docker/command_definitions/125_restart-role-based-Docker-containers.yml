@@ -1,0 +1,16 @@
+---
+command: 'feature-testing-workflow builtin docker_containers_start docker_source_code -- --restart'
+command_tests:
+  - description: Can we restart role based Docker containers?
+    read: |2
+      # docker container stop -t1 docker_source_code_container 
+      #
+      docker_source_code_container
+      # docker container rm docker_source_code_container 
+      #
+      docker_source_code_container
+      # docker run -d -t  --name docker_source_code_container docker_source_code_image 
+      #
+    timeout: 10
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we restart role based Docker containers?

@@ -1,0 +1,13 @@
+---
+command: feature-testing-workflow docker_testing where_am_i
+command_tests:
+  - description: Can we run a command in a role based Docker container?
+    read: |2
+      # docker exec -it docker_source_code_container   cat /.inside-docker
+      #
+      Inside a Docker container built from Dockerfile.source_code
+      # docker exec -it docker_source_code_container   whoami
+      #
+      neurospaces
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we run a command in a role based Docker container?
