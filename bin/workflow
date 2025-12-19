@@ -4195,7 +4195,11 @@ sub builtin_project_rename
 	    directory => $sources_configuration_directory,
 	    filename => "$field_project_name-configuration",
 	   },
-	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
+	   {
+	    directory => $sources_configuration_directory,
+	    filename => ".gitignore",  # but only if it exists
+	   },
+	   ($also_bashrc ? { directory => $ENV{HOME}, filename => ".bashrc" } : ()),
 	  ];
 
     execute_shell_command_array($commands_string_replace);
