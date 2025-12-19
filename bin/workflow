@@ -1496,7 +1496,12 @@ my \$configuration = {
 
     if (not $error)
     {
-	$error = Utilities::create_directories("$configuration_data_directory/cache");
+	#! Utilities::configuration_cache_directory() does not work
+	#! here because we don't have a project yet.
+
+	my $configuration_cache_directory = "$configuration_data_directory/cache";
+
+	$error = Utilities::create_directories($configuration_cache_directory);
     }
 
     return $error;
@@ -2875,10 +2880,34 @@ sub _workflow_operations_initialize
 	   @$command_filenames_configured,
 	  ];
 
-    foreach my $command_filename (@$command_filenames_to_use)
-    {
-	# print STDERR "Executing $command_filename\n";
+    return _workflow_operations_load($command_filenames_to_use);
+}
 
+
+sub _workflow_operations_load
+{
+    my $command_filenames = shift;
+
+    {
+	# first solve these warnings by erasing a previous _Inline cache
+
+	# Subroutine Command::_load_json_configuration_file redefined at (eval 44) line 1.
+	# Subroutine Command::assign_api_functions redefined at (eval 45) line 1.
+	# Subroutine Command::more_python_python_command redefined at (eval 46) line 1.
+	# Subroutine Command::more_python_python_command_completions redefined at (eval 47) line 1.
+	# Subroutine Command::more_python_python_command_help redefined at (eval 48) line 1.
+
+	#t another work around could be to first load the files as ascii,
+	#t get their checksum and use that checksum as part of the cache
+	#t directory
+
+	my $commands_cache_directory = Utilities::commands_cache_directory();
+
+	`rm -fr $commands_cache_directory`;
+    }
+
+    foreach my $command_filename (@$command_filenames)
+    {
 	my $file_type;
 
 	if ($command_filename =~ m(\.yml$))
