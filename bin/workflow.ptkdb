@@ -1,24 +1,15 @@
 $files = {
-           '_<./bin/workflow' => [
-                                   {
-                                     'expr' => undef,
-                                     'fname' => './bin/workflow',
-                                     'line' => 10925,
-                                     'text' => '    my $operation_implementation;
+           '_<../bin/workflow' => [
+                                    {
+                                      'value' => '1',
+                                      'text' => '    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
 ',
-                                     'type' => 'user',
-                                     'value' => '1'
-                                   },
-                                   {
-                                     'expr' => undef,
-                                     'fname' => './bin/workflow',
-                                     'line' => '11027',
-                                     'text' => '    if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
-',
-                                     'type' => 'user',
-                                     'value' => '1'
-                                   }
-                                 ]
+                                      'type' => 'user',
+                                      'line' => '9571',
+                                      'fname' => '../bin/workflow',
+                                      'expr' => undef
+                                    }
+                                  ]
          };
 $expr_list = [
                {
@@ -26,12 +17,12 @@ $expr_list = [
                  'expr' => '@ARGV'
                },
                {
-                 'depth' => -1,
-                 'expr' => '$export_remote'
+                 'expr' => '$export_remote',
+                 'depth' => -1
                },
                {
-                 'depth' => -1,
-                 'expr' => '$export_sh_command'
+                 'expr' => '$export_sh_command',
+                 'depth' => -1
                },
                {
                  'depth' => -1,
