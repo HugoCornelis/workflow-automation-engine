@@ -4182,6 +4182,8 @@ sub builtin_project_rename
 	   "$field_project_name-bash-completion.sh",
 	  ];
 
+    my $also_gitignore = (-f "$sources_configuration_directory/.gitignore") ? 'yes' : '';
+
     my $commands_string_replace
 	= [
 	   map
@@ -4195,10 +4197,39 @@ sub builtin_project_rename
 	    directory => $sources_configuration_directory,
 	    filename => "$field_project_name-configuration",
 	   },
-	   ($also_bashrc ? "$ENV{HOME}/.bashrc" : ()),
+	   ($also_gitignore ? { directory => $sources_configuration_directory, filename => ".gitignore", } : ()),
+	   ($also_bashrc ? { directory => $ENV{HOME}, filename => ".bashrc" } : ()),
 	  ];
 
     execute_shell_command_array($commands_string_replace);
+
+    # bash_completion_filenames and a few others also need a string replace
+    # with underscores in $field_project_name and $new_project_name
+
+    my $field_project_name_underscores = "$field_project_name";
+
+    $field_project_name_underscores =~ s(-)(_)g;
+
+    my $new_project_name_underscores = "$new_project_name";
+
+    $new_project_name_underscores =~ s(-)(_)g;
+
+    my $commands_string_replace_underscores
+	= [
+	   map
+	   {
+	       "perl -pi -e 's/$field_project_name_underscores/$new_project_name_underscores/g' '$_->{directory}/$_->{filename}'";
+	   }
+	   @$bash_completion_filenames,
+	   {
+	    directory => $sources_configuration_directory,
+	    filename => "$field_project_name-configuration",
+	   },
+	   ($also_gitignore ? { directory => $sources_configuration_directory, filename => ".gitignore", } : ()),
+	   ($also_bashrc ? { directory => $ENV{HOME}, filename => ".bashrc" } : ()),
+	  ];
+
+    execute_shell_command_array($commands_string_replace_underscores);
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
@@ -4268,10 +4299,38 @@ sub builtin_project_rename
 
 	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
 
-	YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
+	use YAML;
+
+	if ($option_dry_run)
+	{
+	    print Dump( { new_command_filenames => $new_command_filenames } );
+	}
+	else
+	{
+	    YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
+	}
     }
 
+    # note that we remove and then install, so a renamed project does
+    # not remain in its old location
+
     my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $bin_path_choices
+	= {
+	   "$ENV{HOME}/bin" => 1,
+	   "$ENV{HOME}/.local/bin" => 1,
+	  };
+
+    foreach my $bin_path (sort keys %$bin_path_choices)
+    {
+	if (-f "$bin_path/$old_project_name-workflow")
+	{
+	    $bin_path_choice = $bin_path;
+
+	    last;
+	}
+    }
 
     my $project_bin_files
 	= [
@@ -4279,7 +4338,7 @@ sub builtin_project_rename
 	   {
 	       my $result
 		   = {
-		      directory => "$ENV{HOME}/$bin_path_choice",
+		      directory => $bin_path_choice,
 		      filename => $_,
 		     };
 
@@ -4295,7 +4354,7 @@ sub builtin_project_rename
 	   {
 	       my $result
 		   = {
-		      directory => "$ENV{HOME}/$bin_path_choice/",
+		      directory => $bin_path_choice,
 		      filename => $_->{filename},
 		     };
 
@@ -4390,12 +4449,22 @@ sub builtin_project_rename_help
 
     return "$command: Rename the project from which this command is invoked (the 'current' project).
 
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <new-project-name> [ <'also-bashrc'> ]
+
 arguments:
 ~~~~~~~~~~
 
     ``ARGV[0]``: the new project name.
 
-    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+    ``ARGV[1]``: the string 'also-bashrc' if you want your ~/.bashrc to be updated automatically.
+
+Note that carelessly updating your ``~/.bashrc`` is is risky.
+
 ";
 }
 
