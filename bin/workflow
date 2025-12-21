@@ -3513,7 +3513,7 @@ arguments:
 }
 
 
-sub builtin_grep
+sub builtin_grep_code
 {
     my $arguments = shift || [];
 
@@ -3521,12 +3521,12 @@ sub builtin_grep
 
     if (not defined $regex_search)
     {
-	die "$0: builtin_grep: *** Error: a regex must be given on the command line.";
+	die "$0: builtin_grep_code: *** Error: a regex must be given on the command line.";
     }
 
-    my $debug_builtin_grep = 0;
+    my $debug_builtin_grep_code = 0;
 
-    if ($debug_builtin_grep > 1)
+    if ($debug_builtin_grep_code > 1)
     {
 	print STDERR Dumper(
 			    {
@@ -3558,7 +3558,7 @@ sub builtin_grep
 	      ];
     }
 
-    if ($debug_builtin_grep > 1)
+    if ($debug_builtin_grep_code > 1)
     {
 	print STDERR Dumper(
 			    {
@@ -3580,7 +3580,7 @@ sub builtin_grep
 	$selected_projects = [ @$selected_projects, @$projects, ];
     }
 
-    if ($debug_builtin_grep > 1)
+    if ($debug_builtin_grep_code > 1)
     {
 	print STDERR Dumper(
 			    {
@@ -3602,14 +3602,14 @@ sub builtin_grep
 
 	# generate the list of command filenames
 
-	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
+	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_code);
 
 	$command_filenames = $command_filenames->{command_filenames};
 
 	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
     }
 
-    if ($debug_builtin_grep)
+    if ($debug_builtin_grep_code)
     {
 	print STDERR Dumper( { selected_command_files => $selected_command_files, } );
     }
@@ -3625,11 +3625,11 @@ sub builtin_grep
 }
 
 
-sub builtin_grep_help
+sub builtin_grep_code_help
 {
     my $command = shift;
 
-    return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
+    return "$command: Grep for a regex in the workflow code scripts of the selected workflow projects.
 
 synopsis:
 ~~~~~~~~~

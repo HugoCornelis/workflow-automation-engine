@@ -1,7 +1,7 @@
 ---
-command: workflow builtin grep examples '.*'
+command: workflow builtin grep_code examples '.*'
 command_tests:
-  - description: Can we grep a string across workflow projects?
+  - description: Can we grep a string in the code across workflow projects?
     read: |
       # grep -n 'examples' /home/neurospaces/new-project/abcd-commands-perl_examples /home/neurospaces/new-project/abcd-commands-python_examples.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-build /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-docker_testing.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-python.py
       #
@@ -44,4 +44,4 @@ command_tests:
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:296:sub perl_examples_sequencing_and_composition_help
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:300:    return "$command: an example that composes other examples into one sequence of commands.
     white_space: convert seen 0a to 0d 0a newlines
-description: Can we grep a string across workflow projects?
+description: Can we grep a string in the code across workflow projects?
