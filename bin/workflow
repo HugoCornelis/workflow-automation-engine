@@ -72,7 +72,7 @@ our $option_help;
 our $option_help_commands;
 our $option_help_field_project_name;
 our $option_help_builtin_package;
-our $option_help_module_all;
+our $option_help_builtin_packages_all;
 our $option_help_options;
 our $option_help_projects;
 our $option_help_targets;
@@ -85,12 +85,12 @@ our $option_verbose;
 our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
-       "d|details+" => \$option_details,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
        "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
        "dump-schedule!" => \$option_dump_schedule,
+       "d|details+" => \$option_details,
        "export-help-page!" => \$option_export_help_page,
        "export-remote=s" => \$option_export_remote,
        "export-sh:s" => \$option_export_sh,
@@ -100,9 +100,9 @@ our $global_options
        "force-rebuild!" => \$option_force_rebuild,
        "help!" => \$option_help,
        "help-builtin-package!" => \$option_help_builtin_package,
+       "help-builtin-packages-all!" => \$option_help_builtin_packages_all,
        "help-commands!" => \$option_help_commands,
        "help-field-project-name!" => \$option_help_field_project_name,
-       "help-module-all!" => \$option_help_module_all,
        "help-options!" => \$option_help_options,
        "help-projects!" => \$option_help_projects,
        "help-targets!" => \$option_help_targets,
@@ -10316,9 +10316,9 @@ sub bash_completion_generate_options
 			--force-rebuild
 			--help
 			--help-builtin-package
+			--help-builtin-packages-all
 			--help-commands
 			--help-field-project-name
-			--help-module-all
 			--help-options
 			--help-projects
 			--help-targets
@@ -11027,9 +11027,9 @@ options:
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
     --help                          display usage information and stop execution.
     --help-builtin-package          display help about the commands of the given builtin package.
+    --help-builtin-packages-all     display the builtin packages.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
-    --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
@@ -11093,12 +11093,12 @@ options:
     }
 
     if ($option_help_builtin_package
-        or $option_help_module_all)
+        or $option_help_builtin_packages_all)
     {
 	if (not defined $global_target
 	    and $option_help_builtin_package)
 	{
-	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-builtin-package' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
+	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-builtin-package' or '$global_program_name --help-builtin-packages-all' to learn about the available modules (including the builtin ones)";
 	}
 
 	my $known_operation_packages
@@ -11136,7 +11136,7 @@ options:
 		die "$global_program_name: *** Error: module '$global_target' does not provide --help-module, does this module exist?'";
 	    }
 	}
-	elsif ($option_help_module_all)
+	elsif ($option_help_builtin_packages_all)
 	{
 	    use YAML;
 
