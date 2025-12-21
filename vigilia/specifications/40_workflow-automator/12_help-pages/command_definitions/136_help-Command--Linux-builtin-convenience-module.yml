@@ -1,11 +1,11 @@
 ---
-command: bin/workflow Command::Linux --help-module
+command: bin/workflow Command::Linux --help-builtin-package
 command_tests:
-  - description: help of the Command::Linux builtin convenience module
+  - description: help of the Command::Linux builtin package
     read: |
       Command::Linux:
         description: workflows for working with the Linux kernel source code
         documentation: The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.
       ---
       Command::Linux: {}
-description: help of the Command::Linux builtin convenience module
+description: help of the Command::Linux builtin package

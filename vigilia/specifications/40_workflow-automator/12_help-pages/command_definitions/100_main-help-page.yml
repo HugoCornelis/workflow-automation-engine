@@ -39,9 +39,9 @@ command_tests:
           --export-verbose                when exporting the commands to a file, interleave them with echo commands.
           --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
           --help                          display usage information and stop execution.
+          --help-builtin-package          display help about the commands of the given builtin package.
           --help-commands                 display the available commands, add a target name for restricted output.
           --help-field-project-name       print the field project name and exit.
-          --help-module                   display all the available help information about the commands of the module.
           --help-module-all               display all the available convenience modules.
           --help-options                  print the option values.
           --help-projects                 display known project information and stop execution.

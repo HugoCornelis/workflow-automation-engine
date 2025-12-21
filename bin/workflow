@@ -71,7 +71,7 @@ our $option_force_rebuild;
 our $option_help;
 our $option_help_commands;
 our $option_help_field_project_name;
-our $option_help_module;
+our $option_help_builtin_package;
 our $option_help_module_all;
 our $option_help_options;
 our $option_help_projects;
@@ -99,9 +99,9 @@ our $global_options
        "export-verbose!" => \$option_export_verbose,
        "force-rebuild!" => \$option_force_rebuild,
        "help!" => \$option_help,
+       "help-builtin-package!" => \$option_help_builtin_package,
        "help-commands!" => \$option_help_commands,
        "help-field-project-name!" => \$option_help_field_project_name,
-       "help-module!" => \$option_help_module,
        "help-module-all!" => \$option_help_module_all,
        "help-options!" => \$option_help_options,
        "help-projects!" => \$option_help_projects,
@@ -193,19 +193,19 @@ my $global_known_operation_packages_builtin
     = {
        'Command::Buildroot' => {
 				description => 'workflows for working with Buildroot',
-				documentation => 'These workflows implement convenience interactions with Buildroot.',
+				documentation => 'These workflows implement interactions with Buildroot.',
 			       },
        'Command::Git' => {
 			  description => 'workflows for working with Git',
-			  documentation => 'These workflows implement convenience interactions with Git.',
+			  documentation => 'These workflows implement interactions with Git.',
 			 },
        'Command::Git::RepositorySet' => {
 					 description => 'workflows for working with Git repositories',
-					 documentation => 'These workflows implement convenience interactions with a set of Git repositories.',
+					 documentation => 'These workflows implement interactions with a set of Git repositories.',
 					},
        'Command::GitLab' => {
 			     description => 'workflows for working with GitLab',
-			     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',
+			     documentation => 'These workflows implement push and pull of source code to and from GitLab.',
 			    },
        'Command::Linux' => {
 			    description => 'workflows for working with the Linux kernel source code',
@@ -10213,9 +10213,9 @@ sub bash_completion_generate_options
 			--export-verbose
 			--force-rebuild
 			--help
+			--help-builtin-package
 			--help-commands
 			--help-field-project-name
-			--help-module
 			--help-module-all
 			--help-options
 			--help-projects
@@ -10924,9 +10924,9 @@ options:
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
     --help                          display usage information and stop execution.
+    --help-builtin-package          display help about the commands of the given builtin package.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
-    --help-module                   display all the available help information about the commands of the module.
     --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
     --help-projects                 display known project information and stop execution.
@@ -10990,19 +10990,19 @@ options:
 	exit 0;
     }
 
-    if ($option_help_module
+    if ($option_help_builtin_package
         or $option_help_module_all)
     {
 	if (not defined $global_target
-	    and $option_help_module)
+	    and $option_help_builtin_package)
 	{
-	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-module' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
+	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-builtin-package' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
 	}
 
 	my $known_operation_packages
 	    = {
 	       'Command' => {
-			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_operation_packages_builtin ) . ')',
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-builtin-package'" } sort keys %$global_known_operation_packages_builtin ) . ')',
 			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
 			    },
 	       %$global_known_operation_packages_builtin,
@@ -11017,7 +11017,7 @@ options:
 	       sort keys %$known_operation_packages,
 	      };
 
-	if ($option_help_module)
+	if ($option_help_builtin_package)
 	{
 	    if (exists $known_operation_packages->{$global_target})
 	    {

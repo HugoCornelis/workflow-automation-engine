@@ -2,25 +2,25 @@
 command: bin/workflow --help-module-all
 command_tests:
   - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
-    description: Can we display the builtin convenience modules with the summary descriptions?
+    description: Can we display the builtin workflow packages with the summary descriptions?
     read: |2
       
       help_module_all:
         Command:
-          description: "a library of workflows (try these ones: 'workflow Command::Buildroot --help-module' or 'workflow Command::Git --help-module' or 'workflow Command::Git::RepositorySet --help-module' or 'workflow Command::GitLab --help-module' or 'workflow Command::Linux --help-module' or 'workflow Command::Net::IPerf --help-module' or 'workflow Command::Qemu --help-module')"
+          description: "a library of workflows (try these ones: 'workflow Command::Buildroot --help-builtin-package' or 'workflow Command::Git --help-builtin-package' or 'workflow Command::Git::RepositorySet --help-builtin-package' or 'workflow Command::GitLab --help-builtin-package' or 'workflow Command::Linux --help-builtin-package' or 'workflow Command::Net::IPerf --help-builtin-package' or 'workflow Command::Qemu --help-builtin-package')"
           documentation: each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects
         Command::Buildroot:
           description: workflows for working with Buildroot
-          documentation: These workflows implement convenience interactions with Buildroot.
+          documentation: These workflows implement interactions with Buildroot.
         Command::Git:
           description: workflows for working with Git
-          documentation: These workflows implement convenience interactions with Git.
+          documentation: These workflows implement interactions with Git.
         Command::Git::RepositorySet:
           description: workflows for working with Git repositories
-          documentation: These workflows implement convenience interactions with a set of Git repositories.
+          documentation: These workflows implement interactions with a set of Git repositories.
         Command::GitLab:
           description: workflows for working with GitLab
-          documentation: These workflows implement convenience interactions to push and pull source code from GitLab.
+          documentation: These workflows implement push and pull of source code to and from GitLab.
         Command::Linux:
           description: workflows for working with the Linux kernel source code
           documentation: The sub _config_compare_items in this package helps determine if Linux config items have been renamed between two Linux kernel versions.
@@ -30,4 +30,4 @@ command_tests:
         Command::Qemu:
           description: workflows for working with qemu
           documentation: This packages has utility functions for qemu and its qcow2 disk format.
-description: default builtin convenience modules
+description: default builtin packages

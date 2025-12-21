@@ -1,11 +1,11 @@
 ---
-command: bin/workflow Command::Buildroot --help-module
+command: bin/workflow Command::Buildroot --help-builtin-package
 command_tests:
-  - description: help of the Command::Buildroot builtin convenience module
+  - description: help of the Command::Buildroot builtin package
     read: |
       Command::Buildroot:
         description: workflows for working with Buildroot
-        documentation: These workflows implement convenience interactions with Buildroot.
+        documentation: These workflows implement interactions with Buildroot.
       ---
       Command::Buildroot:
         builtin package_dependencies:
@@ -16,4 +16,4 @@ command_tests:
           type: sub
         builtin packages_help:
           type: sub
-description: help of the Command::Buildroot builtin convenience module
+description: help of the Command::Buildroot builtin package
