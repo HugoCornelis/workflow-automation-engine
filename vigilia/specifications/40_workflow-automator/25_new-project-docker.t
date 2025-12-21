@@ -527,6 +527,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
   - workflow-tests-workflow builtin grep_code
+  - workflow-tests-workflow builtin grep_commands
   - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin project_start
@@ -570,6 +571,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
   - workflow-tests-workflow builtin grep_code
+  - workflow-tests-workflow builtin grep_commands
   - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin project_start

@@ -3649,6 +3649,108 @@ arguments:
 }
 
 
+sub builtin_grep_commands
+{
+    my $arguments = shift || [];
+
+    my $regex_search = $arguments->[0];
+
+    if (not defined $regex_search)
+    {
+	die "$0: builtin_grep_commands: *** Error: a regex must be given on the command line.";
+    }
+
+    my $debug_builtin_grep_commands = 0;
+
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => $arguments,
+			    },
+			   );
+    }
+
+    my $project_selectors;
+
+    if (scalar @$arguments == 1)
+    {
+	my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+	if (! $field_project_name)
+	{
+	    $project_selectors = [ '.*'];
+	}
+	else
+	{
+	    $project_selectors = [ $field_project_name ];
+	}
+    }
+    else
+    {
+	$project_selectors
+	    = [
+	       @$arguments > 1 ? @$arguments[1 .. $#$arguments] : ()
+	      ];
+    }
+
+    # create the list of selected projects
+
+    my $selected_projects = [];
+
+    foreach my $project_selector (@$project_selectors)
+    {
+	my $projects = main::workflow_project_list_generate($project_selector);
+
+	$selected_projects = [ @$selected_projects, @$projects, ];
+    }
+
+    # collect the command_filenames for each selected_project
+
+    my $selected_command_files = [];
+
+    foreach my $selected_project (sort @$selected_projects)
+    {
+	# get the configuration_data_directory
+
+	my ($sources_configuration_directory, $configuration_data_directory)
+	    = main::project_name_2_configuration_data_directory($selected_project);
+
+	# generate the list of command filenames
+
+	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_commands);
+
+	$command_filenames = $command_filenames->{command_filenames};
+
+	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
+    }
+}
+
+
+sub builtin_grep_commands_help
+{
+    my $command = shift;
+
+    return "$command: Grep for a regex in the workflow commands of the selected workflow projects.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: A regular expression to search for.
+
+    ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+
+";
+}
+
+
 sub builtin_help
 {
     my $command = shift;

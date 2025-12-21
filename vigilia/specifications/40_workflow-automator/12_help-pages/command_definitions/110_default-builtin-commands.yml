@@ -18,6 +18,7 @@ command_tests:
         - workflow builtin docker_exec
         - workflow builtin docker_images_build
         - workflow builtin grep_code
+        - workflow builtin grep_commands
         - workflow builtin manual
         - workflow builtin project_rename
         - workflow builtin project_start
