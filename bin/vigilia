@@ -1320,6 +1320,13 @@ sub harness_command_module_create
 	die "$0: *** Error: $command expects an argument for the name of the new module";
     }
 
+    my $module_description = shift || shift @$arguments;
+
+    if (! defined $module_description)
+    {
+	die "$0: *** Error: $command expects an argument for the description of the new module";
+    }
+
     my $summary
 	= {
 	   comment => "This type of comment element can be inserted at any level in the YAML files that define tests.
@@ -1352,7 +1359,7 @@ numerical_compare: Allow small arithmetic differences during the comparison of t
 tag: An array of tags associated with this test module.  These are matched with the tags given on the command line.
 
 ",
-	   description => "<description of your module>",
+	   description => $module_description,,
 	   documentation => {
 			     explanation => "<a few sentences that explain the purpose of the program being tested>",
 			     purpose => "<a single line description of the purpose of this test module>",
