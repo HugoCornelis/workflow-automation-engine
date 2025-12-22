@@ -8436,12 +8436,6 @@ sub execute_scheduled_operation
 
 	$exit_status = not chdir $cd_argument;
     }
-    elsif ($dry_run)
-    {
-	#! this should never be called, this is already called from execute_all_scheduled_operations()
-
-	execute_scheduled_operation_option_dry_run($scheduled_operation);
-    }
     else
     {
 	my $export_output = $options->{export_output};
