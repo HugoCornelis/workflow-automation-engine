@@ -3215,6 +3215,13 @@ sub rebless
 		    {
 			$read =~ s(\x0a)(\x0d\x0a)g;
 		    }
+
+		    #! this does not work yet
+
+		    elsif ($command_test->{white_space} eq 'ignore')
+		    {
+			$read =~ s(\s+)()g;
+		    }
 		}
 
 		$target_package = "Heterarch::Test::CommandTest::Interactive::Literal";
@@ -3778,11 +3785,14 @@ sub ct_run_command
 
 	    $read =~ s(\x0d\x0a)(\x0a)g;
 	}
-	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
-	{
-	    $reporter->report_message("message_details", "Converting seen \\x0d \\x0a to \\x0a newlines\n");
 
-	    $read =~ s(\x0d\x0a)(\x0a)g;
+	#! this does not work yet
+
+	elsif ($self->{white_space} eq 'ignore')
+	{
+	    $reporter->report_message("message_details", "Ignoring white_space in the expected output\n");
+
+	    $read =~ s(\s)(.*)g;
 	}
     }
 

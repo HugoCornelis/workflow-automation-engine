@@ -1,25 +1,88 @@
 $files = {
            '_<./bin/vigilia' => [
                                   {
-                                    'fname' => './bin/vigilia',
+                                    'line' => '11495',
+                                    'expr' => undef,
+                                    'value' => '1',
+                                    'type' => 'user',
+                                    'text' => '    my $seen = $arguments->{seen};
+',
+                                    'fname' => './bin/vigilia'
+                                  },
+                                  {
                                     'type' => 'user',
                                     'value' => '1',
-                                    'line' => '354',
-                                    'text' => '    my $option_result = GetOptionsFromArray($arguments, %$options);
+                                    'text' => '    $self->message("message_error", { message => $message, }, );
 ',
+                                    'fname' => './bin/vigilia',
+                                    'line' => 12292,
                                     'expr' => undef
                                   },
                                   {
-                                    'expr' => undef,
                                     'fname' => './bin/vigilia',
-                                    'text' => '    my $output;
+                                    'text' => '    foreach my $command_definition (@$command_definitions)
 ',
-                                    'line' => '951',
+                                    'line' => 8199,
+                                    'expr' => undef,
+                                    'type' => 'user',
+                                    'value' => '1'
+                                  },
+                                  {
+                                    'type' => 'user',
                                     'value' => '1',
-                                    'type' => 'user'
+                                    'text' => '    foreach my $module_definition (@$module_definitions)
+',
+                                    'fname' => './bin/vigilia',
+                                    'expr' => undef,
+                                    'line' => 1613
+                                  },
+                                  {
+                                    'fname' => './bin/vigilia',
+                                    'text' => '	my $command_prefix = $command_definition->{command_prefix} ? $command_definition->{command_prefix} : "";
+',
+                                    'type' => 'user',
+                                    'value' => '1',
+                                    'expr' => undef,
+                                    'line' => 3003
+                                  },
+                                  {
+                                    'type' => 'user',
+                                    'value' => '1',
+                                    'fname' => './bin/vigilia',
+                                    'text' => '    $self->after_testing($execution_context, $test_result);
+',
+                                    'expr' => undef,
+                                    'line' => 3810
+                                  },
+                                  {
+                                    'fname' => './bin/vigilia',
+                                    'text' => '    my $option_result = GetOptionsFromArray($arguments, %$options);
+',
+                                    'type' => 'user',
+                                    'line' => 349,
+                                    'expr' => undef,
+                                    'value' => '1'
+                                  },
+                                  {
+                                    'type' => 'user',
+                                    'value' => '1',
+                                    'fname' => './bin/vigilia',
+                                    'text' => '    foreach my $module_definition (@$module_definitions)
+',
+                                    'line' => 1666,
+                                    'expr' => undef
                                   }
                                 ]
          };
-$expr_list = [];
+$expr_list = [
+               {
+                 'expr' => '$error',
+                 'depth' => -1
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$test_result'
+               }
+             ];
 $eval_saved_text = undef;
-$main_win_geometry = '1920x1001+0+0';
+$main_win_geometry = '1920x954+0+0';
