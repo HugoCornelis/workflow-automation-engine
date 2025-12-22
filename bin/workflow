@@ -7206,7 +7206,7 @@ sub build_tree_needs_rebuild
 }
 
 
-sub format_commented_command
+sub _format_commented_command
 {
     my $shell_command = shift;
 
@@ -7224,8 +7224,6 @@ sub format_commented_command
 
 	    $result .= "$annotation\n";
 	}
-
-	# print "# $shell_command (length: $shell_command_length)\n#\n";
 
 	$result .= "# $shell_command\n#\n";
     }
@@ -7713,19 +7711,21 @@ sub execute_scheduled_operation_option_dry_run
 
     my $options = $scheduled_operation->{options};
 
+    my $console_output = '';
+
     if ($export_sh
 	and exists $export_sh->{prefix})
     {
 	my $dry_run_prefix = "$global_program_name: *** Running in dry_run mode, export prefix: '";
 
-	print map { "$dry_run_prefix$_\n" } split "\n", $export_sh->{prefix};
+	$console_output .= join "", map { "$dry_run_prefix$_\n" } split "\n", $export_sh->{prefix};
     }
 
     #! when is this option a simple number?
 
     if ($dry_run =~ /^[0-9]+$/)
     {
-	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$shell_command'\n";
+	$console_output .= "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$shell_command'\n";
 
 	if ($option_details)
 	{
@@ -7733,6 +7733,8 @@ sub execute_scheduled_operation_option_dry_run
     }
 
     # markers in the schedule do not have an executable_command, skip them
+
+    my $exit_status = 0;
 
     if (defined $executable_command)
     {
@@ -7744,12 +7746,14 @@ sub execute_scheduled_operation_option_dry_run
 	{
 	    my $cd_argument = $cd_command->{argument};
 
-	    my $exit_status = not chdir $cd_argument;
+	    $exit_status = not chdir $cd_argument;
 	}
 	else
 	{
 	}
     }
+
+    return { console_output => $console_output, exit_status => $exit_status };
 }
 
 
@@ -7895,6 +7899,8 @@ sub execute_scheduled_operation_option_interactions
 
     my $interaction_role_arg = $scheduled_operation->{interaction_role};
 
+    my $console_output = '';
+
     # we must have a valid interaction role
 
     if (not defined $interaction_role_arg)
@@ -7922,7 +7928,7 @@ sub execute_scheduled_operation_option_interactions
 
 	    if ($interaction_role->{is_new_and_needs_header} eq 'yes')
 	    {
-		_print_interaction_header($interaction_role);
+		$console_output .= _format_interaction_header($interaction_role);
 	    }
 	}
     }
@@ -7933,7 +7939,7 @@ sub execute_scheduled_operation_option_interactions
     {
 	# print the command without indentation
 
-	print "$shell_command\n";
+	$console_output .= "$shell_command\n";
     }
 
     # else with a defined interaction_role
@@ -7946,7 +7952,7 @@ sub execute_scheduled_operation_option_interactions
 
 	if ($interaction_role->{is_new_and_needs_header} eq 'yes')
 	{
-	    _print_interaction_header($interaction_role);
+	    $console_output .= _format_interaction_header($interaction_role);
 	}
 
 	# print the command with indentation
@@ -7957,13 +7963,15 @@ sub execute_scheduled_operation_option_interactions
 
 	    my $indent = " " x $interaction_indent;
 
-	    print "$indent'$executable_command'\n";
+	    $console_output .= "$indent'$executable_command'\n";
 
 	    if ($option_details)
 	    {
 	    }
 	}
     }
+
+    return { console_output => $console_output };
 }
 
 
@@ -7979,9 +7987,11 @@ sub _print_sequence_diagram_header
 }
 
 
-sub _print_interaction_header
+sub _format_interaction_header
 {
     my $interaction_role = shift;
+
+    my $console_output = '';
 
     # calculate the indentation level
 
@@ -7993,7 +8003,7 @@ sub _print_interaction_header
 
     if ($interaction_indent != $interaction_role->{indent})
     {
-	print "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
+	$console_output .= "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
     }
 
     my $indent = " " x $interaction_indent;
@@ -8002,11 +8012,13 @@ sub _print_interaction_header
 
     # print the header
 
-    print "$header\n\n";
+    $console_output .= "$header\n\n";
 
     # remember that the header for this interaction_role has been printed
 
     $interaction_role->{is_new_and_needs_header} = $header;
+
+    return $console_output;
 }
 
 
@@ -8071,6 +8083,10 @@ sub execute_scheduled_operation_option_export_sh
     my $export_sh_command = $scheduled_operation->{export_sh_command};
 
     my $interaction_role = $scheduled_operation->{interaction_role};
+
+    my $console_output = '';
+
+    my $exit_status;
 
     if (not defined $global_exported_sh_file)
     {
@@ -8193,7 +8209,7 @@ $help_string
     {
 	my $cd_argument = $cd_command->{argument};
 
-	my $exit_status = not chdir $cd_argument;
+	$exit_status = not chdir $cd_argument;
     }
 
     #! some interaction roles add single quotes, we remove them here.
@@ -8210,7 +8226,7 @@ $help_string
 	$export_sh_command = _execute_option_export_sh_variables_substitute($global_technical_project_configuration->{export_sh_variables}, $export_sh_command);
     }
 
-    print "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
+    $console_output .= "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
 
     if ((not defined $option_export_remote or $option_export_remote eq 0)
 	or $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
@@ -8232,6 +8248,8 @@ $help_string
     {
 	print $global_exported_sh_file "$export_sh_command\n";
     }
+
+    return { console_output => $console_output, exit_status => $exit_status };
 }
 
 
@@ -8425,6 +8443,8 @@ sub execute_scheduled_operation
 
     my $options = $scheduled_operation->{options};
 
+    my $console_output = '';
+
     my $exit_status;
 
     #! note the difference in processing and exit status for a local cd vs a remote cd
@@ -8436,9 +8456,9 @@ sub execute_scheduled_operation
     {
 	my $cd_argument = $cd_command->{argument};
 
-	my $commented_command = format_commented_command($shell_command, $options);
+	my $commented_command = _format_commented_command($shell_command, $options);
 
-	print $commented_command;
+	$console_output = "$commented_command$console_output";
 
 	$exit_status = not chdir $cd_argument;
     }
@@ -8488,9 +8508,9 @@ sub execute_scheduled_operation
 	{
 	    if (not $export_output)
 	    {
-		my $commented_command = format_commented_command($shell_command, $options);
+		my $commented_command = _format_commented_command($shell_command, $options);
 
-		print $commented_command;
+		$console_output = "$commented_command$console_output";
 
 		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
 
@@ -8502,7 +8522,14 @@ sub execute_scheduled_operation
 		}
 		else
 		{
-		    $exit_status = system "$shell_command";
+		    # $exit_status = system "$shell_command";
+
+		    $console_output .= `$shell_command`;
+
+		    #t maybe better to use ${^CHILD_ERROR_NATIVE}
+		    #t see https://perldoc.perl.org/perlvar
+
+		    $exit_status = $?;
 		}
 
 		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
@@ -8615,7 +8642,7 @@ sub execute_scheduled_operation
 	{
 # 	    system "echo >>$output_path 2>&1 failed with $exit_status: $shell_command\n";
 
-	    print "$global_program_name: *** Note: $shell_command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	    $console_output .= "$global_program_name: *** Note: $shell_command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
 	}
 	elsif ($allow_fail_silent)
 	{
@@ -8629,7 +8656,7 @@ sub execute_scheduled_operation
 
     # return the result of command execution
 
-    return $exit_status;
+    return { console_output => $console_output, exit_status => $exit_status };
 }
 
 
@@ -8670,7 +8697,7 @@ sub execute_all_scheduled_operations
 {
     my $interaction_roles = shift;
 
-    my $results = [];
+    my $operation_results = [];
 
     if ($option_dump_schedule)
     {
@@ -8692,26 +8719,28 @@ sub execute_all_scheduled_operations
     {
 	foreach my $scheduled_operation (@$global_scheduled_operations)
 	{
+	    my $operation_result;
+
 	    # either we are executing the scheduled command ...
 
 	    if ($global_execute_what_is_scheduled)
 	    {
-		my $result = execute_scheduled_operation($scheduled_operation);
+		$operation_result = execute_scheduled_operation($scheduled_operation);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_operation->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or we are either in dry-run ...
 
 	    elsif ($option_dry_run =~ /^[0-9]+$/)
 	    {
-		my $result = execute_scheduled_operation_option_dry_run($scheduled_operation);
+		$operation_result = execute_scheduled_operation_option_dry_run($scheduled_operation);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_operation->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or printing an interaction diagram
@@ -8721,22 +8750,22 @@ sub execute_all_scheduled_operations
 		   or $option_interactions_target
 		   or $option_interactions_target_all_roles)
 	    {
-		my $result = execute_scheduled_operation_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
+		$operation_result = execute_scheduled_operation_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_operation->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or exporting to an executable shell script ...
 
 	    elsif (defined $option_export_sh)
 	    {
-		my $result = execute_scheduled_operation_option_export_sh($interaction_roles, $scheduled_operation);
+		$operation_result = execute_scheduled_operation_option_export_sh($interaction_roles, $scheduled_operation);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_operation->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or we have an internal error
@@ -8745,10 +8774,22 @@ sub execute_all_scheduled_operations
 	    {
 		main::report_error_exit("internal error: no interpretation of the scheduled_operations has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
 	    }
+
+	    if (defined $operation_result)
+	    {
+		if (exists $operation_result->{console_output})
+		{
+		    print $operation_result->{console_output};
+		}
+	    }
+	    else
+	    {
+		main::report_error_exit("internal error: no operation_result of a scheduled_operation ($scheduled_operation->{executable_command})");
+	    }
 	}
     }
 
-    return $results;
+    return $operation_results;
 }
 
 
