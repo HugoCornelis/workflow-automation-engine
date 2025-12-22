@@ -7206,11 +7206,13 @@ sub build_tree_needs_rebuild
 }
 
 
-sub display_commented_command
+sub format_commented_command
 {
     my $shell_command = shift;
 
     my $options = shift;
+
+    my $result = "";
 
     if (not $options->{quiet})
     {
@@ -7220,13 +7222,15 @@ sub display_commented_command
 
 	    $annotation =~ s(\n(.))(\n### $1)g;
 
-	    print "$annotation\n";
+	    $result .= "$annotation\n";
 	}
 
 	# print "# $shell_command (length: $shell_command_length)\n#\n";
 
-	print "# $shell_command\n#\n";
+	$result .= "# $shell_command\n#\n";
     }
+
+    return $result;
 }
 
 
@@ -8432,7 +8436,9 @@ sub execute_scheduled_operation
     {
 	my $cd_argument = $cd_command->{argument};
 
-	display_commented_command($shell_command, $options);
+	my $commented_command = format_commented_command($shell_command, $options);
+
+	print $commented_command;
 
 	$exit_status = not chdir $cd_argument;
     }
@@ -8482,7 +8488,9 @@ sub execute_scheduled_operation
 	{
 	    if (not $export_output)
 	    {
-		display_commented_command($shell_command, $options);
+		my $commented_command = format_commented_command($shell_command, $options);
+
+		print $commented_command;
 
 		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
 
