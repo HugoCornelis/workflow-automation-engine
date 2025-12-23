@@ -3333,6 +3333,11 @@ sub builtin_docker_exec
 {
     my $arguments = shift || [];
 
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
+
     my $roles = $global_technical_project_configuration->{roles};
 
     if (not defined $roles)
@@ -3519,6 +3524,11 @@ sub builtin_grep_code
 
     my $regex_search = $arguments->[0];
 
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
+
     if (not defined $regex_search)
     {
 	die "$0: builtin_grep_code: *** Error: a regex must be given on the command line.";
@@ -3654,6 +3664,11 @@ sub builtin_grep_commands
     my $arguments = shift || [];
 
     my $regex_search = $arguments->[0];
+
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
 
     if (not defined $regex_search)
     {
@@ -4195,6 +4210,11 @@ sub builtin_project_rename
 
     my $new_project_name = $arguments->[0];
 
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
+
     if (not $new_project_name)
     {
 	die "$global_program_name: *** Error: builtin_rename_project requires the new project name as an argument (the old_project_name is $old_project_name).";
@@ -4577,6 +4597,11 @@ sub builtin_project_start
 
     my $non_empty_directory = [ split '\n', `ls -1 2>/dev/null`, ];
 
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
+
     if (scalar @$non_empty_directory)
     {
 	die "$global_program_name: *** Error: Please empty this directory before starting a new project.";
@@ -4774,6 +4799,11 @@ arguments:
 sub builtin_role_add
 {
     my $arguments = shift || [];
+
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
 
     my $option_dockerfile;
     my $option_localuser;
@@ -5398,6 +5428,11 @@ sub builtin_scripts_pull_help
 sub builtin_target_add
 {
     my $arguments = shift || [];
+
+    if (not $global_execute_what_is_scheduled)
+    {
+	return '';
+    }
 
     my $option_install_command_pl;
     my $option_install_command_python;
