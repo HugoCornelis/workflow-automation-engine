@@ -11362,6 +11362,15 @@ sub report_error_exit
 }
 
 
+# Given an operation_selector_type and command line arguments, build a
+# schedule of operations to be invoked.
+#
+# The core of this sub is a call to operation_scheduler(), the result
+# is an executable schedule stored in @$global_scheduled_operations.
+#
+# Extension plugins call execute_shell_command() and its family to add
+# their own commands to @$global_scheduled_operations.
+
 sub schedule_operations_for_execution
 {
     my $operation_selector_type = shift;
