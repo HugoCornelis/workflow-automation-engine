@@ -3663,16 +3663,23 @@ sub builtin_grep_commands
 {
     my $arguments = shift || [];
 
-    my $regex_search = $arguments->[0];
-
     if (not $global_execute_what_is_scheduled)
     {
 	return '';
     }
 
-    if (not defined $regex_search)
+    my $regex_target = $arguments->[0] || '.*';
+
+    if (not defined $regex_target)
     {
-	die "$0: builtin_grep_commands: *** Error: a regex must be given on the command line.";
+	die "$0: builtin_grep_commands: *** Error: a regex matching the target must be given on the command line.";
+    }
+
+    my $regex_command = $arguments->[1] || '.*';
+
+    if (not defined $regex_command)
+    {
+	die "$0: builtin_grep_commands: *** Error: a regex matching the command must be given on the command line.";
     }
 
     my $debug_builtin_grep_commands = 0;
@@ -3749,7 +3756,7 @@ sub builtin_grep_commands
 	   help_asked => '',
 	   operation => '.*',
 	   operation_implementation => 'wildcard',
-	   target => '.*',
+	   target => $regex_target,
 	  };
 
     # disable execution from here on
@@ -3770,18 +3777,39 @@ sub builtin_grep_commands
     {
 	my $console_output = $schedule_result->{console_output};
 
-	my $selected_console_output_lines
+	my $console_output_lines
 	    = [
-	       grep
-	       {
-		   m($regex_search)
-	       }
 	       split '\n', $console_output
 	      ];
 
-	my $selected_console_output = join '\n', @$selected_console_output_lines;
+	my $selected_console_output_lines = [];
 
-	print $selected_console_output;
+	my $current_console_output_line;
+
+	my $current_console_output_header;
+
+	foreach my $console_output_line (@$console_output_lines)
+	{
+	    if ($console_output_line =~ m(COMMAND))
+	    {
+		$current_console_output_header = $console_output_line;
+	    }
+	    elsif ($console_output_line =~ m($regex_command))
+	    {
+		if ($current_console_output_header)
+		{
+		    push @$selected_console_output_lines, $current_console_output_header;
+
+		    $current_console_output_header = '';
+		}
+
+		push @$selected_console_output_lines, $console_output_line;
+	    }
+	}
+
+	my $selected_console_output = join "\n", @$selected_console_output_lines;
+
+	print $selected_console_output . "\n";
     }
 
     return '';
@@ -3804,9 +3832,11 @@ $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: A regular expression to search for.
+    ``ARGV[0]``: A regular expression to match the target against, '0' for all targets.
 
-    ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+    ``ARGV[1]``: A regular expression to match the commands against, '0' for all commands.
+
+    ``ARGV[2] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
 }
