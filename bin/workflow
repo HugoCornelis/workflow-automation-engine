@@ -3758,11 +3758,11 @@ sub builtin_grep_commands
 
     main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
 
-    my $global_interaction_roles = {};
-
     local $option_interactions_target_all_roles = 1;
 
-    my $operation_results = Engine::execute_all_scheduled_operations($global_interaction_roles);
+    InteractionRole::interaction_roles_identify_all();
+
+    my $operation_results = Engine::execute_all_scheduled_operations($InteractionRole::all_interaction_roles);
 
     my $schedule_result = Engine::process_operation_results($operation_results, {} );
 
@@ -7313,13 +7313,6 @@ sub _format_commented_command
 }
 
 
-# TODO: this needs refactoring to appear as an argument to function calls
-
-our $global_interaction_roles = {};
-
-my $current_interaction_role;
-
-
 # apply the remoting prefix
 
 sub apply_remote_record_exported_shell_command
@@ -7341,8 +7334,8 @@ sub apply_remote_record_exported_shell_command
 	# if we are exporting this one role or all roles
 
 	if (($export_remote eq 0)
-	    or ($export_remote eq $interaction_roles->{$current_interaction_role}->{name})
-	    or $export_remote eq $interaction_roles->{$current_interaction_role}->{number})
+	    or ($export_remote eq $interaction_roles->{$InteractionRole::current_interaction_role}->{name})
+	    or $export_remote eq $interaction_roles->{$InteractionRole::current_interaction_role}->{number})
 	{
 	    # we export the command without the remoting information
 
@@ -7365,7 +7358,7 @@ sub apply_remote_record_exported_shell_command
 	    }
 	}
 
-	if ($current_interaction_role =~ m(^tmux_))
+	if ($InteractionRole::current_interaction_role =~ m(^tmux_))
 	{
 	    $export_sh_command =~ s(\s+ENTER\s*$)();
 	}
@@ -7637,7 +7630,7 @@ sub compute_remote_and_interaction_role
 	$interaction_role = "localuser\@localhost";
     }
 
-    $current_interaction_role = $interaction_role;
+    $InteractionRole::current_interaction_role = $interaction_role;
 
     # return result
 
@@ -7838,134 +7831,6 @@ sub execute_scheduled_operation_option_dry_run
 }
 
 
-sub identify_interaction_roles
-{
-    my $shell_command = shift;
-
-    my $executable_command = shift;
-
-    my $indent_delta = 40;
-
-    # either we have already inserted a descriptive record for this interaction role
-
-    if (exists $global_interaction_roles->{$current_interaction_role})
-    {
-    }
-
-    # or we show the interaction diagram with all the interaction roles in the configuration.
-
-    elsif ($option_interactions_target_all_roles)
-    {
-	my $roles = $global_technical_project_configuration->{roles};
-
-	if (not defined $roles)
-	{
-	    $roles = $global_technical_project_configuration->{target_servers};
-	}
-
-	my $interaction_indent = 4;
-
-	my $interaction_number = 1;
-
-	# create a hash with a descriptive record for each interaction role
-
-	$global_interaction_roles
-	    = {
-	       # map each human readable role to a descriptive record with appropriate indent
-
-	       map
-	       {
-		   my $target = $_;
-
-		   my $result
-		       = {
-			  $target => {
-				      interaction_indent => $interaction_indent,
-				      is_new_and_needs_header => 'yes',
-				      name => $target,
-				      number => $interaction_number,
-				     },
-			 };
-
-		   $interaction_number += 1;
-
-		   $interaction_indent += 24;
-
-		   %$result;
-	       }
-
-	       # sort roles in a intuitive order
-
-	       sort
-	       {
-		   # make sure that localhost always comes first
-
-		   if ($a =~ /local/)
-		   {
-		       return -1;
-		   }
-		   elsif ($b =~ /local/)
-		   {
-		       return 1;
-		   }
-		   else
-		   {
-		       $a cmp $b;
-		   }
-	       }
-
-	       # convert each target server to a human readable role
-
-	       map
-	       {
-		   my $role_key = $_;
-
-		   my $role = $roles->{$role_key};
-
-		   my $result;
-
-		   if (exists $role->{localuser}
-		       and $role->{localuser} eq 'yes')
-		   {
-		       $result = "localuser\@localhost";
-		   }
-		   else
-		   {
-		       my $role_name = $role->{name} || $role->{ssh_server} || 'localhost';
-
-		       my $target_user = $role->{ssh_user} || 'localuser';
-
-		       $result = $target_user . '@' . $role_name;
-		   }
-
-		   $result;
-	       }
-
-	       # based on the target servers
-
-	       keys %$roles,
-	      };
-    }
-
-    # or we show only the interaction roles used in this workflow
-
-    else
-    {
-	my $sorted_roles = [ keys %$global_interaction_roles, ];
-
-	my $interaction_indent = 4 + scalar @$sorted_roles * $indent_delta;
-
-	$global_interaction_roles->{$current_interaction_role}
-	    = {
-	       interaction_indent => $interaction_indent,
-	       is_new_and_needs_header => 'yes',
-	       name => $current_interaction_role,
-	       number => (scalar @$sorted_roles) + 1,
-	      };
-    }
-}
-
-
 sub execute_scheduled_operation_option_interactions
 {
     my $interaction_roles = shift;
@@ -8078,14 +7943,16 @@ sub _format_interaction_header
 
     my $interaction_role_name = $interaction_role->{name};
 
-    my $interaction_indent = $global_interaction_roles->{$interaction_role_name}->{interaction_indent};
+    my $interaction_indent = $interaction_role->{interaction_indent};
 
-    # TODO: this is here to figure out whether the above use of $global_interaction_roles can be removed.
+    # my $interaction_indent = $InteractionRole::all_interaction_roles->{$interaction_role_name}->{interaction_indent};
 
-    if ($interaction_indent != $interaction_role->{interaction_indent})
-    {
-	$console_output .= "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{interaction_indent})\n";
-    }
+    # # TODO: this is here to figure out whether the above use of $all_interaction_roles can be removed.
+
+    # if ($interaction_indent != $interaction_role->{interaction_indent})
+    # {
+    # 	$console_output .= "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{interaction_indent})\n";
+    # }
 
     my $indent = " " x $interaction_indent;
 
@@ -8985,11 +8852,11 @@ sub execute_shell_command
 
     # identify the interaction roles
 
-    identify_interaction_roles($shell_command, $executable_command);
+    InteractionRole::interaction_roles_identify();
 
     # now that we know the remote, apply the working directory for the remote on the command to be executed
 
-    $shell_command = working_directory_for_interaction_role_apply($current_interaction_role, $shell_command);
+    $shell_command = working_directory_for_interaction_role_apply($InteractionRole::current_interaction_role, $shell_command);
 
     # prefix the command with appropriate sudo options
 
@@ -9010,7 +8877,7 @@ sub execute_shell_command
 
     # force the execution of a change of the working directory to this process
 
-    $executable_command = working_directory_for_interaction_role_parse($executable_command, $current_interaction_role);
+    $executable_command = working_directory_for_interaction_role_parse($executable_command, $InteractionRole::current_interaction_role);
 
     #! note that the order of processing determines whether the options are locally or remotely applied
 
@@ -9020,7 +8887,7 @@ sub execute_shell_command
 
     # apply the remoting prefix, always local
 
-    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($global_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
 
     # apply the timeout prefix, always local
 
@@ -9033,7 +8900,7 @@ sub execute_shell_command
 	  (
 	   $shell_command,
 	   $executable_command,
-	   $current_interaction_role,
+	   $InteractionRole::current_interaction_role,
 	   $options,
 	   ($options->{dry_run} || $option_dry_run),
 	   $export_sh,
@@ -9963,6 +9830,152 @@ sub _init_get_technical_configuration
 
 
 our $global_main_project_name = "ssp";
+
+
+package InteractionRole;
+
+
+# TODO: this needs refactoring to appear as an argument to function calls
+
+our $all_interaction_roles = {};
+
+our $current_interaction_role;
+
+
+sub interaction_roles_identify_all
+{
+    my $roles = $global_technical_project_configuration->{roles};
+
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
+    my $interaction_indent = 4;
+
+    my $interaction_number = 1;
+
+    # create a hash with a descriptive record for each interaction role
+
+    $all_interaction_roles
+	= {
+	   # map each human readable role to a descriptive record with appropriate indent
+
+	   map
+	   {
+	       my $role = $_;
+
+	       my $result
+		   = {
+		      $role => {
+				interaction_indent => $interaction_indent,
+				is_new_and_needs_header => 'yes',
+				name => $role,
+				number => $interaction_number,
+			       },
+		     };
+
+	       $interaction_number += 1;
+
+	       $interaction_indent += 24;
+
+	       %$result;
+	   }
+
+	   # sort roles in a intuitive order
+
+	   sort
+	   {
+	       # make sure that localhost always comes first
+
+	       if ($a =~ /local/)
+	       {
+		   return -1;
+	       }
+	       elsif ($b =~ /local/)
+	       {
+		   return 1;
+	       }
+	       else
+	       {
+		   $a cmp $b;
+	       }
+	   }
+
+	   # convert each role to a human readable name
+
+	   map
+	   {
+	       my $role_key = $_;
+
+	       my $role = $roles->{$role_key};
+
+	       my $result;
+
+	       if (exists $role->{localuser}
+		   and $role->{localuser} eq 'yes')
+	       {
+		   $result = "localuser\@localhost";
+	       }
+	       else
+	       {
+		   my $role_name = $role->{name} || $role->{ssh_server} || 'localhost';
+
+		   my $target_user = $role->{ssh_user} || 'localuser';
+
+		   $result = $target_user . '@' . $role_name;
+	       }
+
+	       $result;
+	   }
+
+	   # based on the known roles
+
+	   keys %$roles,
+	  };
+}
+
+
+sub interaction_roles_add_current
+{
+    my $indent_delta = 40;
+
+    my $sorted_roles = [ keys %$all_interaction_roles, ];
+
+    my $interaction_indent = 4 + scalar @$sorted_roles * $indent_delta;
+
+    $all_interaction_roles->{$current_interaction_role}
+	= {
+	   interaction_indent => $interaction_indent,
+	   is_new_and_needs_header => 'yes',
+	   name => $current_interaction_role,
+	   number => (scalar @$sorted_roles) + 1,
+	  };
+}
+
+
+sub interaction_roles_identify
+{
+    # either we have already inserted a descriptive record for this interaction role
+
+    if (exists $all_interaction_roles->{$current_interaction_role})
+    {
+    }
+
+    # or we show the interaction diagram with all the interaction roles in the configuration.
+
+    elsif ($option_interactions_target_all_roles)
+    {
+	interaction_roles_identify_all();
+    }
+
+    # or we show only the interaction roles used in this workflow
+
+    else
+    {
+	interaction_roles_add_current();
+    }
+}
 
 
 package Utilities;
@@ -11163,7 +11176,7 @@ sub main
 
     schedule_operations_for_execution($operation_selector_type, \@ARGV);
 
-    my $operation_results = Engine::execute_all_scheduled_operations($global_interaction_roles);
+    my $operation_results = Engine::execute_all_scheduled_operations($InteractionRole::all_interaction_roles);
 
     Engine::process_operation_results($operation_results, { console_output => 'always' } );
 
