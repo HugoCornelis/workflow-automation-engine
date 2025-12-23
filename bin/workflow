@@ -11429,6 +11429,7 @@ sub schedule_operations_for_execution
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
     if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
+	or $operation_implementation eq 'wildcard'
 	or $builtin_package
 	or $option_interactions_target
         or $option_interactions_target_all_roles)
