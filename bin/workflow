@@ -11386,7 +11386,8 @@ sub schedule_operations_for_execution
 
     if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
 	or $builtin_package
-	or $option_interactions_target)
+	or $option_interactions_target
+        or $option_interactions_target_all_roles)
     {
 	my $all_selected_operations = operation_selector($operation_selector_type, $dry_run_reason, $help, $arguments);
 
