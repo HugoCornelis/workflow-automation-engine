@@ -9921,9 +9921,29 @@ sub interaction_roles_identify_all
 	       {
 		   my $role_name = $role->{name} || $role->{ssh_server} || 'localhost';
 
-		   my $target_user = $role->{ssh_user} || 'localuser';
+		   my $target_user;
 
-		   $result = $target_user . '@' . $role_name;
+		   if (exists $role->{ssh_user})
+		   {
+		       $target_user = $role->{ssh_user};
+		   }
+		   elsif (exists $role->{remote_policy})
+		   {
+		       $target_user = '';
+		   }
+		   else
+		   {
+		       $target_user = 'localuser';
+		   }
+
+		   if ($target_user)
+		   {
+		       $result = $target_user . '@' . $role_name;
+		   }
+		   else
+		   {
+		       $result = $role_name;
+		   }
 	       }
 
 	       $result;
