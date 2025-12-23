@@ -11519,6 +11519,10 @@ sub operation_scheduler
 }
 
 
+# Given an operation_selector_type, dry_run_reason, option_help and
+# command line arguments, match these with the known operations and
+# return a series of selected operations.
+
 sub operation_selector
 {
     my $operation_selector_type = shift;
