@@ -7834,7 +7834,7 @@ sub identify_interaction_roles
 		   my $result
 		       = {
 			  $target => {
-				      indent => $interaction_indent,
+				      interaction_indent => $interaction_indent,
 				      is_new_and_needs_header => 'yes',
 				      name => $target,
 				      number => $interaction_number,
@@ -7911,7 +7911,7 @@ sub identify_interaction_roles
 
 	$global_interaction_roles->{$current_interaction_role}
 	    = {
-	       indent => $interaction_indent,
+	       interaction_indent => $interaction_indent,
 	       is_new_and_needs_header => 'yes',
 	       name => $current_interaction_role,
 	       number => (scalar @$sorted_roles) + 1,
@@ -7994,7 +7994,7 @@ sub execute_scheduled_operation_option_interactions
 
 	if ($executable_command !~ /^\s*$/)
 	{
-	    my $interaction_indent = $interaction_role->{indent};
+	    my $interaction_indent = $interaction_role->{interaction_indent};
 
 	    my $indent = " " x $interaction_indent;
 
@@ -8032,13 +8032,13 @@ sub _format_interaction_header
 
     my $interaction_role_name = $interaction_role->{name};
 
-    my $interaction_indent = $global_interaction_roles->{$interaction_role_name}->{indent};
+    my $interaction_indent = $global_interaction_roles->{$interaction_role_name}->{interaction_indent};
 
     # TODO: this is here to figure out whether the above use of $global_interaction_roles can be removed.
 
-    if ($interaction_indent != $interaction_role->{indent})
+    if ($interaction_indent != $interaction_role->{interaction_indent})
     {
-	$console_output .= "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
+	$console_output .= "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{interaction_indent})\n";
     }
 
     my $indent = " " x $interaction_indent;
