@@ -11744,15 +11744,22 @@ sub operation_selector_type_construct
     }
     elsif (defined $operation_or_package)
     {
-	$sub_name = "${target}_${operation_or_package}";
-
-	# if help was requested for this operation
-
-	if ($help)
+	if (defined $dry_run_reason
+	    and $dry_run_reason eq 'grep_commands')
 	{
-	    # call the subroutine that implements the help function for the operation
+	}
+	else
+	{
+	    $sub_name = "${target}_${operation_or_package}";
 
-	    $sub_name .= "_help";
+	    # if help was requested for this operation
+
+	    if ($help)
+	    {
+		# call the subroutine that implements the help function for the operation
+
+		$sub_name .= "_help";
+	    }
 	}
     }
     else
