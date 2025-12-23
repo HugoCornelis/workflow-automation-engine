@@ -8826,7 +8826,6 @@ sub execute_all_scheduled_operations
 	    }
 	    else
 	    {
-		process_operation_results($operation_results);
 	    }
 	}
     }
@@ -9112,6 +9111,8 @@ sub process_operation_results
 {
     my $operation_results = shift;
 
+    my $result_processor = shift;
+
     my $console_output = '';
 
     if ($global_execute_what_is_scheduled)
@@ -9158,10 +9159,15 @@ sub process_operation_results
 	main::report_error_exit("internal error: no interpretation of the operation_results has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
     }
 
-    if ($console_output)
+    if ($result_processor->{console_output})
     {
-	print $console_output;
+	if ($console_output)
+	{
+	    print $console_output;
+	}
     }
+
+    return { console_output => $console_output };
 }
 
 
@@ -11112,6 +11118,10 @@ sub main
     schedule_operations_for_execution($operation_selector_type, \@ARGV);
 
     my $operation_results = Engine::execute_all_scheduled_operations($global_interaction_roles);
+
+    Engine::process_operation_results($operation_results, { console_output => 'always' } );
+
+    return 0;
 }
 
 
