@@ -11072,9 +11072,9 @@ sub main
 	$global_execute_what_is_scheduled = '';
     }
 
-    my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $option_help, \@ARGV);
+    my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $dry_run_reason, $option_help, \@ARGV);
 
-    schedule_operations_for_execution($operation_selector_type, $dry_run_reason, $option_help, \@ARGV);
+    schedule_operations_for_execution($operation_selector_type, \@ARGV);
 
     my $operation_results = Engine::execute_all_scheduled_operations($global_interaction_roles);
 }
@@ -11366,19 +11366,19 @@ sub schedule_operations_for_execution
 {
     my $operation_selector_type = shift;
 
-    my $dry_run_reason = shift;
-
-    my $help = shift;
-
     my $arguments = shift;
 
     my $builtin_package = $operation_selector_type->{builtin_package};
 
-    my $target = $operation_selector_type->{target};
+    my $dry_run_reason = $operation_selector_type->{dry_run_reason};
+
+    my $help = $operation_selector_type->{help_asked};
 
     my $operation = $operation_selector_type->{operation};
 
     my $operation_implementation = $operation_selector_type->{operation_implementation};
+
+    my $target = $operation_selector_type->{target};
 
     # if this command exists ...
 
@@ -11636,6 +11636,8 @@ sub operation_selector_type_construct
 
     my $operation_or_package = shift;
 
+    my $dry_run_reason = shift;
+
     my $help = shift;
 
     my $arguments = shift;
@@ -11714,6 +11716,8 @@ sub operation_selector_type_construct
     my $operation_selector_type
 	= {
 	   builtin_package => $builtin_package,
+	   dry_run_reason => $dry_run_reason,
+	   help_asked => $help,
 	   operation => $operation_or_package,
 	   operation_implementation => $operation_implementation,
 	   target => $target,
