@@ -11417,6 +11417,22 @@ sub schedule_operations_for_execution
 }
 
 
+# build the schedule in @$global_scheduled_operations.
+#
+# Examine @$all_selected_operations, call each of them and push the
+# result onto @$global_scheduled_operations as appropriate, converting
+# this into something that can be called or executed.
+#
+# This results in scheduling the invocation of shell scripts and
+# direct invocation of plugin Python defs and Perl subs.
+#
+# Python defs and Perl subs can populate @$global_scheduled_operations
+# through API calls, but shell scripts cannot yet do this (who would
+# that be possible?).
+#
+# After this operation completes, the schedule can be examined,
+# queried and executed as required.
+
 sub operation_scheduler
 {
     my $all_selected_operations = shift;
