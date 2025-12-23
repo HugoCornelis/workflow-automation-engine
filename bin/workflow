@@ -3739,6 +3739,52 @@ sub builtin_grep_commands
 
 	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
     }
+
+    my $schedule_arguments = [];
+
+    my $operation_selector_type
+	= {
+	   builtin_package => '',
+	   dry_run_reason => 'grep_commands',
+	   help_asked => '',
+	   operation => '.*',
+	   operation_implementation => 'wildcard',
+	   target => '.*',
+	  };
+
+    # disable execution from here on
+
+    $global_execute_what_is_scheduled = '';
+
+    main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
+
+    my $global_interaction_roles = {};
+
+    local $option_interactions_target_all_roles = 1;
+
+    my $operation_results = Engine::execute_all_scheduled_operations($global_interaction_roles);
+
+    my $schedule_result = Engine::process_operation_results($operation_results, {} );
+
+    if ($schedule_result->{console_output})
+    {
+	my $console_output = $schedule_result->{console_output};
+
+	my $selected_console_output_lines
+	    = [
+	       grep
+	       {
+		   m($regex_search)
+	       }
+	       split '\n', $console_output
+	      ];
+
+	my $selected_console_output = join '\n', @$selected_console_output_lines;
+
+	print $selected_console_output;
+    }
+
+    return '';
 }
 
 
