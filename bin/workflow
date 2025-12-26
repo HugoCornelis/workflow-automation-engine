@@ -167,9 +167,9 @@ my $GROUP_ID = `id -g`; chomp $GROUP_ID;
 our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null` =~ m'Inside a Docker' ? 'y' : 'n';
 
 
-our $global_scheduled_operations = [];
+our $global_scheduled_commands = [];
 
-our $global_execute_what_is_scheduled = 'yes';
+our $global_execute_scheduled_commands = 'yes';
 
 my $global_builtin_operations
     = {
@@ -3057,7 +3057,7 @@ sub builtin_configuration_archive
 
     # make sure the --interactions family of options works
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -3333,7 +3333,7 @@ sub builtin_docker_exec
 {
     my $arguments = shift || [];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -3524,7 +3524,7 @@ sub builtin_grep_code
 
     my $regex_search = $arguments->[0];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -3663,7 +3663,7 @@ sub builtin_grep_commands
 {
     my $arguments = shift || [];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -3761,7 +3761,9 @@ sub builtin_grep_commands
 
     # disable execution from here on
 
-    $global_execute_what_is_scheduled = '';
+    $global_execute_scheduled_commands = '';
+
+    # build a schedule of operations and invoke them to create the command list
 
     main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
 
@@ -3769,7 +3771,9 @@ sub builtin_grep_commands
 
     InteractionRole::interaction_roles_identify_all();
 
-    my $operation_results = Engine::execute_all_scheduled_operations($InteractionRole::all_interaction_roles);
+    # execute all the scheduled_commands.
+
+    my $operation_results = Engine::execute_all_scheduled_commands($InteractionRole::all_interaction_roles);
 
     my $schedule_result = Engine::process_operation_results($operation_results, {} );
 
@@ -4169,7 +4173,7 @@ $global_command_line
 
     my $ok = 'by default';
 
-    if ($global_execute_what_is_scheduled)
+    if ($global_execute_scheduled_commands)
     {
 	$ok = open($manual_file, ">", $manual_filename);
 
@@ -4286,7 +4290,7 @@ sub builtin_project_rename
 
     my $new_project_name = $arguments->[0];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -4673,7 +4677,7 @@ sub builtin_project_start
 
     my $non_empty_directory = [ split '\n', `ls -1 2>/dev/null`, ];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -4685,7 +4689,7 @@ sub builtin_project_start
 
     my $result;
 
-    if ($global_execute_what_is_scheduled)
+    if ($global_execute_scheduled_commands)
     {
 	my $project_name = $arguments->[0];
 
@@ -4876,7 +4880,7 @@ sub builtin_role_add
 {
     my $arguments = shift || [];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -5062,7 +5066,7 @@ sub builtin_role_add
 
     if (!$error)
     {
-	if (not $global_execute_what_is_scheduled)
+	if (not $global_execute_scheduled_commands)
 	{
 	    print Dump( { role => $role } );
 	}
@@ -5505,7 +5509,7 @@ sub builtin_target_add
 {
     my $arguments = shift || [];
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -7799,7 +7803,7 @@ sub compute_timeout
 }
 
 
-sub execute_scheduled_operation_option_dry_run
+sub execute_scheduled_command_option_dry_run
 {
     my $scheduled_operation = shift;
 
@@ -7861,7 +7865,7 @@ sub execute_scheduled_operation_option_dry_run
 }
 
 
-sub execute_scheduled_operation_option_interactions
+sub execute_scheduled_command_option_interactions
 {
     my $interaction_roles = shift;
 
@@ -8048,7 +8052,7 @@ sub _process_cd_command
 }
 
 
-sub execute_scheduled_operation_option_export_sh
+sub execute_scheduled_command_option_export_sh
 {
     my $interaction_roles = shift;
 
@@ -8250,11 +8254,11 @@ sub _execute_option_export_sh_variables_select
 		next;
 	    }
 
-	    foreach my $scheduled_operation (@$global_scheduled_operations)
+	    foreach my $scheduled_command (@$global_scheduled_commands)
 	    {
 		# substitute the variable value with its name in the command
 
-		my $export_sh_command = $scheduled_operation->{export_sh_command};
+		my $export_sh_command = $scheduled_command->{export_sh_command};
 
 		#! some interaction roles add single quotes, we remove them here.
 
@@ -8407,7 +8411,7 @@ sub _system_bash
 }
 
 
-sub execute_scheduled_operation
+sub execute_scheduled_command
 {
     my $scheduled_operation = shift;
 
@@ -8654,7 +8658,7 @@ sub schedule_real_command
 
     my $export_sh_command = shift;
 
-    my $scheduled_operation
+    my $scheduled_command
 	= {
 	   command => $shell_command,
 	   dry_run => $dry_run,
@@ -8665,13 +8669,15 @@ sub schedule_real_command
 	   options => $options,
 	  };
 
-    push @$global_scheduled_operations, $scheduled_operation;
+    push @$global_scheduled_commands, $scheduled_command;
 
     return '';
 }
 
 
-sub execute_all_scheduled_operations
+# execute all the scheduled_commands.
+
+sub execute_all_scheduled_commands
 {
     my $interaction_roles = shift;
 
@@ -8681,7 +8687,7 @@ sub execute_all_scheduled_operations
     {
 	use Data::Dumper;
 
-	print Dumper( { scheduled_operations => $global_scheduled_operations, }, );
+	print Dumper( { scheduled_commands => $global_scheduled_commands, }, );
     }
     elsif ($option_dump_interaction_roles)
     {
@@ -8695,17 +8701,17 @@ sub execute_all_scheduled_operations
     }
     else
     {
-	foreach my $scheduled_operation (@$global_scheduled_operations)
+	foreach my $scheduled_command (@$global_scheduled_commands)
 	{
 	    my $operation_result;
 
 	    # either we are executing the scheduled command ...
 
-	    if ($global_execute_what_is_scheduled)
+	    if ($global_execute_scheduled_commands)
 	    {
-		$operation_result = execute_scheduled_operation($scheduled_operation);
+		$operation_result = execute_scheduled_command($scheduled_command);
 
-		$scheduled_operation->{operation_result} = $operation_result;
+		$scheduled_command->{operation_result} = $operation_result;
 
 		push @$operation_results, $operation_result;
 	    }
@@ -8714,9 +8720,9 @@ sub execute_all_scheduled_operations
 
 	    elsif ($option_dry_run =~ /^[0-9]+$/)
 	    {
-		$operation_result = execute_scheduled_operation_option_dry_run($scheduled_operation);
+		$operation_result = execute_scheduled_command_option_dry_run($scheduled_command);
 
-		$scheduled_operation->{operation_result} = $operation_result;
+		$scheduled_command->{operation_result} = $operation_result;
 
 		push @$operation_results, $operation_result;
 	    }
@@ -8728,9 +8734,9 @@ sub execute_all_scheduled_operations
 		   or $option_interactions_target
 		   or $option_interactions_target_all_roles)
 	    {
-		$operation_result = execute_scheduled_operation_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
+		$operation_result = execute_scheduled_command_option_interactions($interaction_roles, $scheduled_command, $option_interactions_target_all_roles || $option_interactions_all);
 
-		$scheduled_operation->{operation_result} = $operation_result;
+		$scheduled_command->{operation_result} = $operation_result;
 
 		push @$operation_results, $operation_result;
 	    }
@@ -8739,9 +8745,9 @@ sub execute_all_scheduled_operations
 
 	    elsif (defined $option_export_sh)
 	    {
-		$operation_result = execute_scheduled_operation_option_export_sh($interaction_roles, $scheduled_operation);
+		$operation_result = execute_scheduled_command_option_export_sh($interaction_roles, $scheduled_command);
 
-		$scheduled_operation->{operation_result} = $operation_result;
+		$scheduled_command->{operation_result} = $operation_result;
 
 		push @$operation_results, $operation_result;
 	    }
@@ -8750,10 +8756,10 @@ sub execute_all_scheduled_operations
 
 	    else
 	    {
-		main::report_error_exit("internal error: no interpretation of the scheduled_operations has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+		main::report_error_exit("internal error: no interpretation of the scheduled_commands has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
 	    }
 
-	    if ($global_execute_what_is_scheduled)
+	    if ($global_execute_scheduled_commands)
 	    {
 		if (defined $operation_result)
 		{
@@ -8764,7 +8770,7 @@ sub execute_all_scheduled_operations
 		}
 		else
 		{
-		    main::report_error_exit("internal error: no operation_result of a scheduled_operation ($scheduled_operation->{executable_command})");
+		    main::report_error_exit("internal error: no operation_result of a scheduled_operation ($scheduled_command->{executable_command})");
 		}
 	    }
 	    else
@@ -9058,7 +9064,7 @@ sub process_operation_results
 
     my $console_output = '';
 
-    if ($global_execute_what_is_scheduled)
+    if ($global_execute_scheduled_commands)
     {
     }
 
@@ -11157,7 +11163,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
 
     # given the requested target and the operation, generate a useful filename for exporting execution times to a log file
@@ -11189,7 +11195,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
     elsif ($option_interactions)
     {
@@ -11197,7 +11203,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
     elsif ($option_interactions_all
 	   or $option_interactions_target
@@ -11211,7 +11217,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
     elsif ($option_dump_module_interaction_roles)
     {
@@ -11219,14 +11225,18 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
 
     my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $dry_run_reason, $option_help, \@ARGV);
 
+    # build a schedule of operations and invoke them to create the command list
+
     schedule_operations_for_execution($operation_selector_type, \@ARGV);
 
-    my $operation_results = Engine::execute_all_scheduled_operations($InteractionRole::all_interaction_roles);
+    # execute all the scheduled_commands.
+
+    my $operation_results = Engine::execute_all_scheduled_commands($InteractionRole::all_interaction_roles);
 
     Engine::process_operation_results($operation_results, { console_output => 'always' } );
 
@@ -11520,10 +11530,10 @@ sub report_error_exit
 # schedule of operations to be invoked.
 #
 # The core of this sub is a call to operation_scheduler(), the result
-# is an executable schedule stored in @$global_scheduled_operations.
+# is an executable schedule stored in @$global_scheduled_commands.
 #
 # Extension plugins call execute_shell_command() and its family to add
-# their own commands to @$global_scheduled_operations.
+# their own commands to @$global_scheduled_commands.
 
 sub schedule_operations_for_execution
 {
@@ -11553,7 +11563,11 @@ sub schedule_operations_for_execution
 	or $option_interactions_target
         or $option_interactions_target_all_roles)
     {
+	# construct a list of known operations that match the operation_selector_type
+
 	my $all_selected_operations = operation_selector($operation_selector_type, $dry_run_reason, $help, $arguments);
+
+	# call each of the selected operations, invoking the plugins as required and push the result onto @$global_scheduled_commands
 
 	my $help_string_or_error = operation_scheduler($all_selected_operations, $dry_run_reason);
 
@@ -11581,16 +11595,16 @@ sub schedule_operations_for_execution
 }
 
 
-# build the schedule in @$global_scheduled_operations.
+# build the schedule in @$global_scheduled_commands.
 #
 # Examine @$all_selected_operations, call each of them and push the
-# result onto @$global_scheduled_operations as appropriate, converting
+# result onto @$global_scheduled_commands as appropriate, converting
 # this into something that can be called or executed.
 #
 # This results in scheduling the invocation of shell scripts and
 # direct invocation of plugin Python defs and Perl subs.
 #
-# Python defs and Perl subs can populate @$global_scheduled_operations
+# Python defs and Perl subs can populate @$global_scheduled_commands
 # through API calls, but shell scripts cannot yet do this (who would
 # that be possible?).
 #
@@ -11623,14 +11637,14 @@ sub operation_scheduler
 	{
 	    # add a header to the schedule / diagram for this operation
 
-	    my $scheduled_operation
+	    my $scheduled_command
 		= {
 		   command => "---\nCOMMAND: $short_operation$has_help",
 		   dry_run => $scheduler_dry_run_reason,
 		   interaction_role => 'none',
 		  };
 
-	    push @$global_scheduled_operations, $scheduled_operation;
+	    push @$global_scheduled_commands, $scheduled_command;
 	}
 
 	if ($selected_operation->{is_help})
@@ -11657,14 +11671,14 @@ sub operation_scheduler
 	{
 	    # end the command in the schedule / diagram
 
-	    my $scheduled_operation
+	    my $scheduled_command
 		= {
 		   command => "\n\n---\n",
 		   dry_run => $scheduler_dry_run_reason,
 		   interaction_role => 'none',
 		  };
 
-	    push @$global_scheduled_operations, $scheduled_operation;
+	    push @$global_scheduled_commands, $scheduled_command;
 	}
     }
 
