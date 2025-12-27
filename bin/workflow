@@ -3752,7 +3752,7 @@ sub builtin_grep_commands
     my $operation_selector_type
 	= {
 	   builtin_package => '',
-	   dry_run_reason => 'grep_commands',
+	   dry_run_reason => 'wildcard',
 	   help_asked => '',
 	   operation => '.*',
 	   operation_implementation => 'wildcard',
@@ -11209,7 +11209,7 @@ sub main
 	   or $option_interactions_target
 	   or $option_interactions_target_all_roles)
     {
-	$dry_run_reason = 'option_interactions_target';
+	$dry_run_reason = 'wildcard';
 
 	# make sure we select operations
 
@@ -11560,8 +11560,7 @@ sub schedule_operations_for_execution
     if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
 	or $operation_implementation eq 'wildcard'
 	or $builtin_package
-	or $option_interactions_target
-        or $option_interactions_target_all_roles)
+	or $dry_run_reason eq 'wildcard')
     {
 	# construct a list of known operations that match the operation_selector_type
 
