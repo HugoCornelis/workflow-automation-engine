@@ -11531,8 +11531,9 @@ sub report_error_exit
 # Given an operation_selector_type and command line arguments, build a
 # schedule of operations to be invoked.
 #
-# The core of this sub is a call to operation_scheduler(), the result
-# is an executable schedule stored in @$global_scheduled_commands.
+# The core of this sub is a call to operations_2_commands(), the
+# result is an executable schedule stored in
+# @$global_scheduled_commands.
 #
 # Extension plugins call execute_shell_command() and its family to add
 # their own commands to @$global_scheduled_commands.
@@ -11570,7 +11571,7 @@ sub schedule_operations_for_execution
 
 	# call each of the selected operations, invoking the plugins as required and push the result onto @$global_scheduled_commands
 
-	my $help_string_or_error = operation_scheduler($all_selected_operations);
+	my $help_string_or_error = operations_2_commands($all_selected_operations);
 
 	# ... either was invoked as the --help sub
 
@@ -11612,7 +11613,7 @@ sub schedule_operations_for_execution
 # After this operation completes, the schedule can be examined,
 # queried and executed as required.
 
-sub operation_scheduler
+sub operations_2_commands
 {
     my $all_selected_operations = shift;
 
