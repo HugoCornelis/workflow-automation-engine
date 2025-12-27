@@ -8705,6 +8705,8 @@ sub execute_all_scheduled_commands
 	{
 	    my $operation_result;
 
+	    my $dry_run_reason = $scheduled_command->{dry_run_reason};
+
 	    # either we are executing the scheduled command ...
 
 	    if ($global_execute_scheduled_commands)
@@ -11564,11 +11566,11 @@ sub schedule_operations_for_execution
     {
 	# construct a list of known operations that match the operation_selector_type
 
-	my $all_selected_operations = operation_selector($operation_selector_type, $dry_run_reason, $help, $arguments);
+	my $all_selected_operations = operation_selector($operation_selector_type, $help, $arguments);
 
 	# call each of the selected operations, invoking the plugins as required and push the result onto @$global_scheduled_commands
 
-	my $help_string_or_error = operation_scheduler($all_selected_operations, $dry_run_reason);
+	my $help_string_or_error = operation_scheduler($all_selected_operations);
 
 	# ... either was invoked as the --help sub
 
@@ -11614,8 +11616,6 @@ sub operation_scheduler
 {
     my $all_selected_operations = shift;
 
-    my $scheduler_dry_run_reason = shift;
-
     my $result = '';
 
     foreach my $selected_operation (@$all_selected_operations)
@@ -11632,14 +11632,14 @@ sub operation_scheduler
 
 	my $short_operation = $1;
 
-	if ($scheduler_dry_run_reason)
+	if ($dry_run_reason)
 	{
 	    # add a header to the schedule / diagram for this operation
 
 	    my $scheduled_command
 		= {
 		   command => "---\nCOMMAND: $short_operation$has_help",
-		   dry_run => $scheduler_dry_run_reason,
+		   dry_run => $dry_run_reason,
 		   interaction_role => 'none',
 		  };
 
@@ -11666,14 +11666,14 @@ sub operation_scheduler
 	    }
 	}
 
-	if ($scheduler_dry_run_reason)
+	if ($dry_run_reason)
 	{
 	    # end the command in the schedule / diagram
 
 	    my $scheduled_command
 		= {
 		   command => "\n\n---\n",
-		   dry_run => $scheduler_dry_run_reason,
+		   dry_run => $dry_run_reason,
 		   interaction_role => 'none',
 		  };
 
@@ -11695,8 +11695,6 @@ sub operation_selector
 {
     my $operation_selector_type = shift;
 
-    my $dry_run_reason = shift;
-
     my $help = shift;
 
     my $arguments = shift;
@@ -11717,6 +11715,8 @@ sub operation_selector
 	or $builtin_package)
     {
 	my $operation_implementation = $operation_selector_type->{operation_implementation};
+
+	my $dry_run_reason = $operation_selector_type->{dry_run_reason};
 
 	my $selected_operation
 	    = {
@@ -11807,6 +11807,8 @@ sub operation_selector
 		my $operator = $1;
 
 		my $operation_type = $all_typed_operations->{"$matching_target $operator"}->{type};
+
+		my $dry_run_reason = $operation_selector_type->{dry_run_reason};
 
 		my $selected_operation
 		    = {
