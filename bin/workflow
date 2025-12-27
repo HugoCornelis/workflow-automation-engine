@@ -3765,7 +3765,7 @@ sub builtin_grep_commands
 
     # build a schedule of operations and invoke them to create the command list
 
-    main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
+    my $scheduled_commands = main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
 
     local $option_interactions_target_all_roles = 1;
 
@@ -3773,7 +3773,7 @@ sub builtin_grep_commands
 
     # execute all the scheduled_commands.
 
-    my $operation_results = Engine::execute_all_scheduled_commands($InteractionRole::all_interaction_roles);
+    my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
 
     my $schedule_result = Engine::process_operation_results($operation_results, {} );
 
@@ -8679,6 +8679,8 @@ sub schedule_real_command
 
 sub execute_all_scheduled_commands
 {
+    my $scheduled_commands = shift;
+
     my $interaction_roles = shift;
 
     my $operation_results = [];
@@ -8687,7 +8689,7 @@ sub execute_all_scheduled_commands
     {
 	use Data::Dumper;
 
-	print Dumper( { scheduled_commands => $global_scheduled_commands, }, );
+	print Dumper( { scheduled_commands => $scheduled_commands, }, );
     }
     elsif ($option_dump_interaction_roles)
     {
@@ -8701,7 +8703,7 @@ sub execute_all_scheduled_commands
     }
     else
     {
-	foreach my $scheduled_command (@$global_scheduled_commands)
+	foreach my $scheduled_command (@$scheduled_commands)
 	{
 	    my $operation_result;
 
@@ -11234,11 +11236,11 @@ sub main
 
     # build a schedule of operations and invoke them to create the command list
 
-    schedule_operations_for_execution($operation_selector_type, \@ARGV);
+    my $scheduled_commands = schedule_operations_for_execution($operation_selector_type, \@ARGV);
 
     # execute all the scheduled_commands.
 
-    my $operation_results = Engine::execute_all_scheduled_commands($InteractionRole::all_interaction_roles);
+    my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
 
     Engine::process_operation_results($operation_results, { console_output => 'always' } );
 
@@ -11594,6 +11596,10 @@ sub schedule_operations_for_execution
     {
 	report_error_exit("target '$target' does not provide command '$operation'.");
     }
+
+    use Clone qw(clone);
+
+    return clone($global_scheduled_commands);
 }
 
 
