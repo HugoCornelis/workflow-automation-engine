@@ -3749,25 +3749,31 @@ sub builtin_grep_commands
 
     my $schedule_arguments = [];
 
+    my $dry_run_reason = 'option_interactions';
+
     my $operation_selector_type
 	= {
 	   builtin_package => '',
-	   dry_run_reason => 'option_interactions',
+	   dry_run_reason => $dry_run_reason,
 	   help_asked => '',
 	   operation => '.*',
 	   operation_implementation => 'wildcard',
 	   target => $regex_target,
 	  };
 
-    # disable execution from here on
+    # disable command execution
 
     $global_execute_scheduled_commands = '';
+
+    # tell the scheduler that we are doing some form of interactions query
+
+    local $option_interactions = 1;
 
     # build a schedule of operations and invoke them to create the command list
 
     my $scheduled_commands = main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
 
-    local $option_interactions_target_all_roles = 1;
+    # local $option_interactions_target_all_roles = 1;
 
     InteractionRole::interaction_roles_identify_all();
 
@@ -3775,7 +3781,11 @@ sub builtin_grep_commands
 
     my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
 
-    my $schedule_result = Engine::process_operation_results($operation_results, {} );
+    # re-enable command execution
+
+    # $global_execute_scheduled_commands = 'yes';
+
+    my $schedule_result = Engine::process_operation_results($operation_results, { dry_run_reason => $dry_run_reason } );
 
     if ($schedule_result->{console_output})
     {
@@ -8714,6 +8724,12 @@ sub execute_all_scheduled_commands
 		main::report_error_exit("internal error: no interpretation of the scheduled_commands has been identified (dry_run is $dry_run which is neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
 	    }
 
+	    # copy the dry_run flag for operation_result processing
+
+	    $operation_result->{dry_run} = $dry_run;
+
+	    # when executing the commands we give immediately console output
+
 	    if ($global_execute_scheduled_commands)
 	    {
 		if (defined $operation_result)
@@ -9034,15 +9050,17 @@ sub process_operation_results
 
     my $result_processor = shift;
 
+    my $dry_run_reason = $result_processor->{dry_run_reason};
+
     my $console_output = '';
 
-    if ($global_execute_scheduled_commands)
-    {
-    }
+    # if ($global_execute_scheduled_commands)
+    # {
+    # }
 
     # ... or we are either in dry-run ...
 
-    elsif ($option_dry_run =~ /^[0-9]+$/)
+    if ($dry_run_reason eq 'option_dry_run')
     {
 	foreach my $operation_result (@$operation_results)
 	{
@@ -9052,10 +9070,7 @@ sub process_operation_results
 
     # ... or printing an interaction diagram
 
-    elsif ($option_interactions
-	   or $option_interactions_all
-	   or $option_interactions_target
-	   or $option_interactions_target_all_roles)
+    elsif ($dry_run_reason eq 'option_interactions')
     {
 	foreach my $operation_result (@$operation_results)
 	{
@@ -9077,7 +9092,14 @@ sub process_operation_results
 
     else
     {
-	main::report_error_exit("internal error: no interpretation of the operation_results has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+	# if ($option_verbose)
+	# {
+	#     use Data::Dumper;
+
+	#     print Dumper( { operation_results => $operation_results } );
+	# }
+
+	# main::report_error_exit("internal error: no interpretation of the operation_results has been identified (dry_run_reason is $dry_run_reason which neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
     }
 
     if ($result_processor->{console_output})
@@ -11159,7 +11181,7 @@ sub main
 
     # are we dry running for any reason?
 
-    my $dry_run_reason;
+    my $dry_run_reason = '';
 
     if ($option_dry_run)
     {
@@ -11210,7 +11232,7 @@ sub main
 
     my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
 
-    Engine::process_operation_results($operation_results, { console_output => 'always' } );
+    Engine::process_operation_results($operation_results, { console_output => 'always', dry_run_reason => $dry_run_reason } );
 
     return 0;
 }
@@ -11567,7 +11589,11 @@ sub schedule_operations_for_execution
 
     use Clone qw(clone);
 
-    return clone($global_scheduled_commands);
+    my $result = clone($global_scheduled_commands);
+
+    $global_scheduled_commands = [];
+
+    return $result;
 }
 
 
