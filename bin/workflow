@@ -3752,7 +3752,7 @@ sub builtin_grep_commands
     my $operation_selector_type
 	= {
 	   builtin_package => '',
-	   dry_run_reason => 'wildcard',
+	   dry_run_reason => 'option_interactions',
 	   help_asked => '',
 	   operation => '.*',
 	   operation_implementation => 'wildcard',
