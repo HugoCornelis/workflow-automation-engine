@@ -8414,17 +8414,17 @@ sub _system_bash
 
 sub execute_scheduled_command
 {
-    my $scheduled_operation = shift;
+    my $scheduled_command = shift;
 
-    my $shell_command = $scheduled_operation->{command};
+    my $shell_command = $scheduled_command->{command};
 
-    my $dry_run = $scheduled_operation->{dry_run};
+    my $dry_run = $scheduled_command->{dry_run};
 
-    my $executable_command = $scheduled_operation->{executable_command};
+    my $executable_command = $scheduled_command->{executable_command};
 
-    my $interaction_role = $scheduled_operation->{interaction_role};
+    my $interaction_role = $scheduled_command->{interaction_role};
 
-    my $options = $scheduled_operation->{options};
+    my $options = $scheduled_command->{options};
 
     my $console_output = '';
 
@@ -8584,7 +8584,7 @@ sub execute_scheduled_command
 	    print $global_exported_times_file "\n";
 	}
 
-	#! we could add the output to $scheduled_operation->{output} or something similar
+	#! we could add the output to $scheduled_command->{output} or something similar
 
 	if ($export_output)
 	{
