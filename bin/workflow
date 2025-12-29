@@ -7821,31 +7821,18 @@ sub execute_scheduled_command_option_dry_run
 
     my $console_output = '';
 
-    if ($export_sh
-	and exists $export_sh->{prefix})
+    my $exit_status = 0;
+
+    # markers in the schedule do not have an executable_command, skip them
+
+    if (defined $executable_command)
     {
-	my $dry_run_prefix = "$global_program_name: *** Running in dry_run mode, export prefix: '";
-
-	$console_output .= join "", map { "$dry_run_prefix$_\n" } split "\n", $export_sh->{prefix};
-    }
-
-    #! when is this option a simple number?
-
-    if ($dry_run =~ /^[0-9]+$/)
-    {
-	$console_output .= "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$shell_command'\n";
+	$console_output .= "$global_program_name: *** Running in dry_run, not executing: '$shell_command'\n";
 
 	if ($option_details)
 	{
 	}
-    }
 
-    # markers in the schedule do not have an executable_command, skip them
-
-    my $exit_status = 0;
-
-    if (defined $executable_command)
-    {
 	# execute a cd regardless of dry_running
 
 	my $cd_command = _process_cd_command($executable_command);
@@ -8674,7 +8661,7 @@ sub execute_all_scheduled_commands
 	{
 	    my $operation_result;
 
-	    my $dry_run_reason = $scheduled_command->{dry_run_reason};
+	    my $dry_run = $scheduled_command->{dry_run};
 
 	    # either we are executing the scheduled command ...
 
@@ -8689,7 +8676,7 @@ sub execute_all_scheduled_commands
 
 	    # ... or we are either in dry-run ...
 
-	    elsif ($option_dry_run =~ /^[0-9]+$/)
+	    elsif ($dry_run eq 'option_dry_run')
 	    {
 		$operation_result = execute_scheduled_command_option_dry_run($scheduled_command);
 
@@ -8700,10 +8687,7 @@ sub execute_all_scheduled_commands
 
 	    # ... or printing an interaction diagram
 
-	    elsif ($option_interactions
-		   or $option_interactions_all
-		   or $option_interactions_target
-		   or $option_interactions_target_all_roles)
+	    elsif ($dry_run eq 'option_interactions')
 	    {
 		$operation_result = execute_scheduled_command_option_interactions($interaction_roles, $scheduled_command, $option_interactions_target_all_roles || $option_interactions_all);
 
@@ -8727,7 +8711,7 @@ sub execute_all_scheduled_commands
 
 	    else
 	    {
-		main::report_error_exit("internal error: no interpretation of the scheduled_commands has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+		main::report_error_exit("internal error: no interpretation of the scheduled_commands has been identified (dry_run is $dry_run which is neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
 	    }
 
 	    if ($global_execute_scheduled_commands)
@@ -8900,16 +8884,28 @@ sub execute_shell_command
 
     ($shell_command, $export_sh_command) = apply_timeout($timeout_prefix, $shell_command, undef, $export_sh_command);
 
-    # schedule the given command
+    # compute the dry_run mode if there is any
 
-    my $dry_run = ($options->{dry_run} || $option_dry_run);
+    my $dry_run_reason = ($options->{dry_run} || $option_dry_run) ? 'option_dry_run' : '';
+
+    if ($option_interactions
+	or $option_interactions_all
+	or $option_interactions_target
+	or $option_interactions_target_all_roles)
+    {
+	$dry_run_reason = 'option_interactions';
+    }
+
+    # apply the correct interaction role
 
     my $interaction_role = $InteractionRole::current_interaction_role;
+
+    # schedule the given command
 
     my $scheduled_command
 	= {
 	   command => $shell_command,
-	   dry_run => $dry_run,
+	   dry_run => $dry_run_reason,
 	   executable_command => $executable_command,
 	   export_sh => $export_sh,
 	   export_sh_command => $export_sh_command,
@@ -11185,7 +11181,7 @@ sub main
 	   or $option_interactions_target
 	   or $option_interactions_target_all_roles)
     {
-	$dry_run_reason = 'wildcard';
+	$dry_run_reason = 'option_interactions';
 
 	# make sure we select operations
 
@@ -11537,7 +11533,7 @@ sub schedule_operations_for_execution
     if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
 	or $operation_implementation eq 'wildcard'
 	or $builtin_package
-	or $dry_run_reason eq 'wildcard')
+	or $dry_run_reason eq 'option_interactions')
     {
 	# construct a list of known operations that match the operation_selector_type
 

@@ -1,0 +1,104 @@
+---
+command: feature-testing-workflow features --interactions-target
+command_tests:
+  - description: Are the commands of a single target in option interactions-target scheduled correctly?
+    read: |+2
+      
+      COMMAND: features_annotations
+          ROLE: 'localuser@localhost'
+      
+          'pwd'
+          'cd /bin '
+          'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_cd_tests (use --help to see the help page)
+          'pwd'
+          'cd bin '
+          'pwd'
+          'cd .. '
+          'pwd'
+          'cd / '
+          'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_cd_tests_ssh
+                                                  ROLE: 'root@ssh_cd'
+      
+                                                  'pwd'
+                                                  'cd /bin '
+                                                  'pwd'
+                                                  'cd .. '
+                                                  'pwd'
+                                                  'cd / '
+                                                  'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_cd_tests_tmux
+                                                                                          ROLE: 'tmux_cd'
+      
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+                                                                                          'cd bin '
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+                                                                                          'cd .. '
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+                                                                                          'cd / '
+                                                                                          'pwd >>/tmp/tmux-pwd.txt'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_export_sh
+          'pwd'
+          'cd /bin '
+          'pwd'
+                                                  'pwd'
+                                                  'cd /bin '
+                                                  'pwd'
+                                                                                          'pwd'
+                                                                                          'cd /bin '
+                                                                                          'pwd'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_export_variables
+          'cd /home/neurospaces '
+          'echo /some/directory'
+          'echo with an unused value'
+          'echo SERVER_PASSWORD: a-password-value-is-never-exported'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_remote_script_execution
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data '
+          'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@172.18.0.4:/tmp/feature-shell-script-remote.sh'
+                                                  '/tmp/feature-shell-script-remote.sh arg1 arg2'
+      
+      
+      ---
+      
+      ---
+      COMMAND: features_timestamps
+          'pwd'
+          'pwd'
+          'pwd'
+      
+      
+      ---
+
+    white_space: convert seen 0a to 0d 0a newlines
+description: Are the commands of a single target in option interactions-target scheduled correctly?

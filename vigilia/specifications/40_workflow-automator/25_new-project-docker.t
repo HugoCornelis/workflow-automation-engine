@@ -603,7 +603,7 @@ conf.workflow-tests-configuration
 				command_tests => [
 						  {
 						   description => "Can we dry run one of the installed workflows to inspect which commands it would run?",
-						   read => 'workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
+						   read => 'workflow-tests-workflow: *** Running in dry_run, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
