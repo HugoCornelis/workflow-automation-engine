@@ -8642,39 +8642,6 @@ sub execute_scheduled_command
 }
 
 
-sub schedule_real_command
-{
-    my $shell_command = shift;
-
-    my $executable_command = shift;
-
-    my $interaction_role = shift;
-
-    my $options = shift;
-
-    my $dry_run = shift;
-
-    my $export_sh = shift;
-
-    my $export_sh_command = shift;
-
-    my $scheduled_command
-	= {
-	   command => $shell_command,
-	   dry_run => $dry_run,
-	   executable_command => $executable_command,
-	   export_sh => $export_sh,
-	   export_sh_command => $export_sh_command,
-	   interaction_role => $interaction_role,
-	   options => $options,
-	  };
-
-    push @$global_scheduled_commands, $scheduled_command;
-
-    return '';
-}
-
-
 # execute all the scheduled_commands.
 
 sub execute_all_scheduled_commands
@@ -8935,17 +8902,22 @@ sub execute_shell_command
 
     # schedule the given command
 
-    my $exit_code
-	= schedule_real_command
-	  (
-	   $shell_command,
-	   $executable_command,
-	   $InteractionRole::current_interaction_role,
-	   $options,
-	   ($options->{dry_run} || $option_dry_run),
-	   $export_sh,
-	   $export_sh_command,
-	  );
+    my $dry_run = ($options->{dry_run} || $option_dry_run);
+
+    my $interaction_role = $InteractionRole::current_interaction_role;
+
+    my $scheduled_command
+	= {
+	   command => $shell_command,
+	   dry_run => $dry_run,
+	   executable_command => $executable_command,
+	   export_sh => $export_sh,
+	   export_sh_command => $export_sh_command,
+	   interaction_role => $interaction_role,
+	   options => $options,
+	  };
+
+    push @$global_scheduled_commands, $scheduled_command;
 
     return '';
 }
