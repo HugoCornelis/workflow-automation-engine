@@ -14,7 +14,7 @@ command_tests:
       
       Afterwards install the scripts on your system using the command:
       
-        workflow builtin scripts_install -- --commands --git
+        workflow builtin configuration_install -- --commands --git
       
       Then check if they work by inspecting the examples they provide (with various options):
       

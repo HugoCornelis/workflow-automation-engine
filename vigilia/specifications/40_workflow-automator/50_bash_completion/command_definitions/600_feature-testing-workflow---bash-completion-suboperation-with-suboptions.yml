@@ -1,5 +1,5 @@
 ---
-command: feature-testing-workflow --bash-completion 'feature-testing-workflow builtin scripts_install --' 3 51
+command: feature-testing-workflow --bash-completion 'feature-testing-workflow builtin configuration_install --' 3 57
 command_tests:
   - description: feature-testing-workflow --bash-completion suboperation with suboptions
     read: ''
