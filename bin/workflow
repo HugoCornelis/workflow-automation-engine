@@ -9867,7 +9867,7 @@ package InteractionRole;
 
 # TODO: this needs refactoring to appear as an argument to function calls
 
-our $all_interaction_roles = {};
+our $all_interaction_roles;
 
 our $current_interaction_role;
 
@@ -9879,6 +9879,11 @@ sub interaction_roles_identify_all
     if (not defined $roles)
     {
 	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
+    if ($all_interaction_roles)
+    {
+	return;
     }
 
     my $interaction_indent = 4;
