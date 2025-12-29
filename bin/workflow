@@ -8053,15 +8053,17 @@ sub execute_scheduled_command_option_export_sh
 {
     my $interaction_roles = shift;
 
-    my $scheduled_operation = shift;
+    my $scheduled_command = shift;
 
-    my $executable_command = $scheduled_operation->{executable_command};
+    my $all_scheduled_commands = shift;
 
-    my $export_sh = $scheduled_operation->{export_sh};
+    my $executable_command = $scheduled_command->{executable_command};
 
-    my $export_sh_command = $scheduled_operation->{export_sh_command};
+    my $export_sh = $scheduled_command->{export_sh};
 
-    my $interaction_role = $scheduled_operation->{interaction_role};
+    my $export_sh_command = $scheduled_command->{export_sh_command};
+
+    my $interaction_role = $scheduled_command->{interaction_role};
 
     my $console_output = '';
 
@@ -8170,7 +8172,7 @@ $help_string
 
 	if (exists $global_technical_project_configuration->{export_sh_variables})
 	{
-	    my $selected_variables = _execute_option_export_sh_variables_select($global_technical_project_configuration->{export_sh_variables});
+	    my $selected_variables = _execute_option_export_sh_variables_select($global_technical_project_configuration->{export_sh_variables}, $all_scheduled_commands);
 
 	    _execute_option_export_sh_variables_export($global_exported_sh_file, $selected_variables);
 	}
@@ -8236,6 +8238,8 @@ sub _execute_option_export_sh_variables_select
 {
     my $export_sh_variables = shift;
 
+    my $scheduled_commands = shift;
+
     my $result = [];
 
     foreach my $export_sh_variable_hash (@$export_sh_variables)
@@ -8251,7 +8255,7 @@ sub _execute_option_export_sh_variables_select
 		next;
 	    }
 
-	    foreach my $scheduled_command (@$global_scheduled_commands)
+	    foreach my $scheduled_command (@$scheduled_commands)
 	    {
 		# substitute the variable value with its name in the command
 
@@ -8710,7 +8714,7 @@ sub execute_all_scheduled_commands
 
 	    elsif (defined $option_export_sh)
 	    {
-		$operation_result = execute_scheduled_command_option_export_sh($interaction_roles, $scheduled_command);
+		$operation_result = execute_scheduled_command_option_export_sh($interaction_roles, $scheduled_command, $scheduled_commands);
 
 		$scheduled_command->{operation_result} = $operation_result;
 
