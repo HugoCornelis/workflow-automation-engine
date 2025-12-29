@@ -1,0 +1,22 @@
+---
+command: feature-testing-workflow features cd_tests --interactions
+command_tests:
+  - description: Are commands in option interactions scheduled correctly?
+    read: |+2
+      
+      COMMAND: features_cd_tests (use --help to see the help page)
+          ROLE: 'localuser@localhost'
+      
+          'pwd'
+          'cd bin '
+          'pwd'
+          'cd .. '
+          'pwd'
+          'cd / '
+          'pwd'
+      
+      
+      ---
+
+    white_space: convert seen 0a to 0d 0a newlines
+description: Are commands in option interactions scheduled correctly?

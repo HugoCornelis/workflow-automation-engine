@@ -1,0 +1,36 @@
+---
+command: feature-testing-workflow builtin grep_commands 0 feature
+command_tests:
+  - description: 'Is a query that builds an interaction diagramma and examines it, executed correctly?'
+    read: |
+      COMMAND: builtin_docker_images_build (use --help to see the help page)
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing '
+          'docker build --tag docker_source_code_image --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000  --file feature-testing-configuration-data/dockerfiles/Dockerfile.source_code .'
+      COMMAND: builtin_manual (use --help to see the help page)
+          'echo Internal commands to generate 'feature-testing-manual.rst''
+          'pandoc 'feature-testing-manual.rst' -o 'feature-testing-manual.pdf' -V geometry:margin=1cm --number-sections'
+          'okular 'feature-testing-manual.pdf''
+      COMMAND: builtin_scripts_fetch (use --help to see the help page)
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing '
+      COMMAND: builtin_scripts_install (use --help to see the help page)
+          'bash -c "echo '# feature-testing-workflow
+      alias feature-testing-workflow=\"grc feature-testing-workflow\"
+      alias feature-testing-configuration=\"grc feature-testing-configuration\"
+          'echo   . ./feature-testing-bash-completion.sh'
+          'echo   feature-testing-workflow builtin target_add source_code \"Operations on the source code, such as git checkout, build and installation.\" -- --install-commands-py'
+      COMMAND: builtin_scripts_pull (use --help to see the help page)
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing '
+      COMMAND: examples_sh_sh_array_of_commands
+          '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/examples_sh/sh_array_of_commands.sh'
+      COMMAND: examples_sh_sh_remote_execution
+          '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/examples_sh/sh_remote_execution.sh'
+      COMMAND: examples_sh_sh_single_command
+          '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/examples_sh/sh_single_command.sh'
+      COMMAND: features_remote_script_execution
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data '
+          'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@172.18.0.4:/tmp/feature-shell-script-remote.sh'
+                                                                                          '/tmp/feature-shell-script-remote.sh arg1 arg2'
+      COMMAND: scripts_feature-shell-script-remote
+          '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/scripts/feature-shell-script-remote.sh'
+    white_space: convert seen 0a to 0d 0a newlines
+description: 'Is a query that builds an interaction diagramma and examines it, executed correctly?'

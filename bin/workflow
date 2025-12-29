@@ -71,8 +71,8 @@ our $option_force_rebuild;
 our $option_help;
 our $option_help_commands;
 our $option_help_field_project_name;
-our $option_help_module;
-our $option_help_module_all;
+our $option_help_builtin_package;
+our $option_help_builtin_packages_all;
 our $option_help_options;
 our $option_help_projects;
 our $option_help_targets;
@@ -85,12 +85,12 @@ our $option_verbose;
 our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
-       "d|details+" => \$option_details,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
        "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
        "dump-schedule!" => \$option_dump_schedule,
+       "d|details+" => \$option_details,
        "export-help-page!" => \$option_export_help_page,
        "export-remote=s" => \$option_export_remote,
        "export-sh:s" => \$option_export_sh,
@@ -99,10 +99,10 @@ our $global_options
        "export-verbose!" => \$option_export_verbose,
        "force-rebuild!" => \$option_force_rebuild,
        "help!" => \$option_help,
+       "help-builtin-package!" => \$option_help_builtin_package,
+       "help-builtin-packages-all!" => \$option_help_builtin_packages_all,
        "help-commands!" => \$option_help_commands,
        "help-field-project-name!" => \$option_help_field_project_name,
-       "help-module!" => \$option_help_module,
-       "help-module-all!" => \$option_help_module_all,
        "help-options!" => \$option_help_options,
        "help-projects!" => \$option_help_projects,
        "help-targets!" => \$option_help_targets,
@@ -167,9 +167,9 @@ my $GROUP_ID = `id -g`; chomp $GROUP_ID;
 our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null` =~ m'Inside a Docker' ? 'y' : 'n';
 
 
-our $global_scheduled_operations = [];
+our $global_scheduled_commands = [];
 
-our $global_execute_what_is_scheduled = 'yes';
+our $global_execute_scheduled_commands = 'yes';
 
 my $global_builtin_operations
     = {
@@ -193,19 +193,19 @@ my $global_known_operation_packages_builtin
     = {
        'Command::Buildroot' => {
 				description => 'workflows for working with Buildroot',
-				documentation => 'These workflows implement convenience interactions with Buildroot.',
+				documentation => 'These workflows implement interactions with Buildroot.',
 			       },
        'Command::Git' => {
 			  description => 'workflows for working with Git',
-			  documentation => 'These workflows implement convenience interactions with Git.',
+			  documentation => 'These workflows implement interactions with Git.',
 			 },
        'Command::Git::RepositorySet' => {
 					 description => 'workflows for working with Git repositories',
-					 documentation => 'These workflows implement convenience interactions with a set of Git repositories.',
+					 documentation => 'These workflows implement interactions with a set of Git repositories.',
 					},
        'Command::GitLab' => {
 			     description => 'workflows for working with GitLab',
-			     documentation => 'These workflows implement convenience interactions to push and pull source code from GitLab.',
+			     documentation => 'These workflows implement push and pull of source code to and from GitLab.',
 			    },
        'Command::Linux' => {
 			    description => 'workflows for working with the Linux kernel source code',
@@ -2978,9 +2978,12 @@ sub builtin_command_filenames_known
 
     $command_filenames = $command_filenames->{command_filenames};
 
-    use YAML;
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
 
-    print Dump( { command_filenames_known => $command_filenames } );
+	print Dump( { command_filenames_known => $command_filenames } );
+    }
 
     return 0;
 }
@@ -3023,9 +3026,12 @@ sub builtin_configuration_directory_print
 {
     my $project_name = shift;
 
-    use YAML;
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
 
-    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+    }
 
     my $error = '';
 
@@ -3057,7 +3063,7 @@ sub builtin_configuration_archive
 
     # make sure the --interactions family of options works
 
-    if (not $global_execute_what_is_scheduled)
+    if (not $global_execute_scheduled_commands)
     {
 	return '';
     }
@@ -3333,6 +3339,11 @@ sub builtin_docker_exec
 {
     my $arguments = shift || [];
 
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
     my $roles = $global_technical_project_configuration->{roles};
 
     if (not defined $roles)
@@ -3513,20 +3524,25 @@ arguments:
 }
 
 
-sub builtin_grep
+sub builtin_grep_code
 {
     my $arguments = shift || [];
 
     my $regex_search = $arguments->[0];
 
-    if (not defined $regex_search)
+    if (not $global_execute_scheduled_commands)
     {
-	die "$0: builtin_grep: *** Error: a regex must be given on the command line.";
+	return '';
     }
 
-    my $debug_builtin_grep = 0;
+    if (not defined $regex_search)
+    {
+	die "$0: builtin_grep_code: *** Error: a regex must be given on the command line.";
+    }
 
-    if ($debug_builtin_grep > 1)
+    my $debug_builtin_grep_code = 0;
+
+    if ($debug_builtin_grep_code > 1)
     {
 	print STDERR Dumper(
 			    {
@@ -3558,7 +3574,7 @@ sub builtin_grep
 	      ];
     }
 
-    if ($debug_builtin_grep > 1)
+    if ($debug_builtin_grep_code > 1)
     {
 	print STDERR Dumper(
 			    {
@@ -3580,7 +3596,7 @@ sub builtin_grep
 	$selected_projects = [ @$selected_projects, @$projects, ];
     }
 
-    if ($debug_builtin_grep > 1)
+    if ($debug_builtin_grep_code > 1)
     {
 	print STDERR Dumper(
 			    {
@@ -3602,14 +3618,14 @@ sub builtin_grep
 
 	# generate the list of command filenames
 
-	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep);
+	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_code);
 
 	$command_filenames = $command_filenames->{command_filenames};
 
 	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
     }
 
-    if ($debug_builtin_grep)
+    if ($debug_builtin_grep_code)
     {
 	print STDERR Dumper( { selected_command_files => $selected_command_files, } );
     }
@@ -3625,11 +3641,11 @@ sub builtin_grep
 }
 
 
-sub builtin_grep_help
+sub builtin_grep_code_help
 {
     my $command = shift;
 
-    return "$command: Grep for a regex in the workflow scripts of the selected workflow projects.
+    return "$command: Grep for a regex in the workflow code scripts of the selected workflow projects.
 
 synopsis:
 ~~~~~~~~~
@@ -3644,6 +3660,203 @@ arguments:
     ``ARGV[0]``: A regular expression to search for.
 
     ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+
+";
+}
+
+
+sub builtin_grep_commands
+{
+    my $arguments = shift || [];
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $regex_target = $arguments->[0] || '.*';
+
+    if (not defined $regex_target)
+    {
+	die "$0: builtin_grep_commands: *** Error: a regex matching the target must be given on the command line.";
+    }
+
+    my $regex_command = $arguments->[1] || '.*';
+
+    if (not defined $regex_command)
+    {
+	die "$0: builtin_grep_commands: *** Error: a regex matching the command must be given on the command line.";
+    }
+
+    my $debug_builtin_grep_commands = 0;
+
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     arguments => $arguments,
+			    },
+			   );
+    }
+
+    my $project_selectors;
+
+    if (scalar @$arguments == 1)
+    {
+	my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+	if (! $field_project_name)
+	{
+	    $project_selectors = [ '.*'];
+	}
+	else
+	{
+	    $project_selectors = [ $field_project_name ];
+	}
+    }
+    else
+    {
+	$project_selectors
+	    = [
+	       @$arguments > 1 ? @$arguments[1 .. $#$arguments] : ()
+	      ];
+    }
+
+    # create the list of selected projects
+
+    my $selected_projects = [];
+
+    foreach my $project_selector (@$project_selectors)
+    {
+	my $projects = main::workflow_project_list_generate($project_selector);
+
+	$selected_projects = [ @$selected_projects, @$projects, ];
+    }
+
+    # collect the command_filenames for each selected_project
+
+    my $selected_command_files = [];
+
+    foreach my $selected_project (sort @$selected_projects)
+    {
+	# get the configuration_data_directory
+
+	my ($sources_configuration_directory, $configuration_data_directory)
+	    = main::project_name_2_configuration_data_directory($selected_project);
+
+	# generate the list of command filenames
+
+	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_commands);
+
+	$command_filenames = $command_filenames->{command_filenames};
+
+	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
+    }
+
+    my $schedule_arguments = [];
+
+    my $dry_run_reason = 'option_interactions';
+
+    my $operation_selector_type
+	= {
+	   builtin_package => '',
+	   dry_run_reason => $dry_run_reason,
+	   help_asked => '',
+	   operation => '.*',
+	   operation_implementation => 'wildcard',
+	   target => $regex_target,
+	  };
+
+    # disable command execution
+
+    $global_execute_scheduled_commands = '';
+
+    # tell the scheduler that we are doing some form of interactions query
+
+    local $option_interactions = 1;
+
+    # build a schedule of operations and invoke them to create the command list
+
+    my $scheduled_commands = main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
+
+    # local $option_interactions_target_all_roles = 1;
+
+    InteractionRole::interaction_roles_identify_all();
+
+    # execute all the scheduled_commands.
+
+    my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
+
+    # re-enable command execution
+
+    # $global_execute_scheduled_commands = 'yes';
+
+    my $schedule_result = Engine::process_operation_results($operation_results, { dry_run_reason => $dry_run_reason } );
+
+    if ($schedule_result->{console_output})
+    {
+	my $console_output = $schedule_result->{console_output};
+
+	my $console_output_lines
+	    = [
+	       split '\n', $console_output
+	      ];
+
+	my $selected_console_output_lines = [];
+
+	my $current_console_output_line;
+
+	my $current_console_output_header;
+
+	foreach my $console_output_line (@$console_output_lines)
+	{
+	    if ($console_output_line =~ m(COMMAND))
+	    {
+		$current_console_output_header = $console_output_line;
+	    }
+	    elsif ($console_output_line =~ m($regex_command))
+	    {
+		if ($current_console_output_header)
+		{
+		    push @$selected_console_output_lines, $current_console_output_header;
+
+		    $current_console_output_header = '';
+		}
+
+		push @$selected_console_output_lines, $console_output_line;
+	    }
+	}
+
+	my $selected_console_output = join "\n", @$selected_console_output_lines;
+
+	print $selected_console_output . "\n";
+    }
+
+    return '';
+}
+
+
+sub builtin_grep_commands_help
+{
+    my $command = shift;
+
+    return "$command: Grep for a regex in the workflow commands of the selected workflow projects.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: A regular expression to match the target against, '0' for all targets.
+
+    ``ARGV[1]``: A regular expression to match the commands against, '0' for all commands.
+
+    ``ARGV[2] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 ";
 }
@@ -3976,7 +4189,7 @@ $global_command_line
 
     my $ok = 'by default';
 
-    if ($global_execute_what_is_scheduled)
+    if ($global_execute_scheduled_commands)
     {
 	$ok = open($manual_file, ">", $manual_filename);
 
@@ -4092,6 +4305,11 @@ sub builtin_project_rename
     my $old_project_name = $field_project_name;
 
     my $new_project_name = $arguments->[0];
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
 
     if (not $new_project_name)
     {
@@ -4475,6 +4693,11 @@ sub builtin_project_start
 
     my $non_empty_directory = [ split '\n', `ls -1 2>/dev/null`, ];
 
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
     if (scalar @$non_empty_directory)
     {
 	die "$global_program_name: *** Error: Please empty this directory before starting a new project.";
@@ -4482,7 +4705,7 @@ sub builtin_project_start
 
     my $result;
 
-    if ($global_execute_what_is_scheduled)
+    if ($global_execute_scheduled_commands)
     {
 	my $project_name = $arguments->[0];
 
@@ -4673,6 +4896,11 @@ sub builtin_role_add
 {
     my $arguments = shift || [];
 
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
     my $option_dockerfile;
     my $option_localuser;
     my $option_scp_options;
@@ -4854,7 +5082,7 @@ sub builtin_role_add
 
     if (!$error)
     {
-	if (not $global_execute_what_is_scheduled)
+	if (not $global_execute_scheduled_commands)
 	{
 	    print Dump( { role => $role } );
 	}
@@ -4991,9 +5219,12 @@ sub builtin_role_print
 
     my $matching_roles = _roles_select($matcher);
 
-    use YAML;
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
 
-    print Dump($matching_roles);
+	print Dump($matching_roles);
+    }
 
     return 0;
 }
@@ -5296,6 +5527,11 @@ sub builtin_scripts_pull_help
 sub builtin_target_add
 {
     my $arguments = shift || [];
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
 
     my $option_install_command_pl;
     my $option_install_command_python;
@@ -7104,11 +7340,13 @@ sub build_tree_needs_rebuild
 }
 
 
-sub display_commented_command
+sub _format_commented_command
 {
     my $shell_command = shift;
 
     my $options = shift;
+
+    my $result = "";
 
     if (not $options->{quiet})
     {
@@ -7118,21 +7356,14 @@ sub display_commented_command
 
 	    $annotation =~ s(\n(.))(\n### $1)g;
 
-	    print "$annotation\n";
+	    $result .= "$annotation\n";
 	}
 
-	# print "# $shell_command (length: $shell_command_length)\n#\n";
-
-	print "# $shell_command\n#\n";
+	$result .= "# $shell_command\n#\n";
     }
+
+    return $result;
 }
-
-
-# TODO: this needs refactoring to appear as an argument to function calls
-
-our $global_interaction_roles = {};
-
-my $current_interaction_role;
 
 
 # apply the remoting prefix
@@ -7156,8 +7387,8 @@ sub apply_remote_record_exported_shell_command
 	# if we are exporting this one role or all roles
 
 	if (($export_remote eq 0)
-	    or ($export_remote eq $interaction_roles->{$current_interaction_role}->{name})
-	    or $export_remote eq $interaction_roles->{$current_interaction_role}->{number})
+	    or ($export_remote eq $interaction_roles->{$InteractionRole::current_interaction_role}->{name})
+	    or $export_remote eq $interaction_roles->{$InteractionRole::current_interaction_role}->{number})
 	{
 	    # we export the command without the remoting information
 
@@ -7180,7 +7411,7 @@ sub apply_remote_record_exported_shell_command
 	    }
 	}
 
-	if ($current_interaction_role =~ m(^tmux_))
+	if ($InteractionRole::current_interaction_role =~ m(^tmux_))
 	{
 	    $export_sh_command =~ s(\s+ENTER\s*$)();
 	}
@@ -7452,7 +7683,7 @@ sub compute_remote_and_interaction_role
 	$interaction_role = "localuser\@localhost";
     }
 
-    $current_interaction_role = $interaction_role;
+    $InteractionRole::current_interaction_role = $interaction_role;
 
     # return result
 
@@ -7591,7 +7822,7 @@ sub compute_timeout
 }
 
 
-sub execute_scheduled_operation_option_dry_run
+sub execute_scheduled_command_option_dry_run
 {
     my $scheduled_operation = shift;
 
@@ -7607,29 +7838,20 @@ sub execute_scheduled_operation_option_dry_run
 
     my $options = $scheduled_operation->{options};
 
-    if ($export_sh
-	and exists $export_sh->{prefix})
-    {
-	my $dry_run_prefix = "$global_program_name: *** Running in dry_run mode, export prefix: '";
+    my $console_output = '';
 
-	print map { "$dry_run_prefix$_\n" } split "\n", $export_sh->{prefix};
-    }
-
-    #! when is this option a simple number?
-
-    if ($dry_run =~ /^[0-9]+$/)
-    {
-	print "$global_program_name: *** Running in dry_run $dry_run mode, not executing: '$shell_command'\n";
-
-	if ($option_details)
-	{
-	}
-    }
+    my $exit_status = 0;
 
     # markers in the schedule do not have an executable_command, skip them
 
     if (defined $executable_command)
     {
+	$console_output .= "$global_program_name: *** Running in dry_run, not executing: '$shell_command'\n";
+
+	if ($option_details)
+	{
+	}
+
 	# execute a cd regardless of dry_running
 
 	my $cd_command = _process_cd_command($executable_command);
@@ -7638,144 +7860,18 @@ sub execute_scheduled_operation_option_dry_run
 	{
 	    my $cd_argument = $cd_command->{argument};
 
-	    my $exit_status = not chdir $cd_argument;
+	    $exit_status = not chdir $cd_argument;
 	}
 	else
 	{
 	}
     }
+
+    return { console_output => $console_output, exit_status => $exit_status };
 }
 
 
-sub identify_interaction_roles
-{
-    my $shell_command = shift;
-
-    my $executable_command = shift;
-
-    my $indent_delta = 40;
-
-    # either we have already inserted a descriptive record for this interaction role
-
-    if (exists $global_interaction_roles->{$current_interaction_role})
-    {
-    }
-
-    # or we show the interaction diagram with all the interaction roles in the configuration.
-
-    elsif ($option_interactions_target_all_roles)
-    {
-	my $roles = $global_technical_project_configuration->{roles};
-
-	if (not defined $roles)
-	{
-	    $roles = $global_technical_project_configuration->{target_servers};
-	}
-
-	my $interaction_indent = 4;
-
-	my $interaction_number = 1;
-
-	# create a hash with a descriptive record for each interaction role
-
-	$global_interaction_roles
-	    = {
-	       # map each human readable role to a descriptive record with appropriate indent
-
-	       map
-	       {
-		   my $target = $_;
-
-		   my $result
-		       = {
-			  $target => {
-				      indent => $interaction_indent,
-				      is_new_and_needs_header => 'yes',
-				      name => $target,
-				      number => $interaction_number,
-				     },
-			 };
-
-		   $interaction_number += 1;
-
-		   $interaction_indent += 24;
-
-		   %$result;
-	       }
-
-	       # sort roles in a intuitive order
-
-	       sort
-	       {
-		   # make sure that localhost always comes first
-
-		   if ($a =~ /local/)
-		   {
-		       return -1;
-		   }
-		   elsif ($b =~ /local/)
-		   {
-		       return 1;
-		   }
-		   else
-		   {
-		       $a cmp $b;
-		   }
-	       }
-
-	       # convert each target server to a human readable role
-
-	       map
-	       {
-		   my $role_key = $_;
-
-		   my $role = $roles->{$role_key};
-
-		   my $result;
-
-		   if (exists $role->{localuser}
-		       and $role->{localuser} eq 'yes')
-		   {
-		       $result = "localuser\@localhost";
-		   }
-		   else
-		   {
-		       my $role_name = $role->{name} || $role->{ssh_server} || 'localhost';
-
-		       my $target_user = $role->{ssh_user} || 'localuser';
-
-		       $result = $target_user . '@' . $role_name;
-		   }
-
-		   $result;
-	       }
-
-	       # based on the target servers
-
-	       keys %$roles,
-	      };
-    }
-
-    # or we show only the interaction roles used in this workflow
-
-    else
-    {
-	my $sorted_roles = [ keys %$global_interaction_roles, ];
-
-	my $interaction_indent = 4 + scalar @$sorted_roles * $indent_delta;
-
-	$global_interaction_roles->{$current_interaction_role}
-	    = {
-	       indent => $interaction_indent,
-	       is_new_and_needs_header => 'yes',
-	       name => $current_interaction_role,
-	       number => (scalar @$sorted_roles) + 1,
-	      };
-    }
-}
-
-
-sub execute_scheduled_operation_option_interactions
+sub execute_scheduled_command_option_interactions
 {
     my $interaction_roles = shift;
 
@@ -7788,6 +7884,8 @@ sub execute_scheduled_operation_option_interactions
     my $executable_command = $scheduled_operation->{executable_command};
 
     my $interaction_role_arg = $scheduled_operation->{interaction_role};
+
+    my $console_output = '';
 
     # we must have a valid interaction role
 
@@ -7816,7 +7914,7 @@ sub execute_scheduled_operation_option_interactions
 
 	    if ($interaction_role->{is_new_and_needs_header} eq 'yes')
 	    {
-		_print_interaction_header($interaction_role);
+		$console_output .= _format_interaction_header($interaction_role);
 	    }
 	}
     }
@@ -7827,7 +7925,7 @@ sub execute_scheduled_operation_option_interactions
     {
 	# print the command without indentation
 
-	print "$shell_command\n";
+	$console_output .= "$shell_command\n";
     }
 
     # else with a defined interaction_role
@@ -7840,24 +7938,26 @@ sub execute_scheduled_operation_option_interactions
 
 	if ($interaction_role->{is_new_and_needs_header} eq 'yes')
 	{
-	    _print_interaction_header($interaction_role);
+	    $console_output .= _format_interaction_header($interaction_role);
 	}
 
 	# print the command with indentation
 
 	if ($executable_command !~ /^\s*$/)
 	{
-	    my $interaction_indent = $interaction_role->{indent};
+	    my $interaction_indent = $interaction_role->{interaction_indent};
 
 	    my $indent = " " x $interaction_indent;
 
-	    print "$indent'$executable_command'\n";
+	    $console_output .= "$indent'$executable_command'\n";
 
 	    if ($option_details)
 	    {
 	    }
 	}
     }
+
+    return { console_output => $console_output };
 }
 
 
@@ -7873,22 +7973,26 @@ sub _print_sequence_diagram_header
 }
 
 
-sub _print_interaction_header
+sub _format_interaction_header
 {
     my $interaction_role = shift;
+
+    my $console_output = '';
 
     # calculate the indentation level
 
     my $interaction_role_name = $interaction_role->{name};
 
-    my $interaction_indent = $global_interaction_roles->{$interaction_role_name}->{indent};
+    my $interaction_indent = $interaction_role->{interaction_indent};
 
-    # TODO: this is here to figure out whether the above use of $global_interaction_roles can be removed.
+    # my $interaction_indent = $InteractionRole::all_interaction_roles->{$interaction_role_name}->{interaction_indent};
 
-    if ($interaction_indent != $interaction_role->{indent})
-    {
-	print "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{indent})\n";
-    }
+    # # TODO: this is here to figure out whether the above use of $all_interaction_roles can be removed.
+
+    # if ($interaction_indent != $interaction_role->{interaction_indent})
+    # {
+    # 	$console_output .= "$global_program_name: *** Warning: Inconsistent interaction_indent ($interaction_indent != $interaction_role->{interaction_indent})\n";
+    # }
 
     my $indent = " " x $interaction_indent;
 
@@ -7896,11 +8000,13 @@ sub _print_interaction_header
 
     # print the header
 
-    print "$header\n\n";
+    $console_output .= "$header\n\n";
 
     # remember that the header for this interaction_role has been printed
 
     $interaction_role->{is_new_and_needs_header} = $header;
+
+    return $console_output;
 }
 
 
@@ -7952,19 +8058,25 @@ sub _process_cd_command
 }
 
 
-sub execute_scheduled_operation_option_export_sh
+sub execute_scheduled_command_option_export_sh
 {
     my $interaction_roles = shift;
 
-    my $scheduled_operation = shift;
+    my $scheduled_command = shift;
 
-    my $executable_command = $scheduled_operation->{executable_command};
+    my $all_scheduled_commands = shift;
 
-    my $export_sh = $scheduled_operation->{export_sh};
+    my $executable_command = $scheduled_command->{executable_command};
 
-    my $export_sh_command = $scheduled_operation->{export_sh_command};
+    my $export_sh = $scheduled_command->{export_sh};
 
-    my $interaction_role = $scheduled_operation->{interaction_role};
+    my $export_sh_command = $scheduled_command->{export_sh_command};
+
+    my $interaction_role = $scheduled_command->{interaction_role};
+
+    my $console_output = '';
+
+    my $exit_status;
 
     if (not defined $global_exported_sh_file)
     {
@@ -8069,7 +8181,7 @@ $help_string
 
 	if (exists $global_technical_project_configuration->{export_sh_variables})
 	{
-	    my $selected_variables = _execute_option_export_sh_variables_select($global_technical_project_configuration->{export_sh_variables});
+	    my $selected_variables = _execute_option_export_sh_variables_select($global_technical_project_configuration->{export_sh_variables}, $all_scheduled_commands);
 
 	    _execute_option_export_sh_variables_export($global_exported_sh_file, $selected_variables);
 	}
@@ -8087,7 +8199,7 @@ $help_string
     {
 	my $cd_argument = $cd_command->{argument};
 
-	my $exit_status = not chdir $cd_argument;
+	$exit_status = not chdir $cd_argument;
     }
 
     #! some interaction roles add single quotes, we remove them here.
@@ -8104,7 +8216,7 @@ $help_string
 	$export_sh_command = _execute_option_export_sh_variables_substitute($global_technical_project_configuration->{export_sh_variables}, $export_sh_command);
     }
 
-    print "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
+    $console_output .= "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
 
     if ((not defined $option_export_remote or $option_export_remote eq 0)
 	or $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
@@ -8126,12 +8238,16 @@ $help_string
     {
 	print $global_exported_sh_file "$export_sh_command\n";
     }
+
+    return { console_output => $console_output, exit_status => $exit_status };
 }
 
 
 sub _execute_option_export_sh_variables_select
 {
     my $export_sh_variables = shift;
+
+    my $scheduled_commands = shift;
 
     my $result = [];
 
@@ -8148,11 +8264,11 @@ sub _execute_option_export_sh_variables_select
 		next;
 	    }
 
-	    foreach my $scheduled_operation (@$global_scheduled_operations)
+	    foreach my $scheduled_command (@$scheduled_commands)
 	    {
 		# substitute the variable value with its name in the command
 
-		my $export_sh_command = $scheduled_operation->{export_sh_command};
+		my $export_sh_command = $scheduled_command->{export_sh_command};
 
 		#! some interaction roles add single quotes, we remove them here.
 
@@ -8305,19 +8421,21 @@ sub _system_bash
 }
 
 
-sub execute_scheduled_operation
+sub execute_scheduled_command
 {
-    my $scheduled_operation = shift;
+    my $scheduled_command = shift;
 
-    my $shell_command = $scheduled_operation->{command};
+    my $shell_command = $scheduled_command->{command};
 
-    my $dry_run = $scheduled_operation->{dry_run};
+    my $dry_run = $scheduled_command->{dry_run};
 
-    my $executable_command = $scheduled_operation->{executable_command};
+    my $executable_command = $scheduled_command->{executable_command};
 
-    my $interaction_role = $scheduled_operation->{interaction_role};
+    my $interaction_role = $scheduled_command->{interaction_role};
 
-    my $options = $scheduled_operation->{options};
+    my $options = $scheduled_command->{options};
+
+    my $console_output = '';
 
     my $exit_status;
 
@@ -8330,15 +8448,11 @@ sub execute_scheduled_operation
     {
 	my $cd_argument = $cd_command->{argument};
 
-	display_commented_command($shell_command, $options);
+	my $commented_command = _format_commented_command($shell_command, $options);
+
+	$console_output = "$commented_command$console_output";
 
 	$exit_status = not chdir $cd_argument;
-    }
-    elsif ($dry_run)
-    {
-	#! this should never be called, this is already called from execute_all_scheduled_operations()
-
-	execute_scheduled_operation_option_dry_run($scheduled_operation);
     }
     else
     {
@@ -8386,7 +8500,9 @@ sub execute_scheduled_operation
 	{
 	    if (not $export_output)
 	    {
-		display_commented_command($shell_command, $options);
+		my $commented_command = _format_commented_command($shell_command, $options);
+
+		$console_output = "$commented_command$console_output";
 
 		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
 
@@ -8398,7 +8514,14 @@ sub execute_scheduled_operation
 		}
 		else
 		{
-		    $exit_status = system "$shell_command";
+		    # $exit_status = system "$shell_command";
+
+		    $console_output .= `$shell_command`;
+
+		    #t maybe better to use ${^CHILD_ERROR_NATIVE}
+		    #t see https://perldoc.perl.org/perlvar
+
+		    $exit_status = $?;
 		}
 
 		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
@@ -8470,7 +8593,7 @@ sub execute_scheduled_operation
 	    print $global_exported_times_file "\n";
 	}
 
-	#! we could add the output to $scheduled_operation->{output} or something similar
+	#! we could add the output to $scheduled_command->{output} or something similar
 
 	if ($export_output)
 	{
@@ -8511,7 +8634,7 @@ sub execute_scheduled_operation
 	{
 # 	    system "echo >>$output_path 2>&1 failed with $exit_status: $shell_command\n";
 
-	    print "$global_program_name: *** Note: $shell_command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
+	    $console_output .= "$global_program_name: *** Note: $shell_command was allowed to fail (because $allow_fail) and has exit status $exit_status\n";
 	}
 	elsif ($allow_fail_silent)
 	{
@@ -8525,54 +8648,25 @@ sub execute_scheduled_operation
 
     # return the result of command execution
 
-    return $exit_status;
+    return { console_output => $console_output, exit_status => $exit_status };
 }
 
 
-sub schedule_real_command
+# execute all the scheduled_commands.
+
+sub execute_all_scheduled_commands
 {
-    my $shell_command = shift;
+    my $scheduled_commands = shift;
 
-    my $executable_command = shift;
-
-    my $interaction_role = shift;
-
-    my $options = shift;
-
-    my $dry_run = shift;
-
-    my $export_sh = shift;
-
-    my $export_sh_command = shift;
-
-    my $scheduled_operation
-	= {
-	   command => $shell_command,
-	   dry_run => $dry_run,
-	   executable_command => $executable_command,
-	   export_sh => $export_sh,
-	   export_sh_command => $export_sh_command,
-	   interaction_role => $interaction_role,
-	   options => $options,
-	  };
-
-    push @$global_scheduled_operations, $scheduled_operation;
-
-    return '';
-}
-
-
-sub execute_all_scheduled_operations
-{
     my $interaction_roles = shift;
 
-    my $results = [];
+    my $operation_results = [];
 
     if ($option_dump_schedule)
     {
 	use Data::Dumper;
 
-	print Dumper( { scheduled_operations => $global_scheduled_operations, }, );
+	print Dumper( { scheduled_commands => $scheduled_commands, }, );
     }
     elsif ($option_dump_interaction_roles)
     {
@@ -8586,65 +8680,90 @@ sub execute_all_scheduled_operations
     }
     else
     {
-	foreach my $scheduled_operation (@$global_scheduled_operations)
+	foreach my $scheduled_command (@$scheduled_commands)
 	{
+	    my $operation_result;
+
+	    my $dry_run = $scheduled_command->{dry_run};
+
 	    # either we are executing the scheduled command ...
 
-	    if ($global_execute_what_is_scheduled)
+	    if ($global_execute_scheduled_commands)
 	    {
-		my $result = execute_scheduled_operation($scheduled_operation);
+		$operation_result = execute_scheduled_command($scheduled_command);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_command->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or we are either in dry-run ...
 
-	    elsif ($option_dry_run =~ /^[0-9]+$/)
+	    elsif ($dry_run eq 'option_dry_run')
 	    {
-		my $result = execute_scheduled_operation_option_dry_run($scheduled_operation);
+		$operation_result = execute_scheduled_command_option_dry_run($scheduled_command);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_command->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or printing an interaction diagram
 
-	    elsif ($option_interactions
-		   or $option_interactions_all
-		   or $option_interactions_target
-		   or $option_interactions_target_all_roles)
+	    elsif ($dry_run eq 'option_interactions')
 	    {
-		my $result = execute_scheduled_operation_option_interactions($interaction_roles, $scheduled_operation, $option_interactions_target_all_roles || $option_interactions_all);
+		$operation_result = execute_scheduled_command_option_interactions($interaction_roles, $scheduled_command, $option_interactions_target_all_roles || $option_interactions_all);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_command->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or exporting to an executable shell script ...
 
 	    elsif (defined $option_export_sh)
 	    {
-		my $result = execute_scheduled_operation_option_export_sh($interaction_roles, $scheduled_operation);
+		$operation_result = execute_scheduled_command_option_export_sh($interaction_roles, $scheduled_command, $scheduled_commands);
 
-		$scheduled_operation->{result} = $result;
+		$scheduled_command->{operation_result} = $operation_result;
 
-		push @$results, $result;
+		push @$operation_results, $operation_result;
 	    }
 
 	    # ... or we have an internal error
 
 	    else
 	    {
-		report_error_exit("internal error: no interpretation of the scheduled_operations has been identified (neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+		main::report_error_exit("internal error: no interpretation of the scheduled_commands has been identified (dry_run is $dry_run which is neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+	    }
+
+	    # copy the dry_run flag for operation_result processing
+
+	    $operation_result->{dry_run} = $dry_run;
+
+	    # when executing the commands we give immediately console output
+
+	    if ($global_execute_scheduled_commands)
+	    {
+		if (defined $operation_result)
+		{
+		    if (exists $operation_result->{console_output})
+		    {
+			print $operation_result->{console_output};
+		    }
+		}
+		else
+		{
+		    main::report_error_exit("internal error: no operation_result of a scheduled_operation ($scheduled_command->{executable_command})");
+		}
+	    }
+	    else
+	    {
 	    }
 	}
     }
 
-    return $results;
+    return $operation_results;
 }
 
 
@@ -8753,11 +8872,11 @@ sub execute_shell_command
 
     # identify the interaction roles
 
-    identify_interaction_roles($shell_command, $executable_command);
+    InteractionRole::interaction_roles_identify();
 
     # now that we know the remote, apply the working directory for the remote on the command to be executed
 
-    $shell_command = working_directory_for_interaction_role_apply($current_interaction_role, $shell_command);
+    $shell_command = working_directory_for_interaction_role_apply($InteractionRole::current_interaction_role, $shell_command);
 
     # prefix the command with appropriate sudo options
 
@@ -8778,7 +8897,7 @@ sub execute_shell_command
 
     # force the execution of a change of the working directory to this process
 
-    $executable_command = working_directory_for_interaction_role_parse($executable_command, $current_interaction_role);
+    $executable_command = working_directory_for_interaction_role_parse($executable_command, $InteractionRole::current_interaction_role);
 
     #! note that the order of processing determines whether the options are locally or remotely applied
 
@@ -8788,25 +8907,42 @@ sub execute_shell_command
 
     # apply the remoting prefix, always local
 
-    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($global_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
 
     # apply the timeout prefix, always local
 
     ($shell_command, $export_sh_command) = apply_timeout($timeout_prefix, $shell_command, undef, $export_sh_command);
 
+    # compute the dry_run mode if there is any
+
+    my $dry_run_reason = ($options->{dry_run} || $option_dry_run) ? 'option_dry_run' : '';
+
+    if ($option_interactions
+	or $option_interactions_all
+	or $option_interactions_target
+	or $option_interactions_target_all_roles)
+    {
+	$dry_run_reason = 'option_interactions';
+    }
+
+    # apply the correct interaction role
+
+    my $interaction_role = $InteractionRole::current_interaction_role;
+
     # schedule the given command
 
-    my $exit_code
-	= schedule_real_command
-	  (
-	   $shell_command,
-	   $executable_command,
-	   $current_interaction_role,
-	   $options,
-	   ($options->{dry_run} || $option_dry_run),
-	   $export_sh,
-	   $export_sh_command,
-	  );
+    my $scheduled_command
+	= {
+	   command => $shell_command,
+	   dry_run => $dry_run_reason,
+	   executable_command => $executable_command,
+	   export_sh => $export_sh,
+	   export_sh_command => $export_sh_command,
+	   interaction_role => $interaction_role,
+	   options => $options,
+	  };
+
+    push @$global_scheduled_commands, $scheduled_command;
 
     return '';
 }
@@ -8918,6 +9054,76 @@ sub generate_output_filename
     # return result
 
     return $result;
+}
+
+
+sub process_operation_results
+{
+    my $operation_results = shift;
+
+    my $result_processor = shift;
+
+    my $dry_run_reason = $result_processor->{dry_run_reason};
+
+    my $console_output = '';
+
+    # if ($global_execute_scheduled_commands)
+    # {
+    # }
+
+    # ... or we are either in dry-run ...
+
+    if ($dry_run_reason eq 'option_dry_run')
+    {
+	foreach my $operation_result (@$operation_results)
+	{
+	    $console_output .= $operation_result->{console_output};
+	}
+    }
+
+    # ... or printing an interaction diagram
+
+    elsif ($dry_run_reason eq 'option_interactions')
+    {
+	foreach my $operation_result (@$operation_results)
+	{
+	    $console_output .= $operation_result->{console_output};
+	}
+    }
+
+    # ... or exporting to an executable shell script ...
+
+    elsif (defined $option_export_sh)
+    {
+	foreach my $operation_result (@$operation_results)
+	{
+	    $console_output .= $operation_result->{console_output};
+	}
+    }
+
+    # ... or we have an internal error
+
+    else
+    {
+	# if ($option_verbose)
+	# {
+	#     use Data::Dumper;
+
+	#     print Dumper( { operation_results => $operation_results } );
+	# }
+
+	# main::report_error_exit("internal error: no interpretation of the operation_results has been identified (dry_run_reason is $dry_run_reason which neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+    }
+
+    if ($result_processor->{console_output})
+    {
+	if ($console_output)
+	{
+	    print $console_output;
+	}
+    }
+
+    return { console_output => $console_output };
 }
 
 
@@ -9669,6 +9875,177 @@ sub _init_get_technical_configuration
 our $global_main_project_name = "ssp";
 
 
+package InteractionRole;
+
+
+# TODO: this needs refactoring to appear as an argument to function calls
+
+our $all_interaction_roles;
+
+our $current_interaction_role;
+
+
+sub interaction_roles_identify_all
+{
+    my $roles = $global_technical_project_configuration->{roles};
+
+    if (not defined $roles)
+    {
+	$roles = $global_technical_project_configuration->{target_servers};
+    }
+
+    if ($all_interaction_roles)
+    {
+	return;
+    }
+
+    my $interaction_indent = 4;
+
+    my $interaction_number = 1;
+
+    # create a hash with a descriptive record for each interaction role
+
+    $all_interaction_roles
+	= {
+	   # map each human readable role to a descriptive record with appropriate indent
+
+	   map
+	   {
+	       my $role = $_;
+
+	       my $result
+		   = {
+		      $role => {
+				interaction_indent => $interaction_indent,
+				is_new_and_needs_header => 'yes',
+				name => $role,
+				number => $interaction_number,
+			       },
+		     };
+
+	       $interaction_number += 1;
+
+	       $interaction_indent += 24;
+
+	       %$result;
+	   }
+
+	   # sort roles in a intuitive order
+
+	   sort
+	   {
+	       # make sure that localhost always comes first
+
+	       if ($a =~ /local/)
+	       {
+		   return -1;
+	       }
+	       elsif ($b =~ /local/)
+	       {
+		   return 1;
+	       }
+	       else
+	       {
+		   $a cmp $b;
+	       }
+	   }
+
+	   # convert each role to a human readable name
+
+	   map
+	   {
+	       my $role_key = $_;
+
+	       my $role = $roles->{$role_key};
+
+	       my $result;
+
+	       if (exists $role->{localuser}
+		   and $role->{localuser} eq 'yes')
+	       {
+		   $result = "localuser\@localhost";
+	       }
+	       else
+	       {
+		   my $role_name = $role->{name} || $role->{ssh_server} || 'localhost';
+
+		   my $target_user;
+
+		   if (exists $role->{ssh_user})
+		   {
+		       $target_user = $role->{ssh_user};
+		   }
+		   elsif (exists $role->{remote_policy})
+		   {
+		       $target_user = '';
+		   }
+		   else
+		   {
+		       $target_user = 'localuser';
+		   }
+
+		   if ($target_user)
+		   {
+		       $result = $target_user . '@' . $role_name;
+		   }
+		   else
+		   {
+		       $result = $role_name;
+		   }
+	       }
+
+	       $result;
+	   }
+
+	   # based on the known roles
+
+	   keys %$roles,
+	  };
+}
+
+
+sub interaction_roles_add_current
+{
+    my $indent_delta = 40;
+
+    my $sorted_roles = [ keys %$all_interaction_roles, ];
+
+    my $interaction_indent = 4 + scalar @$sorted_roles * $indent_delta;
+
+    $all_interaction_roles->{$current_interaction_role}
+	= {
+	   interaction_indent => $interaction_indent,
+	   is_new_and_needs_header => 'yes',
+	   name => $current_interaction_role,
+	   number => (scalar @$sorted_roles) + 1,
+	  };
+}
+
+
+sub interaction_roles_identify
+{
+    # either we have already inserted a descriptive record for this interaction role
+
+    if (exists $all_interaction_roles->{$current_interaction_role})
+    {
+    }
+
+    # or we show the interaction diagram with all the interaction roles in the configuration.
+
+    elsif ($option_interactions_target_all_roles)
+    {
+	interaction_roles_identify_all();
+    }
+
+    # or we show only the interaction roles used in this workflow
+
+    else
+    {
+	interaction_roles_add_current();
+    }
+}
+
+
 package Utilities;
 
 
@@ -10213,10 +10590,10 @@ sub bash_completion_generate_options
 			--export-verbose
 			--force-rebuild
 			--help
+			--help-builtin-package
+			--help-builtin-packages-all
 			--help-commands
 			--help-field-project-name
-			--help-module
-			--help-module-all
 			--help-options
 			--help-projects
 			--help-targets
@@ -10798,7 +11175,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
 
     # given the requested target and the operation, generate a useful filename for exporting execution times to a log file
@@ -10822,7 +11199,7 @@ sub main
 
     # are we dry running for any reason?
 
-    my $dry_run_reason;
+    my $dry_run_reason = '';
 
     if ($option_dry_run)
     {
@@ -10830,7 +11207,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
     elsif ($option_interactions)
     {
@@ -10838,13 +11215,13 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
     elsif ($option_interactions_all
 	   or $option_interactions_target
 	   or $option_interactions_target_all_roles)
     {
-	$dry_run_reason = 'option_interactions_target';
+	$dry_run_reason = 'option_interactions';
 
 	# make sure we select operations
 
@@ -10852,7 +11229,7 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
     elsif ($option_dump_module_interaction_roles)
     {
@@ -10860,14 +11237,22 @@ sub main
 
 	# make sure we don't actually run any commands
 
-	$global_execute_what_is_scheduled = '';
+	$global_execute_scheduled_commands = '';
     }
 
-    my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $option_help, \@ARGV);
+    my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $dry_run_reason, $option_help, \@ARGV);
 
-    schedule_operations_for_execution($operation_selector_type, $dry_run_reason, $option_help, \@ARGV);
+    # build a schedule of operations and invoke them to create the command list
 
-    Engine::execute_all_scheduled_operations($global_interaction_roles);
+    my $scheduled_commands = schedule_operations_for_execution($operation_selector_type, \@ARGV);
+
+    # execute all the scheduled_commands.
+
+    my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
+
+    Engine::process_operation_results($operation_results, { console_output => 'always', dry_run_reason => $dry_run_reason } );
+
+    return 0;
 }
 
 
@@ -10924,10 +11309,10 @@ options:
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
     --help                          display usage information and stop execution.
+    --help-builtin-package          display help about the commands of the given builtin package.
+    --help-builtin-packages-all     display the builtin packages.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
-    --help-module                   display all the available help information about the commands of the module.
-    --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
@@ -10990,19 +11375,19 @@ options:
 	exit 0;
     }
 
-    if ($option_help_module
-        or $option_help_module_all)
+    if ($option_help_builtin_package
+        or $option_help_builtin_packages_all)
     {
 	if (not defined $global_target
-	    and $option_help_module)
+	    and $option_help_builtin_package)
 	{
-	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-module' or '$global_program_name --help-module-all' to learn about the available modules (including the builtin ones)";
+	    die "$global_program_name: *** Error: no module name argument was given, try '$global_program_name Command --help-builtin-package' or '$global_program_name --help-builtin-packages-all' to learn about the available modules (including the builtin ones)";
 	}
 
 	my $known_operation_packages
 	    = {
 	       'Command' => {
-			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-module'" } sort keys %$global_known_operation_packages_builtin ) . ')',
+			     description => 'a library of workflows (try these ones: ' . (join ' or ', map { "'$global_program_name $_ --help-builtin-package'" } sort keys %$global_known_operation_packages_builtin ) . ')',
 			     documentation => 'each entry in the library provides a builtin set of workflows that facilitate the implementation of software projects',
 			    },
 	       %$global_known_operation_packages_builtin,
@@ -11017,7 +11402,7 @@ options:
 	       sort keys %$known_operation_packages,
 	      };
 
-	if ($option_help_module)
+	if ($option_help_builtin_package)
 	{
 	    if (exists $known_operation_packages->{$global_target})
 	    {
@@ -11034,7 +11419,7 @@ options:
 		die "$global_program_name: *** Error: module '$global_target' does not provide --help-module, does this module exist?'";
 	    }
 	}
-	elsif ($option_help_module_all)
+	elsif ($option_help_builtin_packages_all)
 	{
 	    use YAML;
 
@@ -11153,35 +11538,50 @@ sub report_error_exit
 }
 
 
+# Given an operation_selector_type and command line arguments, build a
+# schedule of operations to be invoked.
+#
+# The core of this sub is a call to operations_2_commands(), the
+# result is an executable schedule stored in
+# @$global_scheduled_commands.
+#
+# Extension plugins call execute_shell_command() and its family to add
+# their own commands to @$global_scheduled_commands.
+
 sub schedule_operations_for_execution
 {
     my $operation_selector_type = shift;
-
-    my $dry_run_reason = shift;
-
-    my $help = shift;
 
     my $arguments = shift;
 
     my $builtin_package = $operation_selector_type->{builtin_package};
 
-    my $target = $operation_selector_type->{target};
+    my $dry_run_reason = $operation_selector_type->{dry_run_reason};
+
+    my $help = $operation_selector_type->{help_asked};
 
     my $operation = $operation_selector_type->{operation};
 
     my $operation_implementation = $operation_selector_type->{operation_implementation};
+
+    my $target = $operation_selector_type->{target};
 
     # if this command exists ...
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
     if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
+	or $operation_implementation eq 'wildcard'
 	or $builtin_package
-	or $option_interactions_target)
+	or $dry_run_reason eq 'option_interactions')
     {
-	my $all_selected_operations = operation_selector($operation_selector_type, $dry_run_reason, $help, $arguments);
+	# construct a list of known operations that match the operation_selector_type
 
-	my $help_string_or_error = operation_scheduler($all_selected_operations, $dry_run_reason);
+	my $all_selected_operations = operation_selector($operation_selector_type, $help, $arguments);
+
+	# call each of the selected operations, invoking the plugins as required and push the result onto @$global_scheduled_commands
+
+	my $help_string_or_error = operations_2_commands($all_selected_operations);
 
 	# ... either was invoked as the --help sub
 
@@ -11204,14 +11604,36 @@ sub schedule_operations_for_execution
     {
 	report_error_exit("target '$target' does not provide command '$operation'.");
     }
+
+    use Clone qw(clone);
+
+    my $result = clone($global_scheduled_commands);
+
+    $global_scheduled_commands = [];
+
+    return $result;
 }
 
 
-sub operation_scheduler
+# build the schedule in @$global_scheduled_commands.
+#
+# Examine @$all_selected_operations, call each of them and push the
+# result onto @$global_scheduled_commands as appropriate, converting
+# this into something that can be called or executed.
+#
+# This results in scheduling the invocation of shell scripts and
+# direct invocation of plugin Python defs and Perl subs.
+#
+# Python defs and Perl subs can populate @$global_scheduled_commands
+# through API calls, but shell scripts cannot yet do this (who would
+# that be possible?).
+#
+# After this operation completes, the schedule can be examined,
+# queried and executed as required.
+
+sub operations_2_commands
 {
     my $all_selected_operations = shift;
-
-    my $scheduler_dry_run_reason = shift;
 
     my $result = '';
 
@@ -11229,18 +11651,18 @@ sub operation_scheduler
 
 	my $short_operation = $1;
 
-	if ($scheduler_dry_run_reason)
+	if ($dry_run_reason)
 	{
 	    # add a header to the schedule / diagram for this operation
 
-	    my $scheduled_operation
+	    my $scheduled_command
 		= {
 		   command => "---\nCOMMAND: $short_operation$has_help",
-		   dry_run => $scheduler_dry_run_reason,
+		   dry_run => $dry_run_reason,
 		   interaction_role => 'none',
 		  };
 
-	    push @$global_scheduled_operations, $scheduled_operation;
+	    push @$global_scheduled_commands, $scheduled_command;
 	}
 
 	if ($selected_operation->{is_help})
@@ -11263,18 +11685,18 @@ sub operation_scheduler
 	    }
 	}
 
-	if ($scheduler_dry_run_reason)
+	if ($dry_run_reason)
 	{
 	    # end the command in the schedule / diagram
 
-	    my $scheduled_operation
+	    my $scheduled_command
 		= {
 		   command => "\n\n---\n",
-		   dry_run => $scheduler_dry_run_reason,
+		   dry_run => $dry_run_reason,
 		   interaction_role => 'none',
 		  };
 
-	    push @$global_scheduled_operations, $scheduled_operation;
+	    push @$global_scheduled_commands, $scheduled_command;
 	}
     }
 
@@ -11284,11 +11706,13 @@ sub operation_scheduler
 }
 
 
+# Given an operation_selector_type, dry_run_reason, option_help and
+# command line arguments, match these with the known operations and
+# return a series of selected operations.
+
 sub operation_selector
 {
     my $operation_selector_type = shift;
-
-    my $dry_run_reason = shift;
 
     my $help = shift;
 
@@ -11310,6 +11734,8 @@ sub operation_selector
 	or $builtin_package)
     {
 	my $operation_implementation = $operation_selector_type->{operation_implementation};
+
+	my $dry_run_reason = $operation_selector_type->{dry_run_reason};
 
 	my $selected_operation
 	    = {
@@ -11401,6 +11827,8 @@ sub operation_selector
 
 		my $operation_type = $all_typed_operations->{"$matching_target $operator"}->{type};
 
+		my $dry_run_reason = $operation_selector_type->{dry_run_reason};
+
 		my $selected_operation
 		    = {
 		       command_line_arguments => $arguments,
@@ -11426,6 +11854,8 @@ sub operation_selector_type_construct
     my $target = shift;
 
     my $operation_or_package = shift;
+
+    my $dry_run_reason = shift;
 
     my $help = shift;
 
@@ -11467,15 +11897,22 @@ sub operation_selector_type_construct
     }
     elsif (defined $operation_or_package)
     {
-	$sub_name = "${target}_${operation_or_package}";
-
-	# if help was requested for this operation
-
-	if ($help)
+	if (defined $dry_run_reason
+	    and $dry_run_reason eq 'grep_commands')
 	{
-	    # call the subroutine that implements the help function for the operation
+	}
+	else
+	{
+	    $sub_name = "${target}_${operation_or_package}";
 
-	    $sub_name .= "_help";
+	    # if help was requested for this operation
+
+	    if ($help)
+	    {
+		# call the subroutine that implements the help function for the operation
+
+		$sub_name .= "_help";
+	    }
 	}
     }
     else
@@ -11505,6 +11942,8 @@ sub operation_selector_type_construct
     my $operation_selector_type
 	= {
 	   builtin_package => $builtin_package,
+	   dry_run_reason => $dry_run_reason,
+	   help_asked => $help,
 	   operation => $operation_or_package,
 	   operation_implementation => $operation_implementation,
 	   target => $target,

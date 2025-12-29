@@ -1,7 +1,7 @@
 ---
-command: feature-testing-workflow builtin grep tmux
+command: feature-testing-workflow builtin grep_code tmux
 command_tests:
-  - description: Does a builtin grep command produce correct results?
+  - description: Does a builtin grep command on the code produce correct results?
     read: |
       # grep -n 'tmux' /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-build /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-docker_testing.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-more_python.py /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-python.py
       #
@@ -14,4 +14,4 @@ command_tests:
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features:149:    my $remote_tmux = $roles->{tmux_cd};
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features:182:	  remote => $remote_tmux,
     white_space: convert seen 0a to 0d 0a newlines
-description: Does a builtin grep command produce correct results?
+description: Does a builtin grep command on the code produce correct results?

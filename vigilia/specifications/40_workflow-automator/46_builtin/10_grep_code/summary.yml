@@ -24,4 +24,4 @@ harnessing:
       name_image: workflow_features_installed_image
     identifier: docker_harness_workflow_features_installed
     type: Heterarch::Test::ExecutionContext::Harness::Docker
-name: 40_workflow-automator/46_builtin/10_grep/summary.yml
+name: 40_workflow-automator/46_builtin/10_grep_code/summary.yml

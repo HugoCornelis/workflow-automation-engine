@@ -1,11 +1,11 @@
 ---
-command: bin/workflow Command::Git::RepositorySet --help-module
+command: bin/workflow Command::Git::RepositorySet --help-builtin-package
 command_tests:
-  - description: help of the Command::Git::RepositorySet builtin convenience module
+  - description: help of the Command::Git::RepositorySet builtin package
     read: |
       Command::Git::RepositorySet:
         description: workflows for working with Git repositories
-        documentation: These workflows implement convenience interactions with a set of Git repositories.
+        documentation: These workflows implement interactions with a set of Git repositories.
       ---
       Command::Git::RepositorySet: {}
-description: help of the Command::Git::RepositorySet builtin convenience module
+description: help of the Command::Git::RepositorySet builtin package

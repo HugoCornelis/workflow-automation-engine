@@ -302,10 +302,10 @@ options:
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
     --help                          display usage information and stop execution.
+    --help-builtin-package          display help about the commands of the given builtin package.
+    --help-builtin-packages-all     display the builtin packages.
     --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
-    --help-module                   display all the available help information about the commands of the module.
-    --help-module-all               display all the available convenience modules.
     --help-options                  print the option values.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
@@ -526,7 +526,8 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin grep
+  - workflow-tests-workflow builtin grep_code
+  - workflow-tests-workflow builtin grep_commands
   - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin project_start
@@ -569,7 +570,8 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
-  - workflow-tests-workflow builtin grep
+  - workflow-tests-workflow builtin grep_code
+  - workflow-tests-workflow builtin grep_commands
   - workflow-tests-workflow builtin manual
   - workflow-tests-workflow builtin project_rename
   - workflow-tests-workflow builtin project_start
@@ -601,7 +603,7 @@ conf.workflow-tests-configuration
 				command_tests => [
 						  {
 						   description => "Can we dry run one of the installed workflows to inspect which commands it would run?",
-						   read => 'workflow-tests-workflow: *** Running in dry_run 1 mode, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
+						   read => 'workflow-tests-workflow: *** Running in dry_run, not executing: \'/home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh\'
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },

@@ -1,8 +1,21 @@
 ---
 command: feature-testing-workflow docker_testing where_am_i
 command_tests:
-  - description: Can we run a command in a role based Docker container?
-    read: |2
+  - comment: white_space is set to ignore because somehow (presumably) the Docker environment inserts spurious <ctrl-m> characters in the seen output.  This problem started with commit bc960762c9af996981dd678d32c66d3b84a54145.
+    description: Can we run a command in a role based Docker container?
+    read: Inside a Docker container built from Dockerfile.source_code
+    read1: |2
+      # docker exec -it docker_source_code_container   cat /.inside-docker
+      #
+      Inside a Docker container built from Dockerfile.source_code
+    read_old1: |2
+      # docker exec -it docker_source_code_container   cat /.inside-docker
+      #
+      Inside a Docker container built from Dockerfile.source_code
+      # docker exec -it docker_source_code_container   whoami
+      #
+      neurospaces
+    read_old2: |2
       # docker exec -it docker_source_code_container   cat /.inside-docker
       #
       Inside a Docker container built from Dockerfile.source_code
@@ -10,4 +23,6 @@ command_tests:
       #
       neurospaces
     white_space: convert seen 0a to 0d 0a newlines
+    white_space_old1: convert seen 0a to 0d 0a newlines
+    white_space_old2: ignore
 description: Can we run a command in a role based Docker container?

@@ -1,5 +1,5 @@
 ---
-command: bin/workflow Command::Qemu --help-module
+command: bin/workflow Command::Qemu --help-builtin-package
 command_tests:
   - description: help of the Command::Qemu builtin module
     read: |2

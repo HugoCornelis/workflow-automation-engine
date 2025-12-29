@@ -1,0 +1,14 @@
+---
+command: feature-testing-workflow builtin grep_commands 0 docker
+command_tests:
+  - description: 'Is a query that builds an interaction diagramma and examines it, executed correctly (2)?'
+    read: |
+      COMMAND: builtin_docker_containers_start (use --help to see the help page)
+          'docker run -d -t  --name docker_source_code_container docker_source_code_image '
+      COMMAND: builtin_docker_images_build (use --help to see the help page)
+          'docker build --tag docker_source_code_image --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000  --file feature-testing-configuration-data/dockerfiles/Dockerfile.source_code .'
+      COMMAND: docker_testing_where_am_i (use --help to see the help page)
+                                                  ROLE: 'docker_source_code'
+                                                  'cat /.inside-docker'
+    white_space: convert seen 0a to 0d 0a newlines
+description: 'Is a query that builds an interaction diagramma and examines it, executed correctly (2)?'

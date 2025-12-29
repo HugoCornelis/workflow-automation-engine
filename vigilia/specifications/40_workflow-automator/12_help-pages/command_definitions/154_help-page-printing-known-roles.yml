@@ -1,5 +1,5 @@
 ---
-command: workflow builtin role_print --help
+command: bin/workflow builtin role_print --help
 command_tests:
   - description: Do we see the help page for printing known roles?
     read: |+

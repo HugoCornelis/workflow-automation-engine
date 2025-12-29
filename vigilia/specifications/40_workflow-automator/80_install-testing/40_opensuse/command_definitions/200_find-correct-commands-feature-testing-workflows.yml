@@ -19,7 +19,8 @@ command_tests:
         - feature-testing-workflow builtin docker_containers_start
         - feature-testing-workflow builtin docker_exec
         - feature-testing-workflow builtin docker_images_build
-        - feature-testing-workflow builtin grep
+        - feature-testing-workflow builtin grep_code
+        - feature-testing-workflow builtin grep_commands
         - feature-testing-workflow builtin manual
         - feature-testing-workflow builtin project_rename
         - feature-testing-workflow builtin project_start
