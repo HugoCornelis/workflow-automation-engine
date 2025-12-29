@@ -2978,9 +2978,12 @@ sub builtin_command_filenames_known
 
     $command_filenames = $command_filenames->{command_filenames};
 
-    use YAML;
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
 
-    print Dump( { command_filenames_known => $command_filenames } );
+	print Dump( { command_filenames_known => $command_filenames } );
+    }
 
     return 0;
 }
@@ -3023,9 +3026,12 @@ sub builtin_configuration_directory_print
 {
     my $project_name = shift;
 
-    use YAML;
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
 
-    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+    }
 
     my $error = '';
 
@@ -5213,9 +5219,12 @@ sub builtin_role_print
 
     my $matching_roles = _roles_select($matcher);
 
-    use YAML;
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
 
-    print Dump($matching_roles);
+	print Dump($matching_roles);
+    }
 
     return 0;
 }
