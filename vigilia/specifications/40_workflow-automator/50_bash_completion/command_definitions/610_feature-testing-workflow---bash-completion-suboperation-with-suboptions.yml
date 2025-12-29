@@ -1,5 +1,5 @@
 ---
-command: "feature-testing-workflow --bash-completion 'feature-testing-workflow builtin scripts_install -- ' 4 52"
+command: "feature-testing-workflow --bash-completion 'feature-testing-workflow builtin configuration_install -- ' 4 58"
 command_tests:
   - description: feature-testing-workflow --bash-completion suboperation with suboptions
     read: aliasses --bash-completion --commands --engine --force --git --grc-configuration --path-in-bashrc --report

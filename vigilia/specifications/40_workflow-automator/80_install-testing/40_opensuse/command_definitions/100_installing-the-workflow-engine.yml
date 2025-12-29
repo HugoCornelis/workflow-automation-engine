@@ -1,5 +1,5 @@
 ---
-command: cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin scripts_install -- --bash --commands --path-in-bashrc --no-aliasses
+command: cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing && workflow builtin configuration_install -- --bash --commands --path-in-bashrc --no-aliasses
 command_tests:
   - comment: |+2
       OpenSUSE by default gives a ~/.local/bin directory to new users, so that's where the installation of the workflow configuration goes.

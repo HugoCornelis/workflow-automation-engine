@@ -14,6 +14,9 @@ command_tests:
         - workflow builtin command_filenames_known
         - workflow builtin configuration_archive
         - workflow builtin configuration_directory_print
+        - workflow builtin configuration_fetch
+        - workflow builtin configuration_install
+        - workflow builtin configuration_pull
         - workflow builtin docker_containers_start
         - workflow builtin docker_exec
         - workflow builtin docker_images_build
@@ -24,9 +27,6 @@ command_tests:
         - workflow builtin project_start
         - workflow builtin role_add
         - workflow builtin role_print
-        - workflow builtin scripts_fetch
-        - workflow builtin scripts_install
-        - workflow builtin scripts_pull
         - workflow builtin target_add
         - workflow builtin tmux_sessions_create
         - workflow builtin tmux_sessions_kill

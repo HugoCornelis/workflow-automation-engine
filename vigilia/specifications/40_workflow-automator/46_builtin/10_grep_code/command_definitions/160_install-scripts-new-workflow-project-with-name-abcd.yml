@@ -1,5 +1,5 @@
 ---
-command: 'cd new-project && workflow builtin scripts_install -- --bash-completion --commands'
+command: 'cd new-project && workflow builtin configuration_install -- --bash-completion --commands'
 command_tests:
   - description: Can we install the scripts of the new workflow project with name abcd?
     read: |+

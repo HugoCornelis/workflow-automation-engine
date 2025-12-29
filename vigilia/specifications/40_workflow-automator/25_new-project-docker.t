@@ -348,7 +348,7 @@ Test it with the command:
 
 Afterwards install the scripts on your system using the command:
 
-  workflow builtin scripts_install -- --commands --git
+  workflow builtin configuration_install -- --commands --git
 
 Then check if they work by inspecting the examples they provide (with various options):
 
@@ -453,7 +453,7 @@ global_field_project_configuration:
 				description => "correct creation of the field project file",
 			       },
 			       {
-				command => 'cd workflow-test && workflow builtin scripts_install -- --no-aliasses --commands',
+				command => 'cd workflow-test && workflow builtin configuration_install -- --no-aliasses --commands',
 				command_tests => [
 						  {
 						   comment => "The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.",
@@ -523,6 +523,9 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin configuration_archive
   - workflow-tests-workflow builtin configuration_directory_print
+  - workflow-tests-workflow builtin configuration_fetch
+  - workflow-tests-workflow builtin configuration_install
+  - workflow-tests-workflow builtin configuration_pull
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
@@ -533,9 +536,6 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin project_start
   - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin role_print
-  - workflow-tests-workflow builtin scripts_fetch
-  - workflow-tests-workflow builtin scripts_install
-  - workflow-tests-workflow builtin scripts_pull
   - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
@@ -567,6 +567,9 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin command_filenames_known
   - workflow-tests-workflow builtin configuration_archive
   - workflow-tests-workflow builtin configuration_directory_print
+  - workflow-tests-workflow builtin configuration_fetch
+  - workflow-tests-workflow builtin configuration_install
+  - workflow-tests-workflow builtin configuration_pull
   - workflow-tests-workflow builtin docker_containers_start
   - workflow-tests-workflow builtin docker_exec
   - workflow-tests-workflow builtin docker_images_build
@@ -577,9 +580,6 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin project_start
   - workflow-tests-workflow builtin role_add
   - workflow-tests-workflow builtin role_print
-  - workflow-tests-workflow builtin scripts_fetch
-  - workflow-tests-workflow builtin scripts_install
-  - workflow-tests-workflow builtin scripts_pull
   - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
@@ -818,7 +818,7 @@ workflow-test/workflow-tests-configuration-data/targets.yml
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin scripts_install -- --commands --path-in-bashrc --no-aliasses',
+				command => 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin configuration_install -- --commands --path-in-bashrc --no-aliasses',
 				command_tests => [
 						  {
 						   comment => "The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.",

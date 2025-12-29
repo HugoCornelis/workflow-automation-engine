@@ -16,6 +16,9 @@ command_tests:
         - feature-testing-workflow builtin command_filenames_known
         - feature-testing-workflow builtin configuration_archive
         - feature-testing-workflow builtin configuration_directory_print
+        - feature-testing-workflow builtin configuration_fetch
+        - feature-testing-workflow builtin configuration_install
+        - feature-testing-workflow builtin configuration_pull
         - feature-testing-workflow builtin docker_containers_start
         - feature-testing-workflow builtin docker_exec
         - feature-testing-workflow builtin docker_images_build
@@ -26,9 +29,6 @@ command_tests:
         - feature-testing-workflow builtin project_start
         - feature-testing-workflow builtin role_add
         - feature-testing-workflow builtin role_print
-        - feature-testing-workflow builtin scripts_fetch
-        - feature-testing-workflow builtin scripts_install
-        - feature-testing-workflow builtin scripts_pull
         - feature-testing-workflow builtin target_add
         - feature-testing-workflow builtin tmux_sessions_create
         - feature-testing-workflow builtin tmux_sessions_kill

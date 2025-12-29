@@ -176,14 +176,14 @@ my $global_builtin_operations
        command_filenames_known => 1,
        configuration_archive => 1,
        configuration_directory_print => 1,
+       configuration_fetch => 1,
+       configuration_install => 1,
+       configuration_pull => 1,
        grep => 1,
        manual => 1,
        project_rename => 1,
        project_start => 1,
        role_add => 1,
-       scripts_fetch => 1,
-       scripts_install => 1,
-       scripts_pull => 1,
        target_add => 1,
        tmux_sessions_create => 1,
        tmux_sessions_kill => 1,
@@ -3022,37 +3022,6 @@ arguments:
 }
 
 
-sub builtin_configuration_directory_print
-{
-    my $project_name = shift;
-
-    if ($global_execute_scheduled_commands)
-    {
-	use YAML;
-
-	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
-    }
-
-    my $error = '';
-
-    return $error;
-}
-
-
-sub builtin_configuration_directory_print_help
-{
-    my $command = shift;
-
-    return "$command : print the directory where the configuration of this project is found.
-
-arguments:
-~~~~~~~~~~
-
-    none.
-";
-}
-
-
 sub builtin_configuration_archive
 {
     my $arguments = shift || [];
@@ -3198,6 +3167,314 @@ arguments:
 
     ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
 
+";
+}
+
+
+sub builtin_configuration_directory_print
+{
+    my $project_name = shift;
+
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
+
+	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+    }
+
+    my $error = '';
+
+    return $error;
+}
+
+
+sub builtin_configuration_directory_print_help
+{
+    my $command = shift;
+
+    return "$command : print the directory where the configuration of this project is found.
+
+arguments:
+~~~~~~~~~~
+
+    none.
+";
+}
+
+
+sub builtin_configuration_fetch
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands
+	= [
+	   "cd '$sources_configuration_directory'",
+	   "git fetch",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_configuration_fetch_help
+{
+    my $command = shift;
+
+    return "$command: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
+";
+}
+
+
+sub builtin_configuration_install
+{
+    my $arguments = shift || [];
+
+    my $option_install_aliasses = 'by default';
+    my $option_install_bash_completion = 'by default';
+    my $option_install_commands;
+    my $option_install_engine = 'by default';
+    my $option_install_force;
+    my $option_install_git;
+    my $option_install_grc_configuration = 'by default';
+    my $option_install_path_in_bashrc;
+    my $option_install_report;
+
+    our $install_options
+	= {
+	   "aliasses!" => \$option_install_aliasses,
+	   "bash-completion!" => \$option_install_bash_completion,
+	   "commands!" => \$option_install_commands,
+	   "engine!" => \$option_install_engine,
+	   "force!" => \$option_install_force,
+	   "git!" => \$option_install_git,
+	   "grc-configuration!" => \$option_install_grc_configuration,
+	   "path-in-bashrc!" => \$option_install_path_in_bashrc,
+	   "report!" => \$option_install_report,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$install_options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    my $debug = 0;
+
+    if ($debug)
+    {
+	use Data::Dumper;
+
+	print Dumper(
+		     {
+		      option_install_aliasses => $option_install_aliasses,
+		      option_install_bash_completion => $option_install_bash_completion,
+		      option_install_commands => $option_install_commands,
+		      option_install_engine => $option_install_engine,
+		      option_install_force => $option_install_force,
+		      option_install_git => $option_install_git,
+		      option_install_grc_configuration => $option_install_grc_configuration,
+		      option_install_path_in_bashrc => $option_install_path_in_bashrc,
+		      option_install_report => $option_install_report,
+		     }
+		    );
+    }
+
+    # need to take these actions:
+    #
+    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+    # 2. Install to ~/bin or ~/.local/bin: symbolic links for commands
+    # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
+    # 4. Install to /etc/grc.conf: text addition
+    # 5. Install to /usr/share/grc/: symbolic links
+    # 6. Create and populate the git repository
+
+    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
+
+    my $field_configuration = FieldProject::_init_get_field_project_configuration();
+
+    if (!$field_configuration)
+    {
+        die "$global_program_name: *** error: no valid field_configuration found";
+    }
+
+    my $project_name = $field_configuration->{field_project_name};
+
+    if (!$project_name)
+    {
+        die "$global_program_name: *** error: no valid project_name in the field_configuration found";
+    }
+
+    # add the ~/bin  or ~/.local/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
+
+    if ($option_install_path_in_bashrc)
+    {
+	_install_script_path_in_bashrc($project_name);
+    }
+
+    my $bin_path_choice = Utilities::bin_path_choice();
+
+    my $command_mkdir = "mkdir --parents $ENV{HOME}/$bin_path_choice";
+
+    execute_shell_command($command_mkdir);
+
+    _install_script_symbolic_link_to_engine($project_name, $option_install_engine, $option_install_report);
+
+    _install_script_symbolic_link_to_configuration($project_name, $option_install_commands, $option_install_report);
+
+    # _install_script_symbolic_link_to_commands_in_commands_directory($project_name, $option_install_commands, $option_install_report);
+
+    _install_script_symbolic_link_to_commands_configured($project_name, $option_install_commands, $option_install_report);
+
+    if ($option_install_aliasses)
+    {
+	_install_script_bashrc_aliasses($project_name);
+    }
+
+    if ($option_install_bash_completion)
+    {
+	_install_script_bash_completion($project_name);
+    }
+
+    if ($option_install_grc_configuration)
+    {
+	_install_script_grc_conf_additions($project_name);
+
+	_install_script_grc_symbolic_links($project_name, $field_configuration);
+    }
+
+    if ($option_install_git)
+    {
+	_install_script_git_repository($project_name);
+    }
+
+    if ($option_install_engine
+	or $option_install_bash_completion)
+    {
+	my $commands
+	    = [
+	       # "echo",
+	       # "echo",
+	       # "echo  scripts for '$project_name' have been installed.",
+	       "echo",
+	       "echo Bash completion can be enabled using:",
+	       "echo",
+	       "echo   . ./$project_name-bash-completion.sh",
+	       "echo",
+	       # "echo Then maybe followed with commands removing existing commands:",
+	       # "echo",
+	       # "echo   $project_name-workflow builtin remove_commands $project_name-commands-perl_examples $project_name-commands-python_examples.py examples_sh/*",
+	       # "echo",
+	       # "echo Or/and maybe followed with commands removing existing targets:",
+	       # "echo",
+	       # "echo   $project_name-workflow builtin remove_target perl_examples $project_name-commands-python_examples.py examples_sh/*",
+	       # "echo   $project_name-workflow builtin remove_target python_examples",
+	       # "echo   $project_name-workflow builtin remove_target examples_sh\n",
+	       # "echo",
+	       "echo Or/and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
+	       "echo",
+	       "echo   $project_name-workflow builtin target_add source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
+	       "echo",
+	      ];
+
+	execute_shell_command_array($commands, { quiet => 'only show the output of the commands' } );
+    }
+}
+
+
+sub builtin_configuration_install_completions
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $options_completions_hash
+	= {
+	   '--' => {
+		    '0.Available_options:' => '',
+		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
+		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
+		    '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
+		    '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
+		    '--force' => "don't use this.",
+		    '--git' => "create a git repository for the workflow configuration.",
+		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
+		    '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
+		    '--report' => "report on what is being done.",
+		   },
+	  };
+
+    foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
+    {
+	$options_completions_hash->{'--'}->{$options_completion}
+	    = {
+	       map
+	       {
+		   $_ => '';
+	       }
+	       keys %{$options_completions_hash->{'--'}}
+	      };
+    }
+
+    return $options_completions_hash;
+}
+
+
+sub builtin_configuration_install_help
+{
+    my $command = shift;
+
+    return "$command : install or upgrade the workflow scripts that are found in the current directory.
+
+options:
+~~~~~~~~
+
+    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
+
+    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
+
+    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
+
+    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
+
+    ``--force``: don't use this.
+
+    ``--git``: create a git repository for the workflow configuration.
+
+    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
+
+    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
+
+    ``--report``: report on what is being done.
+
+
+Note that grc configuration files will also be installed and configured.
+
+";
+}
+
+
+sub builtin_configuration_pull
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $commands
+	= [
+	   "cd '$sources_configuration_directory'",
+	   "git pull",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub builtin_configuration_pull_help
+{
+    my $command = shift;
+
+    return "$command: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
 ";
 }
 
@@ -4599,7 +4876,7 @@ sub builtin_project_rename
 
     execute_shell_command_array($commands_remove);
 
-    # now invoke builtin_scripts_install() from the configuration
+    # now invoke builtin_configuration_install() from the configuration
     # directory to install the correct symbolic links
 
     # we assume that if aliasses were installed for the old project
@@ -4611,7 +4888,7 @@ sub builtin_project_rename
     my $commands_reinstall_scripts
 	= [
 	   "cd $sources_configuration_directory",
-	   "workflow builtin scripts_install -- --commands $aliasses",
+	   "workflow builtin configuration_install -- --commands $aliasses",
 	  ];
 
     execute_shell_command_array($commands_reinstall_scripts);
@@ -4821,7 +5098,7 @@ sub builtin_project_start
 	    print "---\nTest it with the command:\n\n";
 	    print "  workflow --help-field-project-name\n\n";
 	    print "Afterwards install the scripts on your system using the command:\n\n";
-	    print "  workflow builtin scripts_install -- --commands --git\n\n";
+	    print "  workflow builtin configuration_install -- --commands --git\n\n";
 	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
 	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
 	    print "  $project_name-workflow examples sequencing_and_composition --interactions-target\n\n";
@@ -5243,283 +5520,6 @@ arguments:
                  '``^docker_``' prints Docker roles,
                  '``^serial_``' prints serial console roles,
                  '``^tmux_``' prints tmux roles.
-";
-}
-
-
-sub builtin_scripts_fetch
-{
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $commands
-	= [
-	   "cd '$sources_configuration_directory'",
-	   "git fetch",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
-sub builtin_scripts_fetch_help
-{
-    my $command = shift;
-
-    return "$command: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
-";
-}
-
-
-sub builtin_scripts_install
-{
-    my $arguments = shift || [];
-
-    my $option_install_aliasses = 'by default';
-    my $option_install_bash_completion = 'by default';
-    my $option_install_commands;
-    my $option_install_engine = 'by default';
-    my $option_install_force;
-    my $option_install_git;
-    my $option_install_grc_configuration = 'by default';
-    my $option_install_path_in_bashrc;
-    my $option_install_report;
-
-    our $install_options
-	= {
-	   "aliasses!" => \$option_install_aliasses,
-	   "bash-completion!" => \$option_install_bash_completion,
-	   "commands!" => \$option_install_commands,
-	   "engine!" => \$option_install_engine,
-	   "force!" => \$option_install_force,
-	   "git!" => \$option_install_git,
-	   "grc-configuration!" => \$option_install_grc_configuration,
-	   "path-in-bashrc!" => \$option_install_path_in_bashrc,
-	   "report!" => \$option_install_report,
-	  };
-
-    use Getopt::Long qw(GetOptionsFromArray);;
-
-    my $result = GetOptionsFromArray($arguments, %$install_options);
-
-    if (!$result)
-    {
-        die "$global_program_name: *** Error in option processing, try --help";
-    }
-
-    my $debug = 0;
-
-    if ($debug)
-    {
-	use Data::Dumper;
-
-	print Dumper(
-		     {
-		      option_install_aliasses => $option_install_aliasses,
-		      option_install_bash_completion => $option_install_bash_completion,
-		      option_install_commands => $option_install_commands,
-		      option_install_engine => $option_install_engine,
-		      option_install_force => $option_install_force,
-		      option_install_git => $option_install_git,
-		      option_install_grc_configuration => $option_install_grc_configuration,
-		      option_install_path_in_bashrc => $option_install_path_in_bashrc,
-		      option_install_report => $option_install_report,
-		     }
-		    );
-    }
-
-    # need to take these actions:
-    #
-    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
-    # 2. Install to ~/bin or ~/.local/bin: symbolic links for commands
-    # 3. Install to .bashrc: text addition for aliases (add to ~/.bash_aliases?) and for bash completion
-    # 4. Install to /etc/grc.conf: text addition
-    # 5. Install to /usr/share/grc/: symbolic links
-    # 6. Create and populate the git repository
-
-    # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
-
-    my $field_configuration = FieldProject::_init_get_field_project_configuration();
-
-    if (!$field_configuration)
-    {
-        die "$global_program_name: *** error: no valid field_configuration found";
-    }
-
-    my $project_name = $field_configuration->{field_project_name};
-
-    if (!$project_name)
-    {
-        die "$global_program_name: *** error: no valid project_name in the field_configuration found";
-    }
-
-    # add the ~/bin  or ~/.local/bin directory to PATH in .bashrc, make this optional on option_install_path_in_bashrc
-
-    if ($option_install_path_in_bashrc)
-    {
-	_install_script_path_in_bashrc($project_name);
-    }
-
-    my $bin_path_choice = Utilities::bin_path_choice();
-
-    my $command_mkdir = "mkdir --parents $ENV{HOME}/$bin_path_choice";
-
-    execute_shell_command($command_mkdir);
-
-    _install_script_symbolic_link_to_engine($project_name, $option_install_engine, $option_install_report);
-
-    _install_script_symbolic_link_to_configuration($project_name, $option_install_commands, $option_install_report);
-
-    # _install_script_symbolic_link_to_commands_in_commands_directory($project_name, $option_install_commands, $option_install_report);
-
-    _install_script_symbolic_link_to_commands_configured($project_name, $option_install_commands, $option_install_report);
-
-    if ($option_install_aliasses)
-    {
-	_install_script_bashrc_aliasses($project_name);
-    }
-
-    if ($option_install_bash_completion)
-    {
-	_install_script_bash_completion($project_name);
-    }
-
-    if ($option_install_grc_configuration)
-    {
-	_install_script_grc_conf_additions($project_name);
-
-	_install_script_grc_symbolic_links($project_name, $field_configuration);
-    }
-
-    if ($option_install_git)
-    {
-	_install_script_git_repository($project_name);
-    }
-
-    if ($option_install_engine
-	or $option_install_bash_completion)
-    {
-	my $commands
-	    = [
-	       # "echo",
-	       # "echo",
-	       # "echo  scripts for '$project_name' have been installed.",
-	       "echo",
-	       "echo Bash completion can be enabled using:",
-	       "echo",
-	       "echo   . ./$project_name-bash-completion.sh",
-	       "echo",
-	       # "echo Then maybe followed with commands removing existing commands:",
-	       # "echo",
-	       # "echo   $project_name-workflow builtin remove_commands $project_name-commands-perl_examples $project_name-commands-python_examples.py examples_sh/*",
-	       # "echo",
-	       # "echo Or/and maybe followed with commands removing existing targets:",
-	       # "echo",
-	       # "echo   $project_name-workflow builtin remove_target perl_examples $project_name-commands-python_examples.py examples_sh/*",
-	       # "echo   $project_name-workflow builtin remove_target python_examples",
-	       # "echo   $project_name-workflow builtin remove_target examples_sh\n",
-	       # "echo",
-	       "echo Or/and maybe followed with a command to add or modify a first target, here, for the target named 'source_code':",
-	       "echo",
-	       "echo   $project_name-workflow builtin target_add source_code \\\"Operations on the source code, such as git checkout, build and installation.\\\" -- --install-commands-py",
-	       "echo",
-	      ];
-
-	execute_shell_command_array($commands, { quiet => 'only show the output of the commands' } );
-    }
-}
-
-
-sub builtin_scripts_install_completions
-{
-    my $complete_command_string = shift;
-
-    my $complete_arguments_array = shift;
-
-    my $options_completions_hash
-	= {
-	   '--' => {
-		    '0.Available_options:' => '',
-		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
-		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-		    '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
-		    '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
-		    '--force' => "don't use this.",
-		    '--git' => "create a git repository for the workflow configuration.",
-		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-		    '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
-		    '--report' => "report on what is being done.",
-		   },
-	  };
-
-    foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
-    {
-	$options_completions_hash->{'--'}->{$options_completion}
-	    = {
-	       map
-	       {
-		   $_ => '';
-	       }
-	       keys %{$options_completions_hash->{'--'}}
-	      };
-    }
-
-    return $options_completions_hash;
-}
-
-
-sub builtin_scripts_install_help
-{
-    my $command = shift;
-
-    return "$command : install or upgrade the workflow scripts that are found in the current directory.
-
-options:
-~~~~~~~~
-
-    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
-
-    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
-
-    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
-
-    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
-
-    ``--force``: don't use this.
-
-    ``--git``: create a git repository for the workflow configuration.
-
-    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
-
-    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
-
-    ``--report``: report on what is being done.
-
-
-Note that grc configuration files will also be installed and configured.
-
-";
-}
-
-
-sub builtin_scripts_pull
-{
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $commands
-	= [
-	   "cd '$sources_configuration_directory'",
-	   "git pull",
-	  ];
-
-    execute_shell_command_array($commands);
-}
-
-
-sub builtin_scripts_pull_help
-{
-    my $command = shift;
-
-    return "$command: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
 ";
 }
 
