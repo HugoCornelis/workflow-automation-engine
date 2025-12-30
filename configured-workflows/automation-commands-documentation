@@ -18,7 +18,7 @@ package Command;
 my $workflow_project_directory = "$ENV{HOME}/projects/workflow-automation-engine/source/snapshots/master";
 
 
-sub _documentation_build
+sub _documentation_vigilia_build
 {
     my $tags = shift;
 
@@ -26,15 +26,29 @@ sub _documentation_build
 
     my $commands
 	= [
-	   "cd $workflow_project_directory",
-	   "vigilia --output-pdf --output-figures --verbose --output-content-line-limit 3000 $command_line_tags",
+	   "echo bin/vigilia --output-pdf --output-figures --verbose --output-content-line-limit 3000 $command_line_tags",
 	  ];
 
     execute_shell_command_array($commands);
 }
 
 
-sub _documentation_show
+sub _documentation_workflow_build
+{
+    my $tags = shift;
+
+    my $command_line_tags = $tags ? "--tags " . (join ' ', @$tags) : '';
+
+    my $commands
+	= [
+	   "bin/workflow builtin manual builtin -- --no-view",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub _documentation_vigilia_show
 {
     my $commands
 	= [
@@ -47,9 +61,29 @@ sub _documentation_show
 }
 
 
+sub _documentation_workflow_show
+{
+    my $commands
+	= [
+	   "setsid okular workflow-engine-manual-builtin.pdf >/dev/null 2>&1 < /dev/null &"
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
 sub documentation_build
 {
-    _documentation_build();
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	  ];
+
+    execute_shell_command_array($commands);
+
+    _documentation_vigilia_build();
+
+    _documentation_workflow_build();
 }
 
 
@@ -68,7 +102,16 @@ Note: This command converts the regression test specifications first to latex, t
 
 sub documentation_build_manual
 {
-    _documentation_build( [ 'manual' ] );
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	  ];
+
+    execute_shell_command_array($commands);
+
+    _documentation_vigilia_build( [ 'manual' ] );
+
+    _documentation_workflow_build( [ 'manual' ] );
 }
 
 
@@ -76,7 +119,9 @@ sub documentation_build_manual_show
 {
     documentation_build_manual();
 
-    _documentation_show();
+    _documentation_vigilia_show();
+
+    _documentation_workflow_show();
 }
 
 
@@ -84,7 +129,9 @@ sub documentation_build_show
 {
     documentation_build();
 
-    _documentation_show();
+    _documentation_vigilia_show();
+
+    _documentation_workflow_show();
 }
 
 
