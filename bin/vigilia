@@ -9088,6 +9088,8 @@ sub _output_latex_postamble
 }
 
 
+# _output_latex_preamble creates $output_file for others to use.
+
 sub _output_latex_preamble
 {
     my $output_filename = shift;
@@ -9928,13 +9930,15 @@ sub process
 
     my $global_test_report = shift;
 
+    # _output_latex_preamble creates $output_file for others to use.
+
     _output_latex_preamble
 	(
 	 $output_filename,
 	 $test_module_library_contents->{html_introduction},
 	);
 
-    _output_latex_process($output_filename, $global_test_report);
+    _output_latex_process("$output_filename.tex", $global_test_report);
 
     _output_latex_postamble();
 }
