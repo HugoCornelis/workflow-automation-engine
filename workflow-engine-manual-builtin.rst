@@ -78,6 +78,49 @@ arguments:
     none.
 
 
+Operation: builtin configuration_fetch
+--------------------------------------
+
+builtin configuration_fetch: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
+
+
+Operation: builtin configuration_install
+----------------------------------------
+
+builtin configuration_install : install or upgrade the workflow scripts that are found in the current directory.
+
+options:
+~~~~~~~~
+
+    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
+
+    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
+
+    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
+
+    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
+
+    ``--force``: don't use this.
+
+    ``--git``: create a git repository for the workflow configuration.
+
+    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
+
+    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
+
+    ``--report``: report on what is being done.
+
+
+Note that grc configuration files will also be installed and configured.
+
+
+
+Operation: builtin configuration_pull
+-------------------------------------
+
+builtin configuration_pull: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
+
+
 Operation: builtin docker_containers_start
 ------------------------------------------
 
@@ -136,17 +179,17 @@ arguments:
 
 
 
-Operation: builtin grep
------------------------
+Operation: builtin grep_code
+----------------------------
 
-builtin grep: Grep for a regex in the workflow scripts of the selected workflow projects.
+builtin grep_code: Grep for a regex in the workflow code scripts of the selected workflow projects.
 
 synopsis:
 ~~~~~~~~~
 
 .. code-block:: bash
 
-builtin grep <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+builtin grep_code <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 
 arguments:
 ~~~~~~~~~~
@@ -154,6 +197,29 @@ arguments:
     ``ARGV[0]``: A regular expression to search for.
 
     ``ARGV[1] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
+
+
+
+Operation: builtin grep_commands
+--------------------------------
+
+builtin grep_commands: Grep for a regex in the workflow commands of the selected workflow projects.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin grep_commands <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: A regular expression to match the target against, '0' for all targets.
+
+    ``ARGV[1]``: A regular expression to match the commands against, '0' for all commands.
+
+    ``ARGV[2] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 
 
@@ -197,12 +263,22 @@ Operation: builtin project_rename
 
 builtin project_rename: Rename the project from which this command is invoked (the 'current' project).
 
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin project_rename <new-project-name> [ <'also-bashrc'> ]
+
 arguments:
 ~~~~~~~~~~
 
     ``ARGV[0]``: the new project name.
 
-    ``ARGV[1]``: leave this empty if you don't want your ~/.bashrc to be updated automatically (you will be prompted to do so manually).
+    ``ARGV[1]``: the string 'also-bashrc' if you want your ~/.bashrc to be updated automatically.
+
+Note that carelessly updating your ``~/.bashrc`` is is risky.
+
 
 
 Operation: builtin project_start
@@ -290,49 +366,6 @@ arguments:
                  '``^docker_``' prints Docker roles,
                  '``^serial_``' prints serial console roles,
                  '``^tmux_``' prints tmux roles.
-
-
-Operation: builtin scripts_fetch
---------------------------------
-
-builtin scripts_fetch: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
-
-
-Operation: builtin scripts_install
-----------------------------------
-
-builtin scripts_install : install or upgrade the workflow scripts that are found in the current directory.
-
-options:
-~~~~~~~~
-
-    ``--aliasses``: configure the grc aliases in .bashrc if they are not there yet.
-
-    ``--bash-completion``: configure bash completion in .bashrc if they are not there yet.
-
-    ``--commands``: install or upgrade the command configuration to ~/bin or ~/.local/bin.
-
-    ``--engine``: create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.
-
-    ``--force``: don't use this.
-
-    ``--git``: create a git repository for the workflow configuration.
-
-    ``--grc-configuration``: install symbolic links for grc configuration to color code the workflow output (requires sudo access).
-
-    ``--path-in-bashrc``: update .bashrc to include ~/bin or ~/.local/bin in PATH.
-
-    ``--report``: report on what is being done.
-
-
-Note that grc configuration files will also be installed and configured.
-
-
-
-Operation: builtin scripts_pull
--------------------------------
-
-builtin scripts_pull: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
 
 
 Operation: builtin target_add
