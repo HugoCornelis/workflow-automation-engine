@@ -15,22 +15,73 @@ our $global_technical_project_configuration;
 package Command;
 
 
-our $target_servers = $::global_technical_project_configuration->{target_servers};
-
-
 my $container_enter_command = "docker exec -it workflow_automation_test_container bash";
+
+my $workflow_project_directory = "$ENV{HOME}/projects/workflow-automation-engine/source/snapshots/master";
+
 
 sub test_enter
 {
     my $commands
 	= [
-	   "echo To enter the test container, use the command \\'$container_enter_command\\'",
+	   "cd $workflow_project_directory",
+	   "echo To enter the test container, use a command similar to\\'$container_enter_command\\'",
 # 	   "setsid okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf >/dev/null 2>&1 < /dev/null &"
 
 # 	   "nohup okular /tmp/test_report_workflow-automation-engine/test_report_workflow-automation-engine_command_definition-command_test-meta-module.pdf",
+
+	   "echo The known test containers are:",
+	   "bin/vigilia --show-images",
 	  ];
 
     execute_shell_command_array($commands);
+}
+
+
+sub _test_read_known_containers
+{
+    my $selected_images_yaml = `bin/vigilia --show-images`;
+
+    #t $selected_images_yaml starts with three asterisks, no idea why ...
+
+    $selected_images_yaml =~ s(\*)()g;
+
+    $selected_images_yaml =~ s( Info: See.*)()gs;
+
+    return $selected_images_yaml;
+}
+
+
+sub test_enter_completions
+{
+    my $selected_images_yaml = _test_read_known_containers();
+
+    use YAML;
+
+    my $selected_images = Load($selected_images_yaml);
+
+    my $images = $selected_images->{selected};
+
+    my $container_names
+	= [
+	   sort
+	   map
+	   {
+	       $images->{$_}->{name_container};
+	   }
+	   keys %$images,
+	  ];
+
+    my $completions
+	= {
+	   map
+	   {
+	       $_ => '',
+	   }
+	   @$container_names,
+	  };
+
+    return $completions;
 }
 
 
@@ -38,12 +89,17 @@ sub test_enter_help
 {
     my $command = shift;
 
-    return "$command: Display the command to enter the test container.
+    my $selected_images_yaml = _test_read_known_containers();
+
+    return "$command: Display the command to enter a test container and give a hint regarding the known containers.
 
 no arguments.
-
-Note: The command is \'$container_enter_command\'
 ";
+
+# Known containers are:
+
+# $selected_images_yaml
+# ";
 }
 
 

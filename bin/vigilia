@@ -8851,7 +8851,7 @@ sub _output_latex_figure_generate_insert
 
     my $figure_class = exists $figure->{class} ? $figure->{class} : "simple";
 
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
     my $command_test = shift;
 
@@ -8872,7 +8872,7 @@ sub _output_latex_figure_generate_insert
 
     # create the figure object, link it with the generated references
 
-    my $figure_object = $figure_package->new($figure, $output_filename, $command_test, $figure_references, $read);
+    my $figure_object = $figure_package->new($figure, $output_pathname, $command_test, $figure_references, $read);
 
     # generate its reference
 
@@ -9073,6 +9073,8 @@ sub _output_latex_module_harnessing
 
 sub _output_latex_postamble
 {
+    my $output_file = shift;
+
     my $postamble
 	= '\end{document}
 
@@ -9088,30 +9090,34 @@ sub _output_latex_postamble
 }
 
 
+# _output_latex_preamble creates $output_file for others to use.
+
 sub _output_latex_preamble
 {
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
     my $html_introduction = shift;
 
-    my $main_figures_directory = "$output_filename/figures";
+    my $main_figures_directory = "figures";
 
     {
 	use File::Basename qw( fileparse );
 	use File::Path qw( make_path );
 	use File::Spec;
 
-	my $created = make_path($main_figures_directory);
+	my ( $filename_prefix, $directory ) = fileparse($output_pathname);
+
+	my $created = make_path("$directory/$main_figures_directory");
 
 	use File::Copy;
 
 	my $logo_source_filename = $option_output_logo;
 
-	copy($logo_source_filename, "$main_figures_directory/main-page-logo.jpg")
+	copy($logo_source_filename, "$directory/$main_figures_directory/main-page-logo.jpg")
 	    or die "Copy of $logo_source_filename failed: $!";
     }
 
-    $output_file = IO::File->new(">$output_filename.tex");
+    $output_file = IO::File->new(">$output_pathname.tex");
 
     my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
 
@@ -9255,6 +9261,8 @@ sub _output_latex_preamble
     }
 
     print $output_file $preamble3;
+
+    return $output_file;
 }
 
 
@@ -9727,7 +9735,9 @@ sub _output_latex_command_test_write
 
 sub _output_latex_process
 {
-    my $output_filename = shift;
+    my $output_file = shift;
+
+    my $output_pathname = shift;
 
     my $test_report = shift;
 
@@ -9854,7 +9864,7 @@ sub _output_latex_process
 
 		    foreach my $figure (@$figures)
 		    {
-			_output_latex_figure_generate_insert($figure, $output_filename,  $command_test, $figure_references, $read);
+			_output_latex_figure_generate_insert($figure, $output_pathname,  $command_test, $figure_references, $read);
 		    }
 
 		    if (scalar @$figure_references)
@@ -9922,21 +9932,24 @@ sub process
 {
     my $self = shift;
 
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
     my $test_module_library_contents = shift;
 
     my $global_test_report = shift;
 
-    _output_latex_preamble
-	(
-	 $output_filename,
-	 $test_module_library_contents->{html_introduction},
-	);
+    # _output_latex_preamble creates $output_file for others to use.
 
-    _output_latex_process($output_filename, $global_test_report);
+    my $output_file
+	= _output_latex_preamble
+	  (
+	   $output_pathname,
+	   $test_module_library_contents->{html_introduction},
+	  );
 
-    _output_latex_postamble();
+    _output_latex_process($output_file, $output_pathname, $global_test_report);
+
+    _output_latex_postamble($output_file);
 }
 
 
@@ -10123,7 +10136,6 @@ sub new
 	   data_string => $data_string,
 	   figure_definition => $figure_definition,
 	   figure_references => $figure_references,
-	   filename_prefix => $filename_prefix,
 	   pathname_prefix => $pathname_prefix,
 	  };
 
@@ -10707,11 +10719,11 @@ sub _output_pdf_process
     use File::Path qw( make_path );
     use File::Spec;
 
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
-    my ( $logfile, $directory ) = fileparse($output_filename);
+    my ( $filename, $directory ) = fileparse($output_pathname);
 
-    my $command = "cd '$directory' && pdflatex '$output_filename' && pdflatex '$output_filename'";
+    my $command = "cd '$directory' && pdflatex '$filename.tex' && pdflatex '$filename.tex'";
 
     system $command;
 }
