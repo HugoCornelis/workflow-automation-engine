@@ -10134,7 +10134,6 @@ sub new
 	   data_string => $data_string,
 	   figure_definition => $figure_definition,
 	   figure_references => $figure_references,
-	   filename_prefix => $filename_prefix,
 	   pathname_prefix => $pathname_prefix,
 	  };
 
