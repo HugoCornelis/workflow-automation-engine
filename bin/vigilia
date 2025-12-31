@@ -10715,7 +10715,7 @@ sub _output_pdf_process
 
     my ( $logfile, $directory ) = fileparse($output_filename);
 
-    my $command = "cd '$directory' && pdflatex '$output_filename' && pdflatex '$output_filename'";
+    my $command = "pdflatex '$output_filename.tex' && pdflatex '$output_filename.tex'";
 
     system $command;
 }
