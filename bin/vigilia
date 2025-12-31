@@ -8851,7 +8851,7 @@ sub _output_latex_figure_generate_insert
 
     my $figure_class = exists $figure->{class} ? $figure->{class} : "simple";
 
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
     my $command_test = shift;
 
@@ -8872,7 +8872,7 @@ sub _output_latex_figure_generate_insert
 
     # create the figure object, link it with the generated references
 
-    my $figure_object = $figure_package->new($figure, $output_filename, $command_test, $figure_references, $read);
+    my $figure_object = $figure_package->new($figure, $output_pathname, $command_test, $figure_references, $read);
 
     # generate its reference
 
@@ -9073,6 +9073,8 @@ sub _output_latex_module_harnessing
 
 sub _output_latex_postamble
 {
+    my $output_file = shift;
+
     my $postamble
 	= '\end{document}
 
@@ -9257,6 +9259,8 @@ sub _output_latex_preamble
     }
 
     print $output_file $preamble3;
+
+    return $output_file;
 }
 
 
@@ -9729,7 +9733,9 @@ sub _output_latex_command_test_write
 
 sub _output_latex_process
 {
-    my $output_filename = shift;
+    my $output_file = shift;
+
+    my $output_pathname = shift;
 
     my $test_report = shift;
 
@@ -9856,7 +9862,7 @@ sub _output_latex_process
 
 		    foreach my $figure (@$figures)
 		    {
-			_output_latex_figure_generate_insert($figure, $output_filename,  $command_test, $figure_references, $read);
+			_output_latex_figure_generate_insert($figure, $output_pathname,  $command_test, $figure_references, $read);
 		    }
 
 		    if (scalar @$figure_references)
@@ -9924,7 +9930,7 @@ sub process
 {
     my $self = shift;
 
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
     my $test_module_library_contents = shift;
 
@@ -9932,15 +9938,16 @@ sub process
 
     # _output_latex_preamble creates $output_file for others to use.
 
-    _output_latex_preamble
-	(
-	 $output_filename,
-	 $test_module_library_contents->{html_introduction},
-	);
+    my $output_file
+	= _output_latex_preamble
+	  (
+	   $output_pathname,
+	   $test_module_library_contents->{html_introduction},
+	  );
 
-    _output_latex_process("$output_filename.tex", $global_test_report);
+    _output_latex_process($output_file, $output_pathname, $global_test_report);
 
-    _output_latex_postamble();
+    _output_latex_postamble($output_file);
 }
 
 
@@ -10711,11 +10718,11 @@ sub _output_pdf_process
     use File::Path qw( make_path );
     use File::Spec;
 
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
-    my ( $logfile, $directory ) = fileparse($output_filename);
+    my ( $filename, $directory ) = fileparse($output_pathname);
 
-    my $command = "pdflatex '$output_filename.tex' && pdflatex '$output_filename.tex'";
+    my $command = "pdflatex '$output_pathname.tex' && pdflatex '$output_pathname.tex'";
 
     system $command;
 }

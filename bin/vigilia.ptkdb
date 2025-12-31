@@ -1,85 +1,94 @@
 $files = {
            '_<./bin/vigilia' => [
                                   {
-                                    'text' => '    my $seen = $arguments->{seen};
-',
-                                    'type' => 'user',
-                                    'value' => '1',
-                                    'line' => 11505,
-                                    'fname' => './bin/vigilia',
-                                    'expr' => undef
-                                  },
-                                  {
+                                    'line' => 1613,
+                                    'expr' => undef,
                                     'text' => '    foreach my $module_definition (@$module_definitions)
 ',
-                                    'type' => 'user',
-                                    'line' => 1613,
                                     'value' => '1',
+                                    'type' => 'user',
+                                    'fname' => './bin/vigilia'
+                                  },
+                                  {
+                                    'line' => 1666,
+                                    'expr' => undef,
+                                    'type' => 'user',
                                     'fname' => './bin/vigilia',
+                                    'text' => '    foreach my $module_definition (@$module_definitions)
+',
+                                    'value' => '1'
+                                  },
+                                  {
+                                    'fname' => './bin/vigilia',
+                                    'type' => 'user',
+                                    'text' => '    $self->message("message_error", { message => $message, }, );
+',
+                                    'value' => '1',
+                                    'expr' => undef,
+                                    'line' => 12322
+                                  },
+                                  {
+                                    'text' => '    my $command = "cd \'$directory\' && pdflatex \'$output_filename.tex\' && pdflatex \'$output_filename.tex\'";
+',
+                                    'value' => '1',
+                                    'type' => 'user',
+                                    'fname' => './bin/vigilia',
+                                    'line' => '10734',
                                     'expr' => undef
                                   },
                                   {
                                     'expr' => undef,
-                                    'text' => '    $self->after_testing($execution_context, $test_result);
+                                    'line' => 9101,
+                                    'text' => '    my $main_figures_directory = "$output_filename/figures";
 ',
-                                    'type' => 'user',
-                                    'line' => 3820,
                                     'value' => '1',
+                                    'fname' => './bin/vigilia',
+                                    'type' => 'user'
+                                  },
+                                  {
+                                    'expr' => undef,
+                                    'line' => 349,
+                                    'text' => '    my $option_result = GetOptionsFromArray($arguments, %$options);
+',
+                                    'value' => '1',
+                                    'type' => 'user',
                                     'fname' => './bin/vigilia'
                                   },
                                   {
                                     'type' => 'user',
-                                    'text' => '    my $main_figures_directory = "$output_filename/figures";
-',
-                                    'line' => '9097',
-                                    'value' => '1',
                                     'fname' => './bin/vigilia',
-                                    'expr' => undef
+                                    'text' => '    my $seen = $arguments->{seen};
+',
+                                    'value' => '1',
+                                    'expr' => undef,
+                                    'line' => 11525
                                   },
                                   {
+                                    'line' => 8209,
+                                    'expr' => undef,
                                     'fname' => './bin/vigilia',
-                                    'line' => 3003,
-                                    'value' => '1',
                                     'type' => 'user',
-                                    'text' => '	my $command_prefix = $command_definition->{command_prefix} ? $command_definition->{command_prefix} : "";
+                                    'text' => '    foreach my $command_definition (@$command_definitions)
 ',
-                                    'expr' => undef
+                                    'value' => '1'
                                   },
                                   {
                                     'expr' => undef,
+                                    'line' => 3003,
                                     'fname' => './bin/vigilia',
-                                    'text' => '    $self->message("message_error", { message => $message, }, );
-',
                                     'type' => 'user',
-                                    'value' => '1',
-                                    'line' => 12302
+                                    'text' => '	my $command_prefix = $command_definition->{command_prefix} ? $command_definition->{command_prefix} : "";
+',
+                                    'value' => '1'
                                   },
                                   {
-                                    'line' => 349,
-                                    'value' => '1',
-                                    'type' => 'user',
-                                    'text' => '    my $option_result = GetOptionsFromArray($arguments, %$options);
-',
+                                    'line' => 3820,
+                                    'expr' => undef,
                                     'fname' => './bin/vigilia',
-                                    'expr' => undef
-                                  },
-                                  {
-                                    'line' => 1666,
-                                    'value' => '1',
                                     'type' => 'user',
-                                    'text' => '    foreach my $module_definition (@$module_definitions)
+                                    'text' => '    $self->after_testing($execution_context, $test_result);
 ',
-                                    'fname' => './bin/vigilia',
-                                    'expr' => undef
-                                  },
-                                  {
-                                    'fname' => './bin/vigilia',
-                                    'text' => '    foreach my $command_definition (@$command_definitions)
-',
-                                    'type' => 'user',
-                                    'line' => 8209,
-                                    'value' => '1',
-                                    'expr' => undef
+                                    'value' => '1'
                                   }
                                 ]
          };
@@ -89,8 +98,8 @@ $expr_list = [
                  'expr' => '$error'
                },
                {
-                 'depth' => -1,
-                 'expr' => '$test_result'
+                 'expr' => '$test_result',
+                 'depth' => -1
                }
              ];
 $eval_saved_text = undef;
