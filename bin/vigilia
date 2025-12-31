@@ -9094,28 +9094,30 @@ sub _output_latex_postamble
 
 sub _output_latex_preamble
 {
-    my $output_filename = shift;
+    my $output_pathname = shift;
 
     my $html_introduction = shift;
 
-    my $main_figures_directory = "$output_filename/figures";
+    my $main_figures_directory = "figures";
 
     {
 	use File::Basename qw( fileparse );
 	use File::Path qw( make_path );
 	use File::Spec;
 
-	my $created = make_path($main_figures_directory);
+	my ( $filename_prefix, $directory ) = fileparse($output_pathname);
+
+	my $created = make_path("$directory/$main_figures_directory");
 
 	use File::Copy;
 
 	my $logo_source_filename = $option_output_logo;
 
-	copy($logo_source_filename, "$main_figures_directory/main-page-logo.jpg")
+	copy($logo_source_filename, "$directory/$main_figures_directory/main-page-logo.jpg")
 	    or die "Copy of $logo_source_filename failed: $!";
     }
 
-    $output_file = IO::File->new(">$output_filename.tex");
+    $output_file = IO::File->new(">$output_pathname.tex");
 
     my $title_paragraphs = _output_latex_preamble_construct($html_introduction);
 
@@ -10721,7 +10723,7 @@ sub _output_pdf_process
 
     my ( $filename, $directory ) = fileparse($output_pathname);
 
-    my $command = "pdflatex '$output_pathname.tex' && pdflatex '$output_pathname.tex'";
+    my $command = "cd '$directory' && pdflatex '$filename.tex' && pdflatex '$filename.tex'";
 
     system $command;
 }
