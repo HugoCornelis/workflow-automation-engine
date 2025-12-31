@@ -7,7 +7,7 @@ This manual was automatically generated with the command line:
 
 .. code-block:: bash
 
-    bin/workflow builtin manual builtin
+    bin/workflow builtin manual builtin -- --no-view
 
 Draft Specification Manual: target ``builtin``
 **********************************************
