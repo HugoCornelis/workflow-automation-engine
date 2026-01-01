@@ -10257,7 +10257,7 @@ sub bash_completion
 
     # either generate completions for the configuration browser ...
 
-    if ($shell_command =~ /configuration/)
+    if ($shell_command =~ /configuration$/)
     {
 	$result = bash_completion_generate($arguments, $global_technical_project_configuration, $comp_cword, $debug_completion);
 
@@ -10268,7 +10268,7 @@ sub bash_completion
 
     # ... or generate completions for the workflow engine with or without configuration
 
-    elsif ($shell_command =~ /workflow/)
+    elsif ($shell_command =~ /workflow$/)
     {
 	my $perform_option_completion;
 
