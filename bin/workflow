@@ -10249,7 +10249,7 @@ sub bash_completion
 
     my $arguments = [ split ' ', $string_before_point ]; # $command_line, ];
 
-    my $command_line_word = $arguments->[$comp_cword];
+    my $command_line_current_word = $arguments->[$comp_cword];
 
     my $shell_command = shift @$arguments;
 
@@ -10257,7 +10257,7 @@ sub bash_completion
 
     # either generate completions for the configuration browser ...
 
-    if ($shell_command =~ /configuration/)
+    if ($shell_command =~ /configuration$/)
     {
 	$result = bash_completion_generate($arguments, $global_technical_project_configuration, $comp_cword, $debug_completion);
 
@@ -10268,7 +10268,7 @@ sub bash_completion
 
     # ... or generate completions for the workflow engine with or without configuration
 
-    elsif ($shell_command =~ /workflow/)
+    elsif ($shell_command =~ /workflow$/)
     {
 	my $perform_option_completion;
 
@@ -10276,8 +10276,15 @@ sub bash_completion
 
 	my $target_operation = [];
 
+	my $perform_internal_option_completion = 'by default';
+
 	if ($comp_cword > 0)
 	{
+	    if ($command_line_current_word =~ '^--')
+	    {
+		$perform_option_completion = 'yes';
+	    }
+
 	    #! we shifted one from $arguments so $comp_cword - 1 is the last entry
 
 	    foreach my $index (0 .. $comp_cword - 1)
@@ -10290,15 +10297,19 @@ sub bash_completion
 
 			$position++;
 		    }
-		    elsif ($arguments->[$index] =~ /^--/)
-		    {
-			$perform_option_completion = 'yes';
-		    }
 		    else
 		    {
 			$target_operation->[$position] = $arguments->[$index];
 
 			$position++;
+		    }
+
+		    if ($arguments->[$index] eq '--'
+			and $index != $comp_cword - 1)
+		    {
+			# two hyphens switch to external option completion, but this can still be overriden below
+
+			$perform_internal_option_completion = 0;
 		    }
 		}
 	    }
@@ -10312,14 +10323,25 @@ sub bash_completion
 	    }
 	}
 
-	my $perform_internal_completion = ($position < 3);
+	my $perform_internal_argument_completion = ($position < 3);
 
 	if ($debug_completion->{bash_completion})
 	{
-	    print STDERR Dumper( { perform_internal_completion => $perform_internal_completion } );
+	    print STDERR Dumper(
+				{
+				 perform_internal_argument_completion => $perform_internal_argument_completion,
+				 perform_internal_option_completion => $perform_internal_option_completion,
+				 perform_option_completion => $perform_option_completion,
+				 position => $position,
+				} );
 	}
 
-	if ($perform_internal_completion)
+	if ($perform_option_completion
+	   and $perform_internal_option_completion)
+	{
+	    $result = bash_completion_generate_options();
+	}
+	elsif ($perform_internal_argument_completion)
 	{
 	    if ($perform_option_completion)
 	    {
@@ -10346,7 +10368,7 @@ sub bash_completion
 							   arguments => $arguments,
 							   command => $shell_command,
 							   command_line => $command_line,
-							   command_line_word => $command_line_word,
+							   command_line_current_word => $command_line_current_word,
 							   target_operation => $target_operation,
 							  },
 				     position => {
@@ -10354,7 +10376,7 @@ sub bash_completion
 						  position => $position,
 						 },
 				     status => {
-						perform_internal_completion => $perform_internal_completion,
+						perform_internal_argument_completion => $perform_internal_argument_completion,
 						perform_option_completion => $perform_option_completion,
 						result => [ sort @$result ],
 					       },
@@ -10402,14 +10424,14 @@ sub bash_completion
 							   arguments => $arguments,
 							   command => $shell_command,
 							   command_line => $command_line,
-							   command_line_word => $command_line_word,
+							   command_line_current_word => $command_line_current_word,
 							   target_operation => $target_operation,
 							  },
 				     position => {
 						  comp_cword => $comp_cword,
 						  position => $position,
 						 },
-				     perform_internal_completion => $perform_internal_completion,
+				     perform_internal_argument_completion => $perform_internal_argument_completion,
 				    },
 				   );
 
