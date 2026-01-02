@@ -56,7 +56,6 @@ $SIG{'INT'}
 our $option_bash_completion;
 our $option_details;
 our $option_dry_run = '';
-our $option_dump_all_interaction_roles;
 our $option_dump_all_selected_operations;
 our $option_dump_interaction_roles;
 our $option_dump_module_interaction_roles;
@@ -89,7 +88,6 @@ our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
        "dry-run!" => \$option_dry_run,
-       "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
        "dump-all-selected-operations!" => \$option_dump_all_selected_operations,
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
        "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
@@ -12323,7 +12321,6 @@ sub bash_completion_generate_options
 			--bash-completion
 			--details
 			--dry-run
-			--dump-all-interaction-roles
 			--dump-all-selected-operations
 			--dump-interaction-roles
 			--dump-module-interaction-roles
@@ -12886,7 +12883,6 @@ sub main
 
     if (not defined $option_interactions_all
 	and not defined $option_interactions_target_all_roles
-	and not defined $option_dump_all_interaction_roles
 	and not defined $global_target)
     {
 	report_error_exit("neither a target argument nor a valid global option is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
@@ -13071,7 +13067,6 @@ options:
                                     hint: the bash completion script implements completion for options, targets and operations.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
-    --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
     --dump-all-selected-operations  dump all the operations that are selected for expansion.
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.

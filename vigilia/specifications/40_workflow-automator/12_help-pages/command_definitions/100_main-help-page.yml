@@ -26,7 +26,6 @@ command_tests:
                                           hint: the bash completion script implements completion for options, targets and operations.
           --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
           --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
-          --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
           --dump-all-selected-operations  dump all the operations that are selected for expansion.
           --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
           --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
