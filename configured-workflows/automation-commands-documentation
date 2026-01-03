@@ -11,12 +11,12 @@ our $option_verbose;
 
 our $global_technical_project_configuration;
 
+our $global_field_project_configuration;
 
 package Command;
 
 
-my $workflow_project_directory = "$ENV{HOME}/projects/workflow-automation-engine/source/snapshots/master";
-
+my $workflow_project_directory = "$global_field_project_configuration->{sources_configuration_directory}/..";
 
 sub _documentation_vigilia_build
 {
