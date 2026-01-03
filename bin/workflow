@@ -11958,7 +11958,7 @@ sub operation_selector_type_construct
 	{
 	    #! we should not reach this
 
-	    report_error_exit("internal error");
+	    report_error_exit("the target $target must be followed with an operation");
 	}
     }
 

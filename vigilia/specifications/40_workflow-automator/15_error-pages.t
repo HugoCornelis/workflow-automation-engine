@@ -20,6 +20,18 @@ my $test
 				description => "the error message when using a non-existent option name",
 			       },
 			       {
+				command => 'workflow builtin',
+				command_tests => [
+						  {
+						   description => "Do we get a sensible error message when no operation is given ?",
+						   read => 'workflow: *** Error: the target builtin must be followed with an operation
+',
+						   white_space => 'convert seen 0a to 0d 0a newlines',
+						  },
+						 ],
+				description => "the error message when no operation is given",
+			       },
+			       {
 				command => 'workflow project_start mosart-beethoven',
 				command_tests => [
 						  {
