@@ -10250,7 +10250,7 @@ sub bash_completion
 
     my $arguments = [ split ' ', $string_before_point ]; # $command_line, ];
 
-    my $command_line_current_word = $arguments->[$comp_cword];
+    my $command_line_current_word = exists $arguments->[$comp_cword] ? $arguments->[$comp_cword] : undef;
 
     my $shell_command = shift @$arguments;
 
@@ -10281,7 +10281,8 @@ sub bash_completion
 
 	if ($comp_cword > 0)
 	{
-	    if ($command_line_current_word =~ '^--')
+	    if (defined $command_line_current_word
+		and $command_line_current_word =~ '^--')
 	    {
 		$perform_option_completion = 'yes';
 	    }
