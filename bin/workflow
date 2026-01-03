@@ -11151,7 +11151,7 @@ sub main
 	and not defined $option_dump_all_interaction_roles
 	and not defined $global_target)
     {
-	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
+	report_error_exit("neither a target argument nor a valid global option is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
     }
 
     # always allow the builtin operations (start a new project, add a new target, ...)
