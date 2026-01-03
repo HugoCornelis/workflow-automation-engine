@@ -1,0 +1,41 @@
+---
+command: mkdir workflow-test && cd workflow-test && workflow builtin project_start workflow-tests
+command_tests:
+  - description: Can we start a new project?
+    read: |
+      Using 'workflow-tests' for the name of your project.
+      workflow: registered the perl command file name workflow-tests-commands-perl_examples for target perl_examples
+      workflow: registered the python command file name workflow-tests-commands-python_examples.py for target python_examples
+      Created a configuration file for project 'workflow-tests'
+      ---
+      Test it with the command:
+      
+        workflow --help-field-project-name
+      
+      Afterwards install the scripts on your system using the command:
+      
+        workflow builtin configuration_install -- --commands --git
+      
+      Then check if they work by inspecting the examples they provide (with various options):
+      
+        workflow-tests-workflow examples array_of_commands_remote_execution --interactions
+      
+        workflow-tests-workflow examples sequencing_and_composition --interactions-target
+      
+        workflow-tests-workflow examples single_command --dry-run
+      
+        workflow-tests-workflow examples array_of_commands --help
+      
+      To enable bash completion after installation of the scripts, either execute:
+      
+        . ~/.bashrc
+      
+      Or:
+      
+        . ./workflow-tests-bash-completion.sh
+    tags:
+      - manual
+    white_space: convert seen 0a to 0d 0a newlines
+description: starting a new project
+tags:
+  - manual

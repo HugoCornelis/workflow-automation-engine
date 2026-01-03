@@ -1,0 +1,20 @@
+---
+command: workflow-tests-workflow builtin configuration_directory_print
+command_tests:
+  - description: Is the installed workflow configuration found and correct?
+    read: |2
+      
+      global_field_project_configuration:
+        configuration_origin: dynamically_generated from the executable script name
+        field_project_name: workflow-tests
+        search_path_workflow_executable_directory: /home/neurospaces2/bin
+        sources_configuration_data_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-data
+        sources_configuration_directory: /home/neurospaces2/projects/workflow-configuration/workflow-test
+        sources_configuration_filename: /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration
+    tags:
+      - manual
+    white_space: convert seen 0a to 0d 0a newlines
+command_user: neurospaces2
+description: testing an new installed workflow configuration
+tags:
+  - manual

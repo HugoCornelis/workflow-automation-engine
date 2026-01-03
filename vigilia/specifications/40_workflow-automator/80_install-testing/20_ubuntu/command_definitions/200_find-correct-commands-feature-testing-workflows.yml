@@ -31,6 +31,7 @@ command_tests:
         - feature-testing-workflow builtin target_add
         - feature-testing-workflow builtin tmux_sessions_create
         - feature-testing-workflow builtin tmux_sessions_kill
+        - feature-testing-workflow builtin workflow_add
         - feature-testing-workflow builtin workflow_filenames_known
         - feature-testing-workflow docker_testing where_am_i
         - feature-testing-workflow examples_sh sh_array_of_commands

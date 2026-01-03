@@ -1,0 +1,34 @@
+---
+command: cd ~/projects/workflow-configuration && tar xvfz /tmp/wtw.tar.gz
+command_tests:
+  - description: Can we unpack an archived workflow configuration?
+    read: |
+      workflow-test/README.md
+      workflow-test/conf.workflow-tests-configuration
+      workflow-test/conf.workflow-tests-workflow
+      workflow-test/workflow-project.pl
+      workflow-test/workflow-tests-bash-completion.sh
+      workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
+      workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+      workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+      workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+      workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+      workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+      workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+      workflow-test/workflow-tests-commands-perl_examples
+      workflow-test/workflow-tests-commands-python_examples.py
+      workflow-test/workflow-tests-configuration
+      workflow-test/workflow-tests-configuration-data/cache/configuration.json
+      workflow-test/workflow-tests-configuration-data/cache/configuration.toml
+      workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
+      workflow-test/workflow-tests-configuration-data/node_configuration.yml
+      workflow-test/workflow-tests-configuration-data/roles.yml
+      workflow-test/workflow-tests-configuration-data/targets.yml
+      workflow-test/workflow-tests-configuration-data/workflow_filenames.yml
+    tags:
+      - manual
+    white_space: convert seen 0a to 0d 0a newlines
+command_user: neurospaces2
+description: unpacking an archived workflow configuration
+tags:
+  - manual

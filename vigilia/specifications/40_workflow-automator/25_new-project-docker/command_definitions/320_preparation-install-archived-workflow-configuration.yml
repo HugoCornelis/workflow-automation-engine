@@ -1,0 +1,10 @@
+---
+command: cd ~ && mkdir -vp ~/projects/workflow-configuration
+command_tests:
+  - description: Can we create the directories for installing an archived workflow configuration?
+    read: |
+      mkdir: created directory '/home/neurospaces2/projects'
+      mkdir: created directory '/home/neurospaces2/projects/workflow-configuration'
+    white_space: convert seen 0a to 0d 0a newlines
+command_user: neurospaces2
+description: preparation to install an archived workflow configuration

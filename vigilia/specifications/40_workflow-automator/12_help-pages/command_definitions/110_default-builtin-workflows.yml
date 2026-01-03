@@ -29,5 +29,6 @@ command_tests:
         - workflow builtin target_add
         - workflow builtin tmux_sessions_create
         - workflow builtin tmux_sessions_kill
+        - workflow builtin workflow_add
         - workflow builtin workflow_filenames_known
 description: default builtin workflows

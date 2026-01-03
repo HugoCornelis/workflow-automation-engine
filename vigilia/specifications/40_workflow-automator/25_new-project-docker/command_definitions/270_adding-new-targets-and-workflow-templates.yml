@@ -1,0 +1,14 @@
+---
+command: 'workflow-tests-workflow builtin target_add -- new_target "Add commands to this new target that do new things" --install-commands-sh'
+command_tests:
+  - description: Can we add a new target and workflow template?
+    read: |-
+      workflow-tests-workflow: added target new_target to /home/neurospaces/workflow-test/workflow-tests-configuration-data/targets.yml
+      workflow-tests-workflow: created the shell command file for target new_target
+    tags:
+      - manual
+    wait: 1
+    white_space: convert seen 0a to 0d 0a newlines
+description: adding new targets and workflow templates
+tags:
+  - manual

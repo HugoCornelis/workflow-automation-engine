@@ -1,0 +1,29 @@
+---
+command: tar tfz /tmp/wtw.tar.gz | sort
+command_tests:
+  - description: Can we inspect the archive of the configuration in the tarball?
+    read: |
+      workflow-test/conf.workflow-tests-configuration
+      workflow-test/conf.workflow-tests-workflow
+      workflow-test/README.md
+      workflow-test/workflow-project.pl
+      workflow-test/workflow-tests-bash-completion.sh
+      workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
+      workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+      workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+      workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+      workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+      workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+      workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+      workflow-test/workflow-tests-commands-perl_examples
+      workflow-test/workflow-tests-commands-python_examples.py
+      workflow-test/workflow-tests-configuration
+      workflow-test/workflow-tests-configuration-data/cache/configuration.json
+      workflow-test/workflow-tests-configuration-data/cache/configuration.toml
+      workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
+      workflow-test/workflow-tests-configuration-data/node_configuration.yml
+      workflow-test/workflow-tests-configuration-data/roles.yml
+      workflow-test/workflow-tests-configuration-data/targets.yml
+      workflow-test/workflow-tests-configuration-data/workflow_filenames.yml
+    white_space: convert seen 0a to 0d 0a newlines
+description: inspection of the generated archive

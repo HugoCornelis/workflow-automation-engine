@@ -1,0 +1,14 @@
+---
+command: 'workflow-tests-workflow builtin target_add -- new_target2 "Add commands to this new target2 that do new things2" --install-commands-sh'
+command_tests:
+  - description: Can we add more targets and workflow templates?
+    disabled: 'we cannot read an output file inside the test container yet, but this tests wants to check for it'
+    read:
+      application_output_file: ./workflow-tests-configuration-data/targets.yml
+      expected_output_file: ./vigilia/specifications/strings/two-targets-added.txt
+    read_not_used: |-
+      workflow-tests-workflow: added target new_target2 to /home/neurospaces/workflow-test/workflow-tests-configuration-data/targets.yml
+      workflow-tests-workflow: created the shell command file for target new_target2
+    wait: 1
+    white_space: convert seen 0a to 0d 0a newlines
+description: adding more targets and workflow templates

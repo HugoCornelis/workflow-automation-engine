@@ -1,0 +1,17 @@
+---
+command: cd workflow-test && workflow --help-field-project-name
+command_tests:
+  - description: Has the project been correctly initialized?
+    read: |2
+      
+      global_field_project_configuration:
+        configuration_origin: workflow on the command line
+        field_project_configuration_filename: workflow-project.pl
+        field_project_name: workflow-tests
+        from_directory: .
+        search_path_workflow_executable_directory: .
+        sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
+        sources_configuration_directory: /home/neurospaces/workflow-test
+        sources_configuration_filename: /home/neurospaces/workflow-test/workflow-project.pl
+    white_space: convert seen 0a to 0d 0a newlines
+description: correct creation of the field project file

@@ -1,0 +1,23 @@
+---
+description: testing the workflow automation engine
+documentation:
+  explanation: |+2
+    
+    
+    The workflow script enables the automation of customizable modular
+    project-specific workflows consisting of shell commands.
+
+  purpose: This module tests the workflow automation engine.
+harnessing:
+  class:
+    comment: Enter this container with "docker exec -it workflow_automation_test_container bash"
+    docker:
+      default_user: neurospaces
+      dockerfile: ./vigilia/specifications/dockerfiles/Dockerfile.workflow
+      name_container: workflow_automation_test_container
+      name_image: workflow_automation_image
+    identifier: docker_harness
+    type: Heterarch::Test::ExecutionContext::Harness::Docker
+name: 40_workflow-automator/25_new-project-docker/summary.yml
+tags:
+  - manual

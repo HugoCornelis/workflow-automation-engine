@@ -3000,7 +3000,14 @@ sub ct_run_complete
 
 	my $executed_command = $command_definition->{command} ? $command_definition->{command} : "";
 
-	my $command_prefix = $command_definition->{command_prefix} ? $command_definition->{command_prefix} : "";
+	# the command prefix is available from the $command_line object, not from the command_definition.
+
+	# the common path to construct the $command_line object is
+	# ec_construct_command_line() calls hs_construct_command_line() calls cd_construct_command_line().
+
+	my $command_line = $execution_context->{last_command_line};
+
+	my $command_prefix = $command_line->{command_prefix} ? (join ' ', @{$command_line->{command_prefix}}) : "";
 
 	$reporter->report_error_add
 		(
@@ -4633,6 +4640,11 @@ sub ec_construct_command_line
 	    $command_line = $command_definition->cd_construct_command_line($command_prefix, $self);
 	}
     }
+
+    # keep a record of the constructed command line, it includes the
+    # command itself, its arguments and its prefix.
+
+    $self->{last_command_line} = $command_line;
 
     return $command_line;
 }

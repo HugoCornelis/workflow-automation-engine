@@ -1,0 +1,45 @@
+---
+command: workflow-tests-workflow --help-workflows
+command_tests:
+  - description: 'Have the project workflows been correctly installed, different working directory?'
+    read: |2
+      
+      0_description: |-
+        The list of available workflows for this project are
+          (copy-paste the one you would like to execute,
+           try them with the --dry-run and --interactions options,
+           some workflows may implement a usage message available with the --help option):
+      1_workflows:
+        - workflow-tests-workflow builtin configuration_archive
+        - workflow-tests-workflow builtin configuration_directory_print
+        - workflow-tests-workflow builtin configuration_fetch
+        - workflow-tests-workflow builtin configuration_install
+        - workflow-tests-workflow builtin configuration_pull
+        - workflow-tests-workflow builtin docker_containers_start
+        - workflow-tests-workflow builtin docker_exec
+        - workflow-tests-workflow builtin docker_images_build
+        - workflow-tests-workflow builtin grep_code
+        - workflow-tests-workflow builtin grep_commands
+        - workflow-tests-workflow builtin manual
+        - workflow-tests-workflow builtin project_rename
+        - workflow-tests-workflow builtin project_start
+        - workflow-tests-workflow builtin role_add
+        - workflow-tests-workflow builtin role_print
+        - workflow-tests-workflow builtin target_add
+        - workflow-tests-workflow builtin tmux_sessions_create
+        - workflow-tests-workflow builtin tmux_sessions_kill
+        - workflow-tests-workflow builtin workflow_add
+        - workflow-tests-workflow builtin workflow_filenames_known
+        - workflow-tests-workflow examples_sh sh_array_of_commands
+        - workflow-tests-workflow examples_sh sh_remote_execution
+        - workflow-tests-workflow examples_sh sh_single_command
+        - workflow-tests-workflow perl_examples array_of_commands
+        - workflow-tests-workflow perl_examples array_of_commands_remote_execution
+        - workflow-tests-workflow perl_examples sequencing_and_composition
+        - workflow-tests-workflow perl_examples single_command
+    tags:
+      - manual
+    white_space: convert seen 0a to 0d 0a newlines
+description: 'correct installation of the workflows of the new project, different working directory'
+tags:
+  - manual
