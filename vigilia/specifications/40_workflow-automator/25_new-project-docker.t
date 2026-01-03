@@ -510,6 +510,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
+  - workflow-tests-workflow builtin workflow_add
   - workflow-tests-workflow builtin workflow_filenames_known
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
@@ -554,6 +555,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
+  - workflow-tests-workflow builtin workflow_add
   - workflow-tests-workflow builtin workflow_filenames_known
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
