@@ -4,9 +4,13 @@ command_tests:
   - comment: The output is stripped from all the checksums.  These can be different during development.
     description: Can we build role based Docker images?
     read: |+2
+      (40/40) FINISHED                                              
+    read_old_new: |+2
+      => => naming to docker.io/library/docker_source_code_image:latest
+    read_old: |+2
       Successfully tagged docker_source_code_image:latest
-    timeout: 45
-    white_space: convert seen 0a to 0d 0a newlines
+    timeout: 60
+    white_space_old: convert seen 0a to 0d 0a newlines
     read_complete: |+2
       # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
       #
