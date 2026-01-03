@@ -69,13 +69,13 @@ our $option_export_times;
 our $option_export_verbose;
 our $option_force_rebuild;
 our $option_help;
-our $option_help_commands;
 our $option_help_field_project_name;
 our $option_help_builtin_package;
 our $option_help_builtin_packages_all;
 our $option_help_options;
 our $option_help_projects;
 our $option_help_targets;
+our $option_help_workflows;
 our $option_interactions;
 our $option_interactions_all;
 our $option_interactions_target;
@@ -101,11 +101,11 @@ our $global_options
        "help!" => \$option_help,
        "help-builtin-package!" => \$option_help_builtin_package,
        "help-builtin-packages-all!" => \$option_help_builtin_packages_all,
-       "help-commands!" => \$option_help_commands,
        "help-field-project-name!" => \$option_help_field_project_name,
        "help-options!" => \$option_help_options,
        "help-projects!" => \$option_help_projects,
        "help-targets!" => \$option_help_targets,
+       "help-workflows!" => \$option_help_workflows,
        "interactions!" => \$option_interactions,
        "interactions-all!" => \$option_interactions_all,
        "interactions-target!" => \$option_interactions_target,
@@ -173,7 +173,6 @@ our $global_execute_scheduled_commands = 'yes';
 
 my $global_builtin_operations
     = {
-       command_filenames_known => 1,
        configuration_archive => 1,
        configuration_directory_print => 1,
        configuration_fetch => 1,
@@ -187,6 +186,7 @@ my $global_builtin_operations
        target_add => 1,
        tmux_sessions_create => 1,
        tmux_sessions_kill => 1,
+       workflow_filenames_known => 1,
       };
 
 my $global_known_operation_packages_builtin
@@ -296,44 +296,44 @@ sub _builtin_add_command_filename
 
     # read the commands configuration file
 
-    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory);
 
     # add the commands filename corresponding to the new target name
 
-    my $command_filenames_array = [];
+    my $workflow_filenames_array = [];
 
     if (not $error)
     {
-	$command_filenames_array = $command_filenames->{command_filenames};
+	$workflow_filenames_array = $workflow_filenames->{workflow_filenames};
     }
 
     if (not $error)
     {
-	push @$command_filenames_array, $new_command_filename;
+	push @$workflow_filenames_array, $new_command_filename;
     }
 
     # remove possible duplicate filenames, this allows updates of the description to be written
 
-    my $command_filenames_hash
+    my $workflow_filenames_hash
 	= {
 	   map
 	   {
 	       $_ => $_;
 	   }
-	   @$command_filenames_array,
+	   @$workflow_filenames_array,
 	  };
 
-    $command_filenames_array = [ sort keys %$command_filenames_hash, ];
+    $workflow_filenames_array = [ sort keys %$workflow_filenames_hash, ];
 
-    $command_filenames->{command_filenames} = $command_filenames_array;
+    $workflow_filenames->{workflow_filenames} = $workflow_filenames_array;
 
     # write the commands configuration file
 
     if (not $error)
     {
-	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+	my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
-	YAML::DumpFile($command_filenames_configuration_filename, $command_filenames);
+	YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
 
 	print "$global_program_name: registered the $type command file name $new_command_filename for target $target_name\n";
     }
@@ -1368,7 +1368,7 @@ help: this command echos a string to the terminal
 }
 
 
-sub _builtin_project_configuration_command_filenames_create
+sub _builtin_project_configuration_workflow_filenames_create
 {
     my $project_name = shift;
 
@@ -1376,20 +1376,20 @@ sub _builtin_project_configuration_command_filenames_create
 
 #     my $configuration_file_part
 # 	= "---
-# command_filenames:
+# workflow_filenames:
 #   - $project_name-commands
 # ";
 
     my $configuration_file_part
 	= "---
-command_filenames: []
+workflow_filenames: []
 ";
 
     my $error = '';
 
     use IO::File;
 
-    my $file = IO::File->new("> $configuration_data_directory/command_filenames.yml");
+    my $file = IO::File->new("> $configuration_data_directory/workflow_filenames.yml");
 
     if (defined $file)
     {
@@ -1399,7 +1399,7 @@ command_filenames: []
     }
     else
     {
-	$error = "cannot open $configuration_data_directory/command_filenames.yml";
+	$error = "cannot open $configuration_data_directory/workflow_filenames.yml";
     }
 
     return $error;
@@ -1429,7 +1429,7 @@ use warnings;
 
 require YAML;
 
-my \$command_filenames = eval { YAML::LoadFile('$configuration_data_directory/command_filenames.yml'); };
+my \$workflow_filenames = eval { YAML::LoadFile('$configuration_data_directory/workflow_filenames.yml'); };
 
 my \$node_configuration = eval { YAML::LoadFile('$configuration_data_directory/node_configuration.yml'); };
 
@@ -1438,7 +1438,7 @@ my \$roles = eval { YAML::LoadFile('$configuration_data_directory/roles.yml'); }
 my \$targets = eval { YAML::LoadFile('$configuration_data_directory/targets.yml'); };
 
 my \$configuration = {
-		      \%{ ref \$command_filenames eq 'HASH' ? \$command_filenames : {}; },
+		      \%{ ref \$workflow_filenames eq 'HASH' ? \$workflow_filenames : {}; },
 		      \%{ ref \$node_configuration eq 'HASH' ? \$node_configuration : {}; },
 		      \%{ ref \$roles eq 'HASH' ? \$roles : {}; },
 		      \%{ ref \$targets eq 'HASH' ? \$targets : {}; },
@@ -1460,7 +1460,7 @@ my \$configuration = {
 
     if (not $error)
     {
-	$error = _builtin_project_configuration_command_filenames_create($project_name, $configuration_data_directory);
+	$error = _builtin_project_configuration_workflow_filenames_create($project_name, $configuration_data_directory);
     }
 
     if (not $error)
@@ -1942,11 +1942,12 @@ configured with the new completions and paths.
 Afterwards a good starting point for using the configuration is:
 
 ```
-\$ $project_name-workflow --help-commands
+\$ $project_name-workflow --help-workflows
 ```
-Then followed with one of the `--dry-run` and `--interactions` options
-applied to one of the shown commands to understand what these commands would do
-if executed without options:
+
+Then apply either the `--dry-run` or the `--interactions` option to
+one of the shown workflows to understand what these operations would
+do if executed without options:
 
 ```
 <fill in your project specific examples here>
@@ -2124,7 +2125,7 @@ sub _file_contains_regex
 # Only command filenames containing the string '-commands' are
 # returned.
 
-sub _init_command_filenames_configured
+sub _init_workflow_filenames_configured
 {
     # full_paths is either the empty string '' or 'full-paths' or 'true-paths'.
 
@@ -2140,9 +2141,9 @@ sub _init_command_filenames_configured
 
     my $command_filename_directory = $global_field_project_configuration->{sources_configuration_directory};
 
-    my $command_filenames = $global_technical_project_configuration->{command_filenames};
+    my $workflow_filenames = $global_technical_project_configuration->{workflow_filenames};
 
-    my $command_filenames_full_paths
+    my $workflow_filenames_full_paths
 	= [
 	   map
 	   {
@@ -2150,10 +2151,10 @@ sub _init_command_filenames_configured
 
 	       $full_paths ? "$command_filename_directory/$_" : "$_";
 	   }
-	   @$command_filenames,
+	   @$workflow_filenames,
 	  ];
 
-    my $command_filenames_full_paths_selected
+    my $workflow_filenames_full_paths_selected
 	= [
 	   grep
 	   {
@@ -2176,10 +2177,10 @@ sub _init_command_filenames_configured
 
 	       $result;
 	   }
-	   @$command_filenames_full_paths,
+	   @$workflow_filenames_full_paths,
 	  ];
 
-    # print STDERR Dumper(@$command_filenames_full_paths_selected);
+    # print STDERR Dumper(@$workflow_filenames_full_paths_selected);
 
     my $result
 	= [
@@ -2196,9 +2197,9 @@ sub _init_command_filenames_configured
 
 	       # 	   print Dumper(
 	       # 			{
-	       # 			 command_filenames_full_paths => $command_filenames_full_paths,
-	       # 			 command_filenames_full_paths_selected => $command_filenames_full_paths_selected,
-	       # 			 command_filenames => $command_filenames,
+	       # 			 workflow_filenames_full_paths => $workflow_filenames_full_paths,
+	       # 			 workflow_filenames_full_paths_selected => $workflow_filenames_full_paths_selected,
+	       # 			 workflow_filenames => $workflow_filenames,
 	       # 			 full_paths => $full_paths,
 	       # 			},
 	       # 		       );
@@ -2217,7 +2218,7 @@ sub _init_command_filenames_configured
 
 	       defined $command_filename ? $command_filename : ();
 	   }
-	   @$command_filenames_full_paths_selected
+	   @$workflow_filenames_full_paths_selected
 	  ];
 
     #! options haven't been processed yet for some execution paths
@@ -2229,11 +2230,11 @@ sub _init_command_filenames_configured
 
 	print STDERR Dumper(
 			    {
-			     _init_command_filenames_configured => $result,
+			     _init_workflow_filenames_configured => $result,
 			     command_filename_directory => $command_filename_directory,
-			     command_filenames => $global_technical_project_configuration->{command_filenames},
-			     command_filenames_full_paths => $command_filenames_full_paths,
-			     command_filenames_full_paths_selected => $command_filenames_full_paths_selected,
+			     workflow_filenames => $global_technical_project_configuration->{workflow_filenames},
+			     workflow_filenames_full_paths => $workflow_filenames_full_paths,
+			     workflow_filenames_full_paths_selected => $workflow_filenames_full_paths_selected,
 			     full_paths => $full_paths,
 			    },
 			   );
@@ -2249,7 +2250,7 @@ sub _init_command_filenames_configured
 # full_paths is either 'full-paths' or 'full-paths-configuration'.
 #
 
-sub _init_command_filenames_found
+sub _init_workflow_filenames_found
 {
     my $full_paths = shift;
 
@@ -2651,7 +2652,7 @@ sub _install_script_symbolic_link_to_commands_configured
 
     # generate list of scripts
 
-    my $command_filenames_configured = [ @{ _init_command_filenames_configured('full-paths') }, ];
+    my $workflow_filenames_configured = [ @{ _init_workflow_filenames_configured('full-paths') }, ];
 
     # install each script to the ~/bin or .local/bin directory
 
@@ -2667,7 +2668,7 @@ sub _install_script_symbolic_link_to_commands_configured
 	print "In: sub _install_script_symbolic_link_to_commands_configured()\n";
     }
 
-    my $commands_configured = _init_filenames_2_symlink_commands($command_filenames_configured);
+    my $commands_configured = _init_filenames_2_symlink_commands($workflow_filenames_configured);
 
     _all_scripts_install_execute_shell_command_array($option_install_commands, $option_install_report, "    # 2. Install to ~/bin or .local/bin: symbolic links for commands
 
@@ -2695,7 +2696,7 @@ sub _install_script_symbolic_link_to_configuration
 	   {
 	       $_ => 1,
 	   }
-	   @{ _init_command_filenames_found('full-paths-configuration') },
+	   @{ _init_workflow_filenames_found('full-paths-configuration') },
 	  };
 
     if (defined $option_verbose
@@ -2859,11 +2860,11 @@ sub _workflow_operations_initialize
 
     # only those command files mentioned in the configuration
 
-    my $command_filenames_configured = _init_command_filenames_configured('true-paths');
+    my $workflow_filenames_configured = _init_workflow_filenames_configured('true-paths');
 
-    # print STDERR Dumper( { command_filenames_configured => $command_filenames_configured, } );
+    # print STDERR Dumper( { workflow_filenames_configured => $workflow_filenames_configured, } );
 
-    my $command_filenames_to_use
+    my $workflow_filenames_to_use
 	= [
 	   sort
 	   grep
@@ -2877,16 +2878,16 @@ sub _workflow_operations_initialize
 
 	       not $commands_seen->{$_}++;
 	   }
-	   @$command_filenames_configured,
+	   @$workflow_filenames_configured,
 	  ];
 
-    return _workflow_operations_load($command_filenames_to_use);
+    return _workflow_operations_load($workflow_filenames_to_use);
 }
 
 
 sub _workflow_operations_load
 {
-    my $command_filenames = shift;
+    my $workflow_filenames = shift;
 
     {
 	# first solve these warnings by erasing a previous _Inline cache
@@ -2906,7 +2907,7 @@ sub _workflow_operations_load
 	`rm -fr $commands_cache_directory`;
     }
 
-    foreach my $command_filename (@$command_filenames)
+    foreach my $command_filename (@$workflow_filenames)
     {
 	my $file_type;
 
@@ -2955,70 +2956,6 @@ sub _workflow_operations_load
 	    die "$global_program_name: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
 	}
     }
-}
-
-
-sub builtin_command_filenames_known
-{
-    my $arguments = shift || [ 'relative-paths' ];
-
-    my $debug_builtin_command_filenames_known = 0;
-
-    # get the configuration_data_directory
-
-    my $sources_configuration_directory	= $global_field_project_configuration->{sources_configuration_directory};
-
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
-
-    # generate the list of command filenames
-
-    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
-
-    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_command_filenames_known);
-
-    $command_filenames = $command_filenames->{command_filenames};
-
-    if ($global_execute_scheduled_commands)
-    {
-	use YAML;
-
-	print Dump( { command_filenames_known => $command_filenames } );
-    }
-
-    return 0;
-}
-
-
-sub builtin_command_filenames_known_completions
-{
-    return
-    {
-     "1.Type-one-of:" => '',
-     "full-paths" => '',
-     "relative-paths" => '',
-    };
-}
-
-
-sub builtin_command_filenames_known_help
-{
-    my $command = shift;
-
-    return "$command : print the known command filenames to stdout.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-$command \[ <full-or-relative-paths> \]
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
-
-";
 }
 
 
@@ -3882,7 +3819,7 @@ sub builtin_grep_code
 			   );
     }
 
-    # collect the command_filenames for each selected_project
+    # collect the workflow_filenames for each selected_project
 
     my $selected_command_files = [];
 
@@ -3895,11 +3832,11 @@ sub builtin_grep_code
 
 	# generate the list of command filenames
 
-	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_code);
+	my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_code);
 
-	$command_filenames = $command_filenames->{command_filenames};
+	$workflow_filenames = $workflow_filenames->{workflow_filenames};
 
-	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
+	$selected_command_files = [ @$selected_command_files, @$workflow_filenames, ];
     }
 
     if ($debug_builtin_grep_code)
@@ -3909,9 +3846,9 @@ sub builtin_grep_code
 
     if (@$selected_command_files)
     {
-	my $command_filenames_string = join ' ', @$selected_command_files;
+	my $workflow_filenames_string = join ' ', @$selected_command_files;
 
-	my $command = "grep -n '$regex_search' $command_filenames_string";
+	my $command = "grep -n '$regex_search' $workflow_filenames_string";
 
 	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
     }
@@ -4010,7 +3947,7 @@ sub builtin_grep_commands
 	$selected_projects = [ @$selected_projects, @$projects, ];
     }
 
-    # collect the command_filenames for each selected_project
+    # collect the workflow_filenames for each selected_project
 
     my $selected_command_files = [];
 
@@ -4023,11 +3960,11 @@ sub builtin_grep_commands
 
 	# generate the list of command filenames
 
-	my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_commands);
+	my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full_paths', $debug_builtin_grep_commands);
 
-	$command_filenames = $command_filenames->{command_filenames};
+	$workflow_filenames = $workflow_filenames->{workflow_filenames};
 
-	$selected_command_files = [ @$selected_command_files, @$command_filenames, ];
+	$selected_command_files = [ @$selected_command_files, @$workflow_filenames, ];
     }
 
     my $schedule_arguments = [];
@@ -4728,9 +4665,9 @@ sub builtin_project_rename
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
-    my $command_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, 'full-paths', 0);
 
-    $command_filenames
+    $workflow_filenames
 	= [
 	   map
 	   {
@@ -4742,7 +4679,7 @@ sub builtin_project_rename
 
 	       $result;
 	   }
-	   @{ $command_filenames->{command_filenames} },
+	   @{ $workflow_filenames->{workflow_filenames} },
 	  ];
 
     my $commands_rename
@@ -4769,7 +4706,7 @@ sub builtin_project_rename
 	       $result;
 	   }
 	   @$bash_completion_filenames,
-	   @$command_filenames,
+	   @$workflow_filenames,
 	   @$conf_public_project_filenames,
 	   @$conf_private_project_filenames,
 	   @$configuration_directories,
@@ -4781,28 +4718,28 @@ sub builtin_project_rename
 
     # if (not $error)
     {
-	my $new_command_filenames = [];
+	my $new_workflow_filenames = [];
 
-	foreach my $command_filename (@$command_filenames)
+	foreach my $command_filename (@$workflow_filenames)
 	{
 	    my $new_command_filename = $command_filename->{filename};
 
 	    $new_command_filename =~ s/$old_project_name/$new_project_name/;
 
-	    push @$new_command_filenames, $new_command_filename;
+	    push @$new_workflow_filenames, $new_command_filename;
 	}
 
-	my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+	my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
 	use YAML;
 
 	if ($option_dry_run)
 	{
-	    print Dump( { new_command_filenames => $new_command_filenames } );
+	    print Dump( { new_workflow_filenames => $new_workflow_filenames } );
 	}
 	else
 	{
-	    YAML::DumpFile($command_filenames_configuration_filename, { command_filenames => $new_command_filenames });
+	    YAML::DumpFile($workflow_filenames_configuration_filename, { workflow_filenames => $new_workflow_filenames });
 	}
     }
 
@@ -4843,7 +4780,7 @@ sub builtin_project_rename
 	   "$old_project_name-workflow",
 	  ];
 
-    my $home_bin_command_filenames
+    my $home_bin_workflow_filenames
 	= [
 	   map
 	   {
@@ -4855,7 +4792,7 @@ sub builtin_project_rename
 
 	       $result;
 	   }
-	   @$command_filenames,
+	   @$workflow_filenames,
      	  ];
 
     my $commands_remove
@@ -4870,7 +4807,7 @@ sub builtin_project_rename
 
 	       $result;
 	   }
-	   @$home_bin_command_filenames,
+	   @$home_bin_workflow_filenames,
 	   @$project_bin_files,
 	  ];
 
@@ -4929,7 +4866,7 @@ sub builtin_project_rename
 		      project_filename => $project_filename,
 		      bash_completion_filenames => $bash_completion_filenames,
 		      project_bin_files => $project_bin_files,
-		      command_filenames => $command_filenames,
+		      workflow_filenames => $workflow_filenames,
 		     },
 		    );
     }
@@ -5899,6 +5836,70 @@ sub builtin_tmux_sessions_kill_help
 
 Configured tmux sessions are:
     " . (join ", ", @$tmux_sessions) . "
+";
+}
+
+
+sub builtin_workflow_filenames_known
+{
+    my $arguments = shift || [ 'relative-paths' ];
+
+    my $debug_builtin_workflow_filenames_known = 0;
+
+    # get the configuration_data_directory
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    # generate the list of command filenames
+
+    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
+    if ($global_execute_scheduled_commands)
+    {
+	use YAML;
+
+	print Dump( { workflow_filenames_known => $workflow_filenames } );
+    }
+
+    return 0;
+}
+
+
+sub builtin_workflow_filenames_known_completions
+{
+    return
+    {
+     "1.Type-one-of:" => '',
+     "full-paths" => '',
+     "relative-paths" => '',
+    };
+}
+
+
+sub builtin_workflow_filenames_known_help
+{
+    my $command = shift;
+
+    return "$command : print the known command filenames to stdout.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command \[ <full-or-relative-paths> \]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
+
 ";
 }
 
@@ -10249,7 +10250,7 @@ sub bash_completion
 
     my $arguments = [ split ' ', $string_before_point ]; # $command_line, ];
 
-    my $command_line_current_word = $arguments->[$comp_cword];
+    my $command_line_current_word = exists $arguments->[$comp_cword] ? $arguments->[$comp_cword] : undef;
 
     my $shell_command = shift @$arguments;
 
@@ -10280,7 +10281,8 @@ sub bash_completion
 
 	if ($comp_cword > 0)
 	{
-	    if ($command_line_current_word =~ '^--')
+	    if (defined $command_line_current_word
+		and $command_line_current_word =~ '^--')
 	    {
 		$perform_option_completion = 'yes';
 	    }
@@ -10614,11 +10616,11 @@ sub bash_completion_generate_options
 			--help
 			--help-builtin-package
 			--help-builtin-packages-all
-			--help-commands
 			--help-field-project-name
 			--help-options
 			--help-projects
 			--help-targets
+			--help-workflows
 			--interactions
 			--interactions-all
 			--interactions-target
@@ -10643,37 +10645,37 @@ sub operation_filenames_file_read
 
     my $result;
 
-    my $command_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+    my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
     $result
 	= eval {
 
 	    local $SIG{'__DIE__'};
 
-	    YAML::LoadFile($command_filenames_configuration_filename);
+	    YAML::LoadFile($workflow_filenames_configuration_filename);
 	};
 
     if ($@)
     {
 	if ($verbose)
 	{
-	    warn "$0: command_filenames_file not found ($@)";
+	    warn "$0: workflow_filenames_file not found ($@)";
 	}
 
-	$result = { command_filenames => [], };
+	$result = { workflow_filenames => [], };
     }
 
     if ($full_paths)
     {
-	my $command_filenames = $result->{command_filenames};
+	my $workflow_filenames = $result->{workflow_filenames};
 
-	$result->{command_filenames}
+	$result->{workflow_filenames}
 	    = [
 	       map
 	       {
 		   $full_paths eq 'full_paths' ? "$sources_configuration_directory/$_" : $_;
 	       }
-	       @$command_filenames,
+	       @$workflow_filenames,
 	      ]
     }
 
@@ -11144,11 +11146,12 @@ sub main
 	report_error_exit("target '$global_target' does not exist");
     }
 
-    if ((not defined $option_interactions_all
-	 and not defined $option_interactions_target_all_roles)
+    if (not defined $option_interactions_all
+	and not defined $option_interactions_target_all_roles
+	and not defined $option_dump_all_interaction_roles
 	and not defined $global_target)
     {
-	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
+	report_error_exit("neither a target argument nor a valid global option is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
     }
 
     # always allow the builtin operations (start a new project, add a new target, ...)
@@ -11306,7 +11309,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 
   \$ $global_program_name --help-targets                                       # display the available targets that are found in the configuration file.
 
-  \$ $global_program_name --help-commands                                      # display the available commands that are found in the configuration file.
+  \$ $global_program_name --help-workflows                                     # display the workflows that are found in the configuration.
 
   \$ $global_program_name ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
 
@@ -11315,7 +11318,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
 
     --bash-completion               compute bash completion for the given command line.
-                                    hint: the bash completion script implements completion for options, targets and commands.
+                                    hint: the bash completion script implements completion for options, targets and operations.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -11326,21 +11329,21 @@ options:
     --export-remote                 include the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
     --export-sh                     export the commands to a file with the given name.
-    --export-sudo                   include the sudo commands when exporting commands to a file.
+    --export-sudo                   include applied sudo commands when exporting commands to a file.
     --export-times                  export the times when commands are started and ended to a file with the given name.
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
     --help                          display usage information and stop execution.
-    --help-builtin-package          display help about the commands of the given builtin package.
+    --help-builtin-package          display help about the workflows of the given builtin package.
     --help-builtin-packages-all     display the builtin packages.
-    --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
     --help-options                  print the option values.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
+    --help-workflows                display the configured workflows.
     --interactions                  show the interaction diagram of the commands.
     --interactions-all              show a diagram with all the commands and all the interaction roles.
-    --interactions-target           show the interaction diagram of all the commands in the module.
+    --interactions-target           show the interaction diagram of all the commands for the given target.
     --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
     --verbose                       set verbosity level.
 
@@ -11351,7 +11354,7 @@ options:
 
     my $status;
 
-    if ($option_help_commands)
+    if ($option_help_workflows)
     {
 	use YAML;
 
@@ -11386,11 +11389,11 @@ options:
 
 	print Dump(
 		   {
-		    '0_description' => "The list of available commands for this project are
+		    '0_description' => "The list of available workflows for this project are
   (copy-paste the one you would like to execute,
    try them with the --dry-run and --interactions options,
-   some commands may implement a usage message available with the --help option):",
-		    '1_commands' => $operations,
+   some workflows may implement a usage message available with the --help option):",
+		    '1_workflows' => $operations,
 		   },
 		  );
 
@@ -11498,7 +11501,7 @@ options:
 	       }
 	       map
 	       {
-		   "$_ --help-commands";
+		   "$_ --help-workflows";
 	       }
 	       @$all_workflow_projects,
 	      ];
@@ -11955,7 +11958,7 @@ sub operation_selector_type_construct
 	{
 	    #! we should not reach this
 
-	    report_error_exit("internal error");
+	    report_error_exit("the target $target must be followed with an operation");
 	}
     }
 

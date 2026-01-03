@@ -1,9 +1,9 @@
 ---
-command: abcd-workflow builtin command_filenames_known
+command: abcd-workflow builtin workflow_filenames_known
 command_tests:
   - description: abcd project configuration directory
     read: |
-      command_filenames_known:
+      workflow_filenames_known:
         - abcd-commands-build
         - abcd-commands-docker_testing.py
         - abcd-commands-features
@@ -11,4 +11,4 @@ command_tests:
         - abcd-commands-perl_examples
         - abcd-commands-python.py
     white_space: convert seen 0a to 0d 0a newlines
-description: abcd project command_filenames_known
+description: abcd project workflow_filenames_known

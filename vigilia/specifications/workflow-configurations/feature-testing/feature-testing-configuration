@@ -6,7 +6,7 @@ use warnings;
 
 require YAML;
 
-my $command_filenames = eval { YAML::LoadFile('feature-testing-configuration-data/command_filenames.yml'); };
+my $workflow_filenames = eval { YAML::LoadFile('feature-testing-configuration-data/workflow_filenames.yml'); };
 
 my $node_configuration = eval { YAML::LoadFile('feature-testing-configuration-data/node_configuration.yml'); };
 
@@ -15,7 +15,7 @@ my $roles = eval { YAML::LoadFile('feature-testing-configuration-data/roles.yml'
 my $targets = eval { YAML::LoadFile('feature-testing-configuration-data/targets.yml'); };
 
 my $configuration = {
-		      %{ ref $command_filenames eq 'HASH' ? $command_filenames : {}; },
+		      %{ ref $workflow_filenames eq 'HASH' ? $workflow_filenames : {}; },
 		      %{ ref $node_configuration eq 'HASH' ? $node_configuration : {}; },
 		      %{ ref $roles eq 'HASH' ? $roles : {}; },
 		      %{ ref $targets eq 'HASH' ? $targets : {}; },
