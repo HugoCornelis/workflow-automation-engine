@@ -80,6 +80,10 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
+# make sure that bash history is forced with immediate history writes
+
+RUN echo 'export PROMPT_COMMAND="history -a; history -n"' >> /etc/bash.bashrc
+
 # note that the values given here are defaults, the --build-arg arguments on the command line may become the actual values
 
 # create the test user inside the docker image
@@ -114,6 +118,14 @@ WORKDIR /home/${USER_NAME}
 ARG WORKING_DIRECTORY=/home/${USER_NAME}
 
 RUN mkdir --parents ${WORKING_DIRECTORY}
+
+# populate the bash history with a few commands
+RUN install -o neurospaces -g neurospaces -m 600 /dev/null /home/${USER_NAME}/.bash_history
+
+RUN echo "# Preloaded workflow template commands" >> /home/${USER_NAME}/.bash_history \
+    && echo "ls -a1" >> /home/${USER_NAME}/.bash_history \
+    && echo "echo command 1" >> /home/${USER_NAME}/.bash_history \
+    && echo "echo command 2" >> /home/${USER_NAME}/.bash_history
 
 # RUN git clone git://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git \
 #     && cd sbsigntools \

@@ -1,0 +1,9 @@
+---
+command: 'workflow-tests-workflow builtin workflow_add new_target selected_commands_from_bash_history -- --bash-history 3,4 --py'
+command_tests:
+  - description: Can we select commands from the bash history and convert them to a workflow?
+    read: |
+      workflow-tests-workflow: registered the python command file name workflow-tests-commands-new_target-selected_commands_from_bash_history.py for target new_target
+      workflow-tests-workflow: Created the worklow of 2 commands in file /home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history.py and add the file to the configuration.
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we select commands from the bash history and convert them to a workflow?

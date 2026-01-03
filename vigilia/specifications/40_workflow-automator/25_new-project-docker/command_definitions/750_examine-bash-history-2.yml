@@ -1,0 +1,12 @@
+---
+command: cat ~/.bash_history
+command_tests:
+  - comment: The bash history is populated with commands in the Dockerfile.
+    description: What bash history to insert new workflows is available(2)?
+    read: |
+      # Preloaded workflow template commands
+      ls -a1
+      echo command 1
+      echo command 2
+    white_space: convert seen 0a to 0d 0a newlines
+description: What bash history to insert new workflows is available(2)?
