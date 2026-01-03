@@ -1,0 +1,10 @@
+---
+command: workflow --help-projects
+command_tests:
+  - description: Can we list the known workflow projects using the regular workflow executable?
+    read: |2
+      
+      available_workflow automation projects (copy-paste the one you would like to get help for):
+        - workflow-tests-workflow --help-workflows
+    white_space: convert seen 0a to 0d 0a newlines
+description: listing the known workflow projects using the workflow executable

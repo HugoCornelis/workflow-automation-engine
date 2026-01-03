@@ -1,0 +1,57 @@
+---
+command: 'cd ~/projects/workflow-configuration/workflow-test && workflow builtin configuration_install -- --commands --path-in-bashrc --no-aliasses'
+command_tests:
+  - comment: The aliasses are not installed in the bashrc script because the color coding introduced by 'grc' complicates testing.
+    description: Can we install an unpacked workflow configuration?
+    read: |
+      # bash -c "echo '# necessary for workflow-tests-workflow
+      
+      export PATH=\"$HOME/bin:$PATH\"
+      
+      ' | cat >>/home/neurospaces2/.bashrc"
+      #
+      # mkdir --parents /home/neurospaces2/bin
+      #
+      # ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
+      #
+      # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/workflow-tests-configuration
+      #
+      # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces2/bin/workflow-tests-commands-perl_examples
+      #
+      # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands-python_examples.py /home/neurospaces2/bin/workflow-tests-commands-python_examples.py
+      #
+      # bash -c "echo '. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
+      ' | cat >>/home/neurospaces2/.bashrc"
+      #
+    read_with_aliasses: |
+      # bash -c "echo '# necessary for workflow-tests-workflow
+      
+      export PATH=\"$HOME/bin:$PATH\"
+      
+      ' | cat >>/home/neurospaces2/.bashrc"
+      #
+      # mkdir --parents /home/neurospaces2/bin
+      #
+      # ln -sf /usr/local/bin/workflow /home/neurospaces2/bin/workflow-tests-workflow
+      #
+      # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-configuration /home/neurospaces2/bin/workflow-tests-configuration
+      #
+      # ln -sf /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-commands /home/neurospaces2/bin/workflow-tests-commands
+      #
+      # bash -c "echo '# workflow-tests-workflow
+      
+      alias workflow-tests-workflow=\"grc workflow-tests-workflow\"
+      alias workflow-tests-configuration=\"grc workflow-tests-configuration\"
+      ' | cat >>/home/neurospaces2/.bashrc"
+      #
+      # bash -c "echo '. /home/neurospaces2/projects/workflow-configuration/workflow-test/workflow-tests-bash-completion.sh
+      ' | cat >>/home/neurospaces2/.bashrc"
+      #
+    tags:
+      - manual
+    wait: 1
+    white_space: convert seen 0a to 0d 0a newlines
+command_user: neurospaces2
+description: installing a  workflow configuration
+tags:
+  - manual

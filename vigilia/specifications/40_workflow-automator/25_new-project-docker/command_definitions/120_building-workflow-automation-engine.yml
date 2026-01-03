@@ -1,0 +1,15 @@
+---
+command: cd projects/workflow-automation-engine/source/snapshots/master/ && make
+command_tests:
+  - description: Can we build the workflow automation engine?
+    read: |
+      make[1]: Entering directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
+      make[1]: Nothing to be done for 'all-am'.
+      make[1]: Leaving directory '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master'
+    tags:
+      - manual
+    timeout: 5
+    white_space: convert seen 0a to 0d 0a newlines
+description: building the workflow automation engine
+tags:
+  - manual

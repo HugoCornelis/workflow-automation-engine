@@ -1,0 +1,41 @@
+---
+command: 'cd workflow-test && workflow builtin configuration_install -- --no-aliasses --commands'
+command_tests:
+  - comment: 'The workflow engine emits its output about commands to be executed before executing those commnands, a wait clause in this test is required to ensure that the the workflow engine has executed the commands after it has reported that it will execute them.'
+    description: Can we install the project files?
+    read: |
+      # mkdir --parents /home/neurospaces/bin
+      #
+      # ln -sf /usr/local/bin/workflow /home/neurospaces/bin/workflow-tests-workflow
+      #
+      # ln -sf /home/neurospaces/workflow-test/workflow-tests-configuration /home/neurospaces/bin/workflow-tests-configuration
+      #
+      # ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-perl_examples /home/neurospaces/bin/workflow-tests-commands-perl_examples
+      #
+      # ln -sf /home/neurospaces/workflow-test/workflow-tests-commands-python_examples.py /home/neurospaces/bin/workflow-tests-commands-python_examples.py
+      #
+      # bash -c "echo '. /home/neurospaces/workflow-test/workflow-tests-bash-completion.sh
+      ' | cat >>/home/neurospaces/.bashrc"
+      #
+      # sudo     bash -c "echo '
+      # workflow-tests-workflow
+      (^|[/\w\.]+/)workflow-tests-workflow\s?
+      conf.workflow-tests-workflow
+      
+      # workflow-tests-configuration
+      (^|[/\w\.]+/)workflow-tests-configuration\s?
+      conf.workflow-tests-configuration
+      
+      ' | cat >>/etc/grc.conf"
+      #
+      # sudo     ln -sf /home/neurospaces/workflow-test/conf.workflow-tests-configuration /usr/share/grc/conf.workflow-tests-configuration
+      #
+      # sudo     ln -sf /home/neurospaces/workflow-test/conf.workflow-tests-workflow /usr/share/grc/conf.workflow-tests-workflow
+      #
+    tags:
+      - manual
+    wait: 0.1
+    white_space: convert seen 0a to 0d 0a newlines
+description: correct installation of the new project files
+tags:
+  - manual

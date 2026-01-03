@@ -1,0 +1,5 @@
+---
+command: !!perl/code '{ "DUMMY" }'
+command_notused: test -x workflow-tests-commands-data/examples_sh/sh_single_command.sh
+description: check the execute bit of the generated shell scripts
+disabled: must be adapted for the Docker container

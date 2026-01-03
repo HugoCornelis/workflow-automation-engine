@@ -1,0 +1,56 @@
+---
+command: workflow --help
+command_tests:
+  - description: Can we get the help page?
+    read: |+2
+      
+      workflow: support for workflow design for embedded software engineers.
+      
+      SYNOPSIS
+      
+      workflow <options> <target> <command> -- < ... command specific options and arguments ... >
+      
+      EXAMPLES -- first try these with the --dry-run to understand what they do:
+      
+        $ workflow --help-targets                                       # display the available targets that are found in the configuration file.
+      
+        $ workflow --help-workflows                                     # display the workflows that are found in the configuration.
+      
+        $ workflow ssp build                                            # 'build' the 'ssp' target (if it exists for your local configuration).
+      
+        $ workflow --dry-run ssp build                                  # display the shell commands that would be executed to 'build' the 'ssp' target.
+      
+      options:
+      
+          --bash-completion               compute bash completion for the given command line.
+                                          hint: the bash completion script implements completion for options, targets and operations.
+          --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
+          --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
+          --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
+          --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
+          --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
+          --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+          --export-help-page              export the help page of the command as comments to the shell script.
+          --export-remote                 include the remote access part of exported commands.
+                                          this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
+          --export-sh                     export the commands to a file with the given name.
+          --export-sudo                   include applied sudo commands when exporting commands to a file.
+          --export-times                  export the times when commands are started and ended to a file with the given name.
+          --export-verbose                when exporting the commands to a file, interleave them with echo commands.
+          --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
+          --help                          display usage information and stop execution.
+          --help-builtin-package          display help about the workflows of the given builtin package.
+          --help-builtin-packages-all     display the builtin packages.
+          --help-field-project-name       print the field project name and exit.
+          --help-options                  print the option values.
+          --help-projects                 display known project information and stop execution.
+          --help-targets                  display known targets and stop execution.
+          --help-workflows                display the configured workflows.
+          --interactions                  show the interaction diagram of the commands.
+          --interactions-all              show a diagram with all the commands and all the interaction roles.
+          --interactions-target           show the interaction diagram of all the commands for the given target.
+          --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
+          --verbose                       set verbosity level.
+
+    white_space: convert seen 0a to 0d 0a newlines
+description: help page of the workflow engine

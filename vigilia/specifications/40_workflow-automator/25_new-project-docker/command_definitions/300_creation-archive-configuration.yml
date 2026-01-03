@@ -1,0 +1,46 @@
+---
+command: workflow-tests-workflow --verbose builtin configuration_archive /tmp/wtw.tar.gz
+command_tests:
+  - comment: the expected output is missing the first two dashes that introduce the first option
+    description: Can we generate an archive of the created configuration?
+    read: |2
+      
+      global_field_project_configuration:
+        configuration_origin: dynamically_generated from the executable script name
+        field_project_name: workflow-tests
+        search_path_workflow_executable_directory: /home/neurospaces/bin
+        sources_configuration_data_directory: /home/neurospaces/workflow-test/workflow-tests-commands-data
+        sources_configuration_directory: /home/neurospaces/workflow-test
+        sources_configuration_filename: /home/neurospaces/workflow-test/workflow-tests-configuration
+      ---
+      CWD: /home/neurospaces
+      scripts:
+        - workflow-test/README.md
+        - workflow-test/conf.workflow-tests-configuration
+        - workflow-test/conf.workflow-tests-workflow
+        - workflow-test/workflow-project.pl
+        - workflow-test/workflow-tests-bash-completion.sh
+        - workflow-test/workflow-tests-commands-data/cache/workflow-tests-commands-python_examples.py
+        - workflow-test/workflow-tests-commands-data/examples_sh/sh_array_of_commands.sh
+        - workflow-test/workflow-tests-commands-data/examples_sh/sh_remote_execution.sh
+        - workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+        - workflow-test/workflow-tests-commands-data/new_target/sh_array_of_commands.sh
+        - workflow-test/workflow-tests-commands-data/new_target/sh_remote_execution.sh
+        - workflow-test/workflow-tests-commands-data/new_target/sh_single_command.sh
+        - workflow-test/workflow-tests-commands-perl_examples
+        - workflow-test/workflow-tests-commands-python_examples.py
+        - workflow-test/workflow-tests-configuration
+        - workflow-test/workflow-tests-configuration-data/cache/configuration.json
+        - workflow-test/workflow-tests-configuration-data/cache/configuration.toml
+        - workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
+        - workflow-test/workflow-tests-configuration-data/node_configuration.yml
+        - workflow-test/workflow-tests-configuration-data/roles.yml
+        - workflow-test/workflow-tests-configuration-data/targets.yml
+        - workflow-test/workflow-tests-configuration-data/workflow_filenames.yml
+      tar_filename: /tmp/wtw.tar.gz
+    tags:
+      - manual
+    white_space: convert seen 0a to 0d 0a newlines
+description: creation of an archive of a configuration
+tags:
+  - manual

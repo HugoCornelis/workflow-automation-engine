@@ -1,0 +1,11 @@
+---
+command: cd .. && workflow-tests-workflow examples_sh sh_single_command
+command_tests:
+  - comment: This test is the same as the previous one except for the cd command.
+    description: Have the project workflows been correctly installed and are they executed when invoked from a different directory?
+    read: |
+      # /home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+      #
+      an example of the invocation of a single command
+    white_space: convert seen 0a to 0d 0a newlines
+description: execution of the workflow templates from a different directory

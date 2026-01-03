@@ -1,0 +1,10 @@
+---
+command: workflow-tests-workflow examples_sh sh_single_command
+command_tests:
+  - description: Can we execute one of the installed workflows?
+    read: |
+      # /home/neurospaces/workflow-test/workflow-tests-commands-data/examples_sh/sh_single_command.sh
+      #
+      an example of the invocation of a single command
+    white_space: convert seen 0a to 0d 0a newlines
+description: 'installation and execution of the workflows, no dry run'
