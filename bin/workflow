@@ -11146,8 +11146,9 @@ sub main
 	report_error_exit("target '$global_target' does not exist");
     }
 
-    if ((not defined $option_interactions_all
-	 and not defined $option_interactions_target_all_roles)
+    if (not defined $option_interactions_all
+	and not defined $option_interactions_target_all_roles
+	and not defined $option_dump_all_interaction_roles
 	and not defined $global_target)
     {
 	report_error_exit("neither a target argument nor a valid global options is given (allowed here are: --interactions-all, --interactions-target-all-roles), try --help");
