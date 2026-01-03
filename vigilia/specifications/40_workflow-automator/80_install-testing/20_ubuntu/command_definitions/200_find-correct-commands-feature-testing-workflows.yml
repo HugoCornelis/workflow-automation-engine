@@ -1,19 +1,18 @@
 ---
-command: feature-testing-workflow --help-commands
+command: feature-testing-workflow --help-workflows
 command_tests:
   - description: Do we find the correct commands for the feature-testing workflows?
     read: |2
       
       0_description: |-
-        The list of available commands for this project are
+        The list of available workflows for this project are
           (copy-paste the one you would like to execute,
            try them with the --dry-run and --interactions options,
-           some commands may implement a usage message available with the --help option):
-      1_commands:
+           some workflows may implement a usage message available with the --help option):
+      1_workflows:
         - feature-testing-workflow build operation1
         - feature-testing-workflow build operation2
         - feature-testing-workflow build operation3
-        - feature-testing-workflow builtin command_filenames_known
         - feature-testing-workflow builtin configuration_archive
         - feature-testing-workflow builtin configuration_directory_print
         - feature-testing-workflow builtin configuration_fetch
@@ -32,6 +31,7 @@ command_tests:
         - feature-testing-workflow builtin target_add
         - feature-testing-workflow builtin tmux_sessions_create
         - feature-testing-workflow builtin tmux_sessions_kill
+        - feature-testing-workflow builtin workflow_filenames_known
         - feature-testing-workflow docker_testing where_am_i
         - feature-testing-workflow examples_sh sh_array_of_commands
         - feature-testing-workflow examples_sh sh_remote_execution

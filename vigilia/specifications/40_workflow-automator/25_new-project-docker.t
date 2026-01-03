@@ -277,7 +277,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 
   $ workflow --help-targets                                       # display the available targets that are found in the configuration file.
 
-  $ workflow --help-commands                                      # display the available commands that are found in the configuration file.
+  $ workflow --help-workflows                                     # display the workflows that are found in the configuration.
 
   $ workflow ssp build                                            # \'build\' the \'ssp\' target (if it exists for your local configuration).
 
@@ -286,7 +286,7 @@ EXAMPLES -- first try these with the --dry-run to understand what they do:
 options:
 
     --bash-completion               compute bash completion for the given command line.
-                                    hint: the bash completion script implements completion for options, targets and commands.
+                                    hint: the bash completion script implements completion for options, targets and operations.
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
@@ -297,21 +297,21 @@ options:
     --export-remote                 include the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
     --export-sh                     export the commands to a file with the given name.
-    --export-sudo                   include the sudo commands when exporting commands to a file.
+    --export-sudo                   include applied sudo commands when exporting commands to a file.
     --export-times                  export the times when commands are started and ended to a file with the given name.
     --export-verbose                when exporting the commands to a file, interleave them with echo commands.
     --force-rebuild                 force a rebuild regardless of the existence and build date of previously built artefacts.
     --help                          display usage information and stop execution.
-    --help-builtin-package          display help about the commands of the given builtin package.
+    --help-builtin-package          display help about the workflows of the given builtin package.
     --help-builtin-packages-all     display the builtin packages.
-    --help-commands                 display the available commands, add a target name for restricted output.
     --help-field-project-name       print the field project name and exit.
     --help-options                  print the option values.
     --help-projects                 display known project information and stop execution.
     --help-targets                  display known targets and stop execution.
+    --help-workflows                display the configured workflows.
     --interactions                  show the interaction diagram of the commands.
     --interactions-all              show a diagram with all the commands and all the interaction roles.
-    --interactions-target           show the interaction diagram of all the commands in the module.
+    --interactions-target           show the interaction diagram of all the commands for the given target.
     --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
     --verbose                       set verbosity level.
 
@@ -396,10 +396,10 @@ Or:
 ./workflow-tests-configuration
 ./workflow-tests-configuration-data
 ./workflow-tests-configuration-data/cache
-./workflow-tests-configuration-data/command_filenames.yml
 ./workflow-tests-configuration-data/node_configuration.yml
 ./workflow-tests-configuration-data/roles.yml
 ./workflow-tests-configuration-data/targets.yml
+./workflow-tests-configuration-data/workflow_filenames.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -509,18 +509,17 @@ conf.workflow-tests-configuration
 				tags => [ 'manual' ],
 			       },
 			       {
-				command => 'cd workflow-test && workflow-tests-workflow --help-commands',
+				command => 'cd workflow-test && workflow-tests-workflow --help-workflows',
 				command_tests => [
 						  {
 						   description => "Have the project workflows been correctly installed?",
 						   read => '
 0_description: |-
-  The list of available commands for this project are
+  The list of available workflows for this project are
     (copy-paste the one you would like to execute,
      try them with the --dry-run and --interactions options,
-     some commands may implement a usage message available with the --help option):
-1_commands:
-  - workflow-tests-workflow builtin command_filenames_known
+     some workflows may implement a usage message available with the --help option):
+1_workflows:
   - workflow-tests-workflow builtin configuration_archive
   - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin configuration_fetch
@@ -539,6 +538,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
+  - workflow-tests-workflow builtin workflow_filenames_known
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
   - workflow-tests-workflow examples_sh sh_single_command
@@ -553,18 +553,17 @@ conf.workflow-tests-configuration
 				description => "correct installation of the workflows of the new project",
 			       },
 			       {
-				command => 'workflow-tests-workflow --help-commands',
+				command => 'workflow-tests-workflow --help-workflows',
 				command_tests => [
 						  {
 						   description => "Have the project workflows been correctly installed, different working directory?",
 						   read => '
 0_description: |-
-  The list of available commands for this project are
+  The list of available workflows for this project are
     (copy-paste the one you would like to execute,
      try them with the --dry-run and --interactions options,
-     some commands may implement a usage message available with the --help option):
-1_commands:
-  - workflow-tests-workflow builtin command_filenames_known
+     some workflows may implement a usage message available with the --help option):
+1_workflows:
   - workflow-tests-workflow builtin configuration_archive
   - workflow-tests-workflow builtin configuration_directory_print
   - workflow-tests-workflow builtin configuration_fetch
@@ -583,6 +582,7 @@ conf.workflow-tests-configuration
   - workflow-tests-workflow builtin target_add
   - workflow-tests-workflow builtin tmux_sessions_create
   - workflow-tests-workflow builtin tmux_sessions_kill
+  - workflow-tests-workflow builtin workflow_filenames_known
   - workflow-tests-workflow examples_sh sh_array_of_commands
   - workflow-tests-workflow examples_sh sh_remote_execution
   - workflow-tests-workflow examples_sh sh_single_command
@@ -679,7 +679,7 @@ workflow-tests-workflow: created the shell command file for target new_target2',
 						   description => "Can we list the known workflow projects using the regular workflow executable?",
 						   read => '
 available_workflow automation projects (copy-paste the one you would like to get help for):
-  - workflow-tests-workflow --help-commands
+  - workflow-tests-workflow --help-workflows
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -721,10 +721,10 @@ scripts:
   - workflow-test/workflow-tests-configuration-data/cache/configuration.json
   - workflow-test/workflow-tests-configuration-data/cache/configuration.toml
   - workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
-  - workflow-test/workflow-tests-configuration-data/command_filenames.yml
   - workflow-test/workflow-tests-configuration-data/node_configuration.yml
   - workflow-test/workflow-tests-configuration-data/roles.yml
   - workflow-test/workflow-tests-configuration-data/targets.yml
+  - workflow-test/workflow-tests-configuration-data/workflow_filenames.yml
 tar_filename: /tmp/wtw.tar.gz
 ',
 						   tags => [ 'manual' ],
@@ -757,10 +757,10 @@ workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/cache/configuration.json
 workflow-test/workflow-tests-configuration-data/cache/configuration.toml
 workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
-workflow-test/workflow-tests-configuration-data/command_filenames.yml
 workflow-test/workflow-tests-configuration-data/node_configuration.yml
 workflow-test/workflow-tests-configuration-data/roles.yml
 workflow-test/workflow-tests-configuration-data/targets.yml
+workflow-test/workflow-tests-configuration-data/workflow_filenames.yml
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -804,10 +804,10 @@ workflow-test/workflow-tests-configuration
 workflow-test/workflow-tests-configuration-data/cache/configuration.json
 workflow-test/workflow-tests-configuration-data/cache/configuration.toml
 workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
-workflow-test/workflow-tests-configuration-data/command_filenames.yml
 workflow-test/workflow-tests-configuration-data/node_configuration.yml
 workflow-test/workflow-tests-configuration-data/roles.yml
 workflow-test/workflow-tests-configuration-data/targets.yml
+workflow-test/workflow-tests-configuration-data/workflow_filenames.yml
 ',
 						   tags => [ 'manual' ],
 						   white_space => 'convert seen 0a to 0d 0a newlines',

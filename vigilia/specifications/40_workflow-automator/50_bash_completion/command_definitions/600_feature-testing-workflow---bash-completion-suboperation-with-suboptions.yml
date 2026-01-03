@@ -3,5 +3,5 @@ command: feature-testing-workflow --bash-completion 'feature-testing-workflow bu
 command_tests:
   - description: feature-testing-workflow --bash-completion suboperation with suboptions
     read: ''
-    read_old: bash-completion --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-builtin-package --help-builtin-packages-all help-commands --help-field-project-name --help-options --help-projects --help-targets --interactions --interactions-all --interactions-target --interactions-target-all-roles --verbose
+    read_old: bash-completion --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-builtin-package --help-builtin-packages-all --help-field-project-name --help-options --help-projects --help-targets --help-workflows --interactions --interactions-all --interactions-target --interactions-target-all-roles --verbose
 description: feature-testing-workflow --bash-completion suboperation with suboptions

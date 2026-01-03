@@ -71,11 +71,12 @@ configured with the new completions and paths.
 Afterwards a good starting point for using the configuration is:
 
 ```
-$ feature-testing-workflow --help-commands
+$ feature-testing-workflow --help-workflows
 ```
-Then followed with one of the `--dry-run` and `--interactions` options
-applied to one of the shown commands to understand what these commands would do
-if executed without options:
+
+Then apply either the `--dry-run` or the `--interactions` option to
+one of the shown workflows to understand what these operations would
+do if executed without options:
 
 ```
 <fill in your project specific examples here>

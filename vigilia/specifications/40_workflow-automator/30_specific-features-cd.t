@@ -101,7 +101,7 @@ feature-testing-workflow builtin target_add source_code "Operations on the sourc
 						  {
 						   description => "Can we find the workflow project for the cd feature tests?",
 						   read => 'available_workflow automation projects (copy-paste the one you would like to get help for):
-  - feature-testing-workflow --help-commands
+  - feature-testing-workflow --help-workflows
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },

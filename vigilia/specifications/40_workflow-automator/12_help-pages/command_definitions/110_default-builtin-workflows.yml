@@ -1,17 +1,16 @@
 ---
-command: bin/workflow --help-commands
+command: bin/workflow --help-workflows
 command_tests:
   - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
-    description: Can we display the builtin commands help page?
+    description: Can we display the builtin workflows help page?
     read: |2
       
       0_description: |-
-        The list of available commands for this project are
+        The list of available workflows for this project are
           (copy-paste the one you would like to execute,
            try them with the --dry-run and --interactions options,
-           some commands may implement a usage message available with the --help option):
-      1_commands:
-        - workflow builtin command_filenames_known
+           some workflows may implement a usage message available with the --help option):
+      1_workflows:
         - workflow builtin configuration_archive
         - workflow builtin configuration_directory_print
         - workflow builtin configuration_fetch
@@ -30,4 +29,5 @@ command_tests:
         - workflow builtin target_add
         - workflow builtin tmux_sessions_create
         - workflow builtin tmux_sessions_kill
-description: default builtin commands
+        - workflow builtin workflow_filenames_known
+description: default builtin workflows
