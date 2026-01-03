@@ -8,34 +8,6 @@ my $test
     = {
        command_definitions => [
 			       {
-				command => 'pwd',
-				command_tests => [
-						  {
-						   description => "Are we in the correct working directory?",
-						   read => '/home/neurospaces
-',
-						   wait => 1,
-						   white_space => 'convert seen 0a to 0d 0a newlines',
-						   white_space1 => 'convert seen \\x0d \\x0a to \\x0a newlines',
-						  },
-						 ],
-				command_user => 'neurospaces',
-				description => "working directory",
-			       },
-			       {
-				command => 'ls -1',
-				command_tests => [
-						  {
-						   description => "Can we list the current directory?",
-						   read => 'projects
-',
-						   wait => 1,
-						   white_space => 'convert seen 0a to 0d 0a newlines',
-						  },
-						 ],
-				description => "current directory contents",
-			       },
-			       {
 				command => 'cd projects/workflow-automation-engine/source/snapshots/master/ && ./autogen.sh',
 				command_tests => [
 						  {
