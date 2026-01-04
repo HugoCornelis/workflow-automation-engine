@@ -56,6 +56,7 @@ my $option_select_context_path = '.*';
 my $option_show_command_descriptions;
 my $option_show_command_tests;
 my $option_show_images;
+my $option_show_modules;
 my $option_tags = [];
 my $option_timeout_multiplier = 1;
 my $option_timings = 1;
@@ -130,6 +131,7 @@ options:
     --show-command-descriptions  Show tests that would be run using the current configuration.
     --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
     --show-images                Show the docker images and containers that are referenced by the test harnesses.
+    --show-modules               Show the selected test modules and their descriptions.
     --tags                       Only test test modules that have been tagged with these tags (default: all tags).
     --timeout-multiplier         Multiply all timeout values with this constant.
     --timings                    Add timing information about the tests to the report.
@@ -179,6 +181,7 @@ options:
 					    "show-command-descriptions!" => \$option_show_command_descriptions,
 					    "show-command-tests!" => \$option_show_command_tests,
 					    "show-images!" => \$option_show_images,
+					    "show-modules!" => \$option_show_modules,
 					    "tags=s" => $option_tags,
 					    "timeout-multiplier=s" => \$option_timeout_multiplier,
 					    "timings!" => \$option_timings,
@@ -561,6 +564,12 @@ sub parse_options
 
 	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Images";
 	}
+	elsif ($option_show_modules)
+	{
+	    $global_test_report->{output_format} = 'yaml_exit';
+
+	    $option_output = "Heterarch::Test::Output::Formatter::YAML::Modules";
+	}
 	else
 	{
 	    $global_test_report->{output_format} = 'executor';
@@ -618,6 +627,7 @@ sub parse_options
 	   show_command_descriptions => $option_show_command_descriptions,
 	   show_command_tests => $option_show_command_tests,
 	   show_images => $option_show_images,
+	   show_modules => $option_show_modules,
 	   tags => $option_tags,
 	   timeout_multiplier => $option_timeout_multiplier,
 	   timings => $option_timings,
@@ -11371,6 +11381,95 @@ sub ex_terminate
 	    system $command_list;
 	}
     }
+}
+
+
+package Heterarch::Test::Output::Formatter::YAML::Modules;
+
+# The Formatter:YAML::Modules package converts the test specifications
+# to a YAML formatted list of the selected modules and their
+# descriptions.
+
+
+our @ISA = ("Heterarch::Test::Output::Summarizer");
+
+
+# create an output entry for the current command definition
+# add the current test description to the summary
+
+sub ex_ct_run
+{
+    # always succeeds
+
+    my $test_result
+	= {
+	   after_match => "",
+	   before_match => "",
+	   error => "",
+	   expected => "",
+	   matched_pattern_position => "",
+	   successfully_matching_string => "",
+	  };
+
+    return $test_result;
+}
+
+
+sub ex_cd_start
+{
+    my $self = shift;
+
+    # get the execution context
+
+    my $execution_context = $self->{execution_context};
+
+    # create an output entry for the module
+
+    my $module_definition = $execution_context->get_module_definition();
+
+    my $module_name = $module_definition->{name};
+
+    if (not $global_test_report->{selected}->{$module_name})
+    {
+	$global_test_report->{selected}->{$module_name} = [];
+    }
+}
+
+
+# note that this implementation is the same as the one of ex_terminate() in
+# Heterarch::Test::Output::Formatter::YAML::Summary
+
+sub ex_terminate
+{
+    my $self = shift;
+
+    my $test_module_library_contents = shift;
+
+    # yaml out the test report
+
+    my $report_yaml
+	= {
+	   description => $global_test_report->{description},
+	  };
+
+    # add output specific to the output selection
+
+    if ($option_report_disabled_tests)
+    {
+	$report_yaml->{disabled} = $global_test_report->{disabled};
+    }
+
+    $report_yaml->{selected} = $global_test_report->{selected};
+
+    use YAML;
+
+    my $report_text = "\n" . Dump($report_yaml);
+
+    my $execution_context = $self->{execution_context};
+
+    my $reporter = $execution_context->{reporter};
+
+    $reporter->report_message_info_no_rulers("message_info", "$report_text");
 }
 
 
