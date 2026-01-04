@@ -3858,6 +3858,16 @@ sub builtin_grep_code
 }
 
 
+sub builtin_grep_code_completions
+{
+    return
+    {
+     "1.<search-regex>" => '',
+     "2.[<project-name-regex>...]" => '',
+    };
+}
+
+
 sub builtin_grep_code_help
 {
     my $command = shift;
@@ -4050,6 +4060,17 @@ sub builtin_grep_commands
     }
 
     return '';
+}
+
+
+sub builtin_grep_commands_completions
+{
+    return
+    {
+     "1.<target-regex>" => '',
+     "2.<commands-regex>" => '',
+     "3.[<project-name-regex>...]" => '',
+    };
 }
 
 
