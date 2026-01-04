@@ -10,37 +10,122 @@ tasks in software development.  It addresses the problem of technical
 debt by making project execution workflows persistent, reproducible,
 and easier to maintain.
 
-The `vigilia` testing framework uses a database of test specifications
-to generate documentation for user-facing functionality and to verify
+The `vigilia` framework uses a database of test specifications to
+generate documentation for user-facing functionality and to verify
 that the delivered software meets the required application functions.
 
 
 ## `workflow` Applications
 
 `workflow` engine configurations, applications and libraries are
-typically developed in Python, can be commercialized, and are used
-license aware bridging between Open Source Software and closed source
-software.  Typical applications include:
+typically developed in Python and have a license that is indepent of
+`workflow`.  They can consequently be commercialized as a bridge
+between Open Source Software and closed source software if feasible.
 
-- IT network and infrastructure administration: Automate the IT
-  administration tasks such as monitoring remote machines and never
-  forget that one command that you once used to inspect the
-  registration details of a device inside a Docker container.  A well
-  developed `workflow` configuration offers a conceptual operational
-  view on a complex IT network while still allowing inspection and
-  configuration of all the details.
+`workflow` applications can fall into one of several categories:
+
+- Simple project wrapper that allows a developer to quickly find the
+  tools and command lines required to carry out a given project.
+- Library or executable wrapper,
+- Infrastructure maintenance tool,
+- Software component system integration and inspection.
+
+`workflow` generates developer-facing documentation For each of these
+catories as required.
+
+
+### Simple `workflow` Applications
+
+A simple `workflow` application centralizes and documents the tools
+and command-line workflows required to work effectively on a project.
+
+The `workflow` configuration implements bash completion in a minimal
+project wrapper to standardize access to project-specific tooling and
+exposes the exact command-line interfaces required to build, test,
+deploy, or otherwise operate the project.
+
+A `git ` repository for the configuration ensures that developers
+share a common view on project execution.  The help pages of the
+workflows are automatically collected in a manual per project stage.
+
+
+### Library and Executable Wrappers
+
+Typical `workflow` configuration examples of library and executable
+wrappers include:
+
+- Linux kernel testing and debugging: Compile a specific Linux kernel
+  source tree and initiate debugging sessions under `qemu`.
+
 - Yocto and Buildroot wrapping: Use the Yocto or Buildroot build
   systems more conveniently and leverage `workflow` `bash` completion
   to explore available `defconfig`s and recipes, and track which
-  packages have already been built.
-- Linux kernel testing and debugging: Compile a specific Linux kernel
-  source tree and initiate debugging sessions under `qemu`.
-- Device fleet simulation: Build embedded software artifacts and
-  integrate the required open-source components to simulate device
-  fleet scenarios.
-- Documentation generation and verification: Use the `workflow` engine
-  to automatically generate user-facing documentation from test
-  specifications.
+  packages have already been built.  Advanced configuration allow
+  starting `qemu` with a project specific Linux kernel and rootfs.
+
+
+### Infrastructure Maintenance
+
+Infrastructure maintenance requires both local and remote execution of
+commands from different user accounts.
+
+A `workflow` configuration implements the necessary roles to connect
+to a local or remote service or software component and inspect or
+alter its state with to a specific configuration.  Both workflows and
+roles can be made available through bash completion.
+
+Typical `workflow` configuration examples for IT infrastructure
+maintenance include:
+
+- System diagnosis: System specific integration of the tools such as
+  `ps`, `top`, `lsof`, `ss`, `systemctl`, `docker ps` to understand
+  why a given process or service is running or why a given port is
+  bound.  This allows to cross layers of supervisors, containers and
+  services to find the root cause of a specific problem.  This type of
+  `worfklow` configuration explains why a process exists, rather than
+  just that it exists.
+
+- IT network and infrastructure administration: Automate the IT
+  administration tasks such as monitoring remote machines and
+  inspection of registration details of a device inside a Docker
+  container.  The `workflow` configuration offers a conceptual
+  operational view on a complex IT network while still allowing
+  inspection and configuration of all the network details.
+
+
+### Software Component Integration Systems
+
+Combining and integrating the `workflow` functions for wrappers and
+infrastructure maintenance opens the possibility for` configurations
+for systems integration.  These applications are of a larger scale
+than the other categories.  Typical examples include:
+
+- Device fleet simulation: Build and compose embedded software
+  artifacts together with supporting open-source components to
+  simulate end-to-end device fleet behavior, including provisioning,
+  orchestration, and failure scenarios.
+
+  The configuration integrates the embedded software artifacts of a
+  build system such as Yocto or Buildroot with open-source components,
+  such as `qemu`, Grafana, Hawkbit and Guacamolee, required to
+  simulate device fleet scenarios.
+
+  In this case, the `workflow` engine is used as the system integrator
+  rather than a simple automation script, for the integration of
+  dozens of repositories, focusing on cross-component version
+  compatibility and correct configuration matrices for multiple
+  hardware variants.
+
+- Continuous Integration and Continuous Delivery (CI/CD) system
+  orchestration: A `workflow` configuration coordinates the automated
+  building, testing, analysis, and deployment of software across
+  multiple repositories, environments, and target platforms.  The
+  configuration defines execution order, conditional logic,
+  parallelization, and failure handling, and provides the tools for
+  inspection and diagnosis at each stage and scale.  This helps
+  ensuring that the CI/CD system becomes a central operational
+  backbone that enforces consistency, reproducibility, and
+  traceability across an organization’s software delivery lifecycle.
 
 
 ## `vigilia` Applications
@@ -52,9 +137,9 @@ system](http://genesis-sim.org/):
 - Unit, regression and integration testing: Starting `vigilia` from a
   `cron` job implements the execution of tests to catch error
   introduced by new development early.
-- Static HTML web site generation: The test specifications model real
-  use cases and form the basis for documentation writers to develop
-  tutorial materials.
+- Static HTML web site generation: Specific test specifications model
+  real use cases and form the basis for documentation writers to
+  develop tutorial materials.
 - Manual generation: The inline description of selected tests are
   converted to a PDF document that forms the foundation of
   specification and user manuals.
@@ -62,17 +147,10 @@ system](http://genesis-sim.org/):
 
 ## Technical Details
 
-__The Workflow Automation Engine__
+### The Workflow Automation Engine
 
 The `workflow` engine helps automate complex system shell tasks during
-software development.
-
-Typical workflows include running local or remote shell commands with
-hard-to-remember arguments and options, compiling source code on a
-build server, converting documentation into web pages, flashing binary
-software images (such as a Linux kernel) to small or embedded devices,
-and orchestrating command sequences across local, remote, or virtual
-machines.
+project execution.
 
 The `workflow` engine provides the following capabilities:
 
@@ -101,7 +179,7 @@ The `workflow` engine is typically used to:
   repository.
 
 
-__The `vigilia` Tester__
+### The `vigilia` Tester
 
 The `vigilia` tester is based on a declarative database of test
 specifications to:
@@ -115,53 +193,13 @@ specifications to:
 - Isolate test environments using virtualization.
 
 
-<!-- ## Abstract -->
-
-<!-- Software documentation management systems face three long-standing -->
-<!-- challenges: (1) Consistent software documentation synchronization with -->
-<!-- system function, (2) Satisfy industry certification schemes, (3) -->
-<!-- Document workflows required for project execution, collaboration -->
-<!-- between software developers and reduce on-boarding time of new -->
-<!-- developers. -->
-
-<!-- Two complimentary software applications are introduced: `workflow` and -->
-<!-- `vigilia`.  Together, they elaborate a multipolar view of the -->
-<!-- implementation of a software documentation project while allowing -->
-<!-- refinement during project development. -->
-
-<!-- `workflow` automates the technical workflows required for project -->
-<!-- development.  Its descriptions are based on system shell commands -->
-<!-- through a set of configuration files. -->
-
-<!-- Separation of project specific workflow configurations supports -->
-<!-- collaboration between software developers through a shared git -->
-<!-- repository. -->
-
-<!-- The configuration files implement, automate, track and document the -->
-<!-- execution of a series of system shell commands across machines used -->
-<!-- for multi-role compilations, builds, tests and deployment. -->
-
-<!-- A tester tool, `vigilia` isolates declarative test descriptions from -->
-<!-- their execution. -->
-
-<!-- These descriptions facilitate layering of the documentation levels -->
-<!-- required for industry compliance and certification. -->
-
-<!-- Specific features of test descriptions can be tagged for inclusion in -->
-<!-- documents derived from the tests. -->
-
-<!-- Combining these features guarantees a single “source of truth” -->
-<!-- ensuring software system tests, documents and software functions -->
-<!-- remain coherently synchronized. -->
-
-
 # Installation
 
-`workflow` and `vigilia` are available for most Linux distributions.
-The regression tests use Docker files to install and verify
-functionality on Debian, Ubuntu, Fedora and OpenSUSE.  The package
-lists within these Dockerfiles document the prerequisites for each of
-those distributions (Dockerfile for
+`workflow` and `vigilia` support most Linux distributions.  The
+regression tests use Docker files to install and verify functionality
+on Debian, Ubuntu, Fedora and OpenSUSE.  The package lists within
+these Dockerfiles document the prerequisites for each of those
+distributions (Dockerfile for
 [Debian](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-debian),
 [Ubuntu](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-ubuntu),
 [Fedora](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-fedora),
@@ -260,6 +298,16 @@ To start a new `workflow` project named *foo*, follow these steps:
 
 	Adds a new target *bar* and creates a directory with template
     examples that you can customize for your project.
+
+6. `foo-workflow builtin workflow_add bar perform_my_specific_task -- --bash-history 3,4 --py`
+
+	Adds a workflow to target *bar* with the operation name
+    *perform_my_specific_task*, consisting of the commands found in
+    the bash history.
+
+	Through the `--py` option this workflow is implemented in a Python
+    plugin file.  The `--editor` option is used to edit the workflow,
+    its completions and its help page.
 
 
 ## Starting a new `vigilia` project
