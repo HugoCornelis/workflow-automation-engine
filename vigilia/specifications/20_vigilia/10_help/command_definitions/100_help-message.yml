@@ -55,6 +55,7 @@ command_tests:
           --show-command-descriptions  Show tests that would be run using the current configuration.
           --show-command-tests         Show all the command definitions that would be run during test execution, including the input to those commands.
           --show-images                Show the docker images and containers that are referenced by the test harnesses.
+          --show-modules               Show the selected test modules and their descriptions.
           --tags                       Only test test modules that have been tagged with these tags (default: all tags).
           --timeout-multiplier         Multiply all timeout values with this constant.
           --timings                    Add timing information about the tests to the report.
