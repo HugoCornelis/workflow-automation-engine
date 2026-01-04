@@ -299,6 +299,16 @@ To start a new `workflow` project named *foo*, follow these steps:
 	Adds a new target *bar* and creates a directory with template
     examples that you can customize for your project.
 
+6. `foo-workflow builtin workflow_add bar perform_my_specific_task -- --bash-history 3,4 --py`
+
+	Adds a workflow to target *bar* with the operation name
+    *perform_my_specific_task*, consisting of the commands found in
+    the bash history.
+
+	Through the `--py` option this workflow is implemented in a Python
+    plugin file.  The `--editor` option is used to edit the workflow,
+    its completions and its help page.
+
 
 ## Starting a new `vigilia` project
 
