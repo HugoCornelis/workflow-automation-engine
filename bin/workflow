@@ -6039,8 +6039,6 @@ def ${target}_${operation}_help(command, argv):
 	close $file;
 
 	$error = _builtin_add_command_filename($global_field_project_configuration, $create_file_type, $target, $filename);
-
-	print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
     }
     else
     {
@@ -6054,7 +6052,21 @@ def ${target}_${operation}_help(command, argv):
 	print $file $implementation;
 
 	close $file;
+    }
 
+    if ($option_editor)
+    {
+	my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
+
+	system "vi '$pathname'";
+    }
+
+    if ($create_file_type)
+    {
+	print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
+    }
+    else
+    {
 	print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
     }
 
