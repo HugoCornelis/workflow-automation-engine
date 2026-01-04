@@ -18,29 +18,77 @@ that the delivered software meets the required application functions.
 ## `workflow` Applications
 
 `workflow` engine configurations, applications and libraries are
-typically developed in Python, can be commercialized, and are used
-license aware bridging between Open Source Software and closed source
-software.  Typical applications include:
+typically developed in Python and have a license that is indepent of
+`workflow`.  They can consequently be commercialized as a bridge
+between Open Source Software and closed source software if feasible.
 
-- IT network and infrastructure administration: Automate the IT
-  administration tasks such as monitoring remote machines and never
-  forget that one command that you once used to inspect the
-  registration details of a device inside a Docker container.  A well
-  developed `workflow` configuration offers a conceptual operational
-  view on a complex IT network while still allowing inspection and
-  configuration of all the details.
+`workflow` applications can fall into one of several categories:
+
+- Simple project wrapper that allows a developer to quickly find the
+  tools and command lines required to carry out a given project.
+- Library or executable wrapper,
+- Infrastructure maintenance tool,
+- Software component system integration and inspection.
+
+`workflow` generates developer-facing documentation For each of these
+catories as required.
+
+
+### Simple `workflow` Applications
+
+A simple `workflow` application centralizes and documents the tools
+and command-line workflows required to work effectively on a project.
+
+The `workflow` configuration implements bash completion in a minimal
+project wrapper to standardize access to project-specific tooling and
+exposes the exact command-line interfaces required to build, test,
+deploy, or otherwise operate the project.
+
+A `git ` repository for the configuration ensures that developers
+share a common view on project execution.  The help pages of the
+workflows are automatically collected in a manual per project stage.
+
+
+### Library and Executable Wrappers
+
+Typical `workflow` configuration examples of library and executable
+wrappers are:
+
+- Linux kernel testing and debugging: Compile a specific Linux kernel
+  source tree and initiate debugging sessions under `qemu`.
+
 - Yocto and Buildroot wrapping: Use the Yocto or Buildroot build
   systems more conveniently and leverage `workflow` `bash` completion
   to explore available `defconfig`s and recipes, and track which
-  packages have already been built.
-- Linux kernel testing and debugging: Compile a specific Linux kernel
-  source tree and initiate debugging sessions under `qemu`.
-- Device fleet simulation: Build embedded software artifacts and
-  integrate the required open-source components to simulate device
-  fleet scenarios.
-- Documentation generation and verification: Use the `workflow` engine
-  to automatically generate user-facing documentation from test
-  specifications.
+  packages have already been built.  Advanced configuration allow
+  starting `qemu` with a project specific Linux kernel and rootfs.
+
+
+### Infrastructure Maintenance
+
+- System diagnosis: System specific integration of the tools such as
+  `ps`, `top`, `lsof`, `ss`, `systemctl`, `docker ps` to understand
+  why a given process or service is running or why a given port is
+  bound.  This allows to cross layers of supervisors, containers and
+  services to find the root cause of a specific problem.  This type of
+  `worfklow` configuration explains why a process exists, rather than
+  just that it exists.
+
+- IT network and infrastructure administration: Automate the IT
+  administration tasks such as monitoring remote machines and
+  inspection of registration details of a device inside a Docker
+  container.  The `workflow` configuration offers a conceptual
+  operational view on a complex IT network while still allowing
+  inspection and configuration of all the network details.
+
+
+### Software Component Integration Systems
+
+- Device fleet simulation: Use of a build system such as Yocto or
+  Buildroot for the integration of embedded software artifacts with
+  open-source components, such as `qemu`, Grafana, Hawkbit and
+  Guacamolee, required to simulate device fleet scenarios.
+
 
 
 ## `vigilia` Applications
@@ -52,9 +100,9 @@ system](http://genesis-sim.org/):
 - Unit, regression and integration testing: Starting `vigilia` from a
   `cron` job implements the execution of tests to catch error
   introduced by new development early.
-- Static HTML web site generation: The test specifications model real
-  use cases and form the basis for documentation writers to develop
-  tutorial materials.
+- Static HTML web site generation: Specific test specifications model
+  real use cases and form the basis for documentation writers to
+  develop tutorial materials.
 - Manual generation: The inline description of selected tests are
   converted to a PDF document that forms the foundation of
   specification and user manuals.
