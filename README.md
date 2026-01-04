@@ -10,8 +10,8 @@ tasks in software development.  It addresses the problem of technical
 debt by making project execution workflows persistent, reproducible,
 and easier to maintain.
 
-The `vigilia` testing framework uses a database of test specifications
-to generate documentation for user-facing functionality and to verify
+The `vigilia` framework uses a database of test specifications to
+generate documentation for user-facing functionality and to verify
 that the delivered software meets the required application functions.
 
 
@@ -52,7 +52,7 @@ workflows are automatically collected in a manual per project stage.
 ### Library and Executable Wrappers
 
 Typical `workflow` configuration examples of library and executable
-wrappers are:
+wrappers include:
 
 - Linux kernel testing and debugging: Compile a specific Linux kernel
   source tree and initiate debugging sessions under `qemu`.
@@ -65,6 +65,17 @@ wrappers are:
 
 
 ### Infrastructure Maintenance
+
+Infrastructure maintenance requires both local and remote execution of
+commands from different user accounts.
+
+A `workflow` configuration implements the necessary roles to connect
+to a local or remote service or software component and inspect or
+alter its state with to a specific configuration.  Both workflows and
+roles can be made available through bash completion.
+
+Typical `workflow` configuration examples for IT infrastructure
+maintenance include:
 
 - System diagnosis: System specific integration of the tools such as
   `ps`, `top`, `lsof`, `ss`, `systemctl`, `docker ps` to understand
@@ -84,11 +95,37 @@ wrappers are:
 
 ### Software Component Integration Systems
 
-- Device fleet simulation: Use of a build system such as Yocto or
-  Buildroot for the integration of embedded software artifacts with
-  open-source components, such as `qemu`, Grafana, Hawkbit and
-  Guacamolee, required to simulate device fleet scenarios.
+Combining and integrating the `workflow` functions for wrappers and
+infrastructure maintenance opens the possibility for` configurations
+for systems integration.  These applications are of a larger scale
+than the other categories.  Typical examples include:
 
+- Device fleet simulation: Build and compose embedded software
+  artifacts together with supporting open-source components to
+  simulate end-to-end device fleet behavior, including provisioning,
+  orchestration, and failure scenarios.
+
+  The configuration integrates the embedded software artifacts of a
+  build system such as Yocto or Buildroot with open-source components,
+  such as `qemu`, Grafana, Hawkbit and Guacamolee, required to
+  simulate device fleet scenarios.
+
+  In this case, the `workflow` engine is used as the system integrator
+  rather than a simple automation script, for the integration of
+  dozens of repositories, focusing on cross-component version
+  compatibility and correct configuration matrices for multiple
+  hardware variants.
+
+- Continuous Integration and Continuous Delivery (CI/CD) system
+  orchestration: A `workflow` configuration coordinates the automated
+  building, testing, analysis, and deployment of software across
+  multiple repositories, environments, and target platforms.  The
+  configuration defines execution order, conditional logic,
+  parallelization, and failure handling, and provides the tools for
+  inspection and diagnosis at each stage and scale.  This helps
+  ensuring that the CI/CD system becomes a central operational
+  backbone that enforces consistency, reproducibility, and
+  traceability across an organization’s software delivery lifecycle.
 
 
 ## `vigilia` Applications
