@@ -147,17 +147,10 @@ system](http://genesis-sim.org/):
 
 ## Technical Details
 
-__The Workflow Automation Engine__
+### The Workflow Automation Engine
 
 The `workflow` engine helps automate complex system shell tasks during
-software development.
-
-Typical workflows include running local or remote shell commands with
-hard-to-remember arguments and options, compiling source code on a
-build server, converting documentation into web pages, flashing binary
-software images (such as a Linux kernel) to small or embedded devices,
-and orchestrating command sequences across local, remote, or virtual
-machines.
+project execution.
 
 The `workflow` engine provides the following capabilities:
 
@@ -186,7 +179,7 @@ The `workflow` engine is typically used to:
   repository.
 
 
-__The `vigilia` Tester__
+### The `vigilia` Tester
 
 The `vigilia` tester is based on a declarative database of test
 specifications to:
@@ -200,53 +193,13 @@ specifications to:
 - Isolate test environments using virtualization.
 
 
-<!-- ## Abstract -->
-
-<!-- Software documentation management systems face three long-standing -->
-<!-- challenges: (1) Consistent software documentation synchronization with -->
-<!-- system function, (2) Satisfy industry certification schemes, (3) -->
-<!-- Document workflows required for project execution, collaboration -->
-<!-- between software developers and reduce on-boarding time of new -->
-<!-- developers. -->
-
-<!-- Two complimentary software applications are introduced: `workflow` and -->
-<!-- `vigilia`.  Together, they elaborate a multipolar view of the -->
-<!-- implementation of a software documentation project while allowing -->
-<!-- refinement during project development. -->
-
-<!-- `workflow` automates the technical workflows required for project -->
-<!-- development.  Its descriptions are based on system shell commands -->
-<!-- through a set of configuration files. -->
-
-<!-- Separation of project specific workflow configurations supports -->
-<!-- collaboration between software developers through a shared git -->
-<!-- repository. -->
-
-<!-- The configuration files implement, automate, track and document the -->
-<!-- execution of a series of system shell commands across machines used -->
-<!-- for multi-role compilations, builds, tests and deployment. -->
-
-<!-- A tester tool, `vigilia` isolates declarative test descriptions from -->
-<!-- their execution. -->
-
-<!-- These descriptions facilitate layering of the documentation levels -->
-<!-- required for industry compliance and certification. -->
-
-<!-- Specific features of test descriptions can be tagged for inclusion in -->
-<!-- documents derived from the tests. -->
-
-<!-- Combining these features guarantees a single “source of truth” -->
-<!-- ensuring software system tests, documents and software functions -->
-<!-- remain coherently synchronized. -->
-
-
 # Installation
 
-`workflow` and `vigilia` are available for most Linux distributions.
-The regression tests use Docker files to install and verify
-functionality on Debian, Ubuntu, Fedora and OpenSUSE.  The package
-lists within these Dockerfiles document the prerequisites for each of
-those distributions (Dockerfile for
+`workflow` and `vigilia` support most Linux distributions.  The
+regression tests use Docker files to install and verify functionality
+on Debian, Ubuntu, Fedora and OpenSUSE.  The package lists within
+these Dockerfiles document the prerequisites for each of those
+distributions (Dockerfile for
 [Debian](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-debian),
 [Ubuntu](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-ubuntu),
 [Fedora](https://github.com/HugoCornelis/workflow-automation-engine/blob/master/vigilia/specifications/dockerfiles/Dockerfile.workflow-install-testing-fedora),
