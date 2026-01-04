@@ -2141,7 +2141,10 @@ sub _init_workflow_filenames_configured
 
     my $command_filename_directory = $global_field_project_configuration->{sources_configuration_directory};
 
-    my $workflow_filenames = $global_technical_project_configuration->{workflow_filenames};
+    my $workflow_filenames
+	= (exists $global_technical_project_configuration->{workflow_filenames}
+	   ? $global_technical_project_configuration->{workflow_filenames}
+	   : $global_technical_project_configuration->{command_filenames});
 
     my $workflow_filenames_full_paths
 	= [
@@ -10916,6 +10919,11 @@ sub operation_filenames_file_read
 
     my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
+    if (! -r $workflow_filenames_configuration_filename)
+    {
+	$workflow_filenames_configuration_filename = "$configuration_data_directory/command_filenames.yml";
+    }
+
     $result
 	= eval {
 
@@ -10932,6 +10940,13 @@ sub operation_filenames_file_read
 	}
 
 	$result = { workflow_filenames => [], };
+    }
+
+    if (exists $result->{command_filenames})
+    {
+	$result->{workflow_filenames} = $result->{command_filenames};
+
+    	delete $result->{command_filenames};
     }
 
     if ($full_paths)
