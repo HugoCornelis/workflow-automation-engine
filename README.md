@@ -44,9 +44,9 @@ project wrapper to standardize access to project-specific tooling and
 exposes the exact command-line interfaces required to build, test,
 deploy, or otherwise operate the project.
 
-A `git ` repository for the configuration ensures that developers
-share a common view on project execution.  The help pages of the
-workflows are automatically collected in a manual per project stage.
+A `git` repository for the configuration ensures that developers share
+a common view on project execution.  The help pages of the workflows
+are automatically collected in a manual per project stage.
 
 
 ### Library and Executable Wrappers
@@ -160,7 +160,7 @@ The `workflow` engine provides the following capabilities:
 - Integration with Bash completion enables browsing of
   project-specific _targets_, _commands_, and _configurations_.
 - Integration with `grc` for project-specific _keyword highlighting_.
-- Support for multiple _roles_ for remote execution in a Docker
+- Support for multiple _roles_ for remote execution in Docker
   containers or `tmux` sessions.
 
 
