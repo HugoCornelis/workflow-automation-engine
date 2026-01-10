@@ -5470,6 +5470,24 @@ sub builtin_role_print
 }
 
 
+sub builtin_role_print_completions
+{
+    my $matcher = '.*';
+
+    my $matching_roles = _roles_select($matcher);
+
+    my $completions
+	= {
+	   ( "1.Type-a-role-name-or-regex:" => ''),
+	   map
+	   {
+	       $_ => '',
+	   }
+	   sort keys %$matching_roles
+	  };
+}
+
+
 sub builtin_role_print_help
 {
     my $command = shift;
