@@ -61,6 +61,7 @@ our $option_dump_interaction_roles;
 our $option_dump_module_interaction_roles;
 our $option_dump_schedule;
 our $option_dump_specific_workflow_roles;
+our $option_interactive_execution_mode = 'system';
 our $option_export_help_page;
 our $option_export_remote;
 our $option_export_sh;
@@ -91,6 +92,7 @@ our $global_options
        "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
        "dump-schedule!" => \$option_dump_schedule,
        "d|details+" => \$option_details,
+       "interactive-execution-mode=s" => \$option_interactive_execution_mode,
        "export-help-page!" => \$option_export_help_page,
        "export-remote=s" => \$option_export_remote,
        "export-sh:s" => \$option_export_sh,
@@ -5259,7 +5261,7 @@ sub builtin_role_add
 
 	my $docker_container_name = $role_name . '_container';
 
-	$remote_policy = "docker exec -it $docker_container_name";
+	$remote_policy = "docker exec -it $docker_container_name bash -ic ";
     }
 
     # tmux sessions
@@ -5465,6 +5467,24 @@ sub builtin_role_print
     }
 
     return 0;
+}
+
+
+sub builtin_role_print_completions
+{
+    my $matcher = '.*';
+
+    my $matching_roles = _roles_select($matcher);
+
+    my $completions
+	= {
+	   ( "1.Type-a-role-name-or-regex:" => ''),
+	   map
+	   {
+	       $_ => '',
+	   }
+	   sort keys %$matching_roles
+	  };
 }
 
 
@@ -8727,6 +8747,205 @@ sub _system_bash
 }
 
 
+sub execute_interactively
+{
+    my $shell_command = shift;
+
+    my ($exit_status, $console_output);
+
+    my $execution_interaction_modes
+	= {
+	   backticks => "backticks mode is very interactive and captures output",
+	   expect => "unimplemented",
+	   general_comment => "note: backticks is the most 'interactive' that captures output",
+	   ipc_open3 => "ipc_open3 is a bit less interactive",
+	   ipc_run => "ipc_run does not run the command?",
+	   ipc_run_tty => "untested, pty is not available from IPC::Run on my machine",
+	   system => "system mode does not capture output",
+	  };
+
+    my $execute_interactively_selection = $option_interactive_execution_mode;
+
+    # system mode does not capture output
+
+    if ($execute_interactively_selection eq 'system')
+    {
+	($exit_status, $console_output) = execute_interactively_system($shell_command);
+    }
+
+    # backticks mode is very interactive and captures output
+
+    elsif ($execute_interactively_selection eq 'backticks')
+    {
+	($exit_status, $console_output) = execute_interactively_backticks($shell_command);
+    }
+
+    # ipc_open3 is a bit less interactive
+
+    elsif ($execute_interactively_selection eq 'ipc_open3')
+    {
+	($exit_status, $console_output) = execute_interactively_ipc_open3($shell_command);
+    }
+
+    # ipc_run does not run the command?
+
+    elsif ($execute_interactively_selection eq 'ipc_run')
+    {
+	($exit_status, $console_output) = execute_interactively_ipc_run($shell_command);
+    }
+
+    # ipc_run_tty
+
+    elsif ($execute_interactively_selection eq 'ipc_run_tty')
+    {
+	($exit_status, $console_output) = execute_interactively_ipc_run_tty($shell_command);
+    }
+    else
+    {
+	main::report_error_exit("internal error: invalid execute_interactively_selection (is: $execute_interactively_selection)");
+    }
+
+    return ($exit_status, $console_output);
+}
+
+
+sub execute_interactively_backticks
+{
+    my $shell_command = shift;
+
+    # $exit_status = system "$shell_command";
+
+    my $console_output = `($shell_command) 2>&1 | tee /dev/tty`;
+
+    # $console_output .= `$shell_command`;
+
+    #t maybe better to use ${^CHILD_ERROR_NATIVE}
+    #t see https://perldoc.perl.org/perlvar
+
+    # $exit_status = $?;
+
+    my $exit_status = $? >> 8;
+
+    return ($exit_status, $console_output);
+}
+
+
+sub execute_interactively_ipc_open3
+{
+    my $shell_command = shift;
+
+    use IPC::Open3;
+    use Symbol 'gensym';
+
+    my $stderr = gensym;
+
+    my $pid = open3(undef, my $out, $stderr, $shell_command);
+
+    my $console_output = '';
+
+    while (my $line = <$out>)
+    {
+	print $line;              # interactive output
+	$console_output .= $line; # capture
+    }
+
+    while (my $line = <$stderr>)
+    {
+	print STDERR $line;
+	$console_output .= $line;
+    }
+
+    waitpid($pid, 0);
+
+    my $exit_status = $? >> 8;
+
+    return ($exit_status, $console_output);
+}
+
+
+sub execute_interactively_ipc_run
+{
+    my $shell_command = shift;
+
+    # use IPC::Run qw(run);
+
+    require IPC::Run;
+
+    my $console_output = '';
+
+    IPC::Run::run(
+		  # ['stdbuf', '-oL', '-eL', $shell_command],
+		  # $shell_command,
+		  ['stdbuf', '-oL', '-eL', 'sh', '-c', $shell_command],
+		  '>', sub
+		       {
+			   print @_;
+			   $console_output .= $_ for @_;
+		       },
+		  '2>', sub
+		        {
+			    print STDERR @_;
+			    $console_output .= $_ for @_;
+			},
+		 );
+
+    my $exit_status = $? >> 8;
+
+    return ($exit_status, $console_output);
+}
+
+
+sub execute_interactively_ipc_run_tty
+{
+    my $shell_command = shift;
+
+    # use IPC::Run qw(run pty);
+
+    # use IPC::Run qw(run);
+
+    require IPC::Run;
+
+    my $pty = IPC::Run::pty();
+
+    my $console_output = '';
+
+    IPC::Run::run(
+		  $shell_command,
+		  '<', \undef,
+		  '>', $pty,
+		  '2>', $pty,
+		 );
+
+    while (defined(my $line = <$pty>))
+    {
+	print $line;
+
+	$console_output .= $line;
+    }
+
+    my $exit_status = $? >> 8;
+
+    return ($exit_status, $console_output);
+}
+
+
+sub execute_interactively_system
+{
+    my $shell_command = shift;
+
+    my $exit_status = system "$shell_command";
+
+    my $console_output;
+
+    #t maybe better to use ${^CHILD_ERROR_NATIVE}
+    #t see https://perldoc.perl.org/perlvar
+
+    $exit_status = $?;
+
+    return ($exit_status, $console_output);
+}
+
+
 sub execute_scheduled_command
 {
     my $scheduled_command = shift;
@@ -8755,6 +8974,8 @@ sub execute_scheduled_command
 	my $cd_argument = $cd_command->{argument};
 
 	my $commented_command = _format_commented_command($shell_command, $options);
+
+	print $commented_command;
 
 	$console_output = "$commented_command$console_output";
 
@@ -8808,6 +9029,8 @@ sub execute_scheduled_command
 	    {
 		my $commented_command = _format_commented_command($shell_command, $options);
 
+		print $commented_command;
+
 		$console_output = "$commented_command$console_output";
 
 		my $use_bash = (exists $options->{use_bash}) && $options->{use_bash};
@@ -8820,14 +9043,7 @@ sub execute_scheduled_command
 		}
 		else
 		{
-		    # $exit_status = system "$shell_command";
-
-		    $console_output .= `$shell_command`;
-
-		    #t maybe better to use ${^CHILD_ERROR_NATIVE}
-		    #t see https://perldoc.perl.org/perlvar
-
-		    $exit_status = $?;
+		    ($exit_status, $console_output) = execute_interactively($shell_command);
 		}
 
 		my $timestamp = (exists $options->{timestamp}) && $options->{timestamp};
@@ -9055,7 +9271,9 @@ sub execute_all_scheduled_commands
 		{
 		    if (exists $operation_result->{console_output})
 		    {
-			print $operation_result->{console_output};
+			#! moved this back to the main loop because that is required for long running commands
+
+			# print $operation_result->{console_output};
 		    }
 		}
 		else
@@ -10930,6 +11148,7 @@ sub bash_completion_generate_options
 			--interactions-all
 			--interactions-target
 			--interactions-target-all-roles
+                        --interactive-execution-mode
 			--verbose
 		   )
 		 ];
@@ -11642,6 +11861,7 @@ options:
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+    --interactive-execution-mode    set the interactive execution mode (default is: '$option_interactive_execution_mode').
     --export-help-page              export the help page of the command as comments to the shell script.
     --export-remote                 include the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
