@@ -5261,7 +5261,7 @@ sub builtin_role_add
 
 	my $docker_container_name = $role_name . '_container';
 
-	$remote_policy = "docker exec -it $docker_container_name";
+	$remote_policy = "docker exec -it $docker_container_name bash -ic ";
     }
 
     # tmux sessions
