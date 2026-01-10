@@ -331,4 +331,18 @@ To start a new `vigilia` project named *bar*, follow these steps:
 Note: This section is under development.
 
 
+# Contributing
+
+Contributions are welcome.  `workflow` and `vigilia` are released
+under the GNU Affero General Public License v3 (or later), with the
+additional permission for creating, distributing, and using extension
+plugins under a license of choice (see [LICENSE](COPYING) and [license
+exceptions](license-exceptions.txt) for details).
+
+`workflow` and `vigilia` come with many unit and integration tests.
+All new features must be covered by unit and / or integration tests.
+
+You must write tests that provide reasonable good test coverage.
+
+
 
