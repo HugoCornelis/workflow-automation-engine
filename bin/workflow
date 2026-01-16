@@ -6335,7 +6335,7 @@ sub execute_shell_script_remote
     # 	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
     # }
 
-    my $role = $options->{role};
+    my $role = exists $options->{role} ? $options->{role} : $options->{remote};
 
     my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $role, "scp");
 
@@ -7834,7 +7834,7 @@ sub compute_remote_and_interaction_role
 
     my $ssh_options;
 
-	my $scp_options = "";
+    my $scp_options = "";
 
     if ($option_verbose)
     {
@@ -9392,7 +9392,9 @@ sub execute_shell_command
 
     # if there is remoting information
 
-    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $options->{role});
+    my $role = exists $options->{role} ? $options->{role} : $options->{remote};
+
+    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $role);
 
     my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
