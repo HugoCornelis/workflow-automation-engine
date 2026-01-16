@@ -4,11 +4,11 @@ technical_project_configuration = global_technical_project_configuration['techni
 roles = technical_project_configuration['roles']
 
 def docker_testing_where_am_i(argv):
-    remote = roles['docker_source_code']
+    role = roles['docker_source_code']
 
     # check for something like: 'Inside a Docker container built from Dockerfile.source_code'
     execute_command("cat /.inside-docker", {
-        "remote": remote,
+        "role": role,
         "allow_fail": "when we are not inside the Docker container"
     } )
 
@@ -16,7 +16,7 @@ def docker_testing_where_am_i(argv):
         "whoami",
         "uname -a",
     ]
-    execute_command_array(command_array, { "remote": remote } )
+    execute_command_array(command_array, { "role": role } )
 
 
 def docker_testing_where_am_i_completions(command, argv):

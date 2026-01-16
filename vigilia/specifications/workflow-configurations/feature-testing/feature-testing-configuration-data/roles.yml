@@ -1,7 +1,7 @@
 ---
-# Target servers identify roles that execute command on different hosts.
-# Each host has a 'remote_policy' that is prefixed to the command to be executed.
-# For some roles the remote_policy is dynamically built.  A typical example is an remote ssh server.
+# Roles allow execution of command on different hosts.
+# Each role may have a 'remote_policy' that is prefixed to the command to be executed.
+# For some roles the remote_policy is dynamically built.  A typical example is a remote ssh server.
 #
 # A role that has a 'localuser' set to 'yes' has no remote_policy.
 #

@@ -749,7 +749,7 @@ sub ${target_name}_single_command
     #   allow_fail: allow execution of this command to fail.
     #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
     #   dry_run: do not execute this command.
-    #   remote: a remote that is defined in $project_name-configuration.
+    #   role: a role that is defined in $project_name-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
@@ -1207,15 +1207,15 @@ echo
 echo an example of the invocation of an array of remote commands
 echo this is the second command in the array
 echo
-# remote: build
+# role: build
 echo a few locally executed commands
 echo more locally executed commands
-# remote: localhost
+# role: localhost
 echo
 echo an example of the invocation of an array of remote commands
 echo this is the second command in the array
 echo
-# remote: build
+# role: build
 # help: an example of the invocation of an array of commands that are executed on a remote machine.
 ";
 
@@ -1319,7 +1319,7 @@ sub _builtin_project_commands_yml_template_create
   - echo this is the second command in the array
   - echo
   options:
-    remote: build
+    role: build
 - commands:
   - echo a few locally executed commands
   - echo more locally executed commands
@@ -1329,7 +1329,7 @@ sub _builtin_project_commands_yml_template_create
   - echo this is the second command in the array
   - echo
   options:
-    remote: build
+    role: build
 help: an example of the invocation of an array of commands that are executed on a remote machine.
 ";
 
@@ -1601,15 +1601,17 @@ sub _builtin_project_configuration_roles_create
 
     my $configuration_file_part
 	= "---
-# Roles identify hosts and accounts that execute commands.
-# Each host has a 'remote_policy' that is added (e.g. with a prefix string) to the command to be executed.
-# For some roles the remote_policy is dynamically built (e.g. a remote ssh server).
+# Roles allow execution of command on different hosts.
+# Each role may have a 'remote_policy' that is prefixed to the command to be executed.
+# For some roles the remote_policy is dynamically built.  A typical example is a remote ssh server.
 #
 # A role that has a 'localuser' set to 'yes' has no remote_policy.
 #
-# A tmux or Docker remote_policy requires its name to have a 'tmux_' or 'docker_' prefix respectively.
-# This is recognized by the workflow engine and,
-# for instance, allows tmux sessions to be automatically created.
+# A tmux remote_policy requires its name to have a 'tmux_' prefix.
+# This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
+#
+# A docker remote_policy requires its name to have a 'docker_' prefix.
+# This is recognized by the workflow engine and allows building Docker containers and associate them with a target.
 
 roles:
   build:
@@ -6333,9 +6335,9 @@ sub execute_shell_script_remote
     # 	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
     # }
 
-    my $remote = $options->{remote};
+    my $role = $options->{role};
 
-    my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $remote, "scp");
+    my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $role, "scp");
 
     my $scp_options = $remote_and_interaction_role->{scp_options} || "";
 
@@ -6351,16 +6353,16 @@ sub execute_shell_script_remote
 
     my $remote_prefix = "";
 
-    if (exists $remote->{ssh_password})
+    if (exists $role->{ssh_password})
     {
-	my $ssh_password = $remote->{ssh_password};
+	my $ssh_password = $role->{ssh_password};
 
 	$remote_prefix .= "sshpass -p $ssh_password ";
     }
 
-    if (exists $remote->{ssh_pass_file})
+    if (exists $role->{ssh_pass_file})
     {
-	my $ssh_pass_file = $remote->{ssh_pass_file};
+	my $ssh_pass_file = $role->{ssh_pass_file};
 
 	$remote_prefix .= "sshpass -f $ssh_pass_file ";
     }
@@ -7743,7 +7745,7 @@ sub apply_remote_record_exported_shell_command
 	}
     }
 
-    # apply the remote prefix
+    # apply the remote policy prefix
 
     if ($remote_prefix)
     {
@@ -8477,12 +8479,12 @@ $help_string
 
 	if (not defined $option_export_role)
 	{
-	    print $global_exported_sh_file "# --export-role is not set, exporting all roles without a remote prefix\n";
+	    print $global_exported_sh_file "# --export-role is not set, exporting all roles without a remote policy prefix\n";
 	    print $global_exported_sh_file "#\n";
 	}
 	elsif ($option_export_role eq 0)
 	{
-	    print $global_exported_sh_file "# --export-role is 0, exporting all roles with the appriopriate remote prefix\n";
+	    print $global_exported_sh_file "# --export-role is 0, exporting all roles with the appriopriate remote policy prefix\n";
 	    print $global_exported_sh_file "#\n";
 	}
 	else
@@ -9390,7 +9392,7 @@ sub execute_shell_command
 
     # if there is remoting information
 
-    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $options->{remote});
+    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $options->{role});
 
     my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 

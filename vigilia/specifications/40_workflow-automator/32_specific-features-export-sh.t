@@ -116,7 +116,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh
 #
-# --export-role is not set, exporting all roles without a remote prefix
+# --export-role is not set, exporting all roles without a remote policy prefix
 #
 #
 # no variables of export_sh_variables have been selected for export
@@ -170,7 +170,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 0
 #
-# --export-role is 0, exporting all roles with the appriopriate remote prefix
+# --export-role is 0, exporting all roles with the appriopriate remote policy prefix
 #
 #
 # no variables of export_sh_variables have been selected for export
