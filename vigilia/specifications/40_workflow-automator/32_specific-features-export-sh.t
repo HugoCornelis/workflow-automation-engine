@@ -116,7 +116,7 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh
 #
-# --export-remote is not set, exporting all roles without a remote prefix
+# --export-role is not set, exporting all roles without a remote prefix
 #
 #
 # no variables of export_sh_variables have been selected for export
@@ -138,10 +138,10 @@ pwd
 				description => "contents of the generated output file after using the --export-sh option",
 			       },
 			       {
-				command => 'feature-testing-workflow features export_sh --export-sh --export-remote 0',
+				command => 'feature-testing-workflow features export_sh --export-sh --export-role 0',
 				command_tests => [
 						  {
-						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-remote 0 (all roles)?",
+						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-role 0 (all roles)?",
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'cd /bin\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
@@ -155,22 +155,22 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "correct information about the generated output file when using the --export-sh option, --export-remote 0 (all roles)",
+				description => "correct information about the generated output file when using the --export-sh option, --export-role 0 (all roles)",
 			       },
 			       {
 				command => 'cat features-export-sh.sh',
 				command_tests => [
 						  {
-						   description => "What is the contents of the generated output file after using the --export-sh option, --export-remote 0 (all roles)?",
+						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 0 (all roles)?",
 						   read => '#!/bin/sh
 #
 # script generated with feature-testing-workflow
 #
 # the command line used to generate this script was:
 #
-# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 0
+# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 0
 #
-# --export-remote is 0, exporting all roles with the appriopriate remote prefix
+# --export-role is 0, exporting all roles with the appriopriate remote prefix
 #
 #
 # no variables of export_sh_variables have been selected for export
@@ -189,13 +189,13 @@ tmux send-keys -t cd    \'pwd\' ENTER
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "contents of the generated output file after using the --export-sh option, --export-remote 0 (all roles)",
+				description => "contents of the generated output file after using the --export-sh option, --export-role 0 (all roles)",
 			       },
 			       {
-				command => 'feature-testing-workflow features export_sh --export-sh --export-remote 1',
+				command => 'feature-testing-workflow features export_sh --export-sh --export-role 1',
 				command_tests => [
 						  {
-						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-remote 1?",
+						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-role 1?",
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'cd /bin\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
@@ -209,22 +209,22 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "correct information about the generated output file when using the --export-sh option, --export-remote 1",
+				description => "correct information about the generated output file when using the --export-sh option, --export-role 1",
 			       },
 			       {
 				command => 'cat features-export-sh.sh',
 				command_tests => [
 						  {
-						   description => "What is the contents of the generated output file after using the --export-sh option, --export-remote 1?",
+						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 1?",
 						   read => '#!/bin/sh
 #
 # script generated with feature-testing-workflow
 #
 # the command line used to generate this script was:
 #
-# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 1
+# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 1
 #
-# --export-remote is 1, role: localuser@localhost
+# --export-role is 1, role: localuser@localhost
 #
 #
 # no variables of export_sh_variables have been selected for export
@@ -243,13 +243,13 @@ pwd
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "contents of the generated output file after using the --export-sh option, --export-remote 1",
+				description => "contents of the generated output file after using the --export-sh option, --export-role 1",
 			       },
 			       {
-				command => 'feature-testing-workflow features export_sh --export-sh --export-remote 2',
+				command => 'feature-testing-workflow features export_sh --export-sh --export-role 2',
 				command_tests => [
 						  {
-						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-remote 2?",
+						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-role 2?",
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: pwd>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: cd /bin>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: pwd>\'
@@ -263,22 +263,22 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "correct information about the generated output file when using the --export-sh option, --export-remote 2",
+				description => "correct information about the generated output file when using the --export-sh option, --export-role 2",
 			       },
 			       {
 				command => 'cat features-export-sh.sh',
 				command_tests => [
 						  {
-						   description => "What is the contents of the generated output file after using the --export-sh option, --export-remote 2?",
+						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 2?",
 						   read => '#!/bin/sh
 #
 # script generated with feature-testing-workflow
 #
 # the command line used to generate this script was:
 #
-# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 2
+# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 2
 #
-# --export-remote is 2, role: root@ssh_cd
+# --export-role is 2, role: root@ssh_cd
 #
 #
 # no variables of export_sh_variables have been selected for export
@@ -297,13 +297,13 @@ cd /bin && pwd
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "contents of the generated output file after using the --export-sh option, --export-remote 2",
+				description => "contents of the generated output file after using the --export-sh option, --export-role 2",
 			       },
 			       {
-				command => 'feature-testing-workflow features export_sh --export-sh --export-remote 3',
+				command => 'feature-testing-workflow features export_sh --export-sh --export-role 3',
 				command_tests => [
 						  {
-						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-remote 3?",
+						   description => "Do we see correct information about the generated output file when using the --export-sh option, --export-role 3?",
 						   read => 'feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: pwd>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: cd /bin>\'
 feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <local command: pwd>\'
@@ -317,22 +317,22 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "correct information about the generated output file when using the --export-sh option, --export-remote 3",
+				description => "correct information about the generated output file when using the --export-sh option, --export-role 3",
 			       },
 			       {
 				command => 'cat features-export-sh.sh',
 				command_tests => [
 						  {
-						   description => "What is the contents of the generated output file after using the --export-sh option, --export-remote 3?",
+						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 3?",
 						   read => '#!/bin/sh
 #
 # script generated with feature-testing-workflow
 #
 # the command line used to generate this script was:
 #
-# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-remote 3
+# /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 3
 #
-# --export-remote is 3, role: tmux_cd
+# --export-role is 3, role: tmux_cd
 #
 #
 # no variables of export_sh_variables have been selected for export
@@ -351,7 +351,7 @@ pwd
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
 						 ],
-				description => "contents of the generated output file after using the --export-sh option, --export-remote 3",
+				description => "contents of the generated output file after using the --export-sh option, --export-role 3",
 			       },
 			      ],
        description => "testing the workflow automation engine",

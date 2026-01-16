@@ -63,7 +63,7 @@ our $option_dump_schedule;
 our $option_dump_specific_workflow_roles;
 our $option_interactive_execution_mode = 'system';
 our $option_export_help_page;
-our $option_export_remote;
+our $option_export_role;
 our $option_export_sh;
 our $option_export_sudo;
 our $option_export_times;
@@ -94,7 +94,7 @@ our $global_options
        "d|details+" => \$option_details,
        "interactive-execution-mode=s" => \$option_interactive_execution_mode,
        "export-help-page!" => \$option_export_help_page,
-       "export-remote=s" => \$option_export_remote,
+       "export-role=s" => \$option_export_role,
        "export-sh:s" => \$option_export_sh,
        "export-sudo" => \$option_export_sudo,
        "export-times!" => \$option_export_times,
@@ -8475,14 +8475,14 @@ $help_string
 	    }
 	}
 
-	if (not defined $option_export_remote)
+	if (not defined $option_export_role)
 	{
-	    print $global_exported_sh_file "# --export-remote is not set, exporting all roles without a remote prefix\n";
+	    print $global_exported_sh_file "# --export-role is not set, exporting all roles without a remote prefix\n";
 	    print $global_exported_sh_file "#\n";
 	}
-	elsif ($option_export_remote eq 0)
+	elsif ($option_export_role eq 0)
 	{
-	    print $global_exported_sh_file "# --export-remote is 0, exporting all roles with the appriopriate remote prefix\n";
+	    print $global_exported_sh_file "# --export-role is 0, exporting all roles with the appriopriate remote prefix\n";
 	    print $global_exported_sh_file "#\n";
 	}
 	else
@@ -8493,15 +8493,15 @@ $help_string
 		   {
 		       my $interaction_role = $_;
 
-		       $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
-			   or $option_export_remote eq $interaction_roles->{$interaction_role}->{number};
+		       $option_export_role eq $interaction_roles->{$interaction_role}->{name}
+			   or $option_export_role eq $interaction_roles->{$interaction_role}->{number};
 		   }
 		   keys %$interaction_roles,
 		  ];
 
 	    my $export_remote_interaction_role = $export_remote_interaction_roles->[0] || 'undefined role';
 
-	    print $global_exported_sh_file "# --export-remote is $option_export_remote, role: $export_remote_interaction_role\n";
+	    print $global_exported_sh_file "# --export-role is $option_export_role, role: $export_remote_interaction_role\n";
 	    print $global_exported_sh_file "#\n";
 	}
 
@@ -8544,9 +8544,9 @@ $help_string
 
     $console_output .= "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
 
-    if ((not defined $option_export_remote or $option_export_remote eq 0)
-	or $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
-	or $option_export_remote eq $interaction_roles->{$interaction_role}->{number})
+    if ((not defined $option_export_role or $option_export_role eq 0)
+	or $option_export_role eq $interaction_roles->{$interaction_role}->{name}
+	or $option_export_role eq $interaction_roles->{$interaction_role}->{number})
     {
 	if ($option_export_verbose)
 	{
@@ -9431,7 +9431,7 @@ sub execute_shell_command
 
     # apply the remoting prefix, always local
 
-    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_role, $export_sh_command);
 
     # apply the timeout prefix, always local
 
@@ -11130,7 +11130,7 @@ sub bash_completion_generate_options
 			--dump-module-interaction-roles
 			--dump-schedule
 			--export-help-page
-			--export-remote
+			--export-role
 			--export-sh
 			--export-sudo
 			--export-times
@@ -11863,7 +11863,7 @@ options:
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
     --interactive-execution-mode    set the interactive execution mode (default is: '$option_interactive_execution_mode').
     --export-help-page              export the help page of the command as comments to the shell script.
-    --export-remote                 include the remote access part of exported commands.
+    --export-role                   include the role, ie. the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
     --export-sh                     export the commands to a file with the given name.
     --export-sudo                   include applied sudo commands when exporting commands to a file.

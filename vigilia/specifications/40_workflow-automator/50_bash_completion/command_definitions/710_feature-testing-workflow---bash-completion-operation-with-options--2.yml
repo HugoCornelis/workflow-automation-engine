@@ -2,6 +2,6 @@
 command: feature-testing-workflow --bash-completion 'feature-testing-workflow builtin manual --i' 3 43
 command_tests:
   - description: feature-testing-workflow --bash-completion operation with options--2
-    read: bash-completion --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-remote --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-builtin-package --help-builtin-packages-all --help-field-project-name --help-options --help-projects --help-targets --help-workflows --interactions --interactions-all --interactions-target --interactions-target-all-roles --interactive-execution-mode --verbose
+    read: bash-completion --details --dry-run --dump-all-interaction-roles --dump-interaction-roles --dump-module-interaction-roles --dump-schedule --export-help-page --export-role --export-sh --export-sudo --export-times --export-verbose --force-rebuild --help --help-builtin-package --help-builtin-packages-all --help-field-project-name --help-options --help-projects --help-targets --help-workflows --interactions --interactions-all --interactions-target --interactions-target-all-roles --interactive-execution-mode --verbose
     white_space: convert seen 0a to 0d 0a newlines
 description: feature-testing-workflow --bash-completion operation with options--2
