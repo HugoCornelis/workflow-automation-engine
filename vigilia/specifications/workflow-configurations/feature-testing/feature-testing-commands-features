@@ -39,13 +39,13 @@ sub features_cd_tests
     # Some options to command execution:
     #   allow_fail: allow execution of this command to fail.
     #   dry_run: do not execute this command.
-    #   remote: a remote that is defined in feature-testing-configuration.
+    #   role: a role that is defined in feature-testing-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
     #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
     #
-    # execute_shell_command($command, { remote => '<name of a remote that is defined in feature-testing-configuration>, } );
+    # execute_shell_command($command, { role => '<name of a role that is defined in feature-testing-configuration>, } );
     #
     # These options can given to any of the functions that execute commands.
 
@@ -88,7 +88,7 @@ our $roles = $::global_technical_project_configuration->{roles};
 
 sub features_cd_tests_ssh
 {
-    my $remote = $roles->{ssh_cd};
+    my $role = $roles->{ssh_cd};
 
     # make sure this works from localhost and from inside a docker test container
 
@@ -96,7 +96,7 @@ sub features_cd_tests_ssh
 
     chomp $ssh_server;
 
-    $remote->{ssh_server} = $ssh_server;
+    $role->{ssh_server} = $ssh_server;
 
     my $remote_commands
 	= [
@@ -113,7 +113,7 @@ sub features_cd_tests_ssh
 	(
 	 $remote_commands,
 	 {
-	  remote => $remote,
+	  role => $role,
 	 },
 	);
 }
@@ -121,7 +121,7 @@ sub features_cd_tests_ssh
 
 sub features_cd_tests_tmux
 {
-    my $remote = $roles->{tmux_cd};
+    my $role = $roles->{tmux_cd};
 
     my $remote_commands
 	= [
@@ -138,7 +138,7 @@ sub features_cd_tests_tmux
 	(
 	 $remote_commands,
 	 {
-	  remote => $remote,
+	  role => $role,
 	 },
 	);
 }
@@ -146,9 +146,9 @@ sub features_cd_tests_tmux
 
 sub features_export_sh
 {
-    my $remote_tmux = $roles->{tmux_cd};
+    my $role_tmux = $roles->{tmux_cd};
 
-    my $remote_ssh = $roles->{ssh_cd};
+    my $role_ssh = $roles->{ssh_cd};
 
     # make sure this works from localhost and from inside a docker test container
 
@@ -156,7 +156,7 @@ sub features_export_sh
 
     chomp $ssh_server;
 
-    $remote_ssh->{ssh_server} = $ssh_server;
+    $role_ssh->{ssh_server} = $ssh_server;
 
     my $commands
 	= [
@@ -171,7 +171,7 @@ sub features_export_sh
 	(
 	 $commands,
 	 {
-	  remote => $remote_ssh,
+	  role => $role_ssh,
 	 },
 	);
 
@@ -179,7 +179,7 @@ sub features_export_sh
 	(
 	 $commands,
 	 {
-	  remote => $remote_tmux,
+	  role => $role_tmux,
 	 },
 	);
 }
@@ -203,9 +203,9 @@ sub features_remote_script_execution
 {
     my $shell_script_filename = "scripts/feature-shell-script-remote arg1 arg2";
 
-    my $remote_ssh = $roles->{ssh_cd};
+    my $role_ssh = $roles->{ssh_cd};
 
-    execute_shell_script_remote($shell_script_filename, { remote => $remote_ssh } );
+    execute_shell_script_remote($shell_script_filename, { role => $role_ssh } );
 }
 
 

@@ -63,7 +63,7 @@ our $option_dump_schedule;
 our $option_dump_specific_workflow_roles;
 our $option_interactive_execution_mode = 'system';
 our $option_export_help_page;
-our $option_export_remote;
+our $option_export_role;
 our $option_export_sh;
 our $option_export_sudo;
 our $option_export_times;
@@ -94,7 +94,7 @@ our $global_options
        "d|details+" => \$option_details,
        "interactive-execution-mode=s" => \$option_interactive_execution_mode,
        "export-help-page!" => \$option_export_help_page,
-       "export-remote=s" => \$option_export_remote,
+       "export-role=s" => \$option_export_role,
        "export-sh:s" => \$option_export_sh,
        "export-sudo" => \$option_export_sudo,
        "export-times!" => \$option_export_times,
@@ -749,7 +749,7 @@ sub ${target_name}_single_command
     #   allow_fail: allow execution of this command to fail.
     #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
     #   dry_run: do not execute this command.
-    #   remote: a remote that is defined in $project_name-configuration.
+    #   role: a role that is defined in $project_name-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
     #   sudo: invoke the command prefixed with sudo.
     #   timeout: this command will fail after the given timeout.
@@ -1207,15 +1207,15 @@ echo
 echo an example of the invocation of an array of remote commands
 echo this is the second command in the array
 echo
-# remote: build
+# role: build
 echo a few locally executed commands
 echo more locally executed commands
-# remote: localhost
+# role: localhost
 echo
 echo an example of the invocation of an array of remote commands
 echo this is the second command in the array
 echo
-# remote: build
+# role: build
 # help: an example of the invocation of an array of commands that are executed on a remote machine.
 ";
 
@@ -1319,7 +1319,7 @@ sub _builtin_project_commands_yml_template_create
   - echo this is the second command in the array
   - echo
   options:
-    remote: build
+    role: build
 - commands:
   - echo a few locally executed commands
   - echo more locally executed commands
@@ -1329,7 +1329,7 @@ sub _builtin_project_commands_yml_template_create
   - echo this is the second command in the array
   - echo
   options:
-    remote: build
+    role: build
 help: an example of the invocation of an array of commands that are executed on a remote machine.
 ";
 
@@ -1601,15 +1601,17 @@ sub _builtin_project_configuration_roles_create
 
     my $configuration_file_part
 	= "---
-# Roles identify hosts and accounts that execute commands.
-# Each host has a 'remote_policy' that is added (e.g. with a prefix string) to the command to be executed.
-# For some roles the remote_policy is dynamically built (e.g. a remote ssh server).
+# Roles allow execution of command on different hosts.
+# Each role may have a 'remote_policy' that is prefixed to the command to be executed.
+# For some roles the remote_policy is dynamically built.  A typical example is a remote ssh server.
 #
 # A role that has a 'localuser' set to 'yes' has no remote_policy.
 #
-# A tmux or Docker remote_policy requires its name to have a 'tmux_' or 'docker_' prefix respectively.
-# This is recognized by the workflow engine and,
-# for instance, allows tmux sessions to be automatically created.
+# A tmux remote_policy requires its name to have a 'tmux_' prefix.
+# This is recognized by the workflow engine and, for instance, allows tmux sessions to be automatically created.
+#
+# A docker remote_policy requires its name to have a 'docker_' prefix.
+# This is recognized by the workflow engine and allows building Docker containers and associate them with a target.
 
 roles:
   build:
@@ -6333,9 +6335,9 @@ sub execute_shell_script_remote
     # 	die "$global_program_name: *** Error: no valid script file '$local_filename'\n";
     # }
 
-    my $remote = $options->{remote};
+    my $role = exists $options->{role} ? $options->{role} : $options->{remote};
 
-    my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $remote, "scp");
+    my $remote_and_interaction_role = Engine::compute_remote_and_interaction_role("", $role, "scp");
 
     my $scp_options = $remote_and_interaction_role->{scp_options} || "";
 
@@ -6351,16 +6353,16 @@ sub execute_shell_script_remote
 
     my $remote_prefix = "";
 
-    if (exists $remote->{ssh_password})
+    if (exists $role->{ssh_password})
     {
-	my $ssh_password = $remote->{ssh_password};
+	my $ssh_password = $role->{ssh_password};
 
 	$remote_prefix .= "sshpass -p $ssh_password ";
     }
 
-    if (exists $remote->{ssh_pass_file})
+    if (exists $role->{ssh_pass_file})
     {
-	my $ssh_pass_file = $remote->{ssh_pass_file};
+	my $ssh_pass_file = $role->{ssh_pass_file};
 
 	$remote_prefix .= "sshpass -f $ssh_pass_file ";
     }
@@ -7743,7 +7745,7 @@ sub apply_remote_record_exported_shell_command
 	}
     }
 
-    # apply the remote prefix
+    # apply the remote policy prefix
 
     if ($remote_prefix)
     {
@@ -7832,7 +7834,7 @@ sub compute_remote_and_interaction_role
 
     my $ssh_options;
 
-	my $scp_options = "";
+    my $scp_options = "";
 
     if ($option_verbose)
     {
@@ -8475,14 +8477,14 @@ $help_string
 	    }
 	}
 
-	if (not defined $option_export_remote)
+	if (not defined $option_export_role)
 	{
-	    print $global_exported_sh_file "# --export-remote is not set, exporting all roles without a remote prefix\n";
+	    print $global_exported_sh_file "# --export-role is not set, exporting all roles without a remote policy prefix\n";
 	    print $global_exported_sh_file "#\n";
 	}
-	elsif ($option_export_remote eq 0)
+	elsif ($option_export_role eq 0)
 	{
-	    print $global_exported_sh_file "# --export-remote is 0, exporting all roles with the appriopriate remote prefix\n";
+	    print $global_exported_sh_file "# --export-role is 0, exporting all roles with the appriopriate remote policy prefix\n";
 	    print $global_exported_sh_file "#\n";
 	}
 	else
@@ -8493,15 +8495,15 @@ $help_string
 		   {
 		       my $interaction_role = $_;
 
-		       $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
-			   or $option_export_remote eq $interaction_roles->{$interaction_role}->{number};
+		       $option_export_role eq $interaction_roles->{$interaction_role}->{name}
+			   or $option_export_role eq $interaction_roles->{$interaction_role}->{number};
 		   }
 		   keys %$interaction_roles,
 		  ];
 
 	    my $export_remote_interaction_role = $export_remote_interaction_roles->[0] || 'undefined role';
 
-	    print $global_exported_sh_file "# --export-remote is $option_export_remote, role: $export_remote_interaction_role\n";
+	    print $global_exported_sh_file "# --export-role is $option_export_role, role: $export_remote_interaction_role\n";
 	    print $global_exported_sh_file "#\n";
 	}
 
@@ -8544,9 +8546,9 @@ $help_string
 
     $console_output .= "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
 
-    if ((not defined $option_export_remote or $option_export_remote eq 0)
-	or $option_export_remote eq $interaction_roles->{$interaction_role}->{name}
-	or $option_export_remote eq $interaction_roles->{$interaction_role}->{number})
+    if ((not defined $option_export_role or $option_export_role eq 0)
+	or $option_export_role eq $interaction_roles->{$interaction_role}->{name}
+	or $option_export_role eq $interaction_roles->{$interaction_role}->{number})
     {
 	if ($option_export_verbose)
 	{
@@ -9390,7 +9392,9 @@ sub execute_shell_command
 
     # if there is remoting information
 
-    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $options->{remote});
+    my $role = exists $options->{role} ? $options->{role} : $options->{remote};
+
+    my $remote_and_interaction_role = compute_remote_and_interaction_role($shell_command, $role);
 
     my $remote_prefix = $remote_and_interaction_role->{remote_prefix};
 
@@ -9431,7 +9435,7 @@ sub execute_shell_command
 
     # apply the remoting prefix, always local
 
-    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_remote, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_role, $export_sh_command);
 
     # apply the timeout prefix, always local
 
@@ -11130,7 +11134,7 @@ sub bash_completion_generate_options
 			--dump-module-interaction-roles
 			--dump-schedule
 			--export-help-page
-			--export-remote
+			--export-role
 			--export-sh
 			--export-sudo
 			--export-times
@@ -11863,7 +11867,7 @@ options:
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
     --interactive-execution-mode    set the interactive execution mode (default is: '$option_interactive_execution_mode').
     --export-help-page              export the help page of the command as comments to the shell script.
-    --export-remote                 include the remote access part of exported commands.
+    --export-role                   include the role, ie. the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
     --export-sh                     export the commands to a file with the given name.
     --export-sudo                   include applied sudo commands when exporting commands to a file.

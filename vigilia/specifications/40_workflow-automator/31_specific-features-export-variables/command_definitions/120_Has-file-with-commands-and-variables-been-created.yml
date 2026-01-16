@@ -11,7 +11,7 @@ command_tests:
       #
       # /home/neurospaces/bin/feature-testing-workflow features export_variables --export-sh
       #
-      # --export-remote is not set, exporting all roles without a remote prefix
+      # --export-role is not set, exporting all roles without a remote policy prefix
       #
       #
       # begin export_sh_variables
