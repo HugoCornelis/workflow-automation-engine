@@ -703,7 +703,7 @@ complete -F _${project_name_underscore}_workflow_completions ./${project_name_da
 }
 
 
-sub _builtin_project_commands_template_create_perl
+sub _builtin_project_workflow_template_create_perl
 {
     my $field_project_configuration = shift;
 
@@ -1075,7 +1075,7 @@ arguments:
 }
 
 
-sub _builtin_project_commands_template_create_python
+sub _builtin_project_workflow_template_create_python
 {
     my $field_project_configuration = shift;
 
@@ -5158,7 +5158,7 @@ sub builtin_project_start
 	    {
 		# add a template commands file with the given name
 
-		$error = _builtin_project_commands_template_create_perl($field_project_configuration, $project_name, $target_name, $command_filename);
+		$error = _builtin_project_workflow_template_create_perl($field_project_configuration, $project_name, $target_name, $command_filename);
 	    }
 	}
 
@@ -5172,7 +5172,7 @@ sub builtin_project_start
 
 	    if (not $error)
 	    {
-		$error = _builtin_project_commands_template_create_python($field_project_configuration, $project_name, $target_name, $command_filename);
+		$error = _builtin_project_workflow_template_create_python($field_project_configuration, $project_name, $target_name, $command_filename);
 	    }
 	}
 
@@ -5789,7 +5789,7 @@ sub builtin_target_add
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+	    $error = _builtin_project_workflow_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
 	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
 	}
@@ -5805,7 +5805,7 @@ sub builtin_target_add
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+	    $error = _builtin_project_workflow_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
 	    print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
 	}
