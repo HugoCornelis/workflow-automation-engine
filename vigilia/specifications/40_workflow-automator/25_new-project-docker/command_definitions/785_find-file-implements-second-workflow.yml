@@ -1,0 +1,7 @@
+---
+command: ls /home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history_2.py
+command_tests:
+  - description: Can we find the file that implements the second workflow?
+    read: "/home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history_2.py\n"
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we find the file that implements the second workflow?
