@@ -1462,7 +1462,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        executor => "main::harness_command_module_update",
        help => {
 		synopsis => "$0 module-update <options> <module-name>",
-		usage => "This command reads the (existing) test module with the given name and the reproduces it as file-structured yaml.
+		usage => "This command reads the (existing) test module with the given name and reproduces it as file-structured yaml.
 
 Options:
     --help         Show this help message.
