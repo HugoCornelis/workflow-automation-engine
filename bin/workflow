@@ -757,7 +757,7 @@ sub ${target_name}_single_command
     #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
     #               the hash value is either just '1' or a string that is used for the <suffix>.
     #
-    # execute_shell_command(\$command, { remote => '<name of a remote that is defined in $project_name-configuration>, } );
+    # execute_shell_command(\$command, { role => '<name of a role that is defined in $project_name-configuration>, } );
     #
     # These options can given to any of the functions that execute commands.
 }
@@ -2857,6 +2857,8 @@ sub _workflow_commands_2_implementation
 {
     my $file_type = shift;
 
+    my $add_templates = shift;
+
     my $shell_commands = shift;
 
     my $target = shift;
@@ -2868,6 +2870,10 @@ sub _workflow_commands_2_implementation
     my $command_count = scalar @$shell_commands;
 
     my $error;
+
+    my $template_options = $add_templates =~ m(all) || $add_templates =~ m(options);
+    my $template_completions = $add_templates =~ m(all) || $add_templates =~ m(completions);
+    my $template_help = $add_templates =~ m(all) || $add_templates =~ m(help);
 
     if ($file_type eq 'python')
     {
@@ -2916,8 +2922,34 @@ def ${target}_${operation}(argv):
 
 	}
 
-	$implementation
-	    .= "
+	if ($template_options)
+	{
+	    my $project_name = $global_field_project_configuration->{field_project_name};
+
+	    $implementation
+		.= "
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   dry_run: do not execute this command.
+    #   role: a role that is defined in $project_name-configuration.
+    #   quiet: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
+    #               the hash value is either just '1' or a string that is used for the <suffix>.
+    #
+    # execute_shell_command(\$command, { 'role': '<name of a role that is defined in $project_name-configuration>, } )
+    #
+    # These options can given to any of the functions that execute commands.
+";
+	}
+
+	if ($template_completions)
+	{
+	    $implementation
+		.= "
 def ${target}_${operation}_completions(command, argv):
     completions_hash = {
            \"1._<your_completion_without_spaces_here>\": \"more_nested_dictionary_items_here\",
@@ -2927,10 +2959,18 @@ def ${target}_${operation}_completions(command, argv):
 
     return completions_hash
 
+";
+	};
+
+	if ($template_help)
+	{
+	    $implementation
+		.= "
 def ${target}_${operation}_help(command, argv):
     return f\"{command}: <synopsis> and an rst or md formatted help page\"
 
 ";
+	}
     }
     elsif ($file_type eq 'perl')
     {
@@ -6005,6 +6045,7 @@ sub builtin_workflow_add
 	return '';
     }
 
+    my $option_add_templates = 'all';
     my $option_bash_history;
     my $option_editor;
     my $option_filename;
@@ -6012,13 +6053,14 @@ sub builtin_workflow_add
     my $option_py = 1;
 
     our $install_options
-      = {
-	 "bash-history=s" => \$option_bash_history,
-	 "editor!" => \$option_editor,
-	 "filename=s" => \$option_filename,
-	 "pl!" => \$option_pl,
-	 "py!" => \$option_py,
-	};
+	= {
+	   "add-templates=s" => \$option_add_templates,
+	   "bash-history=s" => \$option_bash_history,
+	   "editor!" => \$option_editor,
+	   "filename=s" => \$option_filename,
+	   "pl!" => \$option_pl,
+	   "py!" => \$option_py,
+	  };
 
     use Getopt::Long qw(GetOptionsFromArray);;
 
@@ -6120,7 +6162,7 @@ sub builtin_workflow_add
 	    }
 	    else
 	    {
-		$implementation = _workflow_commands_2_implementation($create_file_type, $shell_commands, $target, $operation);
+		$implementation = _workflow_commands_2_implementation($create_file_type, $option_add_templates, $shell_commands, $target, $operation);
 
 		if (ref $implementation)
 		{
@@ -6152,7 +6194,7 @@ sub builtin_workflow_add
 	    {
 		my $file_type = $filename =~ m(.py$) ? 'python' : 'perl';
 
-		$implementation = _workflow_commands_2_implementation($file_type, $shell_commands, $target, $operation);
+		$implementation = _workflow_commands_2_implementation($file_type, $option_add_templates, $shell_commands, $target, $operation);
 
 		if (ref $implementation)
 		{
@@ -6209,6 +6251,15 @@ sub builtin_workflow_add_completions
      "2.<target-name>" => '',
      "3.<operation-name>" => '',
      "4.<-- --options>" => '',
+     '--' => {
+	      '0.Available_options:' => '',
+	      '--add-templates' => '',
+	      '--bash-history' => '',
+	      '--editor' => '',
+	      '--filename' => '',
+	      '--pl' => '',
+	      '--py' => '',
+	     },
     };
 }
 
@@ -6236,6 +6287,8 @@ arguments:
 
 options:
 ~~~~~~~~
+
+    ``--add-templates``: Add templates and explanatory comments to the created implementation ('all', or 'options', 'completions', 'help', or a combination of those).
 
     ``--bash-history``: A list of comma seperated items in the bash history that are added to the workflow.
 
