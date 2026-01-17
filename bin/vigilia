@@ -7456,15 +7456,50 @@ sub module_read
 
     my $pathname = shift;
 
+    my $allowed_formats = shift || 'all';
+
+    my $allow_perl_format = $allowed_formats =~ m(all|perl);
+    my $allow_yml_format = $allowed_formats =~ m(all|yml);
+
     my $module_definition;
 
     if ($pathname =~ /\.t$/)
     {
-	$module_definition = module_read_perl($reporter, $pathname);
+	if ($allow_perl_format)
+	{
+	    $module_definition = module_read_perl($reporter, $pathname);
+	}
+	else
+	{
+	    $reporter->report_error_add
+		(
+		 {
+		  context_path => 'module_read',
+		  description => 'module definition is in perl format but this is not allowed here',
+		  error => 'module definition is in perl format but this is not allowed here',
+		  module_name => $pathname,
+		 },
+		);
+	}
     }
     elsif ($pathname =~ /summary\.yml$/)
     {
-	$module_definition = module_read_yml($reporter, $pathname);
+	if ($allow_yml_format)
+	{
+	    $module_definition = module_read_yml($reporter, $pathname);
+	}
+	else
+	{
+	    $reporter->report_error_add
+		(
+		 {
+		  context_path => 'module_read',
+		  description => 'module definition is in yml format but this is not allowed here',
+		  error => 'module definition is in yml format but this is not allowed here',
+		  module_name => $pathname,
+		 },
+		);
+	}
     }
     else
     {
