@@ -864,6 +864,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
+    --command-comment  A comment to insert at the command definition level, '0' to insert a comment with instructions.
     --command-output   The correct output, if no command-output is given the tested command is used to produce it.
     --command-prefix   Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
     --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.
@@ -872,19 +873,21 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
     --output-json      Output in json format.
     --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
     --output-yaml      Output in yaml format.
+    --test-comment     A comment to insert at the test definition level.
     --test-prefix      Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
     --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
 ",
 	       },
        options => {
+		   "command-comment=s" => do { my $option_command_comment; \$option_command_comment; },
 		   "command-output=s" => do { my $option_command_output; \$option_command_output; },
 		   "command-prefix=s" => do { my $option_command_prefix; \$option_command_prefix; },
-		   "comment=s" => do { my $option_comment; \$option_comment; },
 		   "convert-seen-0d-0a-to-0a-newlines!" => do { my $option_convert_seen_0d_0a_to_0a_newlines; \$option_convert_seen_0d_0a_to_0a_newlines; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-stdout!" => do { my $option_output_stdout; \$option_output_stdout; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
+		   "test-comment=s" => do { my $option_test_comment; \$option_test_comment; },
 		   "test-prefix=s" => do { my $option_test_prefix; \$option_test_prefix; },
 		   "yaml-work-around!" => do { my $option_yaml_work_around; \$option_yaml_work_around; },
 		  },
@@ -932,13 +935,22 @@ sub harness_command_module_command_add
 	$command_prefix = $$option_command_prefix;
     }
 
-    my $option_comment = $options->{"comment=s"};
+    my $option_command_comment = $options->{"command-comment=s"};
 
-    my $comment;
+    my $command_comment;
 
-    if (defined $$option_comment)
+    if (defined $$option_command_comment)
     {
-	$comment = $$option_comment;
+	$command_comment = $$option_command_comment;
+    }
+
+    my $option_test_comment = $options->{"test-comment=s"};
+
+    my $test_comment;
+
+    if (defined $$option_test_comment)
+    {
+	$test_comment = $$option_test_comment;
     }
 
     my $option_convert_seen_0d_0a_to_0a_newlines = $options->{"convert-seen-0d-0a-to-0a-newlines!"};
@@ -1000,6 +1012,19 @@ sub harness_command_module_command_add
 
     my $command_definition = clone($global_command_definition_template);
 
+    if (not defined $command_comment)
+    {
+	delete $command_definition->{comment};
+    }
+    elsif ($command_comment eq '0')
+    {
+	# leave the comment with instructions intact
+    }
+    else
+    {
+	$command_definition->{comment} = $command_comment;
+    }
+
     $command_definition->{command} = $command_to_be_tested;
 
     $command_definition->{description} = $description;
@@ -1055,7 +1080,7 @@ sub harness_command_module_command_add
 
     my $command_test
 	= {
-	   defined $comment ? (comment => $comment) : (),
+	   $test_comment ? (comment => $test_comment) : (),
 	   description => $description,
 	   read => $output,
 	   ($convert_seen_0d_0a_to_0a_newlines
