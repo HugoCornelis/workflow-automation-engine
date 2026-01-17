@@ -273,12 +273,12 @@ sub _all_scripts_install_execute_shell_command_array
 
 
 #
-# add the given command filename to the list in the configuration.
+# add the given workflow filename to the list in the configuration.
 #
 # The type and target_name arguments are only there for diagnostics.
 #
 
-sub _builtin_add_command_filename
+sub _builtin_add_workflow_filename
 {
     my $field_project_configuration = shift;
 
@@ -2853,6 +2853,116 @@ sub _strings_remove
 }
 
 
+sub _workflow_commands_2_implementation
+{
+    my $file_type = shift;
+
+    my $shell_commands = shift;
+
+    my $target = shift;
+
+    my $operation = shift;
+
+    my $implementation = '';
+
+    my $command_count = scalar @$shell_commands;
+
+    my $error;
+
+    if ($file_type eq 'python')
+    {
+	if ($command_count == 0)
+	{
+	    $implementation = "#!/usr/bin/python3
+
+# use the variable global_technical_project_configuration to access the configuration
+
+def ${target}_${operation}(argv):
+    # command = \"echo 'python_command from bash (1)'\"
+    # execute_command(command)
+    # command_array = [
+    #     \"echo 'python_command from bash (2)'\",
+    #     \"echo 'python_command from bash (3)'\"
+    # ]
+    # execute_command_array(command_array)
+    pass
+
+";
+
+	}
+	elsif ($command_count == 1)
+	{
+	    $implementation = "#!/usr/bin/python3
+
+def ${target}_${operation}(argv):
+    command = \"$shell_commands->[0]\"
+    execute_command(command)
+
+";
+
+	}
+	else
+	{
+	    $implementation = "#!/usr/bin/python3
+
+def ${target}_${operation}(argv):
+    command_array = [
+        \"$shell_commands->[0]\",
+        \"$shell_commands->[1]\"
+    ]
+    execute_command_array(command_array)
+
+";
+
+	}
+
+	$implementation
+	    .= "
+def ${target}_${operation}_completions(command, argv):
+    completions_hash = {
+           \"1._<your_completion_without_spaces_here>\": \"more_nested_dictionary_items_here\",
+           \"2._<another_completion_here>\": \"the_numbers_preserve_the_order_for_this_example\",
+           \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\": \"\",
+          }
+
+    return completions_hash
+
+def ${target}_${operation}_help(command, argv):
+    return f\"{command}: <synopsis> and an rst or md formatted help page\"
+
+";
+    }
+    elsif ($file_type eq 'perl')
+    {
+	if ($command_count == 0)
+	{
+	    $implementation = "";
+	}
+	elsif ($command_count == 1)
+	{
+	    $implementation = "";
+	}
+	else
+	{
+	    $implementation = "";
+	}
+    }
+    else
+    {
+	$error = "_workflow_commands_2_implementation: unknown file_type";
+    }
+
+    if ($error)
+    {
+	return \ $error;
+    }
+    else
+    {
+	return $implementation;
+    }
+}
+
+
 #
 # Initialize the command module.
 #
@@ -5002,7 +5112,7 @@ sub builtin_project_start
 
 	    my $command_filename = "$project_name-commands-$target_name";
 
-	    $error = _builtin_add_command_filename($field_project_configuration, 'perl', $target_name, $command_filename);
+	    $error = _builtin_add_workflow_filename($field_project_configuration, 'perl', $target_name, $command_filename);
 
 	    if (not $error)
 	    {
@@ -5018,7 +5128,7 @@ sub builtin_project_start
 
 	    my $command_filename = "$project_name-commands-$target_name.py";
 
-	    $error = _builtin_add_command_filename($field_project_configuration, 'python', $target_name, $command_filename);
+	    $error = _builtin_add_workflow_filename($field_project_configuration, 'python', $target_name, $command_filename);
 
 	    if (not $error)
 	    {
@@ -5633,7 +5743,7 @@ sub builtin_target_add
     {
 	my $new_command_filename = "$field_project_name-commands-$target_name";
 
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
+	$error = _builtin_add_workflow_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
@@ -5649,7 +5759,7 @@ sub builtin_target_add
     {
 	my $new_command_filename = "$field_project_name-commands-$target_name.py";
 
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
+	$error = _builtin_add_workflow_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
@@ -5945,8 +6055,6 @@ sub builtin_workflow_add
 
     my $shell_commands = [];
 
-    my $shell_commands_count = 0;
-
     if ($option_bash_history)
     {
 	my $line_numbers = [ split ',', $option_bash_history ];
@@ -5961,13 +6069,11 @@ sub builtin_workflow_add
 	{
 	    push @$shell_commands, map { chomp; $_ } $history->[$line_number - 1];
 	}
-
-	$shell_commands_count = scalar @$shell_commands;
     }
 
     # figure out the filename for the workflow file
 
-    my $filename = $option_filename;
+    my $filename;
 
     my $create_file_type;
 
@@ -5979,67 +6085,6 @@ sub builtin_workflow_add
 
 	$filename = "$field_project_name-commands-$target-$operation.py";
 
-	if ($shell_commands_count == 0)
-	{
-	    $implementation = "#!/usr/bin/python3
-
-# use the variable global_technical_project_configuration to access the configuration
-
-def ${target}_${operation}(argv):
-    # command = \"echo 'python_command from bash (1)'\"
-    # execute_command(command)
-    # command_array = [
-    #     \"echo 'python_command from bash (2)'\",
-    #     \"echo 'python_command from bash (3)'\"
-    # ]
-    # execute_command_array(command_array)
-    pass
-
-";
-
-	}
-	elsif ($shell_commands_count == 1)
-	{
-	    $implementation = "#!/usr/bin/python3
-
-def ${target}_${operation}(argv):
-    command = \"$shell_commands->[0]\"
-    execute_command(command)
-
-";
-
-	}
-	else
-	{
-	    $implementation = "#!/usr/bin/python3
-
-def ${target}_${operation}(argv):
-    command_array = [
-        \"$shell_commands->[0]\",
-        \"$shell_commands->[1]\"
-    ]
-    execute_command_array(command_array)
-
-";
-
-	}
-
-	$implementation
-	    .= "
-def ${target}_${operation}_completions(command, argv):
-    completions_hash = {
-           \"1._<your_completion_without_spaces_here>\": \"more_nested_dictionary_items_here\",
-           \"2._<another_completion_here>\": \"the_numbers_preserve_the_order_for_this_example\",
-           \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\": \"\",
-          }
-
-    return completions_hash
-
-def ${target}_${operation}_help(command, argv):
-    return f\"{command}: <synopsis> and an rst or md formatted help page\"
-
-";
-
 	$create_file_type = 'python';
     }
     elsif ($option_pl)
@@ -6048,69 +6093,108 @@ def ${target}_${operation}_help(command, argv):
 
 	$filename = "$field_project_name-commands-$target-$operation.pl";
 
-	if ($shell_commands_count == 0)
-	{
-	    $implementation = "";
-	}
-	elsif ($shell_commands_count == 1)
-	{
-	    $implementation = "";
-	}
-	else
-	{
-	    $implementation = "";
-	}
-
 	$create_file_type = 'perl';
+    }
+    elsif ($option_filename)
+    {
+	$filename = $option_filename;
+    }
+    else
+    {
+        $error = "$global_program_name builtin_workflow_add: *** error in option processing, try --help";
     }
 
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
     my $pathname = "$sources_configuration_directory/$filename";
 
-    if ($create_file_type)
+    if (not $error)
     {
-	if (-e $pathname)
+	# either we create a new file ...
+
+	if ($create_file_type)
 	{
-	    die "$global_program_name: *** Error: $pathname already exists.";
+	    if (-e $pathname)
+	    {
+		$error = "$pathname already exists.";
+	    }
+	    else
+	    {
+		$implementation = _workflow_commands_2_implementation($create_file_type, $shell_commands, $target, $operation);
+
+		if (ref $implementation)
+		{
+		    $error = $$implementation;
+		}
+
+		if (not $error)
+		{
+		    open my $file, ">", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+
+		    print $file $implementation;
+
+		    close $file;
+
+		    $error = _builtin_add_workflow_filename($global_field_project_configuration, $create_file_type, $target, $filename);
+		}
+	    }
 	}
 
-	open my $file, ">", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+	# ... or we append to an existing file
 
-	print $file $implementation;
-
-	close $file;
-
-	$error = _builtin_add_command_filename($global_field_project_configuration, $create_file_type, $target, $filename);
-    }
-    else
-    {
-	if (!-e $pathname)
+	else
 	{
-	    die "$global_program_name: *** Error: $pathname does not exist.";
+	    if (!-e $pathname)
+	    {
+		$error = "$pathname does not exist.";
+	    }
+	    else
+	    {
+		my $file_type = $filename =~ m(.py$) ? 'python' : 'perl';
+
+		$implementation = _workflow_commands_2_implementation($file_type, $shell_commands, $target, $operation);
+
+		if (ref $implementation)
+		{
+		    $error = $$implementation;
+		}
+
+		if (not $error)
+		{
+		    open my $file, ">>", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+
+		    print $file $implementation;
+
+		    close $file;
+		}
+	    }
+	}
+    }
+
+    if (not $error)
+    {
+	if ($option_editor)
+	{
+	    my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
+
+	    system "$editor '$pathname'";
 	}
 
-    	open my $file, ">>", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+	my $shell_commands_count = scalar @$shell_commands;
 
-	print $file $implementation;
-
-	close $file;
+	if ($create_file_type)
+	{
+	    print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
+	}
+	else
+	{
+	    print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	}
     }
 
-    if ($option_editor)
+    if ($error)
     {
-	my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
-
-	system "vi '$pathname'";
-    }
-
-    if ($create_file_type)
-    {
-	print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
-    }
-    else
-    {
-	print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	die "$global_program_name: *** Error: $error";
     }
 
     return '';
