@@ -20,6 +20,7 @@ command_tests:
           configuration-create Create an initial test configuration with instructions how to expand it to a full test suite.
           help                 Show the help page. 
           module-create        Create a new module with the given name.
+          module-renumber      Renumber the command_definitions of the given module.
           module-update        Update the given module with the given arguments and directives.
           run-tests            Run the tests, possibly with an executor that converts the tests rather than running them.
       

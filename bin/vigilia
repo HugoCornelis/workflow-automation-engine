@@ -1456,6 +1456,132 @@ tag: An array of tags associated with this test module.  These are matched with 
 }
 
 
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"module-renumber"}
+    = {
+       description => "Renumber the command_definitions of the given module.",
+       executor => "main::harness_command_module_renumber",
+       help => {
+		synopsis => "$0 module-renumber <options> <module-name>",
+		usage => "This command reads the command definitions of the given test module and renumbers them according to the given options.  The test module must be file-structured yaml.
+
+Options:
+    --help         Show this help message.
+    --start-number The number to use to start the renumbering.
+    --increment    The increment to apply to successive command definitions.
+",
+	       },
+       options => {
+		   "help!" => do { my $option_help; \$option_help; },
+		   "start-number=s" => do { my $option_start_number; \$option_start_number; },
+		   "increment=s" => do { my $option_increment; \$option_increment; },
+		  },
+       subcommands => [],
+      };
+
+sub harness_command_module_renumber
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift || [];
+
+    my $reporter = shift;
+
+    my $module_name = shift @$arguments;
+
+    if (! defined $module_name)
+    {
+	die "$0: *** Error: $command expects an argument for the name of the module to be updated";
+    }
+
+    # find the test module that must be updated
+
+    my $tests_directory = $global_config->{tests_directory};
+
+    my $module_path_name = "$tests_directory/$module_name/summary.yml";
+
+    if (-r $module_path_name)
+    {
+    }
+    else
+    {
+	die "$0: *** Error: $module_path_name not found.";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_start_number = $options->{"start-number=s"};
+
+    my $start_number = 100;
+
+    if (defined $$option_start_number)
+    {
+	$start_number = $$option_start_number;
+    }
+
+    my $option_increment = $options->{"increment=s"};
+
+    my $increment = 10;
+
+    if (defined $$option_increment)
+    {
+	$increment = $$option_increment;
+    }
+
+    # my $module_definition = Heterarch::Test::Library::module_read_yml($reporter, $module_path_name, 'yml');
+
+    # find the command defintion filenames of the module definition
+
+    $module_path_name =~ m((.*)/summary\.yml$);
+
+    my $directory = $1;
+
+    use File::chdir;
+
+    local $CWD = "$directory/command_definitions";
+
+    my $command_definition_filenames = Heterarch::Test::Library::directory_filenames(".", "*.yml");
+
+    my $error = '';
+
+    if (ref $command_definition_filenames)
+    {
+	my $current_number = $start_number;
+
+	foreach my $command_definition_filename (sort @$command_definition_filenames)
+	{
+	    $command_definition_filename =~ m(^./([0-9]+)_(.*)$);
+
+	    my $command_definition_number = $1;
+
+	    my $command_definition_abbreviation_name = $2;
+
+	    my $new_command_definition_filename = "${current_number}_${command_definition_abbreviation_name}";
+
+	    my $move_command = "mv '$command_definition_filename' '$new_command_definition_filename'";
+
+	    system $move_command;
+
+	    if ($?)
+	    {
+		$error .= "move command ($move_command) failed ($?)";
+	    }
+
+	    $current_number += $increment;
+	}
+    }
+    else
+    {
+	$error = "Error: $command_definition_filenames";
+    }
+
+    # return any error
+
+    return $error;
+}
+
+
 $global_command_line_configuration->{command_configuration}->{known_commands}->{"module-update"}
     = {
        description => "Update the given module with the given arguments and directives.",

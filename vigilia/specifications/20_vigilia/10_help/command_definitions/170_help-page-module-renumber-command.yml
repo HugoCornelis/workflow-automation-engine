@@ -1,0 +1,19 @@
+---
+command: bin/vigilia module-renumber --help
+command_tests:
+  - description: help page of the module-renumber command
+    read: |+2
+      
+      bin/vigilia module-renumber <options> <module-name>
+      
+      Renumber the command_definitions of the given module.
+      
+      This command reads the command definitions of the given test module and renumbers them according to the given options.  The test module must be file-structured yaml.
+      
+      Options:
+          --help         Show this help message.
+          --start-number The number to use to start the renumbering.
+          --increment    The increment to apply to successive command definitions.
+
+comment: ''
+description: help page of the module-renumber command
