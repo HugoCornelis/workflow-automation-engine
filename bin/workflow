@@ -713,7 +713,7 @@ sub _builtin_project_workflow_template_create_perl
 
     my $filename = shift;
 
-    my $commands_template_code
+    my $commands_template_code_preamble
 	= "#!/usr/bin/perl -w
 
 use strict;
@@ -731,7 +731,14 @@ our \$global_technical_project_configuration;
 package Command;
 
 
-sub ${target_name}_single_command
+
+
+our \$roles = \$::global_technical_project_configuration->{roles};
+
+";
+
+    my $commands_template_code_single_command
+	= "sub ${target_name}_single_command
 {
     # arguments on the command line and to this sub are unified in the \$arguments array
 
@@ -828,7 +835,11 @@ arguments:
 }
 
 
-sub ${target_name}_array_of_commands
+";
+
+
+    my $commands_template_code_array_of_commands
+	= "sub ${target_name}_array_of_commands
 {
     my \$arguments = shift || [];
 
@@ -889,9 +900,11 @@ arguments:
 }
 
 
-our \$roles = \$::global_technical_project_configuration->{roles};
+";
 
-sub ${target_name}_array_of_commands_remote_execution
+
+    my $commands_template_code_array_of_commands_remote_execution
+	= "sub ${target_name}_array_of_commands_remote_execution
 {
     my \$arguments = shift || [];
 
@@ -978,7 +991,11 @@ arguments:
 }
 
 
-sub ${target_name}_sequencing_and_composition
+";
+
+
+    my $commands_template_code_sequencing_and_composition
+	= "sub ${target_name}_sequencing_and_composition
 {
     my \$arguments = shift || [];
 
@@ -1046,6 +1063,16 @@ arguments:
 1;
 
 
+";
+
+
+    my $commands_template_code
+	= "
+$commands_template_code_preamble
+$commands_template_code_single_command
+$commands_template_code_array_of_commands
+$commands_template_code_array_of_commands_remote_execution
+$commands_template_code_sequencing_and_composition
 ";
 
     my $error = '';
