@@ -27,8 +27,6 @@ command_tests:
           my $command = 'ls -a1';
       
           execute_shell_command($command);
-      }
-      
       
       
           # Some options to command execution:
@@ -47,6 +45,9 @@ command_tests:
           #
           # These options can given to any of the functions that execute commands.
       
+      }
+      
+      
       sub new_target_selected_commands_from_bash_history_perl_2_completions
       {
           my $complete_command_string = shift;
@@ -62,7 +63,6 @@ command_tests:
       
           return $completions_hash;
       }
-      
       
       
       sub new_target_selected_commands_from_bash_history_perl_2_help

@@ -3020,6 +3020,32 @@ package Command;
 
 ";
 
+	my $options_comments = "";
+
+	if ($template_options)
+	{
+	    my $project_name = $global_field_project_configuration->{field_project_name};
+
+	    $options_comments
+		= "
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   dry_run: do not execute this command.
+    #   role: a role that is defined in $project_name-configuration.
+    #   quiet: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
+    #               the hash value is either just '1' or a string that is used for the <suffix>.
+    #
+    # execute_shell_command(\$command, { role => '<name of a role that is defined in $project_name-configuration>, } )
+    #
+    # These options can given to any of the functions that execute commands.
+";
+	}
+
 	if ($command_count == 0)
 	{
 	    $implementation
@@ -3037,6 +3063,8 @@ sub ${target}_${operation}
     # my \$command = 'echo an example of the invocation of a single command';
 
     # execute_shell_command(\$command);
+
+$options_comments
 }
 
 
@@ -3053,8 +3081,9 @@ sub ${target}_${operation}
     my \$command = '$shell_commands->[0]';
 
     execute_shell_command(\$command);
-}
 
+$options_comments
+}
 
 ";
 	}
@@ -3073,33 +3102,10 @@ sub ${target}_${operation}
 	  ];
 
     execute_shell_command_array(\$commands);
+
+$options_comments
 }
 
-
-";
-	}
-
-	if ($template_options)
-	{
-	    my $project_name = $global_field_project_configuration->{field_project_name};
-
-	    $implementation
-		.= "
-    # Some options to command execution:
-    #   allow_fail: allow execution of this command to fail.
-    #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
-    #   dry_run: do not execute this command.
-    #   role: a role that is defined in $project_name-configuration.
-    #   quiet: do not provide feedback to the terminal about this command.
-    #   sudo: invoke the command prefixed with sudo.
-    #   timeout: this command will fail after the given timeout.
-    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
-    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
-    #               the hash value is either just '1' or a string that is used for the <suffix>.
-    #
-    # execute_shell_command(\$command, { role => '<name of a role that is defined in $project_name-configuration>, } )
-    #
-    # These options can given to any of the functions that execute commands.
 ";
 	}
 
@@ -3122,7 +3128,6 @@ sub ${target}_${operation}_completions
 
     return \$completions_hash;
 }
-
 
 ";
 	};
