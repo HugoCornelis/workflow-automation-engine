@@ -1,0 +1,13 @@
+---
+command: workflow-tests-workflow new_target selected_commands_from_bash_history_perl
+command_tests:
+  - description: Does the added workflow produce correct output (perl)?
+    read: |
+      # echo command 1
+      #
+      command 1
+      # echo command 2
+      #
+      command 2
+    white_space: convert seen 0a to 0d 0a newlines
+description: Does the added workflow produce correct output (perl)?

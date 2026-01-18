@@ -9,6 +9,7 @@ command_tests:
       Add a new command with the given name under the given module and insert its current output as the expected output.
       
       Options:
+          --command-comment  A comment to insert at the command definition level, '0' to insert a comment with instructions.
           --command-output   The correct output, if no command-output is given the tested command is used to produce it.
           --command-prefix   Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
           --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.
@@ -17,6 +18,7 @@ command_tests:
           --output-json      Output in json format.
           --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
           --output-yaml      Output in yaml format.
+          --test-comment     A comment to insert at the test definition level.
           --test-prefix      Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
           --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
       

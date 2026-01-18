@@ -1,0 +1,7 @@
+---
+command: ls /home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history_perl.pl
+command_tests:
+  - description: Can we find the file that implements the workflow (perl)?
+    read: "/home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history_perl.pl\n"
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we find the file that implements the workflow (perl)?

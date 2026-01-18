@@ -273,12 +273,12 @@ sub _all_scripts_install_execute_shell_command_array
 
 
 #
-# add the given command filename to the list in the configuration.
+# add the given workflow filename to the list in the configuration.
 #
 # The type and target_name arguments are only there for diagnostics.
 #
 
-sub _builtin_add_command_filename
+sub _builtin_add_workflow_filename
 {
     my $field_project_configuration = shift;
 
@@ -703,7 +703,7 @@ complete -F _${project_name_underscore}_workflow_completions ./${project_name_da
 }
 
 
-sub _builtin_project_commands_template_create_perl
+sub _builtin_project_workflow_template_create_perl
 {
     my $field_project_configuration = shift;
 
@@ -713,7 +713,7 @@ sub _builtin_project_commands_template_create_perl
 
     my $filename = shift;
 
-    my $commands_template_code
+    my $commands_template_code_preamble
 	= "#!/usr/bin/perl -w
 
 use strict;
@@ -731,7 +731,14 @@ our \$global_technical_project_configuration;
 package Command;
 
 
-sub ${target_name}_single_command
+
+
+our \$roles = \$::global_technical_project_configuration->{roles};
+
+";
+
+    my $commands_template_code_single_command
+	= "sub ${target_name}_single_command
 {
     # arguments on the command line and to this sub are unified in the \$arguments array
 
@@ -757,7 +764,7 @@ sub ${target_name}_single_command
     #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
     #               the hash value is either just '1' or a string that is used for the <suffix>.
     #
-    # execute_shell_command(\$command, { remote => '<name of a remote that is defined in $project_name-configuration>, } );
+    # execute_shell_command(\$command, { role => '<name of a role that is defined in $project_name-configuration>, } );
     #
     # These options can given to any of the functions that execute commands.
 }
@@ -828,7 +835,11 @@ arguments:
 }
 
 
-sub ${target_name}_array_of_commands
+";
+
+
+    my $commands_template_code_array_of_commands
+	= "sub ${target_name}_array_of_commands
 {
     my \$arguments = shift || [];
 
@@ -889,9 +900,11 @@ arguments:
 }
 
 
-our \$roles = \$::global_technical_project_configuration->{roles};
+";
 
-sub ${target_name}_array_of_commands_remote_execution
+
+    my $commands_template_code_array_of_commands_remote_execution
+	= "sub ${target_name}_array_of_commands_remote_execution
 {
     my \$arguments = shift || [];
 
@@ -978,7 +991,11 @@ arguments:
 }
 
 
-sub ${target_name}_sequencing_and_composition
+";
+
+
+    my $commands_template_code_sequencing_and_composition
+	= "sub ${target_name}_sequencing_and_composition
 {
     my \$arguments = shift || [];
 
@@ -1048,6 +1065,16 @@ arguments:
 
 ";
 
+
+    my $commands_template_code
+	= "
+$commands_template_code_preamble
+$commands_template_code_single_command
+$commands_template_code_array_of_commands
+$commands_template_code_array_of_commands_remote_execution
+$commands_template_code_sequencing_and_composition
+";
+
     my $error = '';
 
     use IO::File;
@@ -1075,7 +1102,7 @@ arguments:
 }
 
 
-sub _builtin_project_commands_template_create_python
+sub _builtin_project_workflow_template_create_python
 {
     my $field_project_configuration = shift;
 
@@ -2850,6 +2877,289 @@ sub _strings_remove
     }
 
     return $sentence;
+}
+
+
+sub _workflow_commands_2_implementation
+{
+    my $file_type = shift;
+
+    my $add_templates = shift;
+
+    my $shell_commands = shift;
+
+    my $target = shift;
+
+    my $operation = shift;
+
+    my $implementation = '';
+
+    my $command_count = scalar @$shell_commands;
+
+    my $error;
+
+    my $template_options = $add_templates =~ m(all) || $add_templates =~ m(options);
+    my $template_completions = $add_templates =~ m(all) || $add_templates =~ m(completions);
+    my $template_help = $add_templates =~ m(all) || $add_templates =~ m(help);
+
+    if ($file_type eq 'python')
+    {
+	if ($command_count == 0)
+	{
+	    $implementation = "#!/usr/bin/python3
+
+# use the variable global_technical_project_configuration to access the configuration
+
+def ${target}_${operation}(argv):
+    # command = \"echo 'python_command from bash (1)'\"
+    # execute_command(command)
+    # command_array = [
+    #     \"echo 'python_command from bash (2)'\",
+    #     \"echo 'python_command from bash (3)'\"
+    # ]
+    # execute_command_array(command_array)
+    pass
+
+";
+
+	}
+	elsif ($command_count == 1)
+	{
+	    $implementation = "#!/usr/bin/python3
+
+def ${target}_${operation}(argv):
+    command = \"$shell_commands->[0]\"
+    execute_command(command)
+
+";
+
+	}
+	else
+	{
+	    $implementation = "#!/usr/bin/python3
+
+def ${target}_${operation}(argv):
+    command_array = [
+        \"$shell_commands->[0]\",
+        \"$shell_commands->[1]\"
+    ]
+    execute_command_array(command_array)
+
+";
+
+	}
+
+	if ($template_options)
+	{
+	    my $project_name = $global_field_project_configuration->{field_project_name};
+
+	    $implementation
+		.= "
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   dry_run: do not execute this command.
+    #   role: a role that is defined in $project_name-configuration.
+    #   quiet: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
+    #               the hash value is either just '1' or a string that is used for the <suffix>.
+    #
+    # execute_shell_command(\$command, { 'role': '<name of a role that is defined in $project_name-configuration>, } )
+    #
+    # These options can given to any of the functions that execute commands.
+";
+	}
+
+	if ($template_completions)
+	{
+	    $implementation
+		.= "
+def ${target}_${operation}_completions(command, argv):
+    completions_hash = {
+           \"1._<your_completion_without_spaces_here>\": \"more_nested_dictionary_items_here\",
+           \"2._<another_completion_here>\": \"the_numbers_preserve_the_order_for_this_example\",
+           \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\": \"\",
+          }
+
+    return completions_hash
+
+";
+	};
+
+	if ($template_help)
+	{
+	    $implementation
+		.= "
+def ${target}_${operation}_help(command, argv):
+    return f\"{command}: <synopsis> and an rst or md formatted help page\"
+
+";
+	}
+    }
+    elsif ($file_type eq 'perl')
+    {
+	my $implementation_preamble
+	    = "#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+
+package main;
+
+our \$option_verbose;
+
+our \$global_technical_project_configuration;
+
+
+package Command;
+
+";
+
+	my $options_comments = "";
+
+	if ($template_options)
+	{
+	    my $project_name = $global_field_project_configuration->{field_project_name};
+
+	    $options_comments
+		= "
+    # Some options to command execution:
+    #   allow_fail: allow execution of this command to fail.
+    #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   dry_run: do not execute this command.
+    #   role: a role that is defined in $project_name-configuration.
+    #   quiet: do not provide feedback to the terminal about this command.
+    #   sudo: invoke the command prefixed with sudo.
+    #   timeout: this command will fail after the given timeout.
+    #   use_bash: use bash to invoke the command because it uses specific bash functions or features.
+    #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
+    #               the hash value is either just '1' or a string that is used for the <suffix>.
+    #
+    # execute_shell_command(\$command, { role => '<name of a role that is defined in $project_name-configuration>, } )
+    #
+    # These options can given to any of the functions that execute commands.
+";
+	}
+
+	if ($command_count == 0)
+	{
+	    $implementation
+		= "$implementation_preamble
+sub ${target}_${operation}
+{
+    # arguments on the command line and to this sub are unified in the \$arguments array
+
+    my \$arguments = shift || [];
+
+    # a fictitious force argument can be fetched from the (possibly empty) \$arguments array
+
+    my \$force = \$arguments->[0] || \"\";
+
+    # my \$command = 'echo an example of the invocation of a single command';
+
+    # execute_shell_command(\$command);
+
+$options_comments
+}
+
+
+";
+	}
+	elsif ($command_count == 1)
+	{
+	    $implementation
+		= "$implementation_preamble
+sub ${target}_${operation}
+{
+    my \$arguments = shift || [];
+
+    my \$command = '$shell_commands->[0]';
+
+    execute_shell_command(\$command);
+
+$options_comments
+}
+
+";
+	}
+	else
+	{
+	    $implementation
+		= "$implementation_preamble
+sub ${target}_${operation}
+{
+    my \$arguments = shift || [];
+
+    my \$commands
+	= [
+	   '$shell_commands->[0]',
+	   '$shell_commands->[1]',
+	  ];
+
+    execute_shell_command_array(\$commands);
+
+$options_comments
+}
+
+";
+	}
+
+	if ($template_completions)
+	{
+	    $implementation
+		.= "
+sub ${target}_${operation}_completions
+{
+    my \$complete_command_string = shift;
+
+    my \$complete_arguments_array = shift;
+
+    my \$completions_hash
+	= {
+           \"1._<your_completion_without_spaces_here>\" => \"more_nested_dictionary_items_here\",
+           \"2._<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
+           \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\" => \"\",
+          };
+
+    return \$completions_hash;
+}
+
+";
+	};
+
+	if ($template_help)
+	{
+	    $implementation
+		.= "
+sub ${target}_${operation}_help
+{
+    my \$command = shift;
+
+    return \"\$command: <synopsis> and an rst or md formatted help page\";
+}
+
+
+";
+	}
+    }
+    else
+    {
+	$error = "_workflow_commands_2_implementation: unknown file_type";
+    }
+
+    if ($error)
+    {
+	return \ $error;
+    }
+    else
+    {
+	return $implementation;
+    }
 }
 
 
@@ -5002,13 +5312,13 @@ sub builtin_project_start
 
 	    my $command_filename = "$project_name-commands-$target_name";
 
-	    $error = _builtin_add_command_filename($field_project_configuration, 'perl', $target_name, $command_filename);
+	    $error = _builtin_add_workflow_filename($field_project_configuration, 'perl', $target_name, $command_filename);
 
 	    if (not $error)
 	    {
 		# add a template commands file with the given name
 
-		$error = _builtin_project_commands_template_create_perl($field_project_configuration, $project_name, $target_name, $command_filename);
+		$error = _builtin_project_workflow_template_create_perl($field_project_configuration, $project_name, $target_name, $command_filename);
 	    }
 	}
 
@@ -5018,11 +5328,11 @@ sub builtin_project_start
 
 	    my $command_filename = "$project_name-commands-$target_name.py";
 
-	    $error = _builtin_add_command_filename($field_project_configuration, 'python', $target_name, $command_filename);
+	    $error = _builtin_add_workflow_filename($field_project_configuration, 'python', $target_name, $command_filename);
 
 	    if (not $error)
 	    {
-		$error = _builtin_project_commands_template_create_python($field_project_configuration, $project_name, $target_name, $command_filename);
+		$error = _builtin_project_workflow_template_create_python($field_project_configuration, $project_name, $target_name, $command_filename);
 	    }
 	}
 
@@ -5633,13 +5943,13 @@ sub builtin_target_add
     {
 	my $new_command_filename = "$field_project_name-commands-$target_name";
 
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
+	$error = _builtin_add_workflow_filename($global_field_project_configuration, 'perl', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+	    $error = _builtin_project_workflow_template_create_perl($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
 	    print "$global_program_name: created the perl command file $new_command_filename for target $target_name\n";
 	}
@@ -5649,13 +5959,13 @@ sub builtin_target_add
     {
 	my $new_command_filename = "$field_project_name-commands-$target_name.py";
 
-	$error = _builtin_add_command_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
+	$error = _builtin_add_workflow_filename($global_field_project_configuration, 'python', $target_name, $new_command_filename);
 
 	# add a template commands file with the given name
 
 	if (not $error)
 	{
-	    $error = _builtin_project_commands_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
+	    $error = _builtin_project_workflow_template_create_python($global_field_project_configuration, $field_project_name, $target_name, $new_command_filename);
 
 	    print "$global_program_name: created the python command file $new_command_filename for target $target_name\n";
 	}
@@ -5895,20 +6205,22 @@ sub builtin_workflow_add
 	return '';
     }
 
+    my $option_add_templates = 'all';
     my $option_bash_history;
     my $option_editor;
     my $option_filename;
     my $option_pl;
-    my $option_py = 1;
+    my $option_py;
 
     our $install_options
-      = {
-	 "bash-history=s" => \$option_bash_history,
-	 "editor!" => \$option_editor,
-	 "filename=s" => \$option_filename,
-	 "pl!" => \$option_pl,
-	 "py!" => \$option_py,
-	};
+	= {
+	   "add-templates=s" => \$option_add_templates,
+	   "bash-history=s" => \$option_bash_history,
+	   "editor!" => \$option_editor,
+	   "filename=s" => \$option_filename,
+	   "pl!" => \$option_pl,
+	   "py!" => \$option_py,
+	  };
 
     use Getopt::Long qw(GetOptionsFromArray);;
 
@@ -5945,8 +6257,6 @@ sub builtin_workflow_add
 
     my $shell_commands = [];
 
-    my $shell_commands_count = 0;
-
     if ($option_bash_history)
     {
 	my $line_numbers = [ split ',', $option_bash_history ];
@@ -5961,84 +6271,25 @@ sub builtin_workflow_add
 	{
 	    push @$shell_commands, map { chomp; $_ } $history->[$line_number - 1];
 	}
-
-	$shell_commands_count = scalar @$shell_commands;
     }
 
     # figure out the filename for the workflow file
 
-    my $filename = $option_filename;
+    my $filename;
 
     my $create_file_type;
 
     my $implementation;
+
+    # python is the default, and perl is allowed if it is explicitly enabled
+
+    $option_py ||= not ($option_py || $option_pl);
 
     if ($option_py)
     {
 	my $field_project_name = $global_field_project_configuration->{field_project_name};
 
 	$filename = "$field_project_name-commands-$target-$operation.py";
-
-	if ($shell_commands_count == 0)
-	{
-	    $implementation = "#!/usr/bin/python3
-
-# use the variable global_technical_project_configuration to access the configuration
-
-def ${target}_${operation}(argv):
-    # command = \"echo 'python_command from bash (1)'\"
-    # execute_command(command)
-    # command_array = [
-    #     \"echo 'python_command from bash (2)'\",
-    #     \"echo 'python_command from bash (3)'\"
-    # ]
-    # execute_command_array(command_array)
-    pass
-
-";
-
-	}
-	elsif ($shell_commands_count == 1)
-	{
-	    $implementation = "#!/usr/bin/python3
-
-def ${target}_${operation}(argv):
-    command = \"$shell_commands->[0]\"
-    execute_command(command)
-
-";
-
-	}
-	else
-	{
-	    $implementation = "#!/usr/bin/python3
-
-def ${target}_${operation}(argv):
-    command_array = [
-        \"$shell_commands->[0]\",
-        \"$shell_commands->[1]\"
-    ]
-    execute_command_array(command_array)
-
-";
-
-	}
-
-	$implementation
-	    .= "
-def ${target}_${operation}_completions(command, argv):
-    completions_hash = {
-           \"1._<your_completion_without_spaces_here>\": \"more_nested_dictionary_items_here\",
-           \"2._<another_completion_here>\": \"the_numbers_preserve_the_order_for_this_example\",
-           \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\": \"\",
-          }
-
-    return completions_hash
-
-def ${target}_${operation}_help(command, argv):
-    return f\"{command}: <synopsis> and an rst or md formatted help page\"
-
-";
 
 	$create_file_type = 'python';
     }
@@ -6048,69 +6299,108 @@ def ${target}_${operation}_help(command, argv):
 
 	$filename = "$field_project_name-commands-$target-$operation.pl";
 
-	if ($shell_commands_count == 0)
-	{
-	    $implementation = "";
-	}
-	elsif ($shell_commands_count == 1)
-	{
-	    $implementation = "";
-	}
-	else
-	{
-	    $implementation = "";
-	}
-
 	$create_file_type = 'perl';
+    }
+    elsif ($option_filename)
+    {
+	$filename = $option_filename;
+    }
+    else
+    {
+        $error = "$global_program_name builtin_workflow_add: *** error in option processing, try --help";
     }
 
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
     my $pathname = "$sources_configuration_directory/$filename";
 
-    if ($create_file_type)
+    if (not $error)
     {
-	if (-e $pathname)
+	# either we create a new file ...
+
+	if ($create_file_type)
 	{
-	    die "$global_program_name: *** Error: $pathname already exists.";
+	    if (-e $pathname)
+	    {
+		$error = "$pathname already exists.";
+	    }
+	    else
+	    {
+		$implementation = _workflow_commands_2_implementation($create_file_type, $option_add_templates, $shell_commands, $target, $operation);
+
+		if (ref $implementation)
+		{
+		    $error = $$implementation;
+		}
+
+		if (not $error)
+		{
+		    open my $file, ">", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+
+		    print $file $implementation;
+
+		    close $file;
+
+		    $error = _builtin_add_workflow_filename($global_field_project_configuration, $create_file_type, $target, $filename);
+		}
+	    }
 	}
 
-	open my $file, ">", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+	# ... or we append to an existing file
 
-	print $file $implementation;
-
-	close $file;
-
-	$error = _builtin_add_command_filename($global_field_project_configuration, $create_file_type, $target, $filename);
-    }
-    else
-    {
-	if (!-e $pathname)
+	else
 	{
-	    die "$global_program_name: *** Error: $pathname does not exist.";
+	    if (!-e $pathname)
+	    {
+		$error = "$pathname does not exist.";
+	    }
+	    else
+	    {
+		my $file_type = $filename =~ m(.py$) ? 'python' : 'perl';
+
+		$implementation = _workflow_commands_2_implementation($file_type, $option_add_templates, $shell_commands, $target, $operation);
+
+		if (ref $implementation)
+		{
+		    $error = $$implementation;
+		}
+
+		if (not $error)
+		{
+		    open my $file, ">>", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+
+		    print $file $implementation;
+
+		    close $file;
+		}
+	    }
+	}
+    }
+
+    if (not $error)
+    {
+	if ($option_editor)
+	{
+	    my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
+
+	    system "$editor '$pathname'";
 	}
 
-    	open my $file, ">>", $pathname or die "$global_program_name: Cannot open $pathname: $!";
+	my $shell_commands_count = scalar @$shell_commands;
 
-	print $file $implementation;
-
-	close $file;
+	if ($create_file_type)
+	{
+	    print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
+	}
+	else
+	{
+	    print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	}
     }
 
-    if ($option_editor)
+    if ($error)
     {
-	my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
-
-	system "vi '$pathname'";
-    }
-
-    if ($create_file_type)
-    {
-	print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
-    }
-    else
-    {
-	print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	die "$global_program_name: *** Error: $error";
     }
 
     return '';
@@ -6125,6 +6415,15 @@ sub builtin_workflow_add_completions
      "2.<target-name>" => '',
      "3.<operation-name>" => '',
      "4.<-- --options>" => '',
+     '--' => {
+	      '0.Available_options:' => '',
+	      '--add-templates' => '',
+	      '--bash-history' => '',
+	      '--editor' => '',
+	      '--filename' => '',
+	      '--pl' => '',
+	      '--py' => '',
+	     },
     };
 }
 
@@ -6152,6 +6451,8 @@ arguments:
 
 options:
 ~~~~~~~~
+
+    ``--add-templates``: Add templates and explanatory comments to the created implementation ('all', or 'options', 'completions', 'help', or a combination of those).
 
     ``--bash-history``: A list of comma seperated items in the bash history that are added to the workflow.
 

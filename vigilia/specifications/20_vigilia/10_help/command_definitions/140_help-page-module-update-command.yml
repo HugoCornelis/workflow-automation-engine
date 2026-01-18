@@ -8,7 +8,7 @@ command_tests:
       
       Update the given module with the given arguments and directives.
       
-      This command reads the (existing) test module with the given name and the reproduces it as file-structured yaml.
+      This command reads the (existing) test module with the given name and reproduces it as file-structured yaml.
       
       Options:
           --help         Show this help message.

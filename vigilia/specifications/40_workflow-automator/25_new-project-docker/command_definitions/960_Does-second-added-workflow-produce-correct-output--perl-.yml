@@ -1,0 +1,18 @@
+---
+command: workflow-tests-workflow new_target selected_commands_from_bash_history_perl_2
+command_tests:
+  - description: Does the second added workflow produce correct output (perl)?
+    read: |
+      # ls -a1
+      #
+      .
+      ..
+      .bash_history
+      .bashrc
+      bin
+      projects
+      workflow-test
+      workflow-test-non-empty-directory
+    white_space: convert seen 0a to 0d 0a newlines
+comment: ''
+description: Does the second added workflow produce correct output (perl)?

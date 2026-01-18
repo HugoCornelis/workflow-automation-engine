@@ -864,6 +864,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-add <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
+    --command-comment  A comment to insert at the command definition level, '0' to insert a comment with instructions.
     --command-output   The correct output, if no command-output is given the tested command is used to produce it.
     --command-prefix   Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
     --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.
@@ -872,19 +873,21 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
     --output-json      Output in json format.
     --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
     --output-yaml      Output in yaml format.
+    --test-comment     A comment to insert at the test definition level.
     --test-prefix      Use this prefix for the test filename, if none is given, a heuristic is used (that mostly guesses wrong in which case you have to rename the file).
     --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
 ",
 	       },
        options => {
+		   "command-comment=s" => do { my $option_command_comment; \$option_command_comment; },
 		   "command-output=s" => do { my $option_command_output; \$option_command_output; },
 		   "command-prefix=s" => do { my $option_command_prefix; \$option_command_prefix; },
-		   "comment=s" => do { my $option_comment; \$option_comment; },
 		   "convert-seen-0d-0a-to-0a-newlines!" => do { my $option_convert_seen_0d_0a_to_0a_newlines; \$option_convert_seen_0d_0a_to_0a_newlines; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-stdout!" => do { my $option_output_stdout; \$option_output_stdout; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
+		   "test-comment=s" => do { my $option_test_comment; \$option_test_comment; },
 		   "test-prefix=s" => do { my $option_test_prefix; \$option_test_prefix; },
 		   "yaml-work-around!" => do { my $option_yaml_work_around; \$option_yaml_work_around; },
 		  },
@@ -932,13 +935,22 @@ sub harness_command_module_command_add
 	$command_prefix = $$option_command_prefix;
     }
 
-    my $option_comment = $options->{"comment=s"};
+    my $option_command_comment = $options->{"command-comment=s"};
 
-    my $comment;
+    my $command_comment;
 
-    if (defined $$option_comment)
+    if (defined $$option_command_comment)
     {
-	$comment = $$option_comment;
+	$command_comment = $$option_command_comment;
+    }
+
+    my $option_test_comment = $options->{"test-comment=s"};
+
+    my $test_comment;
+
+    if (defined $$option_test_comment)
+    {
+	$test_comment = $$option_test_comment;
     }
 
     my $option_convert_seen_0d_0a_to_0a_newlines = $options->{"convert-seen-0d-0a-to-0a-newlines!"};
@@ -1000,6 +1012,19 @@ sub harness_command_module_command_add
 
     my $command_definition = clone($global_command_definition_template);
 
+    if (not defined $command_comment)
+    {
+	delete $command_definition->{comment};
+    }
+    elsif ($command_comment eq '0')
+    {
+	# leave the comment with instructions intact
+    }
+    else
+    {
+	$command_definition->{comment} = $command_comment;
+    }
+
     $command_definition->{command} = $command_to_be_tested;
 
     $command_definition->{description} = $description;
@@ -1055,7 +1080,7 @@ sub harness_command_module_command_add
 
     my $command_test
 	= {
-	   defined $comment ? (comment => $comment) : (),
+	   $test_comment ? (comment => $test_comment) : (),
 	   description => $description,
 	   read => $output,
 	   ($convert_seen_0d_0a_to_0a_newlines
@@ -1134,20 +1159,25 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-update <options> <module-name> <command-name> <'command-test-description'>",
 		usage => "Options:
-    --command-output The correct output, if no command-output is given the tested command is used to produce it.
-    --comment        The comment to insert.  The comment is inserted both at command definition level and at command test level.
-    --description    The description to insert.  The description is inserted both at command definition level and at command test level.
-    --help           Show this help message.
-    --output-json    Output in json format.
-    --output-yaml    Output in yaml format.
+    --command-comment  A comment to insert at the command definition level, '0' to insert a comment with instructions.
+    --command-output   The correct output, if no command-output is given the tested command is used to produce it.
+    --command-prefix   Use this prefix as the command identifier.
+    --description      The description to insert.  The description is inserted both at command definition level and at command test level.
+    --help             Show this help message.
+    --output-json      Output in json format.
+    --output-yaml      Output in yaml format.
+    --test-comment     A comment to insert at the test definition level.
 ",
 	       },
        options => {
+		   "command-comment=s" => do { my $option_command_comment; \$option_command_comment; },
 		   "command-output=s" => do { my $option_command_output; \$option_command_output; },
-		   "comment=s" => do { my $option_comment; \$option_comment; },
+		   "command-prefix=s" => do { my $option_command_prefix; \$option_command_prefix; },
+		   "convert-seen-0d-0a-to-0a-newlines!" => do { my $option_convert_seen_0d_0a_to_0a_newlines; \$option_convert_seen_0d_0a_to_0a_newlines; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
+		   "test-comment=s" => do { my $option_test_comment; \$option_test_comment; },
 		  },
       };
 
@@ -1431,13 +1461,139 @@ tag: An array of tags associated with this test module.  These are matched with 
 }
 
 
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"module-renumber"}
+    = {
+       description => "Renumber the command_definitions of the given module.",
+       executor => "main::harness_command_module_renumber",
+       help => {
+		synopsis => "$0 module-renumber <options> <module-name>",
+		usage => "This command reads the command definitions of the given test module and renumbers them according to the given options.  The test module must be file-structured yaml.
+
+Options:
+    --help         Show this help message.
+    --start-number The number to use to start the renumbering.
+    --increment    The increment to apply to successive command definitions.
+",
+	       },
+       options => {
+		   "help!" => do { my $option_help; \$option_help; },
+		   "start-number=s" => do { my $option_start_number; \$option_start_number; },
+		   "increment=s" => do { my $option_increment; \$option_increment; },
+		  },
+       subcommands => [],
+      };
+
+sub harness_command_module_renumber
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift || [];
+
+    my $reporter = shift;
+
+    my $module_name = shift @$arguments;
+
+    if (! defined $module_name)
+    {
+	die "$0: *** Error: $command expects an argument for the name of the module to be updated";
+    }
+
+    # find the test module that must be updated
+
+    my $tests_directory = $global_config->{tests_directory};
+
+    my $module_path_name = "$tests_directory/$module_name/summary.yml";
+
+    if (-r $module_path_name)
+    {
+    }
+    else
+    {
+	die "$0: *** Error: $module_path_name not found.";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_start_number = $options->{"start-number=s"};
+
+    my $start_number = 100;
+
+    if (defined $$option_start_number)
+    {
+	$start_number = $$option_start_number;
+    }
+
+    my $option_increment = $options->{"increment=s"};
+
+    my $increment = 10;
+
+    if (defined $$option_increment)
+    {
+	$increment = $$option_increment;
+    }
+
+    # my $module_definition = Heterarch::Test::Library::module_read_yml($reporter, $module_path_name, 'yml');
+
+    # find the command defintion filenames of the module definition
+
+    $module_path_name =~ m((.*)/summary\.yml$);
+
+    my $directory = $1;
+
+    use File::chdir;
+
+    local $CWD = "$directory/command_definitions";
+
+    my $command_definition_filenames = Heterarch::Test::Library::directory_filenames(".", "*.yml");
+
+    my $error = '';
+
+    if (ref $command_definition_filenames)
+    {
+	my $current_number = $start_number;
+
+	foreach my $command_definition_filename (sort @$command_definition_filenames)
+	{
+	    $command_definition_filename =~ m(^./([0-9]+)_(.*)$);
+
+	    my $command_definition_number = $1;
+
+	    my $command_definition_abbreviation_name = $2;
+
+	    my $new_command_definition_filename = "${current_number}_${command_definition_abbreviation_name}";
+
+	    my $move_command = "mv '$command_definition_filename' '$new_command_definition_filename'";
+
+	    system $move_command;
+
+	    if ($?)
+	    {
+		$error .= "move command ($move_command) failed ($?)";
+	    }
+
+	    $current_number += $increment;
+	}
+    }
+    else
+    {
+	$error = "Error: $command_definition_filenames";
+    }
+
+    # return any error
+
+    return $error;
+}
+
+
 $global_command_line_configuration->{command_configuration}->{known_commands}->{"module-update"}
     = {
        description => "Update the given module with the given arguments and directives.",
        executor => "main::harness_command_module_update",
        help => {
 		synopsis => "$0 module-update <options> <module-name>",
-		usage => "This command reads the (existing) test module with the given name and the reproduces it as file-structured yaml.
+		usage => "This command reads the (existing) test module with the given name and reproduces it as file-structured yaml.
 
 Options:
     --help         Show this help message.
@@ -7431,15 +7587,50 @@ sub module_read
 
     my $pathname = shift;
 
+    my $allowed_formats = shift || 'all';
+
+    my $allow_perl_format = $allowed_formats =~ m(all|perl);
+    my $allow_yml_format = $allowed_formats =~ m(all|yml);
+
     my $module_definition;
 
     if ($pathname =~ /\.t$/)
     {
-	$module_definition = module_read_perl($reporter, $pathname);
+	if ($allow_perl_format)
+	{
+	    $module_definition = module_read_perl($reporter, $pathname);
+	}
+	else
+	{
+	    $reporter->report_error_add
+		(
+		 {
+		  context_path => 'module_read',
+		  description => 'module definition is in perl format but this is not allowed here',
+		  error => 'module definition is in perl format but this is not allowed here',
+		  module_name => $pathname,
+		 },
+		);
+	}
     }
     elsif ($pathname =~ /summary\.yml$/)
     {
-	$module_definition = module_read_yml($reporter, $pathname);
+	if ($allow_yml_format)
+	{
+	    $module_definition = module_read_yml($reporter, $pathname);
+	}
+	else
+	{
+	    $reporter->report_error_add
+		(
+		 {
+		  context_path => 'module_read',
+		  description => 'module definition is in yml format but this is not allowed here',
+		  error => 'module definition is in yml format but this is not allowed here',
+		  module_name => $pathname,
+		 },
+		);
+	}
     }
     else
     {
