@@ -1,0 +1,8 @@
+---
+command: feature-testing-workflow build operation1 --help
+command_tests:
+  - description: Do we see an appropriate error message when we invoke a help page that does not exist of an operation that does exist?
+    disabled: feature-testing-workflow is not installed in this container.
+    read: "feature-testing-workflow: *** Error: target 'build' does not provide help for the operation 'operation1'.\n"
+    white_space: convert seen 0a to 0d 0a newlines
+description: Do we see an appropriate error message when we invoke a help page that does not exist of an operation that does exist?

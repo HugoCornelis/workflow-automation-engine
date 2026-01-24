@@ -2463,29 +2463,45 @@ sub _install_script_git_repository
 {
     my $project_name = shift;
 
-    # 6. Create and populate the git repository
+    # check if there is already a .git directory
 
-    my $command = "git init -b master";
+    my $already_git = -d '.git';
 
-    execute_shell_command($command, );
+    if ($already_git)
+    {
+	my $commands
+	    = [
+	       "echo This directory seems to be a git repository, not creating a new one.",
+	      ];
 
-    my $commands
-	= [
-	   "echo >.gitignore '*~'",
-	   "echo >>.gitignore '_Inline'",
-	   "echo >>.gitignore '$project_name-commands-data/cache'",
-	   "echo >>.gitignore '$project_name-configuration-data/cache'",
-	   "git add --all",
-	  ];
+	execute_shell_command_array($commands);
+    }
+    else
+    {
+	# 6. Create and populate the git repository
 
-    execute_shell_command_array($commands);
+	my $command = "git init -b master";
 
-    my $commands_commit
-	= [
-	   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
-	  ];
+	execute_shell_command($command, );
 
-    execute_shell_command_array($commands_commit, { allow_fail => "this command can fail if git was not properly configured yet." } );
+	my $commands
+	    = [
+	       "echo >.gitignore '*~'",
+	       "echo >>.gitignore '_Inline'",
+	       "echo >>.gitignore '$project_name-commands-data/cache'",
+	       "echo >>.gitignore '$project_name-configuration-data/cache'",
+	       "git add --all",
+	      ];
+
+	execute_shell_command_array($commands);
+
+	my $commands_commit
+	    = [
+	       "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
+	      ];
+
+	execute_shell_command_array($commands_commit, { allow_fail => "this command can fail if git was not properly configured yet." } );
+    }
 }
 
 
@@ -2565,6 +2581,7 @@ sub _install_script_grc_symbolic_links
 	if (not -e $target_directory)
 	{
 		my $command = "mkdir -p $target_directory";
+
 		execute_shell_command($command, { sudo => 1, }, );
 	}
 
@@ -5275,7 +5292,7 @@ sub builtin_project_start
 
 	if (scalar @$directory)
 	{
-	    die "$global_program_name: *** Error: The current directory must be empty such that the workflow configuration are isolated from other files.";
+	    die "$global_program_name: *** Error: The current directory must be empty such that the workflow configuration is isolated from other files.";
 	}
 
 	$project_name =~ s((.*)-commands*)($1);
@@ -5372,7 +5389,7 @@ sub builtin_project_start
 
 	    print "---\nTest it with the command:\n\n";
 	    print "  workflow --help-field-project-name\n\n";
-	    print "Afterwards install the scripts on your system using the command:\n\n";
+	    print "Afterwards install the configuration on your system by invoking the command:\n\n";
 	    print "  workflow builtin configuration_install -- --commands --git\n\n";
 	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
 	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
@@ -6390,11 +6407,27 @@ sub builtin_workflow_add
 
 	if ($create_file_type)
 	{
-	    print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
+	    if ($option_bash_history
+		and not $option_editor)
+	    {
+		print "$global_program_name: Created a worklow of $shell_commands_count commands in file $pathname and added the file to the configuration.\n";
+	    }
+	    else
+	    {
+		print "$global_program_name: Created a worklow in file $pathname and added the file to the configuration.\n";
+	    }
 	}
 	else
 	{
-	    print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	    if ($option_bash_history
+		and not $option_editor)
+	    {
+		print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	    }
+	    else
+	    {
+		print "$global_program_name: Added the worklow to file $pathname.\n";
+	    }
 	}
     }
 
@@ -11227,8 +11260,8 @@ sub bash_completion
 
 	    my $external_completions
 		= {
-		   "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
-		   "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
+		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => 1,
+		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => 1,
 		  };
 
 	    if (exists $operation_hash->{"$target ${operation}_completions"})
@@ -12433,11 +12466,19 @@ sub schedule_operations_for_execution
 
     my $target = $operation_selector_type->{target};
 
-    # if this command exists ...
+    # if this workflow exists ...
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
-    if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
+    # ... as <target> <operation>
+    if ((!$help and defined $operation and exists $all_typed_operations->{"$target $operation"})
+
+	# ... as <target> <operation> --help
+	or ($help and defined $operation and exists $all_typed_operations->{"$target ${operation}_help"})
+
+	# ... as <target> --help
+	or ($help and (not defined $operation) and exists $all_typed_operations->{"$target help"})
+
 	or $operation_implementation eq 'wildcard'
 	or $builtin_package
 	or $dry_run_reason eq 'option_interactions')
@@ -12469,7 +12510,18 @@ sub schedule_operations_for_execution
     }
     else
     {
-	report_error_exit("target '$target' does not provide command '$operation'.");
+	if (not (defined $operation and exists $all_typed_operations->{"$target $operation"}))
+	{
+	    report_error_exit("target '$target' does not provide operation '$operation'.");
+	}
+	elsif ($help)
+	{
+	    report_error_exit("target '$target' does not provide help for the operation '$operation'.");
+	}
+	else
+	{
+	    report_error_exit("This should not happen: target '$target' does not provide operation '$operation'.");
+	}
     }
 
     use Clone qw(clone);
@@ -12548,7 +12600,7 @@ sub operations_2_commands
 	    {
 		my $target = $selected_operation->{target};
 
-		warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
+		warn "$global_program_name: *** Warning: $short_operation generated a warning response ($error)";
 	    }
 	}
 
@@ -12788,13 +12840,9 @@ sub operation_selector_type_construct
 
 	if ($help)
 	{
-	    $sub_name = "${target}";
-
 	    # call the subroutine that implements the global help function for the target
 
-	    $sub_name .= "_help";
-
-	    $operation_or_package = 'help';
+	    $sub_name = "${target}_help";
 	}
 	else
 	{

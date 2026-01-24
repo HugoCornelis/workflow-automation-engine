@@ -1,36 +1,45 @@
 $files = {
-           '_<../bin/workflow' => [
-                                    {
-                                      'value' => '1',
-                                      'text' => '    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+           '_<./bin/workflow' => [
+                                   {
+                                     'text' => '    if ((!$help and defined $operation and exists $all_typed_operations->{"$target $operation"})
 ',
-                                      'type' => 'user',
-                                      'line' => '9571',
-                                      'fname' => '../bin/workflow',
-                                      'expr' => undef
-                                    }
-                                  ]
+                                     'type' => 'user',
+                                     'line' => '12456',
+                                     'fname' => './bin/workflow',
+                                     'expr' => undef,
+                                     'value' => '1'
+                                   },
+                                   {
+                                     'type' => 'user',
+                                     'text' => '    if ($builtin_package)
+',
+                                     'value' => '1',
+                                     'line' => '12773',
+                                     'fname' => './bin/workflow',
+                                     'expr' => undef
+                                   }
+                                 ]
          };
 $expr_list = [
                {
-                 'depth' => -1,
-                 'expr' => '@ARGV'
-               },
-               {
-                 'expr' => '$export_remote',
-                 'depth' => -1
-               },
-               {
-                 'expr' => '$export_sh_command',
+                 'expr' => '@ARGV',
                  'depth' => -1
                },
                {
                  'depth' => -1,
-                 'expr' => '$remote_prefix'
+                 'expr' => '$export_remote'
                },
                {
                  'depth' => -1,
-                 'expr' => '$interaction_roles->{$current_interaction_role}'
+                 'expr' => '$export_sh_command'
+               },
+               {
+                 'expr' => '$remote_prefix',
+                 'depth' => -1
+               },
+               {
+                 'expr' => '$interaction_roles->{$current_interaction_role}',
+                 'depth' => -1
                },
                {
                  'depth' => -1,
@@ -41,8 +50,8 @@ $expr_list = [
                  'expr' => '$current_interaction_role'
                },
                {
-                 'depth' => -1,
-                 'expr' => '$global_target'
+                 'expr' => '$global_target',
+                 'depth' => -1
                }
              ];
 $eval_saved_text = undef;

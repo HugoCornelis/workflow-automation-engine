@@ -4,6 +4,6 @@ command_tests:
   - description: Can we select commands from the bash history and convert them to a workflow (perl)?
     read: |
       workflow-tests-workflow: registered the perl command file name workflow-tests-commands-new_target-selected_commands_from_bash_history_perl.pl for target new_target
-      workflow-tests-workflow: Created the worklow of 2 commands in file /home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history_perl.pl and add the file to the configuration.
+      workflow-tests-workflow: Created a worklow of 2 commands in file /home/neurospaces/workflow-test/workflow-tests-commands-new_target-selected_commands_from_bash_history_perl.pl and added the file to the configuration.
     white_space: convert seen 0a to 0d 0a newlines
 description: Can we select commands from the bash history and convert them to a workflow (perl)?
