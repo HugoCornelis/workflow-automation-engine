@@ -11227,8 +11227,8 @@ sub bash_completion
 
 	    my $external_completions
 		= {
-		   "<no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\">" => 1,
-		   "_no_completions_have_been_defined,_please_implement_the_sub_with_name_\"$completion_sub\"_" => 1,
+		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => 1,
+		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => 1,
 		  };
 
 	    if (exists $operation_hash->{"$target ${operation}_completions"})
