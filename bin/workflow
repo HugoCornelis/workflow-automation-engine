@@ -12560,7 +12560,7 @@ sub operations_2_commands
 	    {
 		my $target = $selected_operation->{target};
 
-		warn "$global_program_name: *** Warning: $short_operation generated an warning response ($error)";
+		warn "$global_program_name: *** Warning: $short_operation generated a warning response ($error)";
 	    }
 	}
 
