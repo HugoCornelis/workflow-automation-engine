@@ -6390,11 +6390,27 @@ sub builtin_workflow_add
 
 	if ($create_file_type)
 	{
-	    print "$global_program_name: Created the worklow of $shell_commands_count commands in file $pathname and add the file to the configuration.\n";
+	    if ($option_bash_history
+		and not $option_editor)
+	    {
+		print "$global_program_name: Created a worklow of $shell_commands_count commands in file $pathname and added the file to the configuration.\n";
+	    }
+	    else
+	    {
+		print "$global_program_name: Created a worklow in file $pathname and added the file to the configuration.\n";
+	    }
 	}
 	else
 	{
-	    print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	    if ($option_bash_history
+		and not $option_editor)
+	    {
+		print "$global_program_name: Added the worklow of $shell_commands_count commands to file $pathname.\n";
+	    }
+	    else
+	    {
+		print "$global_program_name: Added the worklow to file $pathname.\n";
+	    }
 	}
     }
 
