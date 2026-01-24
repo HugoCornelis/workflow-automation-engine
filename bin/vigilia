@@ -7796,9 +7796,11 @@ sub module_read_process_options
 
     my $expected_module_definition_name = "$global_config->{tests_directory}/$module_definition->{name}";
 
+    #t when is this used?
+
     if (exists $options->{input_module_directory})
     {
-	$expected_module_definition_name = "$options->{input_module_directory}/$module_definition->{name}";
+    	$expected_module_definition_name = "$options->{input_module_directory}/$module_definition->{name}";
     }
 
     if ($pathname ne $expected_module_definition_name)
