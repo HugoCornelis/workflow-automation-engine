@@ -12,7 +12,7 @@ command_tests:
       
         workflow --help-field-project-name
       
-      Afterwards install the scripts on your system using the command:
+      Afterwards install the configuration on your system by invoking the command:
       
         workflow builtin configuration_install -- --commands --git
       
