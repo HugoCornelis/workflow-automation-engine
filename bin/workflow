@@ -6512,11 +6512,11 @@ options:
 }
 
 
+my $debug_builtin_workflow_filenames_known = 0;
+
 sub builtin_workflow_filenames_known
 {
     my $arguments = shift || [ 'relative-paths' ];
-
-    my $debug_builtin_workflow_filenames_known = 0;
 
     # get the configuration_data_directory
 
@@ -6524,19 +6524,44 @@ sub builtin_workflow_filenames_known
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
-    # generate the list of command filenames
-
-    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
-
-    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
-
-    $workflow_filenames = $workflow_filenames->{workflow_filenames};
-
     if ($global_execute_scheduled_commands)
     {
-	use YAML;
+	my $index = $#$arguments;
 
-	print Dump( { workflow_filenames_known => $workflow_filenames } );
+	my $edit = $index != -1 ? $arguments->[$index] : 'no-edit';
+
+	if ($edit eq 'edit')
+	{
+	    pop @$arguments;
+
+	    my $pathnames = join ' ', @$arguments;
+
+	    my $editor = $ENV{WORKFLOW_EDITOR} || "tmux new-session -s session_name 'vi $pathnames'";
+
+	    my $command = "cd '$sources_configuration_directory' && $editor";
+
+	    # print STDERR "Starting: $command\n";
+
+	    system $command;
+
+	    # my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
+
+	    # system "cd '$sources_configuration_directory' && $editor $pathnames";
+	}
+	else
+	{
+	    # generate the list of command filenames
+
+	    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
+
+	    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
+
+	    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
+	    use YAML;
+
+	    print Dump( { workflow_filenames_known => $workflow_filenames } );
+	}
     }
 
     return 0;
@@ -6545,11 +6570,28 @@ sub builtin_workflow_filenames_known
 
 sub builtin_workflow_filenames_known_completions
 {
+    # generate the list of command filenames
+
+    my $full_paths = 'relative_paths';
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
     return
     {
      "1.Type-one-of:" => '',
      "full-paths" => '',
      "relative-paths" => '',
+     map
+     {
+	 $_ => 'edit',
+     }
+     @$workflow_filenames
     };
 }
 
