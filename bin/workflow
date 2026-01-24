@@ -5275,7 +5275,7 @@ sub builtin_project_start
 
 	if (scalar @$directory)
 	{
-	    die "$global_program_name: *** Error: The current directory must be empty such that the workflow configuration are isolated from other files.";
+	    die "$global_program_name: *** Error: The current directory must be empty such that the workflow configuration is isolated from other files.";
 	}
 
 	$project_name =~ s((.*)-commands*)($1);
