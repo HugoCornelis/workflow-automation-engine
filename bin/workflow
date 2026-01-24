@@ -12437,7 +12437,8 @@ sub schedule_operations_for_execution
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
-    if ((defined $operation and exists $all_typed_operations->{"$target $operation"})
+    if ((!$help and defined $operation and exists $all_typed_operations->{"$target $operation"})
+	or ($help and defined $operation and exists $all_typed_operations->{"$target ${operation}_help"})
 	or $operation_implementation eq 'wildcard'
 	or $builtin_package
 	or $dry_run_reason eq 'option_interactions')
@@ -12469,7 +12470,18 @@ sub schedule_operations_for_execution
     }
     else
     {
-	report_error_exit("target '$target' does not provide command '$operation'.");
+	if (not (defined $operation and exists $all_typed_operations->{"$target $operation"}))
+	{
+	    report_error_exit("target '$target' does not provide operation '$operation'.");
+	}
+	elsif ($help)
+	{
+	    report_error_exit("target '$target' does not provide help for the operation '$operation'.");
+	}
+	else
+	{
+	    report_error_exit("This should not happen: target '$target' does not provide operation '$operation'.");
+	}
     }
 
     use Clone qw(clone);
