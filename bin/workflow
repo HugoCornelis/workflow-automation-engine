@@ -12449,12 +12449,19 @@ sub schedule_operations_for_execution
 
     my $target = $operation_selector_type->{target};
 
-    # if this command exists ...
+    # if this workflow exists ...
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
+    # ... as <target> <operation>
     if ((!$help and defined $operation and exists $all_typed_operations->{"$target $operation"})
+
+	# ... as <target> <operation> --help
 	or ($help and defined $operation and exists $all_typed_operations->{"$target ${operation}_help"})
+
+	# ... as <target> --help
+	or ($help and (not defined $operation) and exists $all_typed_operations->{"$target help"})
+
 	or $operation_implementation eq 'wildcard'
 	or $builtin_package
 	or $dry_run_reason eq 'option_interactions')
@@ -12816,13 +12823,9 @@ sub operation_selector_type_construct
 
 	if ($help)
 	{
-	    $sub_name = "${target}";
-
 	    # call the subroutine that implements the global help function for the target
 
-	    $sub_name .= "_help";
-
-	    $operation_or_package = 'help';
+	    $sub_name = "${target}_help";
 	}
 	else
 	{
