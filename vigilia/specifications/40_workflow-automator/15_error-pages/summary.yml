@@ -1,0 +1,21 @@
+---
+description: error pages
+documentation:
+  explanation: |+2
+    
+    
+    The workflow script enables the automation of customizable modular
+    project-specific workflows that use system shell commands.
+
+  purpose: This module tests the basic error messages of the workflow automation engine.
+harnessing:
+  class:
+    comment: Enter this container with "docker exec -it workflow_automation_test_container_errors bash"
+    docker:
+      default_user: neurospaces
+      dockerfile: ./vigilia/specifications/dockerfiles/Dockerfile.workflow-errors
+      name_container: workflow_automation_test_container_errors
+      name_image: workflow_automation_image_errors
+    identifier: docker_harness_errors
+    type: Heterarch::Test::ExecutionContext::Harness::Docker
+name: 40_workflow-automator/15_error-pages/summary.yml
