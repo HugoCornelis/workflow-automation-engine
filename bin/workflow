@@ -2463,29 +2463,45 @@ sub _install_script_git_repository
 {
     my $project_name = shift;
 
-    # 6. Create and populate the git repository
+    # check if there is already a .git directory
 
-    my $command = "git init -b master";
+    my $already_git = -d '.git';
 
-    execute_shell_command($command, );
+    if ($already_git)
+    {
+	my $commands
+	    = [
+	       "echo This directory seems to be a git repository, not creating a new one.",
+	      ];
 
-    my $commands
-	= [
-	   "echo >.gitignore '*~'",
-	   "echo >>.gitignore '_Inline'",
-	   "echo >>.gitignore '$project_name-commands-data/cache'",
-	   "echo >>.gitignore '$project_name-configuration-data/cache'",
-	   "git add --all",
-	  ];
+	execute_shell_command_array($commands);
+    }
+    else
+    {
+	# 6. Create and populate the git repository
 
-    execute_shell_command_array($commands);
+	my $command = "git init -b master";
 
-    my $commands_commit
-	= [
-	   "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
-	  ];
+	execute_shell_command($command, );
 
-    execute_shell_command_array($commands_commit, { allow_fail => "this command can fail if git was not properly configured yet." } );
+	my $commands
+	    = [
+	       "echo >.gitignore '*~'",
+	       "echo >>.gitignore '_Inline'",
+	       "echo >>.gitignore '$project_name-commands-data/cache'",
+	       "echo >>.gitignore '$project_name-configuration-data/cache'",
+	       "git add --all",
+	      ];
+
+	execute_shell_command_array($commands);
+
+	my $commands_commit
+	    = [
+	       "git commit --quiet --message 'Default workflow engine configuration for project $project_name.'",
+	      ];
+
+	execute_shell_command_array($commands_commit, { allow_fail => "this command can fail if git was not properly configured yet." } );
+    }
 }
 
 
@@ -2565,6 +2581,7 @@ sub _install_script_grc_symbolic_links
 	if (not -e $target_directory)
 	{
 		my $command = "mkdir -p $target_directory";
+
 		execute_shell_command($command, { sudo => 1, }, );
 	}
 
