@@ -277,7 +277,7 @@ To start a new `workflow` project named *foo*, follow these steps:
 
 	Creates a workflow configuration for the new project named *foo*.
 
-2. `workflow builtin install_scripts -- --commands --git`
+2. `workflow builtin configuration_install -- --commands --git`
 
 	Makes the configuration available from any directory and
     initializes a `git` repository for it.
