@@ -3,6 +3,6 @@ command: workflow builtin project_start workflow-tests
 command_tests:
   - description: Do we get an appropriate error message when starting a new project in a non-empty directory?
     read: |
-      workflow: *** Error: Please empty this directory before starting a new project. at /usr/local/bin/workflow line 5272.
+      workflow: *** Error: Please empty this directory before starting a new project. at /usr/local/bin/workflow line 5283.
     white_space: convert seen 0a to 0d 0a newlines
 description: starting a new project in a non-empty directory
