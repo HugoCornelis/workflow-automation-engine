@@ -6455,7 +6455,7 @@ sub builtin_workflow_add_completions
      "1.Follow-with:" => '',
      "2.<target-name>" => '',
      "3.<operation-name>" => '',
-     "4.<-- --options>" => '',
+     "'4.[--_<options>_]'" => '',
      '--' => {
 	      '0.Available_options:' => '',
 	      '--add-templates' => '',
