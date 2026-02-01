@@ -1664,6 +1664,10 @@ roles:
     ssh_port: 22
     ssh_server: 192.168.4.70
     ssh_user: $user
+  tmux_example:
+    description: an example of a tmux role, tmux roles are prefixed with tmux_
+    name: tmux_example
+    remote_policy: tmux send-keys -t example:0
 ";
 
     my $error = '';
