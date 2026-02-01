@@ -1867,6 +1867,10 @@ colours=magenta bold underline
 regexp=COMMAND:.*\$
 colours=cyan underline
 
+-
+regexp=WORKFLOW:.*\$
+colours=cyan underline
+
 
 ";
 
