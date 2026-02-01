@@ -18,6 +18,6 @@ harnessing:
       name_image: workflow_automation_image
     identifier: docker_harness
     type: Heterarch::Test::ExecutionContext::Harness::Docker
-name: 40_workflow-automator/25_new-project-docker/summary.yml
+name: 40_workflow-automator/25_smoke/summary.yml
 tags:
   - manual
