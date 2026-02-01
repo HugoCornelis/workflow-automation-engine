@@ -12385,6 +12385,7 @@ options:
 
 	my $workflow_projects
 	    = [
+	       sort
 	       map
 	       {
 		   # note: this removes the prefixes ~/bin/ and ~/.local/bin/
