@@ -4835,7 +4835,7 @@ sub builtin_manual_help
 {
     my $command = shift;
 
-    return "$command : print the manual to stdout.
+    return "$command : generate the manual, optionally of a target given on the command line.
 
 synopsis:
 ~~~~~~~~~
