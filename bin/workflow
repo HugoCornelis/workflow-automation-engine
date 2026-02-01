@@ -1116,11 +1116,11 @@ sub _builtin_project_workflow_template_create_python
 	= "#!/usr/bin/python3
 
 def ${target_name}_python_command(argv):
-    command = \"echo 'python_command from bash (1)'\"
+    command = \"echo command1\"
     execute_command(command)
     command_array = [
-        \"echo 'python_command from bash (2)'\",
-        \"echo 'python_command from bash (3)'\"
+        \"echo command2\",
+        \"echo command3\"
     ]
     execute_command_array(command_array)
 
@@ -2932,11 +2932,11 @@ sub _workflow_commands_2_implementation
 # use the variable global_technical_project_configuration to access the configuration
 
 def ${target}_${operation}(argv):
-    # command = \"echo 'python_command from bash (1)'\"
+    # command = \"echo python_command1\"
     # execute_command(command)
     # command_array = [
-    #     \"echo 'python_command from bash (2)'\",
-    #     \"echo 'python_command from bash (3)'\"
+    #     \"echo python_command2\",
+    #     \"echo python_command3\"
     # ]
     # execute_command_array(command_array)
     pass
