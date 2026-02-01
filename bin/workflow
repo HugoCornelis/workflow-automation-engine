@@ -2934,6 +2934,9 @@ sub _workflow_commands_2_implementation
 	    $implementation = "#!/usr/bin/python3
 
 # use the variable global_technical_project_configuration to access the configuration
+# roles are available as the variable global_roles
+# targets are available as the variable global_targets
+
 
 def ${target}_${operation}(argv):
     # command = \"echo python_command1\"
@@ -10315,13 +10318,19 @@ import json
 global_technical_project_configuration_path = '$configuration_cache_directory/configuration.json'
 
 global_technical_project_configuration = None
+global_roles = None
+global_targets = None
 
 def _load_json_configuration_file(filepath):
     global global_technical_project_configuration
+    global global_roles
+    global global_targets
     with open(filepath, 'r', encoding='utf-8') as f:
         global_technical_project_configuration = json.load(f)
     # print_to_stdout('Configuration loaded')
     # print_to_stderr('Configuration loaded')
+    global_roles = global_technical_project_configuration['technical_project_configuration'].get('roles', global_technical_project_configuration['technical_project_configuration'].get('target_servers'))
+    global_targets = global_technical_project_configuration['technical_project_configuration']['targets']
 
 _load_json_configuration_file(global_technical_project_configuration_path)
 
