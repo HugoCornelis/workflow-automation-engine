@@ -1116,11 +1116,11 @@ sub _builtin_project_workflow_template_create_python
 	= "#!/usr/bin/python3
 
 def ${target_name}_python_command(argv):
-    command = \"echo 'python_command from bash (1)'\"
+    command = \"echo command1\"
     execute_command(command)
     command_array = [
-        \"echo 'python_command from bash (2)'\",
-        \"echo 'python_command from bash (3)'\"
+        \"echo command2\",
+        \"echo command3\"
     ]
     execute_command_array(command_array)
 
@@ -1664,6 +1664,10 @@ roles:
     ssh_port: 22
     ssh_server: 192.168.4.70
     ssh_user: $user
+  tmux_example:
+    description: an example of a tmux role, tmux roles are prefixed with tmux_
+    name: tmux_example
+    remote_policy: tmux send-keys -t example:0
 ";
 
     my $error = '';
@@ -1867,6 +1871,10 @@ colours=magenta bold underline
 regexp=COMMAND:.*\$
 colours=cyan underline
 
+-
+regexp=WORKFLOW:.*\$
+colours=cyan underline
+
 
 ";
 
@@ -1938,14 +1946,14 @@ After installation of the workflow engine, use the following command
 from this directory to make this project configuration available to
 the workflow engine:
 
-`\$ workflow builtin scripts_install -- --commands --aliasses`
+`\$ workflow builtin configuration_install -- --commands --aliasses`
 
 The output of the command explains what has been done and it is
 recommended to carefully inspect it.  The help page of the command
 explains:
 
 ```
-\$ workflow builtin scripts_install --help
+\$ workflow builtin configuration_install --help
 workflow builtin scripts_install : install or upgrade the workflow scripts for this project.
 
 options:
@@ -2926,13 +2934,16 @@ sub _workflow_commands_2_implementation
 	    $implementation = "#!/usr/bin/python3
 
 # use the variable global_technical_project_configuration to access the configuration
+# roles are available as the variable global_roles
+# targets are available as the variable global_targets
+
 
 def ${target}_${operation}(argv):
-    # command = \"echo 'python_command from bash (1)'\"
+    # command = \"echo python_command1\"
     # execute_command(command)
     # command_array = [
-    #     \"echo 'python_command from bash (2)'\",
-    #     \"echo 'python_command from bash (3)'\"
+    #     \"echo python_command2\",
+    #     \"echo python_command3\"
     # ]
     # execute_command_array(command_array)
     pass
@@ -4831,7 +4842,7 @@ sub builtin_manual_help
 {
     my $command = shift;
 
-    return "$command : print the manual to stdout.
+    return "$command : generate the manual, optionally of a target given on the command line.
 
 synopsis:
 ~~~~~~~~~
@@ -6447,7 +6458,7 @@ sub builtin_workflow_add_completions
      "1.Follow-with:" => '',
      "2.<target-name>" => '',
      "3.<operation-name>" => '',
-     "4.<-- --options>" => '',
+     "'4.[--_<options>_]'" => '',
      '--' => {
 	      '0.Available_options:' => '',
 	      '--add-templates' => '',
@@ -10307,13 +10318,19 @@ import json
 global_technical_project_configuration_path = '$configuration_cache_directory/configuration.json'
 
 global_technical_project_configuration = None
+global_roles = None
+global_targets = None
 
 def _load_json_configuration_file(filepath):
     global global_technical_project_configuration
+    global global_roles
+    global global_targets
     with open(filepath, 'r', encoding='utf-8') as f:
         global_technical_project_configuration = json.load(f)
     # print_to_stdout('Configuration loaded')
     # print_to_stderr('Configuration loaded')
+    global_roles = global_technical_project_configuration['technical_project_configuration'].get('roles', global_technical_project_configuration['technical_project_configuration'].get('target_servers'))
+    global_targets = global_technical_project_configuration['technical_project_configuration']['targets']
 
 _load_json_configuration_file(global_technical_project_configuration_path)
 
@@ -12368,6 +12385,7 @@ options:
 
 	my $workflow_projects
 	    = [
+	       sort
 	       map
 	       {
 		   # note: this removes the prefixes ~/bin/ and ~/.local/bin/
