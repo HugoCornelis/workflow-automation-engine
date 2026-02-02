@@ -2170,6 +2170,8 @@ sub _init_workflow_filenames_configured
 
     my $full_paths = shift;
 
+    my $debug = shift;
+
     my $field_project_name = $global_field_project_configuration->{field_project_name};
 
     # when invoked as just 'workflow' the directory where to search
@@ -2185,6 +2187,11 @@ sub _init_workflow_filenames_configured
 	   ? $global_technical_project_configuration->{workflow_filenames}
 	   : $global_technical_project_configuration->{command_filenames});
 
+    if ($debug)
+    {
+	use Data::Dumper; print STDERR Dumper( { workflow_filenames => $workflow_filenames } );
+    }
+
     my $workflow_filenames_full_paths
 	= [
 	   map
@@ -2195,6 +2202,11 @@ sub _init_workflow_filenames_configured
 	   }
 	   @$workflow_filenames,
 	  ];
+
+    if ($debug)
+    {
+	use Data::Dumper; print STDERR Dumper( { workflow_filenames_full_paths => $workflow_filenames_full_paths } );
+    }
 
     my $workflow_filenames_full_paths_selected
 	= [
@@ -2222,7 +2234,10 @@ sub _init_workflow_filenames_configured
 	   @$workflow_filenames_full_paths,
 	  ];
 
-    # print STDERR Dumper(@$workflow_filenames_full_paths_selected);
+    if ($debug)
+    {
+	use Data::Dumper; print STDERR Dumper( { workflow_filenames_full_paths_selected => $workflow_filenames_full_paths_selected } );
+    }
 
     my $result
 	= [
@@ -2265,8 +2280,9 @@ sub _init_workflow_filenames_configured
 
     #! options haven't been processed yet for some execution paths
 
-    if ($option_verbose
-	and $option_verbose > 1)
+    if (($option_verbose
+	 and $option_verbose > 1)
+	or $debug)
     {
 	use Data::Dumper;
 
@@ -3197,6 +3213,8 @@ sub ${target}_${operation}_help
 # This sub reads and parses the workflows written in perl or python.
 #
 
+my $debug_operations_load = 0;
+
 sub _workflow_operations_initialize
 {
     my $commands_seen;
@@ -3205,9 +3223,12 @@ sub _workflow_operations_initialize
 
     # only those command files mentioned in the configuration
 
-    my $workflow_filenames_configured = _init_workflow_filenames_configured('true-paths');
+    my $workflow_filenames_configured = _init_workflow_filenames_configured('true-paths', $debug_operations_load);
 
-    # print STDERR Dumper( { workflow_filenames_configured => $workflow_filenames_configured, } );
+    if ($debug_operations_load)
+    {
+	use Data::Dumper; print STDERR Dumper( { workflow_filenames_configured => $workflow_filenames_configured } );
+    }
 
     my $workflow_filenames_to_use
 	= [
@@ -3254,6 +3275,11 @@ sub _workflow_operations_load
 
     foreach my $command_filename (@$workflow_filenames)
     {
+	if ($debug_operations_load)
+	{
+	    print STDERR "_workflow_operations_load: Loading $command_filename\n";
+	}
+
 	my $file_type;
 
 	if ($command_filename =~ m(\.yml$))
@@ -6512,11 +6538,11 @@ options:
 }
 
 
+my $debug_builtin_workflow_filenames_known = 0;
+
 sub builtin_workflow_filenames_known
 {
     my $arguments = shift || [ 'relative-paths' ];
-
-    my $debug_builtin_workflow_filenames_known = 0;
 
     # get the configuration_data_directory
 
@@ -6524,19 +6550,44 @@ sub builtin_workflow_filenames_known
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
-    # generate the list of command filenames
-
-    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
-
-    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
-
-    $workflow_filenames = $workflow_filenames->{workflow_filenames};
-
     if ($global_execute_scheduled_commands)
     {
-	use YAML;
+	my $index = $#$arguments;
 
-	print Dump( { workflow_filenames_known => $workflow_filenames } );
+	my $edit = $index != -1 ? $arguments->[$index] : 'no-edit';
+
+	if ($edit eq 'edit')
+	{
+	    pop @$arguments;
+
+	    my $pathnames = join ' ', @$arguments;
+
+	    my $editor = $ENV{WORKFLOW_EDITOR} || "tmux new-session -s session_name 'vi $pathnames'";
+
+	    my $command = "cd '$sources_configuration_directory' && $editor";
+
+	    # print STDERR "Starting: $command\n";
+
+	    system $command;
+
+	    # my $editor = $ENV{WORKFLOW_EDITOR} || 'vi';
+
+	    # system "cd '$sources_configuration_directory' && $editor $pathnames";
+	}
+	else
+	{
+	    # generate the list of command filenames
+
+	    my $full_paths = (defined $arguments->[0] && $arguments->[0] eq 'full-paths') ? 'full_paths' : 'relative_paths';
+
+	    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
+
+	    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
+	    use YAML;
+
+	    print Dump( { workflow_filenames_known => $workflow_filenames } );
+	}
     }
 
     return 0;
@@ -6545,11 +6596,28 @@ sub builtin_workflow_filenames_known
 
 sub builtin_workflow_filenames_known_completions
 {
+    # generate the list of command filenames
+
+    my $full_paths = 'relative_paths';
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
     return
     {
      "1.Type-one-of:" => '',
      "full-paths" => '',
      "relative-paths" => '',
+     map
+     {
+	 $_ => 'edit',
+     }
+     @$workflow_filenames
     };
 }
 
