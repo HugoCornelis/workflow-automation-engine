@@ -7,5 +7,22 @@ command_tests:
       
       targets:
         builtin:
-          description: the builtin target allows starting a new project and upgrading existing projects
+          description: The builtin target starts new projects and upgrades existing ones.
+          documentation: |+2
+            
+            
+            A new workflow configuration is started with the command:
+            
+            .. code-block:: bash
+               :linenos:
+            
+            workflow builtin project_start <project-name>
+            
+            This configuration is then installed in your local workspace (such as
+            ``~/.local/bin``), with the command:
+            
+            .. code-block:: bash
+               :linenos:
+            
+            workflow builtin configuration_install -- --commands --git
 description: default builtin targets

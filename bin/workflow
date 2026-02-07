@@ -10233,7 +10233,26 @@ sub _configuration_initialize
     {
 	# add the builtin targets, they are always available and possibly override the configured targets of the same name
 
-	$result_technical->{targets}->{builtin}->{description} = "the builtin target allows starting a new project and upgrading existing projects";
+	$result_technical->{targets}->{builtin}->{description} = "The builtin target starts new projects and upgrades existing ones.";
+
+	$result_technical->{targets}->{builtin}->{documentation} = "
+
+A new workflow configuration is started with the command:
+
+.. code-block:: bash
+   :linenos:
+
+workflow builtin project_start <project-name>
+
+This configuration is then installed in your local workspace (such as
+``~/.local/bin``), with the command:
+
+.. code-block:: bash
+   :linenos:
+
+workflow builtin configuration_install -- --commands --git
+
+";
 
     }
 
