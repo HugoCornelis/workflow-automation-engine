@@ -4974,6 +4974,13 @@ sub get_command_definition_path
 }
 
 
+# get the context_path that identifies the current context in the test
+# definitions.
+#
+# If decorated_context_path is set, the returned context_path is
+# decorated with the module name, the command_definition's command,
+# and the command_test's write clause.
+
 sub get_context_path
 {
     my $self = shift;
