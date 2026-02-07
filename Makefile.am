@@ -25,7 +25,7 @@ workflowautomationtestdir=$(prefix)/neurospaces/workflow-automation
 nobase_dist_workflowautomationtest_DATA=@TEST_SPECIFICATION_FILES@
 
 workflowautomationimagesdir=$(prefix)/neurospaces/images
-nobase_dist_workflowautomationimages_DATA = images/ns-main-logo-dark2.jpg
+nobase_dist_workflowautomationimages_DATA = images/ns-main-logo-dark2.jpg logos/cables-bw-final-comp-1-shrunk-cropped-reduced-bottom-640x170.png
 
 # the tests are copied overhere.
 #
