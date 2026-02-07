@@ -3,11 +3,18 @@ THE WORKFLOW ENGINE
 
 
 
+
+
+.. image:: /usr/local/neurospaces/images/logos/cables-bw-final-comp-1-shrunk-cropped-reduced-bottom-640x170.png
+   :alt: vigilia-workflow-engine
+   :scale: 50
+   :align: center
+
 This manual was automatically generated with the command line:
 
 .. code-block:: bash
 
-    bin/workflow builtin manual builtin -- --no-view
+    bin/workflow builtin manual builtin
 
 Draft Specification Manual: target ``builtin``
 **********************************************
@@ -20,31 +27,31 @@ Target: builtin
 
 
 
-the builtin target allows starting a new project and upgrading existing projects
+The builtin target starts new projects and upgrades existing ones.
+
+
+
+A new workflow configuration is started with the command:
+
+.. code-block:: bash
+   :linenos:
+
+workflow builtin project_start <project-name>
+
+This configuration is then installed in your local workspace (such as
+``~/.local/bin``), with the command:
+
+.. code-block:: bash
+   :linenos:
+
+workflow builtin configuration_install -- --commands --git
+
+
 
 
 
 Alphabetical list of ``builtin`` operations
 ===========================================
-
-
-
-Operation: builtin command_filenames_known
-------------------------------------------
-
-builtin command_filenames_known : print the known command filenames to stdout.
-
-synopsis:
-~~~~~~~~~
-
-.. code-block:: bash
-
-builtin command_filenames_known [ <full-or-relative-paths> ]
-
-arguments:
-~~~~~~~~~~
-
-    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
 
 
 
@@ -226,7 +233,7 @@ arguments:
 Operation: builtin manual
 -------------------------
 
-builtin manual : print the manual to stdout.
+builtin manual : generate the manual, optionally of a target given on the command line.
 
 synopsis:
 ~~~~~~~~~
@@ -417,4 +424,60 @@ builtin tmux_sessions_kill: Kill one or more configured tmux session(s).
 
 Configured tmux sessions are:
     
+
+
+Operation: builtin workflow_add
+-------------------------------
+
+builtin workflow_add: Add a new workflow.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin workflow_add <target-name> <operation-name> [ -- <options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The target to which the workflow will be added.
+
+    ``ARGV[1]``: The name of the operation, internally this name will be prefixed with the target name.
+
+
+options:
+~~~~~~~~
+
+    ``--add-templates``: Add templates and explanatory comments to the created implementation ('all', or 'options', 'completions', 'help', or a combination of those).
+
+    ``--bash-history``: A list of comma seperated items in the bash history that are added to the workflow.
+
+    ``--editor``: Invoke the editor in $WORKFLOW_EDITOR to inspect and edit the workflow after it has been created.
+
+    ``--filename``: Use this file to add the new workflow to, this file must already exist in the configuration.
+
+    ``--pl``: Create the workflow in a Perl workflow file, the filename is derived from the target and operation names.
+
+    ``--py``: Create the workflow in a Python workflow file, the filename is derived from the target and operation names, this is the default.
+
+
+
+Operation: builtin workflow_filenames_known
+-------------------------------------------
+
+builtin workflow_filenames_known : print the known command filenames to stdout.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin workflow_filenames_known [ <full-or-relative-paths> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
+
 
