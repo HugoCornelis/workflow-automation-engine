@@ -212,29 +212,47 @@ Ubuntu.
 
 ## Prerequisites
 
-`workflow` and `vigilia` use [YAML](https://yaml.org/),
-[JSON](https://toml.io/en/) and [TOML](https://toml.io/en/) for
-configuration files.  They require the Perl modules `File::chdir`, and
-`File::Find::Rule`, as well as the Perl module for integration of
-Python code into Perl[^1].  `workflow` also relies `grc` for colorized
-output.  Installation itself is handled via `autotools` and `make` and
-requires `gcc` to compile C code.
+`workflow` and `vigilia` require several Perl and Python modules and
+they use [YAML](https://yaml.org/), [JSON](https://toml.io/en/) and
+[TOML](https://toml.io/en/) for configuration files[^1].  `workflow`
+also relies `grc` for colorized output.  Installation itself is
+handled via `autotools` and `make` and requires `gcc` to compile C
+code.
 
 As an example, for Ubuntu 22.04.3 LTS (Jammy), the following
 prerequisites must be installed:
 
 ```
 sudo apt install automake
+sudo apt install docker.io
+sudo apt install jq
+sudo apt install gcc
 sudo apt install grc
+sudo apt install libclone-perl
 sudo apt install libexpect-perl
 sudo apt install libfile-chdir-perl
 sudo apt install libfile-find-rule-perl
 sudo apt install libinline-python-perl
+sudo apt install libipc-system-simple-perl
 sudo apt install libjson-perl
 sudo apt install libnet-ip-perl
 sudo apt install libtoml-perl
 sudo apt install libyaml-perl
 sudo apt install make
+sudo apt install python-dev-is-python3
+```
+
+Generating PDF documentation relies on `pandoc` and _Latex_:
+
+```
+sudo apt install pandoc
+sudo apt install texlive-latex-extra
+```
+
+To enable your user to run Docker, add it to the appropriate group:
+
+```
+sudo usermod -aG docker $USER
 ```
 
 [^1]: The Perl module that integrates with Python is called Inline::Python.  This module currently has a bug that generates warnings when multiple Python source code files are inlined.  A fix is available from https://github.com/niner/inline-python-pm but this fix is not available from package managers yet.

@@ -4512,7 +4512,29 @@ sub builtin_manual
 
     my $matcher;
 
-    my $field_project_name = $global_field_project_configuration->{field_project_name} || 'The workflow engine';
+    my $field_project_configuration;
+
+    if (exists $global_field_project_configuration->{field_project_name})
+    {
+	$field_project_configuration = $global_field_project_configuration;
+    }
+    else
+    {
+	$field_project_configuration
+	    = {
+	       field_project_description => "
+
+.. image:: /usr/local/neurospaces/images/logos/cables-bw-final-comp-1-shrunk-cropped-reduced-bottom-640x170.png
+   :alt: vigilia-workflow-engine
+   :scale: 50
+   :align: center
+
+",
+	       field_project_name => 'The workflow engine',
+	      };
+    }
+
+    my $field_project_name = $field_project_configuration->{field_project_name};
 
     my $filename_suffix = '';
 
@@ -4603,6 +4625,10 @@ sub builtin_manual
     }
 
     my $manual_string = "$header\n\n";
+
+    my $field_project_description = $field_project_configuration->{field_project_description};
+
+    $manual_string .= $field_project_description;
 
     if ($option_input_rst)
     {
@@ -10207,7 +10233,26 @@ sub _configuration_initialize
     {
 	# add the builtin targets, they are always available and possibly override the configured targets of the same name
 
-	$result_technical->{targets}->{builtin}->{description} = "the builtin target allows starting a new project and upgrading existing projects";
+	$result_technical->{targets}->{builtin}->{description} = "The builtin target starts new projects and upgrades existing ones.";
+
+	$result_technical->{targets}->{builtin}->{documentation} = "
+
+A new workflow configuration is started with the command:
+
+.. code-block:: bash
+   :linenos:
+
+workflow builtin project_start <project-name>
+
+This configuration is then installed in your local workspace (such as
+``~/.local/bin``), with the command:
+
+.. code-block:: bash
+   :linenos:
+
+workflow builtin configuration_install -- --commands --git
+
+";
 
     }
 
