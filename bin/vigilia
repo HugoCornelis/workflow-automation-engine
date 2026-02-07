@@ -3178,6 +3178,7 @@ sub ct_run_complete
 	$reporter->report_error_add
 		(
 		 {
+		  command_definition_path => $execution_context->get_command_definition_path(),
 		  command_prefix => $command_prefix,
 		  context_path => $execution_context->get_context_path(),
 		  description => $description,
@@ -4940,6 +4941,36 @@ sub get_command_test
     my $command_test = $current->{current_command_test};
 
     return $command_test;
+}
+
+
+sub get_command_definition_path
+{
+    my $self = shift;
+
+    my $decorated_context_path = shift;
+
+    my $command_definition = $self->get_command_definition();
+
+    my $result = "get_command_definition_path(): none";
+
+    if ($command_definition)
+    {
+	if (exists $command_definition->{command_definition_path})
+	{
+	    $result = $command_definition->{command_definition_path};
+	}
+	else
+	{
+	    $result = "get_command_definition_path(): no command_definition_path";
+	}
+    }
+    else
+    {
+	$result = "get_command_definition_path(): no command_definition";
+    }
+
+    return $result;
 }
 
 
@@ -8280,6 +8311,8 @@ sub module_read_yml
 		}
 		else
 		{
+		    $command_definition->{command_definition_path} = $command_definition_filename;
+
 		    push @$command_definitions, $command_definition;
 		}
 	    }
@@ -12047,10 +12080,11 @@ sub _report_error_summary
 	   path => {
 		    "000_context_path" => $error_report->{context_path},
 		    "010_module_name" => $error_report->{module_name},
-		    "020_description" => $error_report->{description},
-		    "030_subdescription" => $error_report->{subdescription},
-		    "040_executed_command" => $error_report->{executed_command},
-		    "050_command_prefix" => $error_report->{command_prefix},
+		    "020_command_definition_path" => $error_report->{command_definition_path},
+		    "030_description" => $error_report->{description},
+		    "040_subdescription" => $error_report->{subdescription},
+		    "050_executed_command" => $error_report->{executed_command},
+		    "060_command_prefix" => $error_report->{command_prefix},
 		   },
 	   error => $error_report->{error},
 	   report_error_directory => $report_error_directory,
