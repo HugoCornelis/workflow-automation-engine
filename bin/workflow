@@ -3975,6 +3975,8 @@ sub builtin_docker_containers_start
 	    execute_shell_command_array($commands, { allow_fail => 'if the container does not exist' } );
 	}
 
+	my $options_run = $docker_container->{options_run} || "--rm";
+
 	my $shared_volumes_option = '';
 
 	my $shared_volumes = $docker_container->{shared_volumes};
@@ -3995,7 +3997,7 @@ sub builtin_docker_containers_start
 
 	my $commands
 	    = [
-	       "$docker_command run -d -t $shared_volumes_option --name $name_container $name_image ",
+	       "$docker_command run $options_run -d -t $shared_volumes_option --name $name_container $name_image ",
 	       # "$docker_command run -d -t --name $name_container -v \$SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent $name_image ",
 	      ];
 
