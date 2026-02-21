@@ -4626,7 +4626,7 @@ sub builtin_manual
 
     my $manual_string = "$header\n\n";
 
-    my $field_project_description = $field_project_configuration->{field_project_description};
+    my $field_project_description = $field_project_configuration->{field_project_description} || "";
 
     $manual_string .= $field_project_description;
 
