@@ -5749,6 +5749,8 @@ sub builtin_role_add
 	return '';
     }
 
+    #t add an option to implement a template command
+
     my $option_dockerfile;
     my $option_localuser;
     my $option_scp_options;
@@ -5763,12 +5765,12 @@ sub builtin_role_add
       = {
 	 "dockerfile=s" => \$option_dockerfile,
 	 "localuser!" => \$option_localuser,
-	 "scp_options=s" => \$option_scp_options,
-	 "ssh_options=s" => \$option_ssh_options,
-	 "ssh_password=s" => \$option_ssh_password,
-	 "ssh_port=s" => \$option_ssh_port,
-	 "ssh_server=s" => \$option_ssh_server,
-	 "ssh_user=s" => \$option_ssh_user,
+	 "scp-options=s" => \$option_scp_options,
+	 "ssh-options=s" => \$option_ssh_options,
+	 "ssh-password=s" => \$option_ssh_password,
+	 "ssh-port=s" => \$option_ssh_port,
+	 "ssh-server=s" => \$option_ssh_server,
+	 "ssh-user=s" => \$option_ssh_user,
 	 "tmux-session=s" => \$option_tmux_session,
 	};
 
@@ -5835,6 +5837,11 @@ sub builtin_role_add
     # read the targets configuration file
 
     my $roles_configuration_filename = "$configuration_data_directory/roles.yml";
+
+    # This way of handling the role file removes the comments from it.
+    # Description and documentation can be provided in the keys with those names.
+
+    #t we should also come up with a policy to generate backup files of the configuration.
 
     my $roles = YAML::LoadFile($roles_configuration_filename);
 
@@ -5974,16 +5981,18 @@ sub builtin_role_add_completions
 	= {
 	   "1.<role_name>" => '',
 	   "2.<role_description>" => '',
-	   "'3.[--_<options>_]'" => '',
-	   "--dockerfile" => '',
-	   "--localuser" => '',
-	   "--scp-options" => '',
-	   "--ssh-options" => '',
-	   "--ssh-password" => '',
-	   "--ssh-port" => '',
-	   "--ssh-server" => '',
-	   "--ssh-user" => '',
-	   "--tmux-session" => '',
+	   "3.[--_<options>_]" => '',
+	   "--" => {
+		    "--dockerfile" => '',
+		    "--localuser" => '',
+		    "--scp-options" => '',
+		    "--ssh-options" => '',
+		    "--ssh-password" => '',
+		    "--ssh-port" => '',
+		    "--ssh-server" => '',
+		    "--ssh-user" => '',
+		    "--tmux-session" => '',
+		   },
 	  };
 
     if (scalar @$complete_arguments_array > 2)
