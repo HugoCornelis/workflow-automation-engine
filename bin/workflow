@@ -1868,7 +1868,7 @@ count=more
 regexp=ROLE:.*\$
 colours=magenta bold underline
 -
-regexp=COMMAND:.*\$
+regexp=WORKFLOW:.*\$
 colours=cyan underline
 
 -
@@ -4405,7 +4405,7 @@ sub builtin_grep_commands
 
 	foreach my $console_output_line (@$console_output_lines)
 	{
-	    if ($console_output_line =~ m(COMMAND))
+	    if ($console_output_line =~ m(WORKFLOW))
 	    {
 		$current_console_output_header = $console_output_line;
 	    }
@@ -12705,9 +12705,11 @@ sub operations_2_commands
 	{
 	    # add a header to the schedule / diagram for this operation
 
+	    #t check if this header also has the target -- the target is needed to make this readable in a diagram
+
 	    my $scheduled_command
 		= {
-		   command => "---\nCOMMAND: $short_operation$has_help",
+		   command => "---\nWORKFLOW: $short_operation$has_help",
 		   dry_run => $dry_run_reason,
 		   interaction_role => 'none',
 		  };
