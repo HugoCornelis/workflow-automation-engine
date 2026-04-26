@@ -291,7 +291,7 @@ sudo make install
 
 To start a new `workflow` project named *foo*, follow these steps:
 
-1. `workflow builtin start_project foo`
+1. `workflow builtin project_start foo`
 
 	Creates a workflow configuration for the new project named *foo*.
 
