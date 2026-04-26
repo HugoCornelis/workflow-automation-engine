@@ -4,7 +4,7 @@ command_tests:
   - description: Are commands in option interactions scheduled correctly?
     read: |+2
       
-      COMMAND: features_cd_tests (use --help to see the help page)
+      WORKFLOW: features_cd_tests (use --help to see the help page)
           ROLE: 'localuser@localhost'
       
           'pwd'

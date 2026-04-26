@@ -4,7 +4,7 @@ command_tests:
   - description: Are the commands of a single target in option interactions-target scheduled correctly?
     read: |+2
       
-      COMMAND: features_annotations
+      WORKFLOW: features_annotations
           ROLE: 'localuser@localhost'
       
           'pwd'
@@ -15,7 +15,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_cd_tests (use --help to see the help page)
+      WORKFLOW: features_cd_tests (use --help to see the help page)
           'pwd'
           'cd bin '
           'pwd'
@@ -28,7 +28,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_cd_tests_ssh
+      WORKFLOW: features_cd_tests_ssh
                                                   ROLE: 'root@ssh_cd'
       
                                                   'pwd'
@@ -43,7 +43,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_cd_tests_tmux
+      WORKFLOW: features_cd_tests_tmux
                                                                                           ROLE: 'tmux_cd'
       
                                                                                           'pwd >>/tmp/tmux-pwd.txt'
@@ -58,7 +58,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_export_sh
+      WORKFLOW: features_export_sh
           'pwd'
           'cd /bin '
           'pwd'
@@ -73,7 +73,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_export_variables
+      WORKFLOW: features_export_variables
           'cd /home/neurospaces '
           'echo /some/directory'
           'echo with an unused value'
@@ -83,7 +83,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_remote_script_execution
+      WORKFLOW: features_remote_script_execution
           'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data '
           'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@__DOCKER_HOST_IP_ADDRESS__:/tmp/feature-shell-script-remote.sh'
                                                   '/tmp/feature-shell-script-remote.sh arg1 arg2'
@@ -92,7 +92,7 @@ command_tests:
       ---
       
       ---
-      COMMAND: features_timestamps
+      WORKFLOW: features_timestamps
           'pwd'
           'pwd'
           'pwd'

@@ -71,7 +71,7 @@ count=more
 regexp=ROLE:.*$
 colours=magenta bold underline
 -
-regexp=COMMAND:.*$
+regexp=WORKFLOW:.*$
 colours=cyan underline
 
 
