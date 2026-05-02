@@ -1882,8 +1882,6 @@ sub application_initialize_configuration_and_environment
 
 sub initialize_config
 {
-    # find the package core directory
-
     $global_config = do $option_config_filename;
 
     my $old_format = 0;
