@@ -1884,6 +1884,11 @@ sub initialize_config
 {
     $global_config = do $option_config_filename;
 
+    if ($@)
+    {
+	die "$0: Error reading '$option_config_filename' ($@)";
+    }
+
     my $old_format = 0;
 
     if (not defined $global_config)
