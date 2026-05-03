@@ -1882,9 +1882,12 @@ sub application_initialize_configuration_and_environment
 
 sub initialize_config
 {
-    # find the package core directory
-
     $global_config = do $option_config_filename;
+
+    if ($@)
+    {
+	die "$0: Error reading '$option_config_filename' ($@)";
+    }
 
     my $old_format = 0;
 
@@ -3017,7 +3020,7 @@ sub after_testing
 
 	my $module_name = $module_definition->{name};
 
-	my $description = $self->{description};
+	my $description = $self->{description} || '';
 
 	my $test_counter = $execution_context->get_counter_command_test_counter();
 

@@ -4626,7 +4626,7 @@ sub builtin_manual
 
     my $manual_string = "$header\n\n";
 
-    my $field_project_description = $field_project_configuration->{field_project_description};
+    my $field_project_description = $field_project_configuration->{field_project_description} || "";
 
     $manual_string .= $field_project_description;
 
@@ -12675,7 +12675,7 @@ sub schedule_operations_for_execution
 # direct invocation of plugin Python defs and Perl subs.
 #
 # Python defs and Perl subs can populate @$global_scheduled_commands
-# through API calls, but shell scripts cannot yet do this (who would
+# through API calls, but shell scripts cannot yet do this (how would
 # that be possible?).
 #
 # After this operation completes, the schedule can be examined,
