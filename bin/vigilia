@@ -3017,7 +3017,7 @@ sub after_testing
 
 	my $module_name = $module_definition->{name};
 
-	my $description = $self->{description};
+	my $description = $self->{description} || '';
 
 	my $test_counter = $execution_context->get_counter_command_test_counter();
 
