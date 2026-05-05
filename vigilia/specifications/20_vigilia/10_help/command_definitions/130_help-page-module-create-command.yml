@@ -4,15 +4,16 @@ command_tests:
   - description: help page of the module-create command
     read: |+2
       
-      bin/vigilia module-create <options> <module-name>
+      bin/vigilia module-create <options> <module-name> <module-description> [<describe what function the commands have>] [<describe what these tests are for>]
       
       Create a new module with the given name.
       
       Options:
+          --comment      A comment for this module to insert in the module definition.
           --help         Show this help message.
           --output-json  Output the new module in json format.
           --output-yaml  Output the new module in yaml format.
-
+      
 comment: |+
   This type of comment element can be inserted at any level in the YAML files that define tests.
   
