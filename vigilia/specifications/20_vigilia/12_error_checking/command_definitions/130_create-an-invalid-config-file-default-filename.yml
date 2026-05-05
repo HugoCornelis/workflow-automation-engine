@@ -1,0 +1,9 @@
+---
+command: perl -pi.bak -e 's/return \$config;/return \$config + ;/' ./vigilia.config && perl -c ./vigilia.config
+command_tests:
+  - description: Can we create an invalid vigilia configuration file with the default configuration filename?
+    read: |+
+      syntax error at ./vigilia.config line 32, near "+ ;"
+      ./vigilia.config had compilation errors.
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we create an invalid vigilia configuration file with the default configuration filename?

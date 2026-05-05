@@ -1,0 +1,7 @@
+---
+command: vigilia --config-filename ./abc.config
+command_tests:
+  - description: Do we get a correct error message when the custom configuration file is not found?
+    read: "/usr/local/bin/vigilia: Error reading './abc.config' (file does not exist) at /usr/local/bin/vigilia line"
+    white_space: convert seen 0a to 0d 0a newlines
+description: Do we get a correct error message when the custom configuration file is not found?

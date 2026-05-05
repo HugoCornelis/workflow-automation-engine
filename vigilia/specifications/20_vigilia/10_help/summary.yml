@@ -4,7 +4,7 @@ documentation:
   explanation: |+2
     
     
-    The Neurospaces Harness automates unit, regression, integration and
+    Vigilia automates unit, regression, integration and
     smoke testing.  Declarative test specifications define application
     behaviour and can be executed to validate application behaviour
     against its specifications.
