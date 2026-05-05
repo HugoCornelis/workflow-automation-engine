@@ -15,7 +15,8 @@ use POSIX qw( strftime );
 use YAML;
 
 
-my $option_config_filename = './vigilia.config';
+my $config_filename_default = './vigilia.config';
+my $option_config_filename;
 my $option_console_type = 'status';
 our $option_debugging;
 my $option_dump_json;
@@ -100,7 +101,7 @@ $0 <command> <options>
 ",
 		       usage => "
 options:
-    --config-filename            The name of the file with the configuration (default is: $option_config_filename).
+    --config-filename            The name of the file with the configuration (default is: $config_filename_default).
     --console-type               The type of the console output (one of " . (join ", ", sort keys %$global_reporter_classes) . ").
     --debugging                  Enable specific debugging options.
     --dump-json                  Dump test specifications to json files (by default in '$default_specification_dump_directory').
@@ -1882,6 +1883,16 @@ sub application_initialize_configuration_and_environment
 
 sub initialize_config
 {
+    if (!defined $option_config_filename)
+    {
+	$option_config_filename = $config_filename_default;
+    }
+
+    if (!-f $option_config_filename)
+    {
+	die "$0: Error reading '$option_config_filename' (file does not exist)";
+    }
+
     $global_config = do $option_config_filename;
 
     if ($@)
