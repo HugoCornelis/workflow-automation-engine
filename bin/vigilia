@@ -1330,14 +1330,16 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        description => "Create a new module with the given name.",
        executor => "main::harness_command_module_create",
        help => {
-		synopsis => "$0 module-create <options> <module-name>",
+		synopsis => "$0 module-create <options> <module-name> <module-description> [<describe what function the commands have>] [<describe what these tests are for>]",
 		usage => "Options:
+    --comment      A comment for this module to insert in the module definition.
     --help         Show this help message.
     --output-json  Output the new module in json format.
     --output-yaml  Output the new module in yaml format.
 ",
 	       },
        options => {
+		   "comment=s" => do { my $option_comment; \$option_comment; },
 		   "help!" => do { my $option_help; \$option_help; },
 		   "output-json!" => do { my $option_output_json; \$option_output_json; },
 		   "output-yaml!" => do { my $option_output_yaml; \$option_output_yaml; },
@@ -1368,9 +1370,34 @@ sub harness_command_module_create
 	die "$0: *** Error: $command expects an argument for the description of the new module";
     }
 
-    my $summary
-	= {
-	   comment => "This type of comment element can be inserted at any level in the YAML files that define tests.
+    my $module_documentation = shift || shift @$arguments;
+
+    if (! defined $module_documentation)
+    {
+	$module_documentation = "<a few sentences that explain the purpose of the program being tested>";
+    }
+
+    my $module_purpose = shift || shift @$arguments;
+
+    if (! defined $module_purpose)
+    {
+	$module_purpose = "<a single line description of the purpose of this test module>";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_comment = $options->{"comment=s"};
+
+    my $comment;
+
+    if (defined $$option_comment)
+    {
+	$comment = $$option_comment;
+    }
+    else
+    {
+	$comment
+	    = "This type of comment element can be inserted at any level in the YAML files that define tests.
 
 The top level summary file of a test module gives general information about the module without specifying any tests.
 
@@ -1399,11 +1426,16 @@ name: The name of the module, this must match with the pathname of the module.  
 numerical_compare: Allow small arithmetic differences during the comparison of the expected result with the produced result.
 tag: An array of tags associated with this test module.  These are matched with the tags given on the command line.
 
-",
+";
+    }
+
+    my $summary
+	= {
+	   comment => $comment,
 	   description => $module_description,,
 	   documentation => {
-			     explanation => "<a few sentences that explain the purpose of the program being tested>",
-			     purpose => "<a single line description of the purpose of this test module>",
+			     explanation => $module_documentation,
+			     purpose => $module_purpose,
 			    },
 	   name => "<the full pathname of this test module, relative to the test specifications directory>",
 	  };
