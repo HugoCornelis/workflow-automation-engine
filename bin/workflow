@@ -2937,7 +2937,14 @@ sub _workflow_commands_2_implementation
 
     my $command_count = scalar @$shell_commands;
 
-    my $error;
+    # error if uninitialized values encountered ($shell_commands->[0]).
+
+    my $error = grep { !defined $_ } @$shell_commands ? 'undef values in the given shell commands' : 0;
+
+    if ($error)
+    {
+	return \ $error;
+    }
 
     my $template_options = $add_templates =~ m(all) || $add_templates =~ m(options);
     my $template_completions = $add_templates =~ m(all) || $add_templates =~ m(completions);
