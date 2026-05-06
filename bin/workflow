@@ -845,6 +845,7 @@ our \$roles = \$::global_technical_project_configuration->{roles};
     # Some options to command execution:
     #   allow_fail: allow execution of this command to fail.
     #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   background: run the command in the background with 'setsid  >/dev/null 2>&1 ... &'
     #   dry_run: do not execute this command.
     #   role: a role that is defined in $project_name-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
@@ -3109,6 +3110,7 @@ def ${target}_${operation}(argv):
     # Some options to command execution:
     #   allow_fail: allow execution of this command to fail.
     #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   background: run the command in the background with 'setsid  >/dev/null 2>&1 ... &'
     #   dry_run: do not execute this command.
     #   role: a role that is defined in $project_name-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
@@ -3182,6 +3184,7 @@ package Command;
     # Some options to command execution:
     #   allow_fail: allow execution of this command to fail.
     #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+    #   background: run the command in the background with 'setsid  >/dev/null 2>&1 ... &'
     #   dry_run: do not execute this command.
     #   role: a role that is defined in $project_name-configuration.
     #   quiet: do not provide feedback to the terminal about this command.
@@ -8372,6 +8375,32 @@ sub _format_commented_command
 }
 
 
+# apply the background option
+
+sub apply_background
+{
+    my $options_background = shift;
+
+    my $shell_command = shift;
+
+    my $option_export_background = shift || 'always do this';
+
+    my $export_sh_command = shift;
+
+    if ($options_background)
+    {
+	$shell_command = "setsid >/dev/null 2>&1 $shell_command &";
+
+	if ($option_export_background)
+	{
+	    $export_sh_command = $shell_command;
+	}
+    }
+
+    return ($shell_command, $export_sh_command);
+}
+
+
 # apply the remoting prefix
 
 sub apply_remote_record_exported_shell_command
@@ -10232,6 +10261,10 @@ sub execute_shell_command
     # apply the timeout prefix, always local
 
     ($shell_command, $export_sh_command) = apply_timeout($timeout_prefix, $shell_command, undef, $export_sh_command);
+
+    # apply the background option
+
+    ($shell_command, $export_sh_command) = apply_background($options->{background}, $shell_command, undef, $export_sh_command);
 
     # compute the dry_run mode if there is any
 
