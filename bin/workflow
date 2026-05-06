@@ -6358,9 +6358,9 @@ sub builtin_workflow_add
 	{
 	    push @$shell_commands, map { chomp; $_ } $history->[$line_number - 1];
 	}
-    }
 
-    # figure out the filename for the workflow file
+	$error = grep { !defined $_ } @$shell_commands ? 'undef values in the shell history' : 0;
+    }
 
     my $filename;
 
@@ -6368,33 +6368,38 @@ sub builtin_workflow_add
 
     my $implementation;
 
-    # python is the default, and perl is allowed if it is explicitly enabled
-
-    $option_py ||= not ($option_py || $option_pl);
-
-    if ($option_py)
+    if (not $error)
     {
-	my $field_project_name = $global_field_project_configuration->{field_project_name};
+	# figure out the filename for the workflow file
 
-	$filename = "$field_project_name-commands-$target-$operation.py";
+	# python is the default, and perl is allowed if it is explicitly enabled
 
-	$create_file_type = 'python';
-    }
-    elsif ($option_pl)
-    {
-	my $field_project_name = $global_field_project_configuration->{field_project_name};
+	$option_py ||= not ($option_py || $option_pl);
 
-	$filename = "$field_project_name-commands-$target-$operation.pl";
+	if ($option_py)
+	{
+	    my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-	$create_file_type = 'perl';
-    }
-    elsif ($option_filename)
-    {
-	$filename = $option_filename;
-    }
-    else
-    {
-        $error = "$global_program_name builtin_workflow_add: *** error in option processing, try --help";
+	    $filename = "$field_project_name-commands-$target-$operation.py";
+
+	    $create_file_type = 'python';
+	}
+	elsif ($option_pl)
+	{
+	    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+	    $filename = "$field_project_name-commands-$target-$operation.pl";
+
+	    $create_file_type = 'perl';
+	}
+	elsif ($option_filename)
+	{
+	    $filename = $option_filename;
+	}
+	else
+	{
+	    $error = "$global_program_name builtin_workflow_add: *** error in option processing, try --help";
+	}
     }
 
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
