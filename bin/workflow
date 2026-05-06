@@ -12783,6 +12783,15 @@ options:
 
 	my $targets = $global_technical_project_configuration->{targets};
 
+	if (!defined $option_verbose
+	    || $option_verbose < 1)
+	{
+	    foreach my $target (keys %$targets)
+	    {
+		delete $targets->{$target}->{documentation};
+	    }
+	}
+
 	print Dump( { targets => $targets, }, );
 
 	exit 0;
