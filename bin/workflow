@@ -8472,7 +8472,7 @@ sub compute_remote_and_interaction_role
      interaction_role_with_policy_syntax => $interaction_role_with_policy_syntax,
      remote_prefix => $remote_prefix,
      ssh_options => $ssh_options,
-	 scp_options => $scp_options
+     scp_options => $scp_options
     };
 }
 
