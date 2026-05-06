@@ -9884,7 +9884,7 @@ sub execute_shell_command
 
     ($shell_command, $export_sh_command) = apply_sudo($sudo_prefix, $shell_command, $option_export_sudo, $export_sh_command);
 
-    # apply the remoting prefix, always local
+    # apply the remoting prefix, but only for eventually recording it in a shell script
 
     ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_role, $export_sh_command);
 
