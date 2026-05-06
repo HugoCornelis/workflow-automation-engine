@@ -2590,7 +2590,7 @@ sub _install_script_grc_symbolic_links
 
 	my $grc_workflow = "conf.$project_name-workflow";
 
-	my $source_directory = $field_configuration->{search_path_workflow_executable_directory};
+	my $source_directory = $field_configuration->{sources_configuration_directory};
 
 	use Cwd;
 
