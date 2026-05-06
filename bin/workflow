@@ -2714,9 +2714,9 @@ sub _install_script_symbolic_link_to_commands_configured
 {
     my $project_name = shift;
 
-    my $option_install_commands = shift;
+    my $option_install_commands = shift || '';
 
-    my $option_install_report = shift;
+    my $option_install_report = shift || '';
 
     if ($option_verbose)
     {
@@ -2756,9 +2756,9 @@ sub _install_script_symbolic_link_to_configuration
 {
     my $project_name = shift;
 
-    my $option_install_commands = shift;
+    my $option_install_commands = shift || '';
 
-    my $option_install_report = shift;
+    my $option_install_report = shift || '';
 
     if ($option_verbose)
     {
