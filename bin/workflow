@@ -1739,7 +1739,7 @@ roles:
   docker_build:
     description: interaction with the docker build container
     name: docker_build
-    remote_policy: 'docker exec -it docker_build_container'
+    remote_policy: 'docker exec -it docker_build_container bash -ic'
     shared_volumes_examples:
       - description: This is an example for sharing ssh keys read-only (use with caution).
         inside: %%HOME_DIRECTORY%%/.ssh:ro
@@ -8087,6 +8087,15 @@ sub working_directory_for_interaction_role_apply
     if ($interaction_role =~ m(^tmux_))
     {
 	$result = "'$shell_command' ENTER";
+    }
+    # elsif ($interaction_role =~ m(^docker_script_))
+    elsif ($interaction_role =~ m(^docker_))
+    {
+       $result = "\"bash -ic '$shell_command'\" /dev/null";
+    }
+    elsif ($interaction_role =~ m(^docker_))
+    {
+       $result = "'$shell_command'";
     }
 
     return $result;
