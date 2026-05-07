@@ -2590,7 +2590,7 @@ sub _install_script_grc_symbolic_links
 
 	my $grc_workflow = "conf.$project_name-workflow";
 
-	my $source_directory = $field_configuration->{search_path_workflow_executable_directory};
+	my $source_directory = $field_configuration->{sources_configuration_directory};
 
 	use Cwd;
 
@@ -2714,9 +2714,9 @@ sub _install_script_symbolic_link_to_commands_configured
 {
     my $project_name = shift;
 
-    my $option_install_commands = shift;
+    my $option_install_commands = shift || '';
 
-    my $option_install_report = shift;
+    my $option_install_report = shift || '';
 
     if ($option_verbose)
     {
@@ -2756,9 +2756,9 @@ sub _install_script_symbolic_link_to_configuration
 {
     my $project_name = shift;
 
-    my $option_install_commands = shift;
+    my $option_install_commands = shift || '';
 
-    my $option_install_report = shift;
+    my $option_install_report = shift || '';
 
     if ($option_verbose)
     {
@@ -2937,7 +2937,14 @@ sub _workflow_commands_2_implementation
 
     my $command_count = scalar @$shell_commands;
 
-    my $error;
+    # error if uninitialized values encountered ($shell_commands->[0]).
+
+    my $error = grep { !defined $_ } @$shell_commands ? 'undef values in the given shell commands' : 0;
+
+    if ($error)
+    {
+	return \ $error;
+    }
 
     my $template_options = $add_templates =~ m(all) || $add_templates =~ m(options);
     my $template_completions = $add_templates =~ m(all) || $add_templates =~ m(completions);
@@ -6351,9 +6358,9 @@ sub builtin_workflow_add
 	{
 	    push @$shell_commands, map { chomp; $_ } $history->[$line_number - 1];
 	}
-    }
 
-    # figure out the filename for the workflow file
+	$error = grep { !defined $_ } @$shell_commands ? 'undef values in the shell history' : 0;
+    }
 
     my $filename;
 
@@ -6361,33 +6368,38 @@ sub builtin_workflow_add
 
     my $implementation;
 
-    # python is the default, and perl is allowed if it is explicitly enabled
-
-    $option_py ||= not ($option_py || $option_pl);
-
-    if ($option_py)
+    if (not $error)
     {
-	my $field_project_name = $global_field_project_configuration->{field_project_name};
+	# figure out the filename for the workflow file
 
-	$filename = "$field_project_name-commands-$target-$operation.py";
+	# python is the default, and perl is allowed if it is explicitly enabled
 
-	$create_file_type = 'python';
-    }
-    elsif ($option_pl)
-    {
-	my $field_project_name = $global_field_project_configuration->{field_project_name};
+	$option_py ||= not ($option_py || $option_pl);
 
-	$filename = "$field_project_name-commands-$target-$operation.pl";
+	if ($option_py)
+	{
+	    my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-	$create_file_type = 'perl';
-    }
-    elsif ($option_filename)
-    {
-	$filename = $option_filename;
-    }
-    else
-    {
-        $error = "$global_program_name builtin_workflow_add: *** error in option processing, try --help";
+	    $filename = "$field_project_name-commands-$target-$operation.py";
+
+	    $create_file_type = 'python';
+	}
+	elsif ($option_pl)
+	{
+	    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+	    $filename = "$field_project_name-commands-$target-$operation.pl";
+
+	    $create_file_type = 'perl';
+	}
+	elsif ($option_filename)
+	{
+	    $filename = $option_filename;
+	}
+	else
+	{
+	    $error = "$global_program_name builtin_workflow_add: *** error in option processing, try --help";
+	}
     }
 
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
@@ -8460,7 +8472,7 @@ sub compute_remote_and_interaction_role
      interaction_role_with_policy_syntax => $interaction_role_with_policy_syntax,
      remote_prefix => $remote_prefix,
      ssh_options => $ssh_options,
-	 scp_options => $scp_options
+     scp_options => $scp_options
     };
 }
 
@@ -9872,7 +9884,7 @@ sub execute_shell_command
 
     ($shell_command, $export_sh_command) = apply_sudo($sudo_prefix, $shell_command, $option_export_sudo, $export_sh_command);
 
-    # apply the remoting prefix, always local
+    # apply the remoting prefix, but only for eventually recording it in a shell script
 
     ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($InteractionRole::all_interaction_roles, $remote_prefix, $shell_command, $option_export_role, $export_sh_command);
 
@@ -12329,7 +12341,6 @@ options:
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
-    --interactive-execution-mode    set the interactive execution mode (default is: '$option_interactive_execution_mode').
     --export-help-page              export the help page of the command as comments to the shell script.
     --export-role                   include the role, ie. the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
@@ -12350,6 +12361,7 @@ options:
     --interactions-all              show a diagram with all the commands and all the interaction roles.
     --interactions-target           show the interaction diagram of all the commands for the given target.
     --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
+    --interactive-execution-mode    set the interactive execution mode (default is: '$option_interactive_execution_mode').
     --verbose                       set verbosity level.
 
 ";
