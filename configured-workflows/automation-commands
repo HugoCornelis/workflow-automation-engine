@@ -102,6 +102,13 @@ no arguments.
 # ";
 }
 
+package main;
+
+our $global_execute_scheduled_commands;
+
+
+package Command;
+
 
 sub test_perl_2_yaml
 {
@@ -112,6 +119,16 @@ sub test_perl_2_yaml
     my $format = $arguments->[1] || 'json';
 
     my $replace = $arguments->[2] || '';
+
+    # make sure the --interactions family of options works
+
+    if (not $::global_execute_scheduled_commands)
+    {
+	if (! $old_test_pathname)
+	{
+	    $old_test_pathname = "some-path-name-that-allows-sensible-output-in-the-documentation";
+	}
+    }
 
     if (! $old_test_pathname)
     {
