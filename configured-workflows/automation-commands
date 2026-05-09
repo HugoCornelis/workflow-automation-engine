@@ -103,6 +103,100 @@ no arguments.
 }
 
 
+sub test_perl_2_yaml
+{
+    my $arguments = shift;
+
+    my $old_test_pathname = $arguments->[0];
+
+    my $format = $arguments->[1] || 'json';
+
+    my $replace = $arguments->[2] || '';
+
+    if (! $old_test_pathname)
+    {
+	die "$0: *** Error: expected a single argument for the test_pathname.";
+    }
+
+    if ($format ne 'yaml'
+	and $format ne 'json')
+    {
+	die "$0: *** Error: format should be 'json' or 'yaml' (now it is '$format'.";
+    }
+
+    my $new_test_pathname = $old_test_pathname;
+
+    $new_test_pathname =~ s(.t$)();
+
+    my $conversion_commands
+	= [
+	   "vigilia --regex $old_test_pathname --dump-file-structured-$format",
+	   "echo The result of the conversion is found as",
+	   "echo",
+	   "echo     /tmp/tests/specifications/$new_test_pathname/summary.yml",
+	   "echo     /tmp/tests/specifications/$new_test_pathname/command_definitions/*",
+	   "echo",
+	   (not $replace) ? ("echo Use a second argument for the command you just used, to automatically replace the previous test with its converted version.") : (),
+	  ];
+
+    execute_shell_command_array
+	(
+	 $conversion_commands,
+	 {
+	  allow_fail => 'if some of the tests fail, vigilia returns a failure code',
+	  quiet => 'for better visual output',
+	 },
+	);
+
+    if ($replace)
+    {
+	my $option_config_filename = './tests.config';
+	my $test_config = do $option_config_filename;
+
+	if (not exists $test_config->{tests_directory})
+	{
+	    $test_config->{tests_directory} = "./tests/specifications";
+	}
+
+	my $tests_directory = $test_config->{tests_directory};
+
+	my $replace_commands
+	    = [
+	       "rm -fr $tests_directory/$old_test_pathname*",
+	       "mv /tmp/$tests_directory/$new_test_pathname $tests_directory/$new_test_pathname",
+	      ];
+
+	execute_shell_command_array($replace_commands);
+    }
+
+}
+
+
+sub test_perl_2_yaml_help
+{
+    my $command = shift;
+
+    return "$command: convert a test module in perl to file-structured json or yaml in /tmp.
+
+For a format of 'json' this command is equivalent to:
+
+\$ vigilia --regex <test_pathname> --dump-file-structured-json
+
+For a format of 'yaml' this command is equivalent to:
+
+\$ vigilia --regex <test_pathname> --dump-file-structured-yaml
+
+with some extras.
+
+arguments:
+
+    ARGV[0]: The existing test pathname, note that this is processed as a regex.
+    ARGV[1]: Either 'json' or 'yaml', the default is 'json'.
+    ARGV[2]: 'replace' or any string to replace the existing test with its yaml version.
+";
+}
+
+
 # return success
 
 1;
