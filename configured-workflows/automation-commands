@@ -11,6 +11,8 @@ our $option_verbose;
 
 our $global_technical_project_configuration;
 
+our $global_execute_scheduled_commands;
+
 
 package Command;
 
@@ -101,13 +103,6 @@ no arguments.
 # $selected_images_yaml
 # ";
 }
-
-package main;
-
-our $global_execute_scheduled_commands;
-
-
-package Command;
 
 
 sub test_perl_2_yaml
@@ -210,6 +205,49 @@ arguments:
     ARGV[0]: The existing test pathname, note that this is processed as a regex.
     ARGV[1]: Either 'json' or 'yaml', the default is 'json'.
     ARGV[2]: 'replace' or any string to replace the existing test with its yaml version.
+";
+}
+
+
+sub test_search
+{
+    my $arguments = shift || [];
+
+    my $search_string = $arguments->[0];
+
+    if (not $::global_execute_scheduled_commands)
+    {
+	if (! $search_string)
+	{
+	    $search_string = "some-search-string-that-allows-sensible-output";
+	}
+    }
+
+    if (! $search_string)
+    {
+	die "$0: *** Error: expected a single argument for the search_string.";
+    }
+
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	   "grep -r $search_string vigilia",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub test_search_help
+{
+    my $command = shift;
+
+    return "$command: Search the test specifications for a given string.
+
+arguments:
+
+    ARGV[0]: The string to search for.
+
 ";
 }
 
