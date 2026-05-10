@@ -12798,7 +12798,7 @@ sub operation_selector
 
     my $all_selected_operations = [];
 
-    # use of a builtin_package or a help always results in a single operation ...
+    # use of a builtin_package currently always results in a single operation ...
 
     if ($builtin_package)
     {
