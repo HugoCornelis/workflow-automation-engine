@@ -12880,12 +12880,24 @@ sub operation_selector
 		       @$operation_implementations
 		      ];
 	    }
+	    else
+	    {
+		$selected_operation_implementations
+		    = [
+		       @$selected_operation_implementations,
+		       grep
+		       {
+			   m(^$matcher$);
+		       }
+		       sort @$operation_implementations
+		      ];
+	    }
 
 	    # dry run mode needs to have either generate or report the target's roles
 
 	    my $dry_run_reason = $operation_selector_type->{dry_run_reason};
 
-	    if ($dry_run_reason)
+	    if ($dry_run_reason && $help)
 	    {
 		$selected_operation_implementations
 		    = [
