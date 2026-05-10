@@ -1,37 +1,37 @@
 $files = {
            '_<./bin/workflow' => [
                                    {
-                                     'text' => '    if ((!$help and defined $operation and exists $all_typed_operations->{"$target $operation"})
-',
                                      'type' => 'user',
-                                     'line' => '12456',
                                      'fname' => './bin/workflow',
                                      'expr' => undef,
+                                     'line' => '12840',
+                                     'text' => '	foreach my $matching_target (@$matching_targets)
+',
                                      'value' => '1'
                                    },
                                    {
                                      'type' => 'user',
-                                     'text' => '    if ($builtin_package)
+                                     'expr' => undef,
+                                     'line' => '12901',
+                                     'text' => '	    foreach my $selected_operation_implementation (sort @$selected_operation_implementations)
 ',
-                                     'value' => '1',
-                                     'line' => '12773',
                                      'fname' => './bin/workflow',
-                                     'expr' => undef
+                                     'value' => '1'
                                    }
                                  ]
          };
 $expr_list = [
                {
-                 'expr' => '@ARGV',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '@ARGV'
                },
                {
                  'depth' => -1,
                  'expr' => '$export_remote'
                },
                {
-                 'depth' => -1,
-                 'expr' => '$export_sh_command'
+                 'expr' => '$export_sh_command',
+                 'depth' => -1
                },
                {
                  'expr' => '$remote_prefix',
@@ -50,8 +50,8 @@ $expr_list = [
                  'expr' => '$current_interaction_role'
                },
                {
-                 'expr' => '$global_target',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$global_target'
                }
              ];
 $eval_saved_text = undef;
