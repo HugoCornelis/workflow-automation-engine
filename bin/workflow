@@ -12858,10 +12858,19 @@ sub operation_selector
 
 	    # possibly in dry run mode to have them either generate or report the target's roles
 
+	    my $matcher = (defined $operation
+			   ? "Command::${matching_target}_${operation}"
+			   : "Command::${matching_target}");
+
+	    if ($help)
+	    {
+		$matcher .= "[ _]help";
+	    }
+
 	    foreach my $operation_implementation (
 						  grep
 						  {
-						      m(^Command::${matching_target}_${operation}$);
+						      m(^$matcher$);
 						  }
 						  sort @$operation_implementations
 						 )
@@ -12890,7 +12899,7 @@ sub operation_selector
 			   has_help => $has_help,
 			   help => $help,
 			   is_help => $help,
-			   operation_implementation => $operation_implementation . "_help",
+			   operation_implementation => $operation_implementation,
 			   operation_type => 'sub',
 			   target => $matching_target,
 			  };
@@ -12898,6 +12907,8 @@ sub operation_selector
 		}
 		else
 		{
+		    # don't believe we can ever get here with a _help operation_implementation ...
+
 		    if ($operation_implementation =~ /_help$/)
 		    {
 			next;
