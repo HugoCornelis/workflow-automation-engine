@@ -12835,13 +12835,9 @@ sub operation_selector
 
 	my $all_defined_targets = $global_technical_project_configuration->{targets};
 
-	foreach my $matching_target (
-				     grep
-				     {
-					 m(^$target_regex$);
-				     }
-				     sort keys %$all_defined_targets
-				    )
+	my $matching_targets = [ grep { m(^$target_regex$); } sort keys %$all_defined_targets ];
+
+	foreach my $matching_target (@$matching_targets)
 	{
 	    # reference subroutine names specific for the given target: they belong together
 
