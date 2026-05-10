@@ -12873,13 +12873,16 @@ sub operation_selector
 		$matcher .= "[ _]help";
 	    }
 
-	    foreach my $operation_implementation (
-						  grep
-						  {
-						      m(^$matcher$);
-						  }
-						  sort @$operation_implementations
-						 )
+	    my $selected_operation_implementations
+		= [
+		   grep
+		   {
+		       m(^$matcher$);
+		   }
+		   sort @$operation_implementations
+		  ];
+
+	    foreach my $selected_operation_implementation (@$selected_operation_implementations)
 	    {
 		my $selected_operation;
 
@@ -12887,7 +12890,7 @@ sub operation_selector
 
 		my $has_help = '';
 
-		if (grep(/^${operation_implementation}_help$/, @$operation_implementations))
+		if (grep(/^${selected_operation_implementation}_help$/, @$operation_implementations))
 		{
 		    # ... annotate the selected operation
 
@@ -12905,24 +12908,23 @@ sub operation_selector
 			   has_help => $has_help,
 			   help => $help,
 			   is_help => $help,
-			   operation_implementation => $operation_implementation,
+			   operation_implementation => $selected_operation_implementation,
 			   operation_type => 'sub',
 			   target => $matching_target,
 			  };
-
 		}
 		else
 		{
-		    # don't believe we can ever get here with a _help operation_implementation ...
-
-		    if ($operation_implementation =~ /_help$/)
+		    if ($selected_operation_implementation =~ /_help$/)
 		    {
+			# we get here with a _help operation_implementation during interactions-target and builtin grep_* workflows
+
 			next;
 		    }
 
 		    #! this mess needs reimplementation
 
-		    $operation_implementation =~ /Command::${matching_target}_(.*)/;
+		    $selected_operation_implementation =~ /Command::${matching_target}_(.*)/;
 
 		    my $operator = $1;
 
@@ -12936,7 +12938,7 @@ sub operation_selector
 			   dry_run_reason => $dry_run_reason,
 			   has_help => $has_help,
 			   help => $help,
-			   operation_implementation => $operation_implementation,
+			   operation_implementation => $selected_operation_implementation,
 			   operation_type => $operation_type,
 			   target => $matching_target,
 			  };
