@@ -12613,6 +12613,12 @@ sub schedule_operations_for_execution
 
     my $all_typed_operations = operation_hash_typed_generate('with help subs');
 
+    my $not_help = (!$help and defined $operation and exists $all_typed_operations->{"$target $operation"});
+
+    my $help_operation = ($help and defined $operation and exists $all_typed_operations->{"$target ${operation}_help"});
+
+    my $help_target = ($help and (not defined $operation) and exists $all_typed_operations->{"$target help"});
+
     # ... as <target> <operation>
     if ((!$help and defined $operation and exists $all_typed_operations->{"$target $operation"})
 
