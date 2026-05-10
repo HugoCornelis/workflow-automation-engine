@@ -12644,7 +12644,9 @@ sub schedule_operations_for_execution
 
 	if ($help)
 	{
-	    print "$global_program_name $help_string_or_error\n";
+	    my $help_string = $all_selected_operations->[0]->{help_string};
+
+	    print "$global_program_name $help_string\n";
 	}
 
 	# ... or was invoked as a builtin package or simply the implementation of the command ...
@@ -12739,7 +12741,7 @@ sub operations_2_commands
 	{
 	    my $arguments = $selected_operation->{command_line_arguments};
 
-	    $result .= schedule_help_execute($operation_implementation, $arguments);
+	    $selected_operation->{help_string} = schedule_help_execute($operation_implementation, $arguments);
 	}
 	else
 	{
