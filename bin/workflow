@@ -12858,7 +12858,7 @@ sub operation_selector
 
 	    # select all these subroutines
 
-	    # possibly in dry run mode to have them either generate or report the target's roles
+	    my $selected_operation_implementations = [];
 
 	    my $matcher = (defined $operation
 			   ? "Command::${matching_target}_${operation}"
@@ -12866,19 +12866,39 @@ sub operation_selector
 
 	    if ($help)
 	    {
-		$matcher .= "[ _]help";
+		#! I am not sure if both the space and the underscore are necessary
+
+		my $help_matcher = "${matcher}[ _]help";
+
+		$selected_operation_implementations
+		    = [
+		       @$selected_operation_implementations,
+		       grep
+		       {
+			   m(^$help_matcher$);
+		       }
+		       @$operation_implementations
+		      ];
 	    }
 
-	    my $selected_operation_implementations
-		= [
-		   grep
-		   {
-		       m(^$matcher$);
-		   }
-		   sort @$operation_implementations
-		  ];
+	    # dry run mode needs to have either generate or report the target's roles
 
-	    foreach my $selected_operation_implementation (@$selected_operation_implementations)
+	    my $dry_run_reason = $operation_selector_type->{dry_run_reason};
+
+	    if ($dry_run_reason)
+	    {
+		$selected_operation_implementations
+		    = [
+		       @$selected_operation_implementations,
+		       grep
+		       {
+			   m(^$matcher$);
+		       }
+		       @$operation_implementations
+		      ];
+	    }
+
+	    foreach my $selected_operation_implementation (sort @$selected_operation_implementations)
 	    {
 		my $selected_operation;
 
