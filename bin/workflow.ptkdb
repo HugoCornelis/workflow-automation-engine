@@ -1,21 +1,39 @@
 $files = {
            '_<./bin/workflow' => [
                                    {
-                                     'type' => 'user',
-                                     'fname' => './bin/workflow',
                                      'expr' => undef,
-                                     'line' => '12840',
-                                     'text' => '	foreach my $matching_target (@$matching_targets)
+                                     'fname' => './bin/workflow',
+                                     'line' => 12950,
+                                     'text' => '	    foreach my $selected_operation_implementation (sort @$selected_operation_implementations)
 ',
+                                     'type' => 'user',
                                      'value' => '1'
                                    },
                                    {
-                                     'type' => 'user',
                                      'expr' => undef,
-                                     'line' => '12901',
-                                     'text' => '	    foreach my $selected_operation_implementation (sort @$selected_operation_implementations)
-',
                                      'fname' => './bin/workflow',
+                                     'line' => '12904',
+                                     'text' => '	    if ($help)
+',
+                                     'type' => 'user',
+                                     'value' => '1'
+                                   },
+                                   {
+                                     'expr' => undef,
+                                     'fname' => './bin/workflow',
+                                     'line' => 12877,
+                                     'text' => '	foreach my $matching_target (@$matching_targets)
+',
+                                     'type' => 'user',
+                                     'value' => '1'
+                                   },
+                                   {
+                                     'expr' => undef,
+                                     'fname' => './bin/workflow',
+                                     'line' => 12103,
+                                     'text' => '    my $operation_name = $operation_implementation;
+',
+                                     'type' => 'user',
                                      'value' => '1'
                                    }
                                  ]
@@ -30,16 +48,16 @@ $expr_list = [
                  'expr' => '$export_remote'
                },
                {
-                 'expr' => '$export_sh_command',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$export_sh_command'
                },
                {
-                 'expr' => '$remote_prefix',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$remote_prefix'
                },
                {
-                 'expr' => '$interaction_roles->{$current_interaction_role}',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$interaction_roles->{$current_interaction_role}'
                },
                {
                  'depth' => -1,
@@ -52,7 +70,35 @@ $expr_list = [
                {
                  'depth' => -1,
                  'expr' => '$global_target'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$matching_targets'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$all_selected_operations'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$global_scheduled_commands'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$scheduled_command'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => '$operation_results'
+               },
+               {
+                 'depth' => 0,
+                 'expr' => 'sort @$operation_implementations'
+               },
+               {
+                 'depth' => -1,
+                 'expr' => 'sort @$selected_operation_implementations'
                }
              ];
 $eval_saved_text = undef;
-$main_win_geometry = '1920x899+0+0';
+$main_win_geometry = '1920x1051+0+0';
