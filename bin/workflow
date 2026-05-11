@@ -57,8 +57,10 @@ our $option_bash_completion;
 our $option_details;
 our $option_dry_run = '';
 our $option_dump_all_interaction_roles;
+our $option_dump_all_selected_operations;
 our $option_dump_interaction_roles;
 our $option_dump_module_interaction_roles;
+our $option_dump_operation_selector_type;
 our $option_dump_schedule;
 our $option_dump_specific_workflow_roles;
 our $option_interactive_execution_mode = 'system';
@@ -88,8 +90,10 @@ our $global_options
        "bash-completion=s" => \$option_bash_completion,
        "dry-run!" => \$option_dry_run,
        "dump-all-interaction-roles!" => \$option_dump_all_interaction_roles,
+       "dump-all-selected-operations!" => \$option_dump_all_selected_operations,
        "dump-interaction-roles!" => \$option_dump_interaction_roles,
        "dump-module-interaction-roles!" => \$option_dump_module_interaction_roles,
+       "dump-operation-selector-type!" => \$option_dump_operation_selector_type,
        "dump-schedule!" => \$option_dump_schedule,
        "d|details+" => \$option_details,
        "interactive-execution-mode=s" => \$option_interactive_execution_mode,
@@ -9639,14 +9643,10 @@ sub execute_all_scheduled_commands
 
     if ($option_dump_schedule)
     {
-	use Data::Dumper;
-
 	print Dumper( { scheduled_commands => $scheduled_commands, }, );
     }
     elsif ($option_dump_interaction_roles)
     {
-	use Data::Dumper;
-
 	print Dumper( { interaction_roles => $interaction_roles, }, );
     }
     elsif ($option_dump_module_interaction_roles)
@@ -11606,8 +11606,10 @@ sub bash_completion_generate_options
 			--details
 			--dry-run
 			--dump-all-interaction-roles
+			--dump-all-selected-operations
 			--dump-interaction-roles
 			--dump-module-interaction-roles
+			--dump-operation-selector-type
 			--dump-schedule
 			--export-help-page
 			--export-role
@@ -12283,6 +12285,11 @@ sub main
 
     my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $dry_run_reason, $option_help, \@ARGV);
 
+    if ($option_dump_operation_selector_type)
+    {
+	print Dumper( { operation_selector_type => $operation_selector_type, } );
+    }
+
     # build a schedule of operations and invoke them to create the command list
 
     my $scheduled_commands = schedule_operations_for_execution($operation_selector_type, \@ARGV);
@@ -12338,8 +12345,10 @@ options:
     --details                       add more detailed output to --dry-run and --interactions* options (use this multiple times to increase the level of detail).
     --dry-run                       if set, do not execute system commands but print them to STDOUT if possible.
     --dump-all-interaction-roles    dump all the interaction roles found in the configuration.
+    --dump-all-selected-operations  dump all the operations that are selected for expansion.
     --dump-interaction-roles        dump the found interaction roles (note that they depend on the scheduled commands).
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
+    --dump-operation-selector-type  dump the operation selector type.
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
     --export-help-page              export the help page of the command as comments to the shell script.
     --export-role                   include the role, ie. the remote access part of exported commands.
