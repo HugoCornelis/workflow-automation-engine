@@ -175,6 +175,10 @@ our $docker_build_container = `cat /home/$USER_NAME/.inside-docker* 2>/dev/null`
 
 our $global_scheduled_commands = [];
 
+
+# this is a global flag that allows scheduled commands to be run
+# this flag can be checked by operations
+
 our $global_execute_scheduled_commands = 'yes';
 
 my $global_builtin_operations
@@ -9672,6 +9676,24 @@ sub execute_all_scheduled_commands
 		push @$operation_results, $operation_result;
 	    }
 
+	    # ... or this is a help string only ...
+
+	    elsif (exists $scheduled_command->{help_string})
+	    {
+		my $help_string = $scheduled_command->{help_string};
+
+		if ($help_string =~ m(\n$))
+		{
+		    $operation_result->{help_string} = $scheduled_command->{help_string};
+		}
+		else
+		{
+		    $operation_result->{help_string} = "$scheduled_command->{help_string}\n";
+		}
+
+		push @$operation_results, $operation_result;
+	    }
+
 	    # ... or we are either in dry-run ...
 
 	    elsif ($dry_run eq 'option_dry_run')
@@ -10046,52 +10068,47 @@ sub process_operation_results
 
     my $console_output = '';
 
-    # if ($global_execute_scheduled_commands)
-    # {
-    # }
-
-    # ... or we are either in dry-run ...
-
-    if ($dry_run_reason eq 'option_dry_run')
+    foreach my $operation_result (@$operation_results)
     {
-	foreach my $operation_result (@$operation_results)
+	if (exists $operation_result->{help_string})
+	{
+	    $console_output .= $operation_result->{help_string};
+	}
+
+	# ... or we are either in dry-run ...
+
+	elsif ($dry_run_reason eq 'option_dry_run')
 	{
 	    $console_output .= $operation_result->{console_output};
 	}
-    }
 
-    # ... or printing an interaction diagram
+	# ... or printing an interaction diagram
 
-    elsif ($dry_run_reason eq 'option_interactions')
-    {
-	foreach my $operation_result (@$operation_results)
+	elsif ($dry_run_reason eq 'option_interactions')
 	{
 	    $console_output .= $operation_result->{console_output};
 	}
-    }
 
-    # ... or exporting to an executable shell script ...
+	# ... or exporting to an executable shell script ...
 
-    elsif (defined $option_export_sh)
-    {
-	foreach my $operation_result (@$operation_results)
+	elsif (defined $option_export_sh)
 	{
 	    $console_output .= $operation_result->{console_output};
 	}
-    }
 
-    # ... or we have an internal error
+	# ... or we have an internal error
 
-    else
-    {
-	# if ($option_verbose)
-	# {
-	#     use Data::Dumper;
+	else
+	{
+	    # if ($option_verbose)
+	    # {
+	    #     use Data::Dumper;
 
-	#     print Dumper( { operation_results => $operation_results } );
-	# }
+	    #     print Dumper( { operation_results => $operation_results } );
+	    # }
 
-	# main::report_error_exit("internal error: no interpretation of the operation_results has been identified (dry_run_reason is $dry_run_reason which neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+	    # main::report_error_exit("internal error: no interpretation of the operation_results has been identified (dry_run_reason is $dry_run_reason which neither executing, nor dry-running, nor producing interaction diagrams, nor exporting)");
+	}
     }
 
     if ($result_processor->{console_output})
@@ -12101,7 +12118,9 @@ sub schedule_help_execute
 	$help_string = &$operation_implementation($operation_name, $arguments);
     }
 
-    return $help_string;
+    #t global_program_name should not be inserted here, that is the job of the help page
+
+    return "$global_program_name $help_string";
 }
 
 
@@ -12197,6 +12216,13 @@ sub main
     my $requested_target = (defined $option_interactions_all ? '.*' : $global_target);
 
     $global_output_filename_template = join '-', $requested_target, ($global_operation || ''), @ARGV;
+
+    # make sure that enabling help does not run any commands
+
+    if (defined $option_help)
+    {
+	$global_execute_scheduled_commands = '';
+    }
 
     # given the requested target and the operation, generate a useful filename for exporting commands to a shell script
 
@@ -12645,27 +12671,18 @@ sub schedule_operations_for_execution
 
 	my $all_selected_operations = operation_selector($operation_selector_type, $help, $arguments);
 
-	# call each of the selected operations, invoking the plugins as required and push the result onto @$global_scheduled_commands
-
-	my $help_string_or_error = operations_2_commands($all_selected_operations);
-
-	# ... either was invoked as the --help sub
-
-	if ($help)
+	if ($option_dump_all_selected_operations)
 	{
-	    my $help_string = $all_selected_operations->[0]->{help_string};
-
-	    print "$global_program_name $help_string\n";
+	    print Dumper( { all_selected_operations => $all_selected_operations, } );
 	}
 
-	# ... or was invoked as a builtin package or simply the implementation of the command ...
+	# call each of the selected operations, invoking the plugins as required and push the result onto @$global_scheduled_commands
 
-	else
+	my $error = operations_2_commands($all_selected_operations);
+
+	if ($error)
 	{
-	    if ($help_string_or_error)
-	    {
-		report_error_exit($help_string_or_error);
-	    }
+	    report_error_exit($error);
 	}
     }
     else
@@ -12736,21 +12753,34 @@ sub operations_2_commands
 
 	    #t check if this header also has the target -- the target is needed to make this readable in a diagram
 
+	    if ($short_operation !~ m(_help$))
+	    {
+		my $scheduled_command
+		    = {
+		       command => "---\nWORKFLOW: $short_operation$has_help",
+		       dry_run => $dry_run_reason,
+		       interaction_role => 'none',
+		      };
+
+		push @$global_scheduled_commands, $scheduled_command;
+	    }
+	}
+
+	# if ($selected_operation->{is_help})
+	if ($short_operation =~ /_help$/)
+	{
+	    my $arguments = $selected_operation->{command_line_arguments};
+
+	    my $help_string = schedule_help_execute($operation_implementation, $arguments);
+
 	    my $scheduled_command
 		= {
-		   command => "---\nWORKFLOW: $short_operation$has_help",
-		   dry_run => $dry_run_reason,
+		   dry_run => 'is_help',
+		   help_string => $help_string,
 		   interaction_role => 'none',
 		  };
 
 	    push @$global_scheduled_commands, $scheduled_command;
-	}
-
-	if ($selected_operation->{is_help})
-	{
-	    my $arguments = $selected_operation->{command_line_arguments};
-
-	    $selected_operation->{help_string} = schedule_help_execute($operation_implementation, $arguments);
 	}
 	else
 	{
@@ -12763,6 +12793,8 @@ sub operations_2_commands
 		my $target = $selected_operation->{target};
 
 		warn "$global_program_name: *** Warning: $short_operation generated a warning response ($error)";
+
+		$selected_operation->{error_string} = $error;
 	    }
 	}
 
@@ -12770,18 +12802,19 @@ sub operations_2_commands
 	{
 	    # end the command in the schedule / diagram
 
-	    my $scheduled_command
-		= {
-		   command => "\n\n---\n",
-		   dry_run => $dry_run_reason,
-		   interaction_role => 'none',
-		  };
+	    if ($short_operation !~ m(_help$))
+	    {
+		my $scheduled_command
+		    = {
+		       command => "---\nEND WORKFLOW: $short_operation\n",
+		       dry_run => $dry_run_reason,
+		       interaction_role => 'none',
+		      };
 
-	    push @$global_scheduled_commands, $scheduled_command;
+		push @$global_scheduled_commands, $scheduled_command;
+	    }
 	}
     }
-
-    # return either a help string or an error message
 
     return $result;
 }
@@ -12898,9 +12931,13 @@ sub operation_selector
 		       @$selected_operation_implementations,
 		       grep
 		       {
+			   not m(_help$);
+		       }
+		       grep
+		       {
 			   m(^$matcher$);
 		       }
-		       sort @$operation_implementations
+		       @$operation_implementations
 		      ];
 	    }
 
@@ -12913,6 +12950,10 @@ sub operation_selector
 		$selected_operation_implementations
 		    = [
 		       @$selected_operation_implementations,
+		       grep
+		       {
+			   not m(_help$);
+		       }
 		       grep
 		       {
 			   m(^$matcher$);
@@ -12936,7 +12977,7 @@ sub operation_selector
 		    $has_help = " (use --help to see the help page)";
 		}
 
-		if ($help)
+		if ($selected_operation_implementation =~ m(_help$))
 		{
 		    my $dry_run_reason = $operation_selector_type->{dry_run_reason};
 
