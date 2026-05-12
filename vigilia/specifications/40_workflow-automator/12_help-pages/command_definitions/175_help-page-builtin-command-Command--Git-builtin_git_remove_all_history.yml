@@ -13,5 +13,4 @@ command_tests:
           ``ARGV[1]``: The commit message to use when adding the files to the new repository.
       
           ``ARGV[2]``: Optional, the URL of a repository where to push, if this is not given, no push is performed.
-
 description: Do we see the help page of the builtin command Command::Git builtin_git_remove_all_history?

@@ -27,5 +27,4 @@ command_tests:
           ``--install-commands-py``: install a python command file template.
       
           ``--install-commands-sh``: install a shell command file template.
-      
 description: 'default builtin targets: adding a new target'

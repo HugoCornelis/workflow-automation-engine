@@ -17,5 +17,4 @@ command_tests:
       
           ``ARGV[0]``: name of the tarball.  Recognized filename extensions are 'tar.gz', 'tar.bz2', '.tgz' and '.tbz'.
       
-      
 description: 'default builtin targets: archiving a_configuration'
