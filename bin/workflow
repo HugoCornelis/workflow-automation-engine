@@ -12962,7 +12962,27 @@ sub operation_selector
 		      ];
 	    }
 
-	    foreach my $selected_operation_implementation (sort @$selected_operation_implementations)
+	    $selected_operation_implementations = [ sort @$selected_operation_implementations ];
+
+	    # make sure that help pages precede their workflow in interaction diagrams
+
+	    foreach my $index (1 .. $#$selected_operation_implementations)
+	    {
+		my $selected_operation_implementation = $selected_operation_implementations->[$index];
+
+		if ($selected_operation_implementation =~ m(_help$))
+		{
+		    my $no_help_selected_operation_implementation = $selected_operation_implementations->[$index - 1];
+
+		    $selected_operation_implementations->[$index - 1] = $selected_operation_implementation;
+
+		    $selected_operation_implementations->[$index] = $no_help_selected_operation_implementation;
+		}
+	    }
+
+	    # convert operation names into operations
+
+	    foreach my $selected_operation_implementation (@$selected_operation_implementations)
 	    {
 		my $selected_operation;
 
