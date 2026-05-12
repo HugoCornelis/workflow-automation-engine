@@ -1,7 +1,7 @@
 ---
-command: feature-testing-workflow features --interactions-target
+command: feature-testing-workflow features --interactions-target --help
 command_tests:
-  - description: Are the commands of a single target in option interactions-target scheduled correctly?
+  - description: Do we see both help pages and an interaction diagram when using both the --help and the --interactions-target options?
     read: |+2
       
       WORKFLOW: features_annotations
@@ -13,6 +13,20 @@ command_tests:
       ---
       END WORKFLOW: features_annotations
       
+      feature-testing-workflow features cd_tests: Test the 'cd' features.
+      
+      SYNOPSIS: features cd_tests
+      
+      This command is used for testing of the internal 'cd' command.
+      
+      In addition, it is also used for testing of the '--export-help-page' option.
+      
+      This help page is implemented with the 'features_cd_tests_help' sub.
+      This sub documents the command line arguments and options:
+      
+          ARGV[0]: The directory to which to change.
+      
+       
       ---
       WORKFLOW: features_cd_tests (use --help to see the help page)
           'pwd'
@@ -79,7 +93,7 @@ command_tests:
       ---
       WORKFLOW: features_remote_script_execution
           'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data '
-          'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@__DOCKER_HOST_IP_ADDRESS__:/tmp/feature-shell-script-remote.sh'
+          'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@172.18.0.5:/tmp/feature-shell-script-remote.sh'
                                                   '/tmp/feature-shell-script-remote.sh arg1 arg2'
       ---
       END WORKFLOW: features_remote_script_execution
@@ -91,6 +105,6 @@ command_tests:
           'pwd'
       ---
       END WORKFLOW: features_timestamps
-      
+
     white_space: convert seen 0a to 0d 0a newlines
-description: Are the commands of a single target in option interactions-target scheduled correctly?
+description: Do we see both help pages and an interaction diagram when using both the --help and the --interactions-target options?

@@ -57,5 +57,4 @@ command_tests:
           ssh_server: 172.18.0.22
           ssh_user: root
       
-      
 description: 'default builtin targets: adding a new role'

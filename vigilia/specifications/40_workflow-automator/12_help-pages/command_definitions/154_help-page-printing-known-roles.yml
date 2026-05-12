@@ -12,5 +12,4 @@ command_tests:
                        '``^docker_``' prints Docker roles,
                        '``^serial_``' prints serial console roles,
                        '``^tmux_``' prints tmux roles.
-
 description: Do we see the help page for printing known roles?

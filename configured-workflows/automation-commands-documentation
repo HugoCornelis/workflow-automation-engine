@@ -100,6 +100,15 @@ Note: This command converts the regression test specifications first to latex, t
 }
 
 
+sub documentation_help
+{
+    my $command = shift;
+
+    return "$command: Build the documentation of the workflow engine and vigilia.
+";
+}
+
+
 sub documentation_build_manual
 {
     my $commands

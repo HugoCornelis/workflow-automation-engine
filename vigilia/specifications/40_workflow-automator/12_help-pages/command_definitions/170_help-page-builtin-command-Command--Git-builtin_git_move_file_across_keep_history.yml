@@ -44,6 +44,4 @@ command_tests:
       
       where <your-remote> repository is your base repository which may be
       the same as your source repository.
-      
-
 description: Do we see the help page of the builtin command Command::Git builtin_git_move_files_across_keep_history?

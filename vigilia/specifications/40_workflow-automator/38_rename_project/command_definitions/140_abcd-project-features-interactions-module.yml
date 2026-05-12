@@ -9,9 +9,8 @@ command_tests:
           'pwd'
           'cd /bin '
           'pwd'
-      
-      
       ---
+      END WORKFLOW: features_annotations
       
       ---
       WORKFLOW: features_cd_tests (use --help to see the help page)
@@ -22,9 +21,8 @@ command_tests:
           'pwd'
           'cd / '
           'pwd'
-      
-      
       ---
+      END WORKFLOW: features_cd_tests
       
       ---
       WORKFLOW: features_cd_tests_ssh
@@ -37,9 +35,8 @@ command_tests:
                                                   'pwd'
                                                   'cd / '
                                                   'pwd'
-      
-      
       ---
+      END WORKFLOW: features_cd_tests_ssh
       
       ---
       WORKFLOW: features_cd_tests_tmux
@@ -52,9 +49,8 @@ command_tests:
                                                                                           'pwd >>/tmp/tmux-pwd.txt'
                                                                                           'cd / '
                                                                                           'pwd >>/tmp/tmux-pwd.txt'
-      
-      
       ---
+      END WORKFLOW: features_cd_tests_tmux
       
       ---
       WORKFLOW: features_export_sh
@@ -67,9 +63,8 @@ command_tests:
                                                                                           'pwd'
                                                                                           'cd /bin '
                                                                                           'pwd'
-      
-      
       ---
+      END WORKFLOW: features_export_sh
       
       ---
       WORKFLOW: features_export_variables
@@ -77,27 +72,24 @@ command_tests:
           'echo /some/directory'
           'echo with an unused value'
           'echo SERVER_PASSWORD: a-password-value-is-never-exported'
-      
-      
       ---
+      END WORKFLOW: features_export_variables
       
       ---
       WORKFLOW: features_remote_script_execution
           'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/abcd-commands-data '
           'sshpass -p harness scp -pr -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null  scripts/feature-shell-script-remote.sh root@__DOCKER_HOST_IP_ADDRESS__:/tmp/feature-shell-script-remote.sh'
                                                   '/tmp/feature-shell-script-remote.sh arg1 arg2'
-      
-      
       ---
+      END WORKFLOW: features_remote_script_execution
       
       ---
       WORKFLOW: features_timestamps
           'pwd'
           'pwd'
           'pwd'
-      
-      
       ---
+      END WORKFLOW: features_timestamps
       
     white_space: convert seen 0a to 0d 0a newlines
 description: abcd project intections of the features commands
