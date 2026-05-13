@@ -291,17 +291,27 @@ sub _all_scripts_install_execute_shell_command_array
 
 sub _build_completion_tree
 {
-    my ($keys, $depth, $used) = @_;
+    my ($keys, $depth, $used, $filter_used) = @_;
 
     # if $used is undef, set it to an empty hash
 
     $used //= {};
 
-    if ($depth <= 0
-	|| keys(%$used) >= @$keys)
+    # default: filter used keys
+
+    $filter_used //= 'yes';
+
+    if ($depth <= 0)
     {
         return '';
     }
+
+    my $candidate_keys
+	= [
+	   $filter_used eq 'yes'
+	   ? grep { not $used->{$_} } @$keys
+	   : @$keys
+	  ];
 
     return
     {
@@ -314,10 +324,10 @@ sub _build_completion_tree
 				       %$used,
 				       $_ => 1,
 				      },
+				      $filter_used,
 				     )
      }
-     grep { not $used->{$_} }
-     sort @$keys,
+     @$candidate_keys,
     };
 }
 
@@ -3812,6 +3822,7 @@ sub builtin_configuration_install_completions
 						     $option_keys,
 						     $depth - 1,
 						     { $_ => 1 },
+						     'yes',
 						    )
 		    }
 		    @$option_keys
