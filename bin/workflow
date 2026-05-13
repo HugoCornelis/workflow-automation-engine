@@ -280,21 +280,73 @@ sub _all_scripts_install_execute_shell_command_array
 }
 
 
+# Given a list of string values, expand it into a tree of dictionaries
+# of a given depth, such that each level in the tree has dictionaries
+# with as keys the values in the original list, that is recursively
+# mapped to a dictionary with again the same values as keys until this
+# given depth, at which the values are empty strings.
+#
+# There should be no duplicate keys in any path from the root of the
+# generated tree to any of its leaves
+
 sub _build_completion_tree
 {
-    my ($keys, $depth) = @_;
+    my ($keys, $depth, $used) = @_;
 
-    if ($depth <= 0)
+    # if $used is undef, set it to an empty hash
+
+    $used //= {};
+
+    if ($depth <= 0
+	|| keys(%$used) >= @$keys)
     {
-	return '';
+        return '';
     }
 
     return
     {
      map
      {
-	 $_ => _build_completion_tree($keys, $depth - 1)
+	 $_ => _build_completion_tree(
+				      $keys,
+				      $depth - 1,
+				      {
+				       %$used,
+				       $_ => 1,
+				      },
+				     )
      }
+     grep { not $used->{$_} }
+     sort @$keys,
+    };
+}
+
+
+sub _build_completion_tree2
+{
+    my ($keys, $depth, $used) = @_;
+
+    $used //= {};
+
+    if ($depth <= 0)
+    {
+        return '';
+    }
+
+    return
+    {
+     map
+     {
+	 $_ => _build_completion_tree2(
+				       $keys,
+				       $depth - 1,
+				       {
+					%$used,
+					$_ => 1,
+				       },
+				      )
+     }
+     grep { not $used->{$_} }
      @$keys,
     };
 }
@@ -3756,7 +3808,11 @@ sub builtin_configuration_install_completions
 	   '--' => {
 		    map
 		    {
-			$_ => _build_completion_tree($option_keys, $depth - 1)
+			$_ => _build_completion_tree(
+						     $option_keys,
+						     $depth - 1,
+						     { $_ => 1 },
+						    )
 		    }
 		    @$option_keys
 		   },
