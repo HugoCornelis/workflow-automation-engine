@@ -3797,7 +3797,6 @@ sub builtin_configuration_install_completions
 
     my $option_descriptions
 	= {
-	   '0.Available_options:' => '',
 	   '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
 	   '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
 	   '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
@@ -3811,7 +3810,7 @@ sub builtin_configuration_install_completions
 
     my $option_keys = [ keys %$option_descriptions ];
 
-    my $depth = 5;
+    my $depth = scalar @$option_keys;
 
     my $options_completions_hash
 	= {
