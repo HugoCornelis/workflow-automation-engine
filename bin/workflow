@@ -280,6 +280,26 @@ sub _all_scripts_install_execute_shell_command_array
 }
 
 
+sub _build_completion_tree
+{
+    my ($keys, $depth) = @_;
+
+    if ($depth <= 0)
+    {
+	return '';
+    }
+
+    return
+    {
+     map
+     {
+	 $_ => _build_completion_tree($keys, $depth - 1)
+     }
+     @$keys,
+    };
+}
+
+
 #
 # add the given workflow filename to the list in the configuration.
 #
@@ -3713,33 +3733,34 @@ sub builtin_configuration_install_completions
 
     my $complete_arguments_array = shift;
 
+    my $option_descriptions
+	= {
+	   '0.Available_options:' => '',
+	   '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
+	   '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
+	   '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
+	   '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
+	   '--force' => "don't use this.",
+	   '--git' => "create a git repository for the workflow configuration.",
+	   '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
+	   '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
+	   '--report' => "report on what is being done.",
+	  };
+
+    my $option_keys = [ keys %$option_descriptions ];
+
+    my $depth = 5;
+
     my $options_completions_hash
 	= {
 	   '--' => {
-		    '0.Available_options:' => '',
-		    '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
-		    '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-		    '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
-		    '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
-		    '--force' => "don't use this.",
-		    '--git' => "create a git repository for the workflow configuration.",
-		    '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-		    '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
-		    '--report' => "report on what is being done.",
+		    map
+		    {
+			$_ => _build_completion_tree($option_keys, $depth - 1)
+		    }
+		    @$option_keys
 		   },
 	  };
-
-    foreach my $options_completion (keys %{$options_completions_hash->{'--'}})
-    {
-	$options_completions_hash->{'--'}->{$options_completion}
-	    = {
-	       map
-	       {
-		   $_ => '';
-	       }
-	       keys %{$options_completions_hash->{'--'}}
-	      };
-    }
 
     return $options_completions_hash;
 }
