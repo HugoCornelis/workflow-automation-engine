@@ -2519,7 +2519,7 @@ sub _install_script_git_repository
 	my $commands
 	    = [
 	       "echo >.gitignore '*~'",
-	       "echo >>.gitignore '_Inline'",
+	       # "echo >>.gitignore '_Inline'",
 	       "echo >>.gitignore '$project_name-commands-data/cache'",
 	       "echo >>.gitignore '$project_name-configuration-data/cache'",
 	       "git add --all",
