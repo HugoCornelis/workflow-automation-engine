@@ -1,14 +1,36 @@
 ---
-command: feature-testing-workflow builtin grep_commands 0 docker
+command: feature-testing-workflow builtin grep_commands :all docker
 command_tests:
   - description: 'Is a query that builds an interaction diagramma and examines it, executed correctly (2)?'
-    read: |
+    read: |2
+          ROLE: 'localuser@localhost'
+      
+                                                  ROLE: 'docker_source_code'
+      
+                                                                                          ROLE: 'root@ssh_cd'
+      
+                                                                                                                                  ROLE: 'tmux_cd'
+      
+                                                                                                                                                                          ROLE: 'tester@build'
+      
+      
       WORKFLOW: builtin_docker_containers_start (use --help to see the help page)
           'docker run -d -t  --name docker_source_code_container docker_source_code_image '
+      ---
+      END WORKFLOW: builtin_docker_containers_start
+      
       WORKFLOW: builtin_docker_images_build (use --help to see the help page)
+          'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing '
           'docker build --tag docker_source_code_image --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000  --file feature-testing-configuration-data/dockerfiles/Dockerfile.source_code .'
+      ---
+      END WORKFLOW: builtin_docker_images_build
+      
       WORKFLOW: docker_testing_where_am_i (use --help to see the help page)
-                                                  ROLE: 'docker_source_code'
                                                   'cat /.inside-docker'
+                                                  'whoami'
+                                                  'uname -a'
+      ---
+      END WORKFLOW: docker_testing_where_am_i
+      
     white_space: convert seen 0a to 0d 0a newlines
 description: 'Is a query that builds an interaction diagramma and examines it, executed correctly (2)?'
