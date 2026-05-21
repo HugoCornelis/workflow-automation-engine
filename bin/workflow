@@ -4437,7 +4437,7 @@ sub builtin_grep_commands
 	die "$0: builtin_grep_commands: *** Error: a regex matching the command must be given on the command line.";
     }
 
-    my $debug_builtin_grep_commands = 0;
+    my $debug_builtin_grep_commands = 2;
 
     if ($debug_builtin_grep_commands > 1)
     {
@@ -4482,6 +4482,15 @@ sub builtin_grep_commands
 	$selected_projects = [ @$selected_projects, @$projects, ];
     }
 
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     selected_projects => $selected_projects,
+			    },
+			   );
+    }
+
     # collect the workflow_filenames for each selected_project
 
     my $selected_command_files = [];
@@ -4500,6 +4509,15 @@ sub builtin_grep_commands
 	$workflow_filenames = $workflow_filenames->{workflow_filenames};
 
 	$selected_command_files = [ @$selected_command_files, @$workflow_filenames, ];
+    }
+
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     selected_command_files => $selected_command_files,
+			    },
+			   );
     }
 
     my $schedule_arguments = [];
@@ -4542,9 +4560,27 @@ sub builtin_grep_commands
 
     my $schedule_result = Engine::process_operation_results($operation_results, { dry_run_reason => $dry_run_reason } );
 
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     schedule_result => $schedule_result,
+			    },
+			   );
+    }
+
     if ($schedule_result->{console_output})
     {
 	my $console_output = $schedule_result->{console_output};
+
+	if ($debug_builtin_grep_commands > 1)
+	{
+	    print STDERR Dumper(
+				{
+				 console_output => $console_output,
+				},
+			       );
+	}
 
 	my $console_output_lines
 	    = [
@@ -4553,27 +4589,31 @@ sub builtin_grep_commands
 
 	my $selected_console_output_lines = [];
 
-	my $current_console_output_line;
+	my $currently_cursored_workflow = [];
 
-	my $current_console_output_header;
+	my $select_currently_cursored_workflow;
 
 	foreach my $console_output_line (@$console_output_lines)
 	{
-	    if ($console_output_line =~ m(WORKFLOW))
+	    if ($console_output_line =~ m(END WORKFLOW))
 	    {
-		$current_console_output_header = $console_output_line;
+		if ($select_currently_cursored_workflow)
+		{
+		    push @$selected_console_output_lines, @$currently_cursored_workflow, $console_output_line, '';
+
+		    $select_currently_cursored_workflow = 0;
+		}
+	    }
+	    elsif ($console_output_line =~ m(WORKFLOW))
+	    {
+		$currently_cursored_workflow = [];
 	    }
 	    elsif ($console_output_line =~ m($regex_command))
 	    {
-		if ($current_console_output_header)
-		{
-		    push @$selected_console_output_lines, $current_console_output_header;
-
-		    $current_console_output_header = '';
-		}
-
-		push @$selected_console_output_lines, $console_output_line;
+		$select_currently_cursored_workflow = 1;
 	    }
+
+	    push @$currently_cursored_workflow, $console_output_line;
 	}
 
 	my $selected_console_output = join "\n", @$selected_console_output_lines;
