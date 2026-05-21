@@ -4415,12 +4415,22 @@ sub builtin_grep_commands
 
     my $regex_target = $arguments->[0] || '.*';
 
+    if ($regex_target eq ':all')
+    {
+	$regex_target = '.*';
+    }
+
     if (not defined $regex_target)
     {
 	die "$0: builtin_grep_commands: *** Error: a regex matching the target must be given on the command line.";
     }
 
     my $regex_command = $arguments->[1] || '.*';
+
+    if ($regex_command eq ':all')
+    {
+	$regex_command = '.*';
+    }
 
     if (not defined $regex_command)
     {
@@ -4602,9 +4612,9 @@ $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: A regular expression to match the target against, '0' for all targets.
+    ``ARGV[0]``: A regular expression to match the target against, ':all' for all targets.
 
-    ``ARGV[1]``: A regular expression to match the commands against, '0' for all commands.
+    ``ARGV[1]``: A regular expression to match the commands against, ':all' for all commands.
 
     ``ARGV[2] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
