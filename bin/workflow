@@ -2967,6 +2967,18 @@ sub _sentence_summarize
 }
 
 
+sub _shell_quote
+{
+    my ($s) = @_;
+
+    return "''" if !defined($s) || $s eq '';
+
+    $s =~ s/'/'"'"'/g;
+
+    return "'$s'";
+}
+
+
 sub _strings_remove
 {
     my $strings = shift;
@@ -4326,30 +4338,25 @@ sub builtin_grep_code
     # 	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
     # }
 
-    use String::ShellQuote qw(shell_quote);
-
     if (@$selected_command_files)
     {
-	my $files = join ' ', map { shell_quote($_) } @$selected_command_files;
+	my $files = join ' ', map { _shell_quote($_) } @$selected_command_files;
 
-	my $search = shell_quote($regex_search);
+	# pass the search expression through an environment variable to avoid vulnerabilities
 
-	my $command = qq{
-perl -ne '
-    if (/^\\s*(?:def\\s+\\w+\\s*\\(\\s*argv\\s*\\)\\s*:|sub\\s+[-\\w]+)/)
-    {
-        \$context = "\$ARGV:\$.:\$_";
-    }
+	my $command = 'REGEX=' . _shell_quote($regex_search) . qq{ perl -ne '
 
-    if (/$regex_search/)
-    {
-        print \$context if defined \$context;
-        print "\$ARGV:\$.:\$_";
-    }
+        if (/^\\s*(?:def\\s+\\w+\\s*\\(\\s*argv\\s*\\)\\s*:|sub\\s+[-\\w]+)/) {
+            \$context = "\$ARGV:\$.:\$_";
+        }
 
-    close ARGV if eof;
-' $files
-};
+        if (/\$ENV{REGEX}/) {
+            print \$context if defined \$context;
+            print "\$ARGV:\$.:\$_";
+        }
+
+        close ARGV if eof;
+    ' $files};
 
 	execute_shell_command(
 			      $command,
