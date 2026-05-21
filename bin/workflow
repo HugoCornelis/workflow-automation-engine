@@ -4317,14 +4317,49 @@ sub builtin_grep_code
 	print STDERR Dumper( { selected_command_files => $selected_command_files, } );
     }
 
+    # if (@$selected_command_files)
+    # {
+    # 	my $workflow_filenames_string = join ' ', @$selected_command_files;
+
+    # 	my $command = "grep -n '$regex_search' $workflow_filenames_string";
+
+    # 	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
+    # }
+
+    use String::ShellQuote qw(shell_quote);
+
     if (@$selected_command_files)
     {
-	my $workflow_filenames_string = join ' ', @$selected_command_files;
+	my $files = join ' ', map { shell_quote($_) } @$selected_command_files;
 
-	my $command = "grep -n '$regex_search' $workflow_filenames_string";
+	my $search = shell_quote($regex_search);
 
-	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
+	my $command = qq{
+perl -ne '
+    if (/^\\s*(?:def\\s+\\w+\\s*\\(\\s*argv\\s*\\)\\s*:|sub\\s+[-\\w]+)/)
+    {
+        \$context = "\$ARGV:\$.:\$_";
     }
+
+    if (/$regex_search/)
+    {
+        print \$context if defined \$context;
+        print "\$ARGV:\$.:\$_";
+    }
+
+    close ARGV if eof;
+' $files
+};
+
+	execute_shell_command(
+			      $command,
+			      {
+			       allow_fail_silent => 'in case grep finds no hits',
+			       quiet => 'this is to verbose',
+			      }
+			     );
+    }
+
 }
 
 
