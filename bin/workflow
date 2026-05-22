@@ -4548,6 +4548,21 @@ sub builtin_grep_commands
 
     InteractionRole::interaction_roles_identify_all();
 
+    # print the interaction roles as headers
+
+    my $interaction_roles = $InteractionRole::all_interaction_roles;
+
+    my $console_output_interaction_roles = Engine::execute_scheduled_command_all_interactions_header($interaction_roles);
+
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     interaction_roles => $console_output_interaction_roles,
+			    },
+			   );
+    }
+
     # execute all the scheduled_commands.
 
     my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
@@ -4616,7 +4631,16 @@ sub builtin_grep_commands
 
 	my $selected_console_output = join "\n", @$selected_console_output_lines;
 
-	print $selected_console_output . "\n";
+	if ($selected_console_output)
+	{
+	    # print the interaction roles as headers
+
+	    print $console_output_interaction_roles . "\n";
+
+	    # print the workflows
+
+	    print $selected_console_output . "\n";
+	}
     }
 
     return '';
@@ -8835,6 +8859,32 @@ sub execute_scheduled_command_option_dry_run
 }
 
 
+sub execute_scheduled_command_all_interactions_header
+{
+    my $interaction_roles = shift;
+
+    my $console_output = '';
+
+    # print the interaction header for all the configured roles
+
+    foreach my $interaction_role_name (sort
+				       {
+					   $interaction_roles->{$a}->{number} <=> $interaction_roles->{$b}->{number};
+				       }
+				       keys %$interaction_roles)
+    {
+	my $interaction_role = $interaction_roles->{$interaction_role_name};
+
+	if ($interaction_role->{is_new_and_needs_header} eq 'yes')
+	{
+	    $console_output .= _format_interaction_header($interaction_role);
+	}
+    }
+
+    return $console_output;
+}
+
+
 sub execute_scheduled_command_option_interactions
 {
     my $interaction_roles = shift;
@@ -8866,21 +8916,7 @@ sub execute_scheduled_command_option_interactions
 
     if ($all)
     {
-	# print the interaction header for all the configured roles
-
-	foreach my $interaction_role_name (sort
-					   {
-					       $interaction_roles->{$a}->{number} <=> $interaction_roles->{$b}->{number};
-					   }
-					   keys %$interaction_roles)
-	{
-	    my $interaction_role = $interaction_roles->{$interaction_role_name};
-
-	    if ($interaction_role->{is_new_and_needs_header} eq 'yes')
-	    {
-		$console_output .= _format_interaction_header($interaction_role);
-	    }
-	}
+	$console_output .= execute_scheduled_command_all_interactions_header($interaction_roles);
     }
 
     # if there is no interaction role
