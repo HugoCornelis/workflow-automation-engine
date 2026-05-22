@@ -73,5 +73,7 @@ colours=magenta bold underline
 -
 regexp=WORKFLOW:.*$
 colours=cyan underline
-
+-
+regexp=END WORKFLOW:.*$
+colours=cyan underline
 

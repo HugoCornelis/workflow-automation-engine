@@ -1960,11 +1960,9 @@ colours=magenta bold underline
 -
 regexp=WORKFLOW:.*\$
 colours=cyan underline
-
 -
-regexp=WORKFLOW:.*\$
+regexp=END WORKFLOW:.*\$
 colours=cyan underline
-
 
 ";
 
