@@ -1960,11 +1960,9 @@ colours=magenta bold underline
 -
 regexp=WORKFLOW:.*\$
 colours=cyan underline
-
 -
-regexp=WORKFLOW:.*\$
+regexp=END WORKFLOW:.*\$
 colours=cyan underline
-
 
 ";
 
@@ -2964,6 +2962,18 @@ sub _sentence_summarize
     $result =~ s(-$)();
 
     return $result;
+}
+
+
+sub _shell_quote
+{
+    my ($s) = @_;
+
+    return "''" if !defined($s) || $s eq '';
+
+    $s =~ s/'/'"'"'/g;
+
+    return "'$s'";
 }
 
 
@@ -4317,14 +4327,44 @@ sub builtin_grep_code
 	print STDERR Dumper( { selected_command_files => $selected_command_files, } );
     }
 
+    # if (@$selected_command_files)
+    # {
+    # 	my $workflow_filenames_string = join ' ', @$selected_command_files;
+
+    # 	my $command = "grep -n '$regex_search' $workflow_filenames_string";
+
+    # 	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
+    # }
+
     if (@$selected_command_files)
     {
-	my $workflow_filenames_string = join ' ', @$selected_command_files;
+	my $files = join ' ', map { _shell_quote($_) } @$selected_command_files;
 
-	my $command = "grep -n '$regex_search' $workflow_filenames_string";
+	# pass the search expression through an environment variable to avoid vulnerabilities
 
-	execute_shell_command($command, { allow_fail_silent => 'in case grep finds no hits' });
+	my $command = 'REGEX=' . _shell_quote($regex_search) . qq{ perl -ne '
+
+        if (/^\\s*(?:def\\s+\\w+\\s*\\(\\s*argv\\s*\\)\\s*:|sub\\s+[-\\w]+)/) {
+            \$context = "\$ARGV:\$.:\$_";
+        }
+
+        if (/\$ENV{REGEX}/) {
+            print \$context if defined \$context;
+            print "\$ARGV:\$.:\$_";
+        }
+
+        close ARGV if eof;
+    ' $files};
+
+	execute_shell_command(
+			      $command,
+			      {
+			       allow_fail_silent => 'in case grep finds no hits',
+			       quiet => 'this is to verbose',
+			      }
+			     );
     }
+
 }
 
 
@@ -4373,12 +4413,22 @@ sub builtin_grep_commands
 
     my $regex_target = $arguments->[0] || '.*';
 
+    if ($regex_target eq ':all')
+    {
+	$regex_target = '.*';
+    }
+
     if (not defined $regex_target)
     {
 	die "$0: builtin_grep_commands: *** Error: a regex matching the target must be given on the command line.";
     }
 
     my $regex_command = $arguments->[1] || '.*';
+
+    if ($regex_command eq ':all')
+    {
+	$regex_command = '.*';
+    }
 
     if (not defined $regex_command)
     {
@@ -4430,6 +4480,15 @@ sub builtin_grep_commands
 	$selected_projects = [ @$selected_projects, @$projects, ];
     }
 
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     selected_projects => $selected_projects,
+			    },
+			   );
+    }
+
     # collect the workflow_filenames for each selected_project
 
     my $selected_command_files = [];
@@ -4448,6 +4507,15 @@ sub builtin_grep_commands
 	$workflow_filenames = $workflow_filenames->{workflow_filenames};
 
 	$selected_command_files = [ @$selected_command_files, @$workflow_filenames, ];
+    }
+
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     selected_command_files => $selected_command_files,
+			    },
+			   );
     }
 
     my $schedule_arguments = [];
@@ -4480,6 +4548,21 @@ sub builtin_grep_commands
 
     InteractionRole::interaction_roles_identify_all();
 
+    # print the interaction roles as headers
+
+    my $interaction_roles = $InteractionRole::all_interaction_roles;
+
+    my $console_output_interaction_roles = Engine::execute_scheduled_command_all_interactions_header($interaction_roles);
+
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     interaction_roles => $console_output_interaction_roles,
+			    },
+			   );
+    }
+
     # execute all the scheduled_commands.
 
     my $operation_results = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
@@ -4490,9 +4573,27 @@ sub builtin_grep_commands
 
     my $schedule_result = Engine::process_operation_results($operation_results, { dry_run_reason => $dry_run_reason } );
 
+    if ($debug_builtin_grep_commands > 1)
+    {
+	print STDERR Dumper(
+			    {
+			     schedule_result => $schedule_result,
+			    },
+			   );
+    }
+
     if ($schedule_result->{console_output})
     {
 	my $console_output = $schedule_result->{console_output};
+
+	if ($debug_builtin_grep_commands > 1)
+	{
+	    print STDERR Dumper(
+				{
+				 console_output => $console_output,
+				},
+			       );
+	}
 
 	my $console_output_lines
 	    = [
@@ -4501,32 +4602,45 @@ sub builtin_grep_commands
 
 	my $selected_console_output_lines = [];
 
-	my $current_console_output_line;
+	my $currently_cursored_workflow = [];
 
-	my $current_console_output_header;
+	my $select_currently_cursored_workflow;
 
 	foreach my $console_output_line (@$console_output_lines)
 	{
-	    if ($console_output_line =~ m(WORKFLOW))
+	    if ($console_output_line =~ m(END WORKFLOW))
 	    {
-		$current_console_output_header = $console_output_line;
+		if ($select_currently_cursored_workflow)
+		{
+		    push @$selected_console_output_lines, @$currently_cursored_workflow, $console_output_line, '';
+
+		    $select_currently_cursored_workflow = 0;
+		}
+	    }
+	    elsif ($console_output_line =~ m(WORKFLOW))
+	    {
+		$currently_cursored_workflow = [];
 	    }
 	    elsif ($console_output_line =~ m($regex_command))
 	    {
-		if ($current_console_output_header)
-		{
-		    push @$selected_console_output_lines, $current_console_output_header;
-
-		    $current_console_output_header = '';
-		}
-
-		push @$selected_console_output_lines, $console_output_line;
+		$select_currently_cursored_workflow = 1;
 	    }
+
+	    push @$currently_cursored_workflow, $console_output_line;
 	}
 
 	my $selected_console_output = join "\n", @$selected_console_output_lines;
 
-	print $selected_console_output . "\n";
+	if ($selected_console_output)
+	{
+	    # print the interaction roles as headers
+
+	    print $console_output_interaction_roles . "\n";
+
+	    # print the workflows
+
+	    print $selected_console_output . "\n";
+	}
     }
 
     return '';
@@ -4560,9 +4674,9 @@ $command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: A regular expression to match the target against, '0' for all targets.
+    ``ARGV[0]``: A regular expression to match the target against, ':all' for all targets.
 
-    ``ARGV[1]``: A regular expression to match the commands against, '0' for all commands.
+    ``ARGV[1]``: A regular expression to match the commands against, ':all' for all commands.
 
     ``ARGV[2] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
@@ -8745,6 +8859,32 @@ sub execute_scheduled_command_option_dry_run
 }
 
 
+sub execute_scheduled_command_all_interactions_header
+{
+    my $interaction_roles = shift;
+
+    my $console_output = '';
+
+    # print the interaction header for all the configured roles
+
+    foreach my $interaction_role_name (sort
+				       {
+					   $interaction_roles->{$a}->{number} <=> $interaction_roles->{$b}->{number};
+				       }
+				       keys %$interaction_roles)
+    {
+	my $interaction_role = $interaction_roles->{$interaction_role_name};
+
+	if ($interaction_role->{is_new_and_needs_header} eq 'yes')
+	{
+	    $console_output .= _format_interaction_header($interaction_role);
+	}
+    }
+
+    return $console_output;
+}
+
+
 sub execute_scheduled_command_option_interactions
 {
     my $interaction_roles = shift;
@@ -8776,21 +8916,7 @@ sub execute_scheduled_command_option_interactions
 
     if ($all)
     {
-	# print the interaction header for all the configured roles
-
-	foreach my $interaction_role_name (sort
-					   {
-					       $interaction_roles->{$a}->{number} <=> $interaction_roles->{$b}->{number};
-					   }
-					   keys %$interaction_roles)
-	{
-	    my $interaction_role = $interaction_roles->{$interaction_role_name};
-
-	    if ($interaction_role->{is_new_and_needs_header} eq 'yes')
-	    {
-		$console_output .= _format_interaction_header($interaction_role);
-	    }
-	}
+	$console_output .= execute_scheduled_command_all_interactions_header($interaction_roles);
     }
 
     # if there is no interaction role
