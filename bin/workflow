@@ -4435,7 +4435,7 @@ sub builtin_grep_commands
 	die "$0: builtin_grep_commands: *** Error: a regex matching the command must be given on the command line.";
     }
 
-    my $debug_builtin_grep_commands = 2;
+    my $debug_builtin_grep_commands = 0;
 
     if ($debug_builtin_grep_commands > 1)
     {
