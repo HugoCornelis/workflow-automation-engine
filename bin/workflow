@@ -9105,6 +9105,9 @@ sub execute_scheduled_command_option_export_sh
 	print $global_exported_sh_file "# $global_command_line\n";
 	print $global_exported_sh_file "#\n";
 
+	my $help_page;
+	my $help_string;
+
 	if ($option_export_help_page)
 	{
 	    my $command_line = [ split '\s', $global_command_line ];
@@ -9115,7 +9118,7 @@ sub execute_scheduled_command_option_export_sh
 
 	    my $help_sub = "Command::${target}_${operation}_help";
 
-	    my $help_string
+	    $help_string
 		= eval {
 
 		    no strict "refs";
@@ -9129,7 +9132,7 @@ sub execute_scheduled_command_option_export_sh
 	    {
 		# there is no help available, that is ok
 
-		my $help_page = "#
+		$help_page = "#
 # '$shell_command $target $operation --help' is not implemented.
 # '$help_sub(\"${target}_${operation}\")' is missing ($@).
 #
@@ -9144,7 +9147,7 @@ sub execute_scheduled_command_option_export_sh
 		$help_string = "#    $help_string";
 		$help_string =~ s(\n)(\n#    )gs;
 
-		my $help_page = "#
+		$help_page = "#
 # $shell_command $target $operation --help
 #
 $help_string
