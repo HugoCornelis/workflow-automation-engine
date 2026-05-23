@@ -9256,7 +9256,21 @@ done
     {
 	if ($option_export_verbose)
 	{
+	    my $options = $scheduled_command->{options};
+
+	    if (exists $options->{annotation})
+	    {
+		my $annotation = $options->{annotation};
+
+		print $global_exported_sh_file "\n# '$annotation'\n#";
+
+		print $global_exported_sh_file "\necho -e '\n--- $annotation'\n";
+		print $global_exported_sh_file "echo -e '-------'\n";
+	    }
+
 	    print $global_exported_sh_file "[[ \${RUN_VERBOSE:-0} == 1 ]] && echo '$export_sh_command'\n";
+
+	    # use Data::Dumper; print Dumper ( { scheduled_command => $scheduled_command, } ) ;
 	}
 
 	#t this does not work with RUN_DRY_RUN processing
