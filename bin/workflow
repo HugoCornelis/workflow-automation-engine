@@ -9131,6 +9131,7 @@ sub execute_scheduled_command_option_export_sh
 
 		my $help_page = "#
 # '$shell_command $target $operation --help' is not implemented.
+# '$help_sub(\"${target}_${operation}\")' is missing ($@).
 #
 #
 ";
