@@ -12292,6 +12292,8 @@ sub note
 
     my $message = $arguments->{message};
 
+    $message =~ s(\n)( )g;
+
     if (length $message > $length)
     {
 	$message = substr($message, 0, $length);
