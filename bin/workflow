@@ -9140,6 +9140,7 @@ sub execute_scheduled_command_option_export_sh
 	    }
 	    else
 	    {
+		$help_string =~ s(`)(')gs;
 		$help_string = "#    $help_string";
 		$help_string =~ s(\n)(\n#    )gs;
 
