@@ -9155,8 +9155,11 @@ $help_string
 ";
 
 		print $global_exported_sh_file $help_page;
+	    }
+	}
 
-		my $option_processor
+	{
+	    my $option_processor
 		    = '
 while [[ ${1-} != "" ]]; do
   case "$1" in
@@ -9180,8 +9183,39 @@ EOF
 done
 
 ';
-		print $global_exported_sh_file $option_processor;
-	    }
+	    print $global_exported_sh_file $option_processor;
+	}
+
+	{
+	    my $running_modes
+		= '
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+';
+
+	    print $global_exported_sh_file $running_modes;
+	}
+
+	{
+	    my $command_runner
+		= '
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
+';
+
+		print $global_exported_sh_file $command_runner;
 	}
 
 	if (not defined $option_export_role)
@@ -9283,11 +9317,11 @@ done
 	    print $global_exported_sh_file $export_sh->{prefix};
 	}
 
-	print $global_exported_sh_file "[[ -z \"\${RUN_DRY_RUN:-}\" ]]  && $export_sh_command\n";
+	print $global_exported_sh_file "do_run_command $export_sh_command\n";
     }
     else
     {
-	print $global_exported_sh_file "[[ -z \"\${RUN_DRY_RUN:-}\" ]]  && $export_sh_command\n";
+	print $global_exported_sh_file "do_run_command $export_sh_command\n";
     }
 
     return { console_output => $console_output, exit_status => $exit_status };
