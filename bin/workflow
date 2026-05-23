@@ -9122,7 +9122,7 @@ sub execute_scheduled_command_option_export_sh
 
 		    local $SIG{'__DIE__'};
 
-		    &$help_sub("${target}_${operation}");
+		    &$help_sub("${target}_${operation}", [ split '\s+', $global_command_line, ]);
 		};
 
 	    if ($@)
