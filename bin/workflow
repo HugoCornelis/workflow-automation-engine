@@ -9092,7 +9092,11 @@ sub execute_scheduled_command_option_export_sh
 	    die "*** Error: $global_program_name: cannot open $global_exported_sh_filename for writing ($!)";
 	}
 
-	print $global_exported_sh_file "#!/bin/sh\n";
+	print $global_exported_sh_file "#!/bin/bash\n\n";
+	print $global_exported_sh_file "# -e: exit immediately if any command returns a non-zero exit status\n";
+	print $global_exported_sh_file "# -u: undefined variable causes the script to exit immediately\n";
+	print $global_exported_sh_file "# -o pipefail: a pipeline fails if any command in the pipeline fails\n"; # only for bash
+	print $global_exported_sh_file "set -euo pipefail\n\n";
 	print $global_exported_sh_file "#\n";
 	print $global_exported_sh_file "# script generated with $::global_program_name\n";
 	print $global_exported_sh_file "#\n";
