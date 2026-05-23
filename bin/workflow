@@ -9152,6 +9152,32 @@ $help_string
 ";
 
 		print $global_exported_sh_file $help_page;
+
+		my $option_processor
+		    = '
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+' . $help_string . '
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+';
+		print $global_exported_sh_file $option_processor;
 	    }
 	}
 
@@ -9230,19 +9256,21 @@ $help_string
     {
 	if ($option_export_verbose)
 	{
-	    print $global_exported_sh_file "echo '$export_sh_command'\n";
+	    print $global_exported_sh_file "[[ \${RUN_VERBOSE:-0} == 1 ]] && echo '$export_sh_command'\n";
 	}
+
+	#t this does not work with RUN_DRY_RUN processing
 
 	if (exists $export_sh->{prefix})
 	{
 	    print $global_exported_sh_file $export_sh->{prefix};
 	}
 
-	print $global_exported_sh_file "$export_sh_command\n";
+	print $global_exported_sh_file "[[ -z \"\${RUN_DRY_RUN:-}\" ]]  && $export_sh_command\n";
     }
     else
     {
-	print $global_exported_sh_file "$export_sh_command\n";
+	print $global_exported_sh_file "[[ -z \"\${RUN_DRY_RUN:-}\" ]]  && $export_sh_command\n";
     }
 
     return { console_output => $console_output, exit_status => $exit_status };
