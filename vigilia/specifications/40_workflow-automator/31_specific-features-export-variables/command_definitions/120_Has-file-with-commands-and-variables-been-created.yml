@@ -2,8 +2,14 @@
 command: cat ./features-export-variables.sh
 command_tests:
   - description: Has the file with the commands and variables been created?
-    read: |
-      #!/bin/sh
+    read: |2
+      #!/bin/bash
+      
+      # -e: exit immediately if any command returns a non-zero exit status
+      # -u: undefined variable causes the script to exit immediately
+      # -o pipefail: a pipeline fails if any command in the pipeline fails
+      set -euo pipefail
+      
       #
       # script generated with feature-testing-workflow
       #
@@ -11,6 +17,46 @@ command_tests:
       #
       # /home/neurospaces/bin/feature-testing-workflow features export_variables --export-sh
       #
+      
+      while [[ ${1-} != "" ]]; do
+        case "$1" in
+          -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+          -h|--help)
+            cat <<EOF
+      Usage: $(basename "$0") [-h|--help]
+      
+      
+      
+      Options:
+        -d, --dry-run Do not run commands but show them if verbose is set.
+        -h, --help    Show this help
+        -v, --verbose Run in verbose mode (display commands as they are executed)
+      EOF
+            exit 0
+            ;;
+          -v|--verbose) RUN_VERBOSE=1; shift ;;
+          *) echo "Unknown argument: $1"; exit 2 ;;
+        esac
+      done
+      
+      
+      # running mode defaults
+      RUN_VERBOSE=0
+      RUN_DRY_RUN=0
+      
+      
+      # run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+      # Usage: do_run_command command arg1 arg2 ...
+      do_run_command() {
+          if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+              echo "$@"
+          fi
+      
+          if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+              "$@"
+          fi
+      }
+      
       # --export-role is not set, exporting all roles without a remote policy prefix
       #
       #
@@ -29,9 +75,9 @@ command_tests:
       # end export_sh_variables
       #
       
-      cd $HOME_DIRECTORY
-      echo /some/directory
-      echo $A_USED_VARIABLE
-      echo SERVER_PASSWORD: $SERVER_PASSWORD
+      do_run_command cd $HOME_DIRECTORY
+      do_run_command echo /some/directory
+      do_run_command echo $A_USED_VARIABLE
+      do_run_command echo SERVER_PASSWORD: $SERVER_PASSWORD
     white_space: convert seen 0a to 0d 0a newlines
 description: Has the file with the commands and variables been created?
