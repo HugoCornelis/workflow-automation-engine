@@ -205,62 +205,62 @@ my $global_console_window_configuration
 						  "suffix" => 'Complete',
 						  "total" => -1,
 						 },
-			  "length" => 120,
+			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			  "line_number" => 0,
 			  "prompt" => "   Progress: ",
 			 },
        "message_module" => {
 			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			    "length" => 120,
+			    "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			    "line_number" => 2,
 			    "prompt" => "     Module: ",
 			   },
        "message_harnessing" => {
 				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-				"length" => 120,
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
 				"line_number" => 3,
 				"prompt" => "    Harness: ",
 			       },
        "message_command" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => 120,
+			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			     "line_number" => 4,
 			     "prompt" => "    Command: ",
 			    },
        "message_test" => {
 			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => 120,
+			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			  "line_number" => 5,
 			  "prompt" => "       Test: ",
 			 },
        "message_details" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => 120,
+			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			     "line_number" => 6,
 			     "prompt" => "    Details: ",
 			    },
        "message_info" => {
 			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => 120,
+			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			  "line_number" => 8,
 			  "prompt" => "Information: ",
 			 },
        "message_warning" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => 120,
+			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			     "line_number" => 10,
 			     "prompt" => "    Warning: ",
 			    },
        "message_error" => {
 			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			   "length" => 120,
+			   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			   "line_number" => 11,
 			   "prompt" => " Last Error: ",
 			  },
        "end" => {
 		 "enabled" => "yes",
 		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => 120,
+		 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 		 "line_number" => 12,
 		 "prompt" => "   Finished: ",
 		},
@@ -278,32 +278,32 @@ my $global_console_window_library_configuration
 						  "suffix" => 'Complete',
 						  "total" => -1,
 						 },
-			  "length" => 120,
+			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			  "line_number" => 0,
 			  "prompt" => "   Progress: ",
 			 },
        "message_info" => {
 			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => 120,
+			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			  "line_number" => 1,
 			  "prompt" => "Information: ",
 			 },
        "message_warning" => {
 			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => 120,
+			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			     "line_number" => 2,
 			     "prompt" => "    Warning: ",
 			    },
        "message_error" => {
 			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			   "length" => 120,
+			   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 			   "line_number" => 3,
 			   "prompt" => "      Error: ",
 			  },
        "end" => {
 		 "enabled" => "yes",
 		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => 120,
+		 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
 		 "line_number" => 4,
 		 "prompt" => "   Finished: ",
 		},
@@ -11998,6 +11998,43 @@ sub _differences_report
 }
 
 
+sub _get_terminal_width
+{
+    # prefer the use of Term::ReadKey
+
+    eval
+    {
+        require Term::ReadKey;
+        Term::ReadKey->import(qw(GetTerminalSize));
+
+        my $width = GetTerminalSize(*STDOUT);
+        return $width if defined $width && $width > 0;
+    };
+
+    # try regular stty
+
+    my $width = `stty size 2>/dev/null`;
+
+    if ($width =~ /^\s*\d+\s+(\d+)\s*$/)
+    {
+        return $1;
+    }
+
+    # try environment COLUMNS
+
+    if ($ENV{COLUMNS} && $ENV{COLUMNS} =~ /^\d+$/)
+    {
+        return $ENV{COLUMNS};
+    }
+
+    # nothing sensible is available, use a sensible default
+
+    my $default = 120;
+
+    return $default;
+}
+
+
 sub _global_error_add
 {
     my $error_report = shift;
@@ -12251,9 +12288,11 @@ sub note
 
     my $arguments = shift;
 
-    my $length = $line_options->{length};
+    my $length = $line_options->{length} - length($line_options->{prompt});;
 
     my $message = $arguments->{message};
+
+    $message =~ s(\n)( )g;
 
     if (length $message > $length)
     {
@@ -12397,7 +12436,11 @@ sub progress
 
     my $length = $line_options->{length};
 
-    my $without_bar = "$prefix||  $suffix";
+    my $prompt = $line_options->{prompt};
+
+    my $without_bar = "$prompt$prefix||  $suffix";
+
+    # the length of the message without the progress bar itself
 
     my $without_bar_length = length($without_bar);
 
@@ -12417,6 +12460,8 @@ sub progress
         my $bar_cursor = $global_spinner->[$iteration % ($global_scalar_spinner)];
 
         my $bar_suffix = '-';
+
+	# the bar prefix is the part that comes before the cursor
 
 	my $bar_prefix_length = $iteration;
 
