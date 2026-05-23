@@ -9299,18 +9299,12 @@ do_run_command() {
 	    {
 		my $annotation = $options->{annotation};
 
-		print $global_exported_sh_file "\n# '$annotation'\n#";
+		print $global_exported_sh_file "\n# '$annotation'\n#\n";
 
-		print $global_exported_sh_file "\necho -e '\n--- $annotation'\n";
 		print $global_exported_sh_file "echo -e '-------'\n";
+		print $global_exported_sh_file "echo -e '--- $annotation'\n";
 	    }
-
-	    print $global_exported_sh_file "[[ \${RUN_VERBOSE:-0} == 1 ]] && echo '$export_sh_command'\n";
-
-	    # use Data::Dumper; print Dumper ( { scheduled_command => $scheduled_command, } ) ;
 	}
-
-	#t this does not work with RUN_DRY_RUN processing
 
 	if (exists $export_sh->{prefix})
 	{
