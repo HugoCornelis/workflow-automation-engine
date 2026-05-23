@@ -1,51 +1,24 @@
 $files = {
            '_<./bin/vigilia' => [
                                   {
-                                    'fname' => './bin/vigilia',
-                                    'line' => '1887',
-                                    'expr' => undef,
+                                    'line' => '12408',
                                     'type' => 'user',
                                     'value' => '1',
-                                    'text' => '    if ($@)
-'
-                                  },
-                                  {
-                                    'type' => 'user',
-                                    'text' => '    my $option_result = GetOptionsFromArray($arguments, %$options);
-',
-                                    'fname' => './bin/vigilia',
-                                    'line' => 352,
                                     'expr' => undef,
-                                    'value' => '1'
-                                  },
-                                  {
-                                    'expr' => undef,
-                                    'fname' => './bin/vigilia',
-                                    'line' => 3811,
-                                    'text' => '    $self->after_testing($execution_context, $test_result);
+                                    'text' => '    if (!defined $iteration)
 ',
-                                    'value' => '1',
-                                    'type' => 'user'
-                                  },
-                                  {
-                                    'expr' => undef,
-                                    'fname' => './bin/vigilia',
-                                    'line' => 1663,
-                                    'text' => '    foreach my $module_definition (@$module_definitions)
-',
-                                    'value' => '1',
-                                    'type' => 'user'
+                                    'fname' => './bin/vigilia'
                                   }
                                 ]
          };
 $expr_list = [
                {
-                 'expr' => '$error',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$error'
                },
                {
-                 'expr' => '$test_result',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$test_result'
                }
              ];
 $eval_saved_text = undef;
