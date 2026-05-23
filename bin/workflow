@@ -9393,10 +9393,19 @@ sub _execute_option_export_sh_variables_export
     print $exported_sh_file "#\n";
     print $exported_sh_file "\n";
 
+    my $done_variables = {};
+
     foreach my $export_sh_variable_hash (@$export_sh_variables)
     {
 	foreach my $export_sh_variable_name (sort keys %$export_sh_variable_hash)
 	{
+	    if (exists $done_variables->{$export_sh_variable_name})
+	    {
+		next;
+	    }
+
+	    $done_variables->{$export_sh_variable_name} = 'done';
+
 	    my ($export_sh_variable_value, $export_sh_variable_description)
 		= _export_sh_variable_get_value($export_sh_variable_hash, $export_sh_variable_name);
 
