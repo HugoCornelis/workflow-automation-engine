@@ -108,7 +108,13 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 				command_tests => [
 						  {
 						   description => "What is the contents of the generated output file after using the --export-sh option?",
-						   read => '#!/bin/sh
+						   read => '#!/bin/bash
+
+# -e: exit immediately if any command returns a non-zero exit status
+# -u: undefined variable causes the script to exit immediately
+# -o pipefail: a pipeline fails if any command in the pipeline fails
+set -euo pipefail
+
 #
 # script generated with feature-testing-workflow
 #
@@ -116,21 +122,61 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh
 #
+
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
 # --export-role is not set, exporting all roles without a remote policy prefix
 #
 #
 # no variables of export_sh_variables have been selected for export
 #
 
-pwd
-cd /bin
-pwd
-pwd
-cd /bin
-pwd
-pwd
-cd /bin
-pwd
+do_run_command pwd
+do_run_command cd /bin
+do_run_command pwd
+do_run_command pwd
+do_run_command cd /bin
+do_run_command pwd
+do_run_command pwd
+do_run_command cd /bin
+do_run_command pwd
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -162,7 +208,13 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 				command_tests => [
 						  {
 						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 0 (all roles)?",
-						   read => '#!/bin/sh
+						   read => '#!/bin/bash
+
+# -e: exit immediately if any command returns a non-zero exit status
+# -u: undefined variable causes the script to exit immediately
+# -o pipefail: a pipeline fails if any command in the pipeline fails
+set -euo pipefail
+
 #
 # script generated with feature-testing-workflow
 #
@@ -170,21 +222,61 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'tmux send-
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 0
 #
+
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
 # --export-role is 0, exporting all roles with the appriopriate remote policy prefix
 #
 #
 # no variables of export_sh_variables have been selected for export
 #
 
-pwd
-cd /bin
-pwd
-sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd
-sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
-sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'
-tmux send-keys -t cd    \'pwd\' ENTER
-tmux send-keys -t cd    \'cd /bin\' ENTER
-tmux send-keys -t cd    \'pwd\' ENTER
+do_run_command pwd
+do_run_command cd /bin
+do_run_command pwd
+do_run_command sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd
+do_run_command sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
+do_run_command sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    \'cd /bin && pwd\'
+do_run_command tmux send-keys -t cd    \'pwd\' ENTER
+do_run_command tmux send-keys -t cd    \'cd /bin\' ENTER
+do_run_command tmux send-keys -t cd    \'pwd\' ENTER
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -216,7 +308,13 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 				command_tests => [
 						  {
 						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 1?",
-						   read => '#!/bin/sh
+						   read => '#!/bin/bash
+
+# -e: exit immediately if any command returns a non-zero exit status
+# -u: undefined variable causes the script to exit immediately
+# -o pipefail: a pipeline fails if any command in the pipeline fails
+set -euo pipefail
+
 #
 # script generated with feature-testing-workflow
 #
@@ -224,21 +322,61 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 1
 #
+
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
 # --export-role is 1, role: localuser@localhost
 #
 #
 # no variables of export_sh_variables have been selected for export
 #
 
-pwd
-cd /bin
-pwd
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
-# <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
-# <remote command at tmux send-keys -t cd : \'cd /bin\' ENTER>
-# <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
+do_run_command pwd
+do_run_command cd /bin
+do_run_command pwd
+do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
+do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
+do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
+do_run_command # <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
+do_run_command # <remote command at tmux send-keys -t cd : \'cd /bin\' ENTER>
+do_run_command # <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -270,7 +408,13 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 				command_tests => [
 						  {
 						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 2?",
-						   read => '#!/bin/sh
+						   read => '#!/bin/bash
+
+# -e: exit immediately if any command returns a non-zero exit status
+# -u: undefined variable causes the script to exit immediately
+# -o pipefail: a pipeline fails if any command in the pipeline fails
+set -euo pipefail
+
 #
 # script generated with feature-testing-workflow
 #
@@ -278,21 +422,61 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'# <remote 
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 2
 #
+
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
 # --export-role is 2, role: root@ssh_cd
 #
 #
 # no variables of export_sh_variables have been selected for export
 #
 
-# <local command: pwd>
-# <local command: cd /bin>
-# <local command: pwd>
-pwd
-cd /bin
-cd /bin && pwd
-# <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
-# <remote command at tmux send-keys -t cd : \'cd /bin\' ENTER>
-# <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
+do_run_command # <local command: pwd>
+do_run_command # <local command: cd /bin>
+do_run_command # <local command: pwd>
+do_run_command pwd
+do_run_command cd /bin
+do_run_command cd /bin && pwd
+do_run_command # <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
+do_run_command # <remote command at tmux send-keys -t cd : \'cd /bin\' ENTER>
+do_run_command # <remote command at tmux send-keys -t cd : \'pwd\' ENTER>
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -324,7 +508,13 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 				command_tests => [
 						  {
 						   description => "What is the contents of the generated output file after using the --export-sh option, --export-role 3?",
-						   read => '#!/bin/sh
+						   read => '#!/bin/bash
+
+# -e: exit immediately if any command returns a non-zero exit status
+# -u: undefined variable causes the script to exit immediately
+# -o pipefail: a pipeline fails if any command in the pipeline fails
+set -euo pipefail
+
 #
 # script generated with feature-testing-workflow
 #
@@ -332,21 +522,61 @@ feature-testing-workflow: *** Running in export_sh mode, exporting: \'pwd\'
 #
 # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 3
 #
+
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
 # --export-role is 3, role: tmux_cd
 #
 #
 # no variables of export_sh_variables have been selected for export
 #
 
-# <local command: pwd>
-# <local command: cd /bin>
-# <local command: pwd>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
-# <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
-pwd
-cd /bin
-pwd
+do_run_command # <local command: pwd>
+do_run_command # <local command: cd /bin>
+do_run_command # <local command: pwd>
+do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
+do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
+do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : \'cd /bin && pwd\'>
+do_run_command pwd
+do_run_command cd /bin
+do_run_command pwd
 ',
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },

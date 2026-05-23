@@ -9092,7 +9092,11 @@ sub execute_scheduled_command_option_export_sh
 	    die "*** Error: $global_program_name: cannot open $global_exported_sh_filename for writing ($!)";
 	}
 
-	print $global_exported_sh_file "#!/bin/sh\n";
+	print $global_exported_sh_file "#!/bin/bash\n\n";
+	print $global_exported_sh_file "# -e: exit immediately if any command returns a non-zero exit status\n";
+	print $global_exported_sh_file "# -u: undefined variable causes the script to exit immediately\n";
+	print $global_exported_sh_file "# -o pipefail: a pipeline fails if any command in the pipeline fails\n"; # only for bash
+	print $global_exported_sh_file "set -euo pipefail\n\n";
 	print $global_exported_sh_file "#\n";
 	print $global_exported_sh_file "# script generated with $::global_program_name\n";
 	print $global_exported_sh_file "#\n";
@@ -9100,6 +9104,9 @@ sub execute_scheduled_command_option_export_sh
 	print $global_exported_sh_file "#\n";
 	print $global_exported_sh_file "# $global_command_line\n";
 	print $global_exported_sh_file "#\n";
+
+	my $help_page;
+	my $help_string;
 
 	if ($option_export_help_page)
 	{
@@ -9111,22 +9118,23 @@ sub execute_scheduled_command_option_export_sh
 
 	    my $help_sub = "Command::${target}_${operation}_help";
 
-	    my $help_string
+	    $help_string
 		= eval {
 
 		    no strict "refs";
 
 		    local $SIG{'__DIE__'};
 
-		    &$help_sub("${target}_${operation}");
+		    &$help_sub("${target}_${operation}", [ split '\s+', $global_command_line, ]);
 		};
 
 	    if ($@)
 	    {
 		# there is no help available, that is ok
 
-		my $help_page = "#
+		$help_page = "#
 # '$shell_command $target $operation --help' is not implemented.
+# '$help_sub(\"${target}_${operation}\")' is missing ($@).
 #
 #
 ";
@@ -9135,10 +9143,11 @@ sub execute_scheduled_command_option_export_sh
 	    }
 	    else
 	    {
+		$help_string =~ s(`)(')gs;
 		$help_string = "#    $help_string";
 		$help_string =~ s(\n)(\n#    )gs;
 
-		my $help_page = "#
+		$help_page = "#
 # $shell_command $target $operation --help
 #
 $help_string
@@ -9147,6 +9156,66 @@ $help_string
 
 		print $global_exported_sh_file $help_page;
 	    }
+	}
+
+	{
+	    my $option_processor
+		    = '
+while [[ ${1-} != "" ]]; do
+  case "$1" in
+    -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+    -h|--help)
+      cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+' . $help_string . '
+
+Options:
+  -d, --dry-run Do not run commands but show them if verbose is set.
+  -h, --help    Show this help
+  -v, --verbose Run in verbose mode (display commands as they are executed)
+EOF
+      exit 0
+      ;;
+    -v|--verbose) RUN_VERBOSE=1; shift ;;
+    *) echo "Unknown argument: $1"; exit 2 ;;
+  esac
+done
+
+';
+	    print $global_exported_sh_file $option_processor;
+	}
+
+	{
+	    my $running_modes
+		= '
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+';
+
+	    print $global_exported_sh_file $running_modes;
+	}
+
+	{
+	    my $command_runner
+		= '
+# run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+# Usage: do_run_command command arg1 arg2 ...
+do_run_command() {
+    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+        echo "$@"
+    fi
+
+    if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+        "$@"
+    fi
+}
+
+';
+
+		print $global_exported_sh_file $command_runner;
 	}
 
 	if (not defined $option_export_role)
@@ -9224,7 +9293,17 @@ $help_string
     {
 	if ($option_export_verbose)
 	{
-	    print $global_exported_sh_file "echo '$export_sh_command'\n";
+	    my $options = $scheduled_command->{options};
+
+	    if (exists $options->{annotation})
+	    {
+		my $annotation = $options->{annotation};
+
+		print $global_exported_sh_file "\n# '$annotation'\n#\n";
+
+		print $global_exported_sh_file "echo -e '-------'\n";
+		print $global_exported_sh_file "echo -e '--- $annotation'\n";
+	    }
 	}
 
 	if (exists $export_sh->{prefix})
@@ -9232,11 +9311,11 @@ $help_string
 	    print $global_exported_sh_file $export_sh->{prefix};
 	}
 
-	print $global_exported_sh_file "$export_sh_command\n";
+	print $global_exported_sh_file "do_run_command $export_sh_command\n";
     }
     else
     {
-	print $global_exported_sh_file "$export_sh_command\n";
+	print $global_exported_sh_file "do_run_command $export_sh_command\n";
     }
 
     return { console_output => $console_output, exit_status => $exit_status };
@@ -9345,10 +9424,19 @@ sub _execute_option_export_sh_variables_export
     print $exported_sh_file "#\n";
     print $exported_sh_file "\n";
 
+    my $done_variables = {};
+
     foreach my $export_sh_variable_hash (@$export_sh_variables)
     {
 	foreach my $export_sh_variable_name (sort keys %$export_sh_variable_hash)
 	{
+	    if (exists $done_variables->{$export_sh_variable_name})
+	    {
+		next;
+	    }
+
+	    $done_variables->{$export_sh_variable_name} = 'done';
+
 	    my ($export_sh_variable_value, $export_sh_variable_description)
 		= _export_sh_variable_get_value($export_sh_variable_hash, $export_sh_variable_name);
 
