@@ -2,41 +2,41 @@
 command: workflow builtin grep_code examples '.*'
 command_tests:
   - description: Can we grep a string in the code across workflow projects?
-    read: |
+    read: |2
       /home/neurospaces/new-project/abcd-commands-perl_examples:24:sub perl_examples_single_command
       /home/neurospaces/new-project/abcd-commands-perl_examples:24:sub perl_examples_single_command
-      /home/neurospaces/new-project/abcd-commands-perl_examples:56:sub perl_examples_single_command_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:56:sub perl_examples_single_command_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:56:sub perl_examples_single_command_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:67:	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
-      /home/neurospaces/new-project/abcd-commands-perl_examples:107:sub perl_examples_single_command_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:107:sub perl_examples_single_command_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:122:sub perl_examples_array_of_commands
-      /home/neurospaces/new-project/abcd-commands-perl_examples:122:sub perl_examples_array_of_commands
-      /home/neurospaces/new-project/abcd-commands-perl_examples:138:sub perl_examples_array_of_commands_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:138:sub perl_examples_array_of_commands_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:169:sub perl_examples_array_of_commands_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:169:sub perl_examples_array_of_commands_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:184:sub perl_examples_array_of_commands_remote_execution
-      /home/neurospaces/new-project/abcd-commands-perl_examples:184:sub perl_examples_array_of_commands_remote_execution
-      /home/neurospaces/new-project/abcd-commands-perl_examples:226:sub perl_examples_array_of_commands_remote_execution_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:226:sub perl_examples_array_of_commands_remote_execution_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:257:sub perl_examples_array_of_commands_remote_execution_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:257:sub perl_examples_array_of_commands_remote_execution_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:272:sub perl_examples_sequencing_and_composition
-      /home/neurospaces/new-project/abcd-commands-perl_examples:272:sub perl_examples_sequencing_and_composition
-      /home/neurospaces/new-project/abcd-commands-perl_examples:272:sub perl_examples_sequencing_and_composition
-      /home/neurospaces/new-project/abcd-commands-perl_examples:280:	   'echo this examples composes other examples into one sequence of commands',
-      /home/neurospaces/new-project/abcd-commands-perl_examples:272:sub perl_examples_sequencing_and_composition
-      /home/neurospaces/new-project/abcd-commands-perl_examples:285:    perl_examples_single_command();
-      /home/neurospaces/new-project/abcd-commands-perl_examples:272:sub perl_examples_sequencing_and_composition
-      /home/neurospaces/new-project/abcd-commands-perl_examples:286:    perl_examples_array_of_commands();
-      /home/neurospaces/new-project/abcd-commands-perl_examples:290:sub perl_examples_sequencing_and_composition_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:290:sub perl_examples_sequencing_and_composition_completions
-      /home/neurospaces/new-project/abcd-commands-perl_examples:321:sub perl_examples_sequencing_and_composition_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:321:sub perl_examples_sequencing_and_composition_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:321:sub perl_examples_sequencing_and_composition_help
-      /home/neurospaces/new-project/abcd-commands-perl_examples:325:    return "$command: an example that composes other examples into one sequence of commands.
+      /home/neurospaces/new-project/abcd-commands-perl_examples:57:sub perl_examples_single_command_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:57:sub perl_examples_single_command_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:57:sub perl_examples_single_command_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:68:	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
+      /home/neurospaces/new-project/abcd-commands-perl_examples:108:sub perl_examples_single_command_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:108:sub perl_examples_single_command_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:123:sub perl_examples_array_of_commands
+      /home/neurospaces/new-project/abcd-commands-perl_examples:123:sub perl_examples_array_of_commands
+      /home/neurospaces/new-project/abcd-commands-perl_examples:139:sub perl_examples_array_of_commands_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:139:sub perl_examples_array_of_commands_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:170:sub perl_examples_array_of_commands_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:170:sub perl_examples_array_of_commands_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:185:sub perl_examples_array_of_commands_remote_execution
+      /home/neurospaces/new-project/abcd-commands-perl_examples:185:sub perl_examples_array_of_commands_remote_execution
+      /home/neurospaces/new-project/abcd-commands-perl_examples:227:sub perl_examples_array_of_commands_remote_execution_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:227:sub perl_examples_array_of_commands_remote_execution_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:258:sub perl_examples_array_of_commands_remote_execution_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:258:sub perl_examples_array_of_commands_remote_execution_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:273:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:273:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:273:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:281:	   'echo this examples composes other examples into one sequence of commands',
+      /home/neurospaces/new-project/abcd-commands-perl_examples:273:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:286:    perl_examples_single_command();
+      /home/neurospaces/new-project/abcd-commands-perl_examples:273:sub perl_examples_sequencing_and_composition
+      /home/neurospaces/new-project/abcd-commands-perl_examples:287:    perl_examples_array_of_commands();
+      /home/neurospaces/new-project/abcd-commands-perl_examples:291:sub perl_examples_sequencing_and_composition_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:291:sub perl_examples_sequencing_and_composition_completions
+      /home/neurospaces/new-project/abcd-commands-perl_examples:322:sub perl_examples_sequencing_and_composition_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:322:sub perl_examples_sequencing_and_composition_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:322:sub perl_examples_sequencing_and_composition_help
+      /home/neurospaces/new-project/abcd-commands-perl_examples:326:    return "$command: an example that composes other examples into one sequence of commands.
       /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
       /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
       /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):

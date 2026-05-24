@@ -38,6 +38,8 @@ command_tests:
         - feature-testing-workflow examples_sh sh_remote_execution
         - feature-testing-workflow examples_sh sh_single_command
         - feature-testing-workflow features annotations
+        - feature-testing-workflow features background
+        - feature-testing-workflow features background_testing
         - feature-testing-workflow features cd_tests
         - feature-testing-workflow features cd_tests_ssh
         - feature-testing-workflow features cd_tests_tmux

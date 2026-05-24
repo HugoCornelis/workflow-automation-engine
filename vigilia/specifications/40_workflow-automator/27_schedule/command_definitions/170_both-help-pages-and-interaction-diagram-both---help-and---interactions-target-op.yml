@@ -13,6 +13,20 @@ command_tests:
       ---
       END WORKFLOW: features_annotations
       
+      feature-testing-workflow features background: <synopsis> and an rst or md formatted help page
+      ---
+      WORKFLOW: features_background (use --help to see the help page)
+      ---
+      END WORKFLOW: features_background
+      
+      ---
+      WORKFLOW: features_background_testing
+          'echo 'foreground command (1)''
+          'echo 'background command''
+          'echo 'foreground command (2)''
+      ---
+      END WORKFLOW: features_background_testing
+      
       feature-testing-workflow features cd_tests: Test the 'cd' features.
       
       SYNOPSIS: features cd_tests
