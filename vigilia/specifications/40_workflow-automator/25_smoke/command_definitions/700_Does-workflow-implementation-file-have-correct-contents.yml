@@ -16,6 +16,7 @@ command_tests:
           # Some options to command execution:
           #   allow_fail: allow execution of this command to fail.
           #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
+          #   background: run the command in the background with 'setsid  >/dev/null 2>&1 ... &'
           #   dry_run: do not execute this command.
           #   role: a role that is defined in workflow-tests-configuration.
           #   quiet: do not provide feedback to the terminal about this command.

@@ -7,6 +7,7 @@ command_tests:
         - abcd-commands-build
         - abcd-commands-docker_testing.py
         - abcd-commands-features
+        - abcd-commands-features-background.py
         - abcd-commands-more_python.py
         - abcd-commands-perl_examples
         - abcd-commands-python.py

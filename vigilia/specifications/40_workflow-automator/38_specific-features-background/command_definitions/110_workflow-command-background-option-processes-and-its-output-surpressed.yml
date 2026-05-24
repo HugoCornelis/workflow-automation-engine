@@ -1,0 +1,15 @@
+---
+command: feature-testing-workflow features background_testing
+command_tests:
+  - description: Is the workflow command background option processes and is its output surpressed?
+    read: |
+      # echo 'foreground command (1)'
+      #
+      foreground command (1)
+      # setsid >/dev/null 2>&1 echo 'background command' &
+      #
+      # echo 'foreground command (2)'
+      #
+      foreground command (2)
+    white_space: convert seen 0a to 0d 0a newlines
+description: Is the workflow command background option processes and is its output surpressed?
