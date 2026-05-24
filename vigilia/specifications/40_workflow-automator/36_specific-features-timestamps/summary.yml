@@ -9,7 +9,7 @@ documentation:
   purpose: This module tests the timestamp features of the workflow engine.
 harnessing:
   class:
-    comment: Enter this container with "docker exec -it workflow_feature_testing_container bash", note that it has a fixed ip address of 172.18.0.22 as assumed by the test scripts
+    comment: Enter this container with "docker exec -it workflow_feature_testing_container bash"
     description: |+2
       This class instantiates a docker image based on the given docker file, then runs a container based on that image.
       
