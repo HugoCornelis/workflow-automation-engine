@@ -1,0 +1,12 @@
+---
+command: ./features-export-sh.sh --verbose
+command_tests:
+  - description: Does the generated script implement the --verbose option?
+    read: |
+      + pwd
+      /home/neurospaces
+      + cd /bin
+      + pwd
+      /bin
+    white_space: convert seen 0a to 0d 0a newlines
+description: Does the generated script implement the --verbose option?

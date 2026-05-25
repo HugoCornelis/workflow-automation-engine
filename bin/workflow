@@ -9206,6 +9206,18 @@ $help_string
 	}
 
 	{
+	    my $running_modes
+		= '
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+';
+
+	    print $global_exported_sh_file $running_modes;
+	}
+
+	{
 	    my $option_processor
 		    = '
 while [[ ${1-} != "" ]]; do
@@ -9218,7 +9230,7 @@ Usage: $(basename "$0") [-h|--help]
 ' . $help_string . '
 
 Options:
-  -d, --dry-run Do not run commands but show them if verbose is set.
+  -d, --dry-run Do not run commands but show them.
   -h, --help    Show this help
   -v, --verbose Run in verbose mode (display commands as they are executed)
 EOF
@@ -9234,25 +9246,16 @@ done
 	}
 
 	{
-	    my $running_modes
-		= '
-# running mode defaults
-RUN_VERBOSE=0
-RUN_DRY_RUN=0
-
-';
-
-	    print $global_exported_sh_file $running_modes;
-	}
-
-	{
 	    my $command_runner
 		= '
 # run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
 # Usage: do_run_command command arg1 arg2 ...
 do_run_command() {
-    if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
-        echo "$@"
+    if [[ ${RUN_VERBOSE:-0} == 1 || ${RUN_DRY_RUN:-0} == 1 ]]; then
+        printf \'+\'
+        printf \' %q\' "$@"
+        printf \'\n\'
+        # echo "$@"
     fi
 
     if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
@@ -9362,7 +9365,7 @@ do_run_command() {
     }
     else
     {
-	print $global_exported_sh_file "do_run_command $export_sh_command\n";
+	print $global_exported_sh_file "# do_run_command $export_sh_command\n";
     }
 
     return { console_output => $console_output, exit_status => $exit_status };

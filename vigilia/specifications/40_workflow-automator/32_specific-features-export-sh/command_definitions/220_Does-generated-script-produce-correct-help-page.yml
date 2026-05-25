@@ -1,0 +1,15 @@
+---
+command: ./features-export-sh.sh --help
+command_tests:
+  - description: Does the generated script produce a correct help page?
+    read: |
+      Usage: features-export-sh.sh [-h|--help]
+      
+      
+      
+      Options:
+        -d, --dry-run Do not run commands but show them.
+        -h, --help    Show this help
+        -v, --verbose Run in verbose mode (display commands as they are executed)
+    white_space: convert seen 0a to 0d 0a newlines
+description: Does the generated script produce a correct help page?

@@ -1,8 +1,8 @@
 ---
-command: cat ./features-export-variables.sh
+command: cat features-export-sh.sh
 command_tests:
-  - description: Has the file with the commands and variables been created?
-    read: |2
+  - description: 'What is the contents of the generated output file after using the --export-sh option, --export-role 3?'
+    read: |
       #!/bin/bash
       
       # -e: exit immediately if any command returns a non-zero exit status
@@ -15,7 +15,7 @@ command_tests:
       #
       # the command line used to generate this script was:
       #
-      # /home/neurospaces/bin/feature-testing-workflow features export_variables --export-sh
+      # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 3
       #
       
       # running mode defaults
@@ -60,27 +60,20 @@ command_tests:
           fi
       }
       
-      # --export-role is not set, exporting all roles without a remote policy prefix
+      # --export-role is 3, role: tmux_cd
       #
       #
-      # begin export_sh_variables
-      #
-      
-      A_USED_VARIABLE=${A_USED_VARIABLE:=with an unused value}
-      #
-      # HOME_DIRECTORY: Your home directory
-      HOME_DIRECTORY=${HOME_DIRECTORY:=/home/neurospaces}
-      #
-      # SERVER_PASSWORD: Variables that have 'password' in their name, may be exported but their value is never exported.  This allows exported scripts to log into remote machines without exposing the credentials to do so.
-      SERVER_PASSWORD=${SERVER_PASSWORD:=}
-      
-      #
-      # end export_sh_variables
+      # no variables of export_sh_variables have been selected for export
       #
       
-      do_run_command cd $HOME_DIRECTORY
-      do_run_command echo /some/directory
-      do_run_command echo $A_USED_VARIABLE
-      do_run_command echo SERVER_PASSWORD: $SERVER_PASSWORD
+      # do_run_command # <local command: pwd>
+      # do_run_command # <local command: cd /bin>
+      # do_run_command # <local command: pwd>
+      # do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : pwd>
+      # do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : cd /bin>
+      # do_run_command # <remote command at sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__ : 'cd /bin && pwd'>
+      do_run_command pwd
+      do_run_command cd /bin
+      do_run_command pwd
     white_space: convert seen 0a to 0d 0a newlines
-description: Has the file with the commands and variables been created?
+description: 'contents of the generated output file after using the --export-sh option, --export-role 3'
