@@ -140,6 +140,30 @@ sub test_perl_2_yaml
 
     $new_test_pathname =~ s(.t$)();
 
+    my $pathname_prefix = "/tmp/tests/specifications";
+
+    my $option_config_filename = './vigilia.config';
+
+    my $test_config = do $option_config_filename;
+
+    if ($@)
+    {
+	execute_shell_command("echo Reading the configuration: '$@'");
+    }
+
+    if (not exists $test_config->{tests_directory})
+    {
+	$test_config->{tests_directory} = "./vigilia/specifications";
+
+	execute_shell_command("echo Using the default $test_config->{tests_directory}  as the target directory");
+    }
+    else
+    {
+	execute_shell_command("echo Using the configured $test_config->{tests_directory}  as the target directory");
+    }
+
+    my $tests_directory = $test_config->{tests_directory};
+
     my $conversion_commands
 	= [
 	   "vigilia --regex $old_test_pathname --dump-file-structured-$format",
@@ -162,16 +186,6 @@ sub test_perl_2_yaml
 
     if ($replace)
     {
-	my $option_config_filename = './tests.config';
-	my $test_config = do $option_config_filename;
-
-	if (not exists $test_config->{tests_directory})
-	{
-	    $test_config->{tests_directory} = "./tests/specifications";
-	}
-
-	my $tests_directory = $test_config->{tests_directory};
-
 	my $replace_commands
 	    = [
 	       "rm -fr $tests_directory/$old_test_pathname*",
