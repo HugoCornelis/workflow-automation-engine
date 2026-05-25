@@ -25,4 +25,4 @@ harnessing:
       name_image: workflow_feature_testing_image
     identifier: docker_harness_feature_testing
     type: Heterarch::Test::ExecutionContext::Harness::Docker
-name: ./vigilia/specifications/40_workflow-automator/32_specific-features-export-sh/summary.yml
+name: 40_workflow-automator/32_specific-features-export-sh/summary.yml
