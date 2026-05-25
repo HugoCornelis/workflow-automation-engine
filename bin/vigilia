@@ -7,11 +7,13 @@ use strict;
 my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
+use IPC::Open3;
+use IO::Select;
 
 use Neurospaces::Tester;
 
 use POSIX qw( strftime );
-
+use Symbol qw(gensym);
 use YAML;
 
 
@@ -1892,6 +1894,71 @@ sub harness_command_run_tests
 }
 
 
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"report-summaries"}
+    = {
+       description => "Report the summary filenames of the previously generated vigilia report.",
+       executor => "main::harness_command_report_summaries",
+       help => {
+		synopsis => "$0 report-summaries <options> [ <module-name> [ <command-name> ] ]",
+		usage => "Options:
+    --help             Show this help message.
+",
+	       },
+       options => {
+		   "help!" => do { my $option_help; \$option_help; },
+		  },
+      };
+
+sub harness_command_report_summaries
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift;
+
+    my $reporter = shift;
+
+    my $result
+	= execute_internal_command
+	  (
+	   [
+	    "find",
+	    $global_config->{reporting_directory},
+	    "-iname",
+	    "000_summary.yml",
+	   ],
+	   {
+	    merge_stderr => 1,
+	   }
+	  );
+
+    my $output = $result->{stdout};
+
+    my $exit_code = 0;
+
+    my $error;
+
+    if ($? ne 0)
+    {
+	$error = \ "Error: failed to find any report summaries";
+
+	$exit_code = 1;
+    }
+
+    my $lines
+	= [
+	   map { "$_\n" }
+	   sort
+	   split /\R/, $output
+	  ];
+
+    print join('', @$lines);
+
+    return $error;
+}
+
+
 sub application_initialize_configuration_and_environment
 {
     my $command_line_configuration = shift;
@@ -1909,6 +1976,124 @@ sub application_initialize_configuration_and_environment
     # initialize_signal_handlers() is called in the command executor
     # because the signal handlers assume that some of the global
     # variables have been initialized (the $reporter ao.).
+}
+
+
+sub execute_internal_command
+{
+    my $command = shift;
+
+    my $options = shift;
+
+    $options //= {};
+
+    die "execute_internal_command(): command must be an array reference\n"
+        unless ref($command) eq 'ARRAY';
+
+    die "execute_internal_command(): command may not be empty\n"
+        unless @$command;
+
+    my $allow_fail_silent = $options->{allow_fail_silent};
+    my $merge_stderr      = $options->{merge_stderr} // 0;
+    my $print_output      = $options->{print_output} // 0;
+
+    my $stdin;
+
+    my $stdout;
+
+    my $stderr = gensym;
+
+    my $pid = eval
+    {
+        open3($stdin, $stdout, $stderr, @$command);
+    };
+
+    die "execute_internal_command(): failed to start command: $!\n"
+        if $@;
+
+    close $stdin;
+
+    my $selector = IO::Select->new();
+
+    $selector->add($stdout);
+
+    $selector->add($stderr) unless $merge_stderr;
+
+    my $stdout_text = '';
+    my $stderr_text = '';
+
+    if ($merge_stderr)
+    {
+        $selector->add($stdout);
+
+	$selector->add($stderr);
+    }
+
+    while (my @ready = $selector->can_read())
+    {
+        foreach my $fh (@ready)
+        {
+            my $line = <$fh>;
+
+            if (!defined $line)
+            {
+                $selector->remove($fh);
+
+                close $fh;
+
+		next;
+            }
+
+            if ($fh == $stdout)
+            {
+                $stdout_text .= $line;
+            }
+            else
+            {
+                if ($merge_stderr)
+                {
+                    $stdout_text .= $line;
+                }
+                else
+                {
+                    $stderr_text .= $line;
+                }
+            }
+
+            print $line if $print_output;
+        }
+    }
+
+    waitpid($pid, 0);
+
+    my $raw_status = $?;
+
+    my $exit_code = $raw_status >> 8;
+
+    my $signal = $raw_status & 127;
+
+    if ($signal)
+    {
+        die "execute_internal_command(): command killed by signal $signal: @$command\n"
+            unless $allow_fail_silent;
+    }
+
+    if ($exit_code != 0 && !$allow_fail_silent)
+    {
+        die join '',
+            "execute_internal_command(): command failed with exit code $exit_code\n",
+            "Command: @$command\n",
+            ($stderr_text ne '' ? "stderr:\n$stderr_text" : '');
+    }
+
+    return {
+        command => $command,
+        exit_code => $exit_code,
+        signal => $signal,
+        stdout => $stdout_text,
+        stderr => $stderr_text,
+        success => ($exit_code == 0 && !$signal) ? 1 : 0,
+    };
 }
 
 
@@ -8570,7 +8755,7 @@ sub md_run
 
     $global_test_report->{global}->{test_counters}->{current}->{module_definition}++;
 
-    # return result: execution completed
+    # return result: execution completed, note that errors are directed through the reporter
 
     return '';
 }
