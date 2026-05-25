@@ -1,0 +1,17 @@
+---
+command: bin/vigilia report-summaries --help
+command_tests:
+  - description: help page of the report-summaries command
+    read: |+2
+      
+      bin/vigilia report-summaries <options> [ <module-name> [ <command-name> ] ]
+      
+      Report the summary filenames of the previously generated vigilia report.
+      
+      Options:
+          --include-descriptions       Include the description entry of the summaries.
+          --include-executed-commands  Include the executed command entry of the summaries.
+          --short                      Same as '--include-descriptions' and '--include-executed-commands'.
+          --help                       Show this help message.
+
+description: help page of the report-summaries command
