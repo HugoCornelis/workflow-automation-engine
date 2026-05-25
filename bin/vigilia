@@ -7,11 +7,13 @@ use strict;
 my $loaded_mail_sender = eval "require Mail::Sender";
 
 use Data::Transformator;
+use IPC::Open3;
+use IO::Select;
 
 use Neurospaces::Tester;
 
 use POSIX qw( strftime );
-
+use Symbol qw(gensym);
 use YAML;
 
 
@@ -1697,12 +1699,9 @@ sub harness_command_module_update
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
-	my $error = $module_definition->md_run($execution_context, $executor);
+	# errors are directed through the reporter
 
-	if ($error)
-	{
-	    return $error;
-	}
+	my $error = $module_definition->md_run($execution_context, $executor);
     }
 
     # do final processing of the executor
@@ -1866,6 +1865,8 @@ sub harness_command_run_tests
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
+	# errors are directed through the reporter
+
 	my $error = $module_definition->md_run($execution_context, $executor);
     }
 
@@ -1893,6 +1894,167 @@ sub harness_command_run_tests
 }
 
 
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"report-summaries"}
+    = {
+       description => "Report the summary filenames of the previously generated vigilia report.",
+       executor => "main::harness_command_report_summaries",
+       help => {
+		synopsis => "$0 report-summaries <options> [ <module-name> [ <command-name> ] ]",
+		usage => "Options:
+    --include-descriptions       Include the description entry of the summaries.
+    --include-executed-commands  Include the executed command entry of the summaries.
+    --short                      Same as '--include-descriptions' and '--include-executed-commands'.
+    --help                       Show this help message.
+",
+	       },
+       options => {
+		   "include-descriptions!" => do { my $option_include_descriptions; \$option_include_descriptions; },
+		   "include-executed-commands!" => do { my $option_include_executed_commands; \$option_include_executed_commands; },
+		   "short!" => do { my $option_short; \$option_short; },
+		   "help!" => do { my $option_help; \$option_help; },
+		  },
+      };
+
+sub harness_command_report_summaries
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift;
+
+    my $reporter = shift;
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_include_descriptions = $options->{"include-descriptions!"};
+
+    my $include_descriptions;
+
+    if (defined $$option_include_descriptions)
+    {
+	$include_descriptions = $$option_include_descriptions;
+    }
+
+    my $option_include_executed_commands = $options->{"include-executed-commands!"};
+
+    my $include_executed_commands;
+
+    if (defined $$option_include_executed_commands)
+    {
+	$include_executed_commands = $$option_include_executed_commands;
+    }
+
+    my $option_short = $options->{"short!"};
+
+    my $short;
+
+    if (defined $$option_short)
+    {
+	$short = $$option_short;
+    }
+
+    if ($short)
+    {
+	$include_descriptions = 'short';
+
+	$include_executed_commands = 'short';
+    }
+
+    my $result
+	= execute_internal_command
+	  (
+	   [
+	    "find",
+	    $global_config->{reporting_directory},
+	    "-iname",
+	    "000_summary.yml",
+	   ],
+	   {
+	    merge_stderr => 1,
+	   }
+	  );
+
+    my $output = $result->{stdout};
+
+    my $exit_code = 0;
+
+    my $error;
+
+    if ($? ne 0)
+    {
+	$error = \ "Error: failed to find any report summaries";
+
+	$exit_code = 1;
+    }
+
+    my $summaries
+	= [
+	   map
+	   {
+	       { filename    => $_, }
+	   }
+	   sort
+	   split /\R/, $output
+	  ];
+
+    foreach my $summary (@$summaries)
+    {
+	my $filename = $summary->{filename};
+
+	my $yaml = eval
+	{
+	    use YAML;
+
+	    YAML::LoadFile($filename);
+	};
+
+	if ($@)
+	{
+	    warn "Could not read YAML file '$filename': $@";
+
+	    next;
+	}
+
+	if ($include_descriptions)
+	{
+	    $summary->{description} = $yaml->{path}->{'030_description'} // '';
+	}
+
+    	if ($include_executed_commands)
+	{
+	    $summary->{executed_command} = $yaml->{path}->{'050_executed_command'} // '';
+	}
+}
+
+    foreach my $summary (@$summaries)
+    {
+	my $add_newline;
+
+	foreach my $key_name (qw(filename description executed_command))
+	{
+	    if ($key_name eq 'filename')
+	    {
+		print "$summary->{$key_name}\n";
+	    }
+	    elsif (exists $summary->{$key_name})
+	    {
+		$add_newline = $key_name;
+
+		print "    $key_name: $summary->{$key_name}\n";
+	    }
+	}
+
+	if ($add_newline)
+	{
+	    print "\n";
+	}
+    }
+
+    return $error;
+}
+
+
 sub application_initialize_configuration_and_environment
 {
     my $command_line_configuration = shift;
@@ -1910,6 +2072,124 @@ sub application_initialize_configuration_and_environment
     # initialize_signal_handlers() is called in the command executor
     # because the signal handlers assume that some of the global
     # variables have been initialized (the $reporter ao.).
+}
+
+
+sub execute_internal_command
+{
+    my $command = shift;
+
+    my $options = shift;
+
+    $options //= {};
+
+    die "execute_internal_command(): command must be an array reference\n"
+        unless ref($command) eq 'ARRAY';
+
+    die "execute_internal_command(): command may not be empty\n"
+        unless @$command;
+
+    my $allow_fail_silent = $options->{allow_fail_silent};
+    my $merge_stderr      = $options->{merge_stderr} // 0;
+    my $print_output      = $options->{print_output} // 0;
+
+    my $stdin;
+
+    my $stdout;
+
+    my $stderr = gensym;
+
+    my $pid = eval
+    {
+        open3($stdin, $stdout, $stderr, @$command);
+    };
+
+    die "execute_internal_command(): failed to start command: $!\n"
+        if $@;
+
+    close $stdin;
+
+    my $selector = IO::Select->new();
+
+    $selector->add($stdout);
+
+    $selector->add($stderr) unless $merge_stderr;
+
+    my $stdout_text = '';
+    my $stderr_text = '';
+
+    if ($merge_stderr)
+    {
+        $selector->add($stdout);
+
+	$selector->add($stderr);
+    }
+
+    while (my @ready = $selector->can_read())
+    {
+        foreach my $fh (@ready)
+        {
+            my $line = <$fh>;
+
+            if (!defined $line)
+            {
+                $selector->remove($fh);
+
+                close $fh;
+
+		next;
+            }
+
+            if ($fh == $stdout)
+            {
+                $stdout_text .= $line;
+            }
+            else
+            {
+                if ($merge_stderr)
+                {
+                    $stdout_text .= $line;
+                }
+                else
+                {
+                    $stderr_text .= $line;
+                }
+            }
+
+            print $line if $print_output;
+        }
+    }
+
+    waitpid($pid, 0);
+
+    my $raw_status = $?;
+
+    my $exit_code = $raw_status >> 8;
+
+    my $signal = $raw_status & 127;
+
+    if ($signal)
+    {
+        die "execute_internal_command(): command killed by signal $signal: @$command\n"
+            unless $allow_fail_silent;
+    }
+
+    if ($exit_code != 0 && !$allow_fail_silent)
+    {
+        die join '',
+            "execute_internal_command(): command failed with exit code $exit_code\n",
+            "Command: @$command\n",
+            ($stderr_text ne '' ? "stderr:\n$stderr_text" : '');
+    }
+
+    return {
+        command => $command,
+        exit_code => $exit_code,
+        signal => $signal,
+        stdout => $stdout_text,
+        stderr => $stderr_text,
+        success => ($exit_code == 0 && !$signal) ? 1 : 0,
+    };
 }
 
 
@@ -8571,7 +8851,7 @@ sub md_run
 
     $global_test_report->{global}->{test_counters}->{current}->{module_definition}++;
 
-    # return result: execution completed
+    # return result: execution completed, note that errors are directed through the reporter
 
     return '';
 }

@@ -22,6 +22,7 @@ command_tests:
           module-create        Create a new module with the given name.
           module-renumber      Renumber the command_definitions of the given module.
           module-update        Update the given module with the given arguments and directives.
+          report-summaries     Report the summary filenames of the previously generated vigilia report.
           run-tests            Run the tests, possibly with an executor that converts the tests rather than running them.
       
       options:
