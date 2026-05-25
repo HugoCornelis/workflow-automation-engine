@@ -1,0 +1,76 @@
+---
+command: cat features-export-sh.sh
+command_tests:
+  - description: 'What is the contents of the generated output file after using the --export-sh option, --export-role 0 (all roles)?'
+    read: |
+      #!/bin/bash
+      
+      # -e: exit immediately if any command returns a non-zero exit status
+      # -u: undefined variable causes the script to exit immediately
+      # -o pipefail: a pipeline fails if any command in the pipeline fails
+      set -euo pipefail
+      
+      #
+      # script generated with feature-testing-workflow
+      #
+      # the command line used to generate this script was:
+      #
+      # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 0
+      #
+      
+      while [[ ${1-} != "" ]]; do
+        case "$1" in
+          -d|--dry-run) RUN_DRY_RUN=1; shift ;;
+          -h|--help)
+            cat <<EOF
+      Usage: $(basename "$0") [-h|--help]
+      
+      
+      
+      Options:
+        -d, --dry-run Do not run commands but show them if verbose is set.
+        -h, --help    Show this help
+        -v, --verbose Run in verbose mode (display commands as they are executed)
+      EOF
+            exit 0
+            ;;
+          -v|--verbose) RUN_VERBOSE=1; shift ;;
+          *) echo "Unknown argument: $1"; exit 2 ;;
+        esac
+      done
+      
+      
+      # running mode defaults
+      RUN_VERBOSE=0
+      RUN_DRY_RUN=0
+      
+      
+      # run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
+      # Usage: do_run_command command arg1 arg2 ...
+      do_run_command() {
+          if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
+              echo "$@"
+          fi
+      
+          if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
+              "$@"
+          fi
+      }
+      
+      # --export-role is 0, exporting all roles with the appriopriate remote policy prefix
+      #
+      #
+      # no variables of export_sh_variables have been selected for export
+      #
+      
+      do_run_command pwd
+      do_run_command cd /bin
+      do_run_command pwd
+      do_run_command sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    pwd
+      do_run_command sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    cd /bin
+      do_run_command sshpass -p harness ssh -o LogLevel=ERROR -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22 root@__DOCKER_HOST_IP_ADDRESS__    'cd /bin && pwd'
+      do_run_command tmux send-keys -t cd    'pwd' ENTER
+      do_run_command tmux send-keys -t cd    'cd /bin' ENTER
+      do_run_command tmux send-keys -t cd    'pwd' ENTER
+    white_space: convert seen 0a to 0d 0a newlines
+description: 'contents of the generated output file after using the --export-sh option, --export-role 0 (all roles)'

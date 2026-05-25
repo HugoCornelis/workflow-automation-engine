@@ -1,0 +1,16 @@
+---
+command: feature-testing-workflow features export_sh --export-sh --export-role 2
+command_tests:
+  - description: 'Do we see correct information about the generated output file when using the --export-sh option, --export-role 2?'
+    read: |
+      feature-testing-workflow: *** Running in export_sh mode, exporting: '# <local command: pwd>'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: '# <local command: cd /bin>'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: '# <local command: pwd>'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: 'pwd'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: 'cd /bin'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: 'cd /bin && pwd'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: '# <remote command at tmux send-keys -t cd : 'pwd' ENTER>'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: '# <remote command at tmux send-keys -t cd : 'cd /bin' ENTER>'
+      feature-testing-workflow: *** Running in export_sh mode, exporting: '# <remote command at tmux send-keys -t cd : 'pwd' ENTER>'
+    white_space: convert seen 0a to 0d 0a newlines
+description: 'correct information about the generated output file when using the --export-sh option, --export-role 2'
