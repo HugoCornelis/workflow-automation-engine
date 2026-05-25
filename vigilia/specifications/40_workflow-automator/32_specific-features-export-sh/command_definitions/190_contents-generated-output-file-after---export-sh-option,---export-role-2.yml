@@ -18,6 +18,11 @@ command_tests:
       # /home/neurospaces/bin/feature-testing-workflow features export_sh --export-sh --export-role 2
       #
       
+      # running mode defaults
+      RUN_VERBOSE=0
+      RUN_DRY_RUN=0
+      
+      
       while [[ ${1-} != "" ]]; do
         case "$1" in
           -d|--dry-run) RUN_DRY_RUN=1; shift ;;
@@ -28,7 +33,7 @@ command_tests:
       
       
       Options:
-        -d, --dry-run Do not run commands but show them if verbose is set.
+        -d, --dry-run Do not run commands but show them.
         -h, --help    Show this help
         -v, --verbose Run in verbose mode (display commands as they are executed)
       EOF
@@ -40,16 +45,14 @@ command_tests:
       done
       
       
-      # running mode defaults
-      RUN_VERBOSE=0
-      RUN_DRY_RUN=0
-      
-      
       # run a command, implement RUN_VERBOSE and RUN_DRY_RUN.
       # Usage: do_run_command command arg1 arg2 ...
       do_run_command() {
-          if [[ ${RUN_VERBOSE:-0} == 1 ]]; then
-              echo "$@"
+          if [[ ${RUN_VERBOSE:-0} == 1 || ${RUN_DRY_RUN:-0} == 1 ]]; then
+              printf '+'
+              printf ' %q' "$@"
+              printf '\n'
+              # echo "$@"
           fi
       
           if [[ ${RUN_DRY_RUN:-0} == 0 ]]; then
@@ -63,14 +66,14 @@ command_tests:
       # no variables of export_sh_variables have been selected for export
       #
       
-      do_run_command # <local command: pwd>
-      do_run_command # <local command: cd /bin>
-      do_run_command # <local command: pwd>
+      # do_run_command # <local command: pwd>
+      # do_run_command # <local command: cd /bin>
+      # do_run_command # <local command: pwd>
       do_run_command pwd
       do_run_command cd /bin
       do_run_command cd /bin && pwd
-      do_run_command # <remote command at tmux send-keys -t cd : 'pwd' ENTER>
-      do_run_command # <remote command at tmux send-keys -t cd : 'cd /bin' ENTER>
-      do_run_command # <remote command at tmux send-keys -t cd : 'pwd' ENTER>
+      # do_run_command # <remote command at tmux send-keys -t cd : 'pwd' ENTER>
+      # do_run_command # <remote command at tmux send-keys -t cd : 'cd /bin' ENTER>
+      # do_run_command # <remote command at tmux send-keys -t cd : 'pwd' ENTER>
     white_space: convert seen 0a to 0d 0a newlines
 description: 'contents of the generated output file after using the --export-sh option, --export-role 2'
