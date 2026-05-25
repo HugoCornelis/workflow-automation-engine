@@ -1697,12 +1697,9 @@ sub harness_command_module_update
     {
 	bless $module_definition, "Heterarch::Test::Module";
 
-	my $error = $module_definition->md_run($execution_context, $executor);
+	# errors are directed through the reporter
 
-	if ($error)
-	{
-	    return $error;
-	}
+	my $error = $module_definition->md_run($execution_context, $executor);
     }
 
     # do final processing of the executor
@@ -1865,6 +1862,8 @@ sub harness_command_run_tests
     foreach my $module_definition (@$module_definitions)
     {
 	bless $module_definition, "Heterarch::Test::Module";
+
+	# errors are directed through the reporter
 
 	my $error = $module_definition->md_run($execution_context, $executor);
     }
