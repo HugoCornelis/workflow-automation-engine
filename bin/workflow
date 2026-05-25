@@ -9206,6 +9206,18 @@ $help_string
 	}
 
 	{
+	    my $running_modes
+		= '
+# running mode defaults
+RUN_VERBOSE=0
+RUN_DRY_RUN=0
+
+';
+
+	    print $global_exported_sh_file $running_modes;
+	}
+
+	{
 	    my $option_processor
 		    = '
 while [[ ${1-} != "" ]]; do
@@ -9231,18 +9243,6 @@ done
 
 ';
 	    print $global_exported_sh_file $option_processor;
-	}
-
-	{
-	    my $running_modes
-		= '
-# running mode defaults
-RUN_VERBOSE=0
-RUN_DRY_RUN=0
-
-';
-
-	    print $global_exported_sh_file $running_modes;
 	}
 
 	{
