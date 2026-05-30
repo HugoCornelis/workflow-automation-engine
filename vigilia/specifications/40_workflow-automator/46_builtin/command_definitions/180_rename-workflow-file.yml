@@ -1,0 +1,10 @@
+---
+command: feature-testing-workflow builtin workflow_file_rename feature-testing-commands-python.py feature-testing-commands-python-new.py
+command_tests:
+  - description: Can we rename a workflow file?
+    read: |
+      feature-testing-workflow: moved feature-testing-commands-python.py to feature-testing-commands-python-new.py
+      # mv '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-python.py' '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-python-new.py'
+      #
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we rename a workflow file?
