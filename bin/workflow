@@ -6797,6 +6797,146 @@ options:
 }
 
 
+sub builtin_workflow_file_remove
+{
+    my $arguments = shift || [];
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $error = '';
+
+    my $filename = $arguments->[0] || '';
+
+    if (not $error)
+    {
+	if (not $filename)
+	{
+	    $error = "expecting the filename of a workflow file on the command line";
+	}
+
+	if ($filename =~ m(/))
+	{
+	    $error = "the given filename should not have directory separators '/'.";
+	}
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $pathname = "$sources_configuration_directory/$filename";
+
+    if (not $error)
+    {
+	if (!-e $pathname)
+	{
+	    $error = "$pathname does not exist.";
+	}
+	else
+	{
+	    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+	    # remove the old filename, add the new filename
+
+	    my $workflow_filenames_array = $workflow_filenames->{workflow_filenames};
+
+	    $workflow_filenames_array
+		= [
+		   grep
+		   {
+		       $_ ne $filename
+		   }
+		   @$workflow_filenames_array,
+		  ];
+
+	    # remove possible duplicate filenames
+
+	    my $workflow_filenames_hash
+		= {
+		   map
+		   {
+		       $_ => $_;
+		   }
+		   @$workflow_filenames_array,
+		  };
+
+	    $workflow_filenames_array = [ sort keys %$workflow_filenames_hash, ];
+
+	    $workflow_filenames->{workflow_filenames} = $workflow_filenames_array;
+
+	    # write the commands configuration file
+
+	    my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
+
+	    YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
+
+	    print "$global_program_name: removed $filename\n";
+
+	    my $commands
+		= [
+		   "rm '$pathname'",
+		  ];
+
+	    execute_shell_command_array($commands);
+	}
+    }
+
+    if ($error)
+    {
+	die "$global_program_name: *** Error: $error";
+    }
+
+    return '';
+}
+
+
+sub builtin_workflow_file_remove_completions
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
+    # print STDERR Dump( { workflow_filenames_known => $workflow_filenames } );
+
+    return
+    {
+     map
+     {
+	 $_ => '',
+     }
+     @$workflow_filenames,
+    };
+}
+
+
+sub builtin_workflow_file_remove_help
+{
+    my $command = shift;
+
+    return "$command: Remove a file that implements workflows.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <workflow-filename>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The workflow filename (tab completion is available).
+";
+}
+
+
 my $debug_builtin_workflow_filenames_known = 0;
 
 sub builtin_workflow_filenames_known

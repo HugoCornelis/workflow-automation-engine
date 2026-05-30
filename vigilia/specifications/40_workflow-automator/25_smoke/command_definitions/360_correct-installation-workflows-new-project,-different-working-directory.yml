@@ -29,6 +29,7 @@ command_tests:
         - workflow-tests-workflow builtin tmux_sessions_create
         - workflow-tests-workflow builtin tmux_sessions_kill
         - workflow-tests-workflow builtin workflow_add
+        - workflow-tests-workflow builtin workflow_file_remove
         - workflow-tests-workflow builtin workflow_filenames_known
         - workflow-tests-workflow examples_sh sh_array_of_commands
         - workflow-tests-workflow examples_sh sh_remote_execution
@@ -37,6 +38,7 @@ command_tests:
         - workflow-tests-workflow perl_examples array_of_commands_remote_execution
         - workflow-tests-workflow perl_examples sequencing_and_composition
         - workflow-tests-workflow perl_examples single_command
+        - workflow-tests-workflow python_examples python_command
     tags:
       - manual
     white_space: convert seen 0a to 0d 0a newlines
