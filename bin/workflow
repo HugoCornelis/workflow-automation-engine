@@ -1670,7 +1670,7 @@ sub _builtin_project_configuration_targets_create
 
     my $configuration_file_part
 	= "---
-description: The following are example targets, modify/remove/add according to your project needs.
+description: 'The following are example targets, modify/remove/add according to your project needs.'
 targets:
   all:
     description: used for processing of target files that are produced by other targets
@@ -1740,14 +1740,14 @@ roles:
   docker_build:
     description: interaction with the docker build container
     name: docker_build
-    remote_policy: 'docker exec -it docker_build_container bash -ic'
+    remote_policy: docker exec -it docker_build_container bash -ic
     shared_volumes_examples:
       - description: This is an example for sharing ssh keys read-only (use with caution).
-        inside: %%HOME_DIRECTORY%%/.ssh:ro
-        outside: %%HOME_DIRECTORY%%/.ssh
+        inside: '%%HOME_DIRECTORY%%/.ssh:ro'
+        outside: '%%HOME_DIRECTORY%%/.ssh'
       - description: This is another example for some directory
-        inside: %%HOME_DIRECTORY%%/directory_inside_the_container
-        outside: %%HOME_DIRECTORY%%/directory_outside_the_container
+        inside: '%%HOME_DIRECTORY%%/directory_inside_the_container'
+        outside: '%%HOME_DIRECTORY%%/directory_outside_the_container'
   laptop:
     description: the local computer of the developer
     localuser: yes
@@ -1756,7 +1756,7 @@ roles:
     ssh_server: 192.168.4.70
     ssh_user: $user
   tmux_example:
-    description: an example of a tmux role, tmux roles are prefixed with tmux_
+    description: 'an example of a tmux role, tmux roles are prefixed with tmux_'
     name: tmux_example
     remote_policy: tmux send-keys -t example:0
 ";
