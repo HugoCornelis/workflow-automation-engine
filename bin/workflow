@@ -13008,7 +13008,7 @@ sub parse_command_line
     {
         print
             "
-$global_program_name: support for workflow design for embedded software engineers.
+$global_program_name: queryable workflow knowledge base creation for complex command line based software projects.
 
 SYNOPSIS
 

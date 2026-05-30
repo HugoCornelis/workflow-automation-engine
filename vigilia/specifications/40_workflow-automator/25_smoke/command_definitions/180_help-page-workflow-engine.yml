@@ -4,7 +4,7 @@ command_tests:
   - description: Can we get the help page?
     read: |+2
       
-      workflow: support for workflow design for embedded software engineers.
+      workflow: queryable workflow knowledge base creation for complex command line based software projects.
       
       SYNOPSIS
       
