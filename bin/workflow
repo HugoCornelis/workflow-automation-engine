@@ -1670,7 +1670,7 @@ sub _builtin_project_configuration_targets_create
 
     my $configuration_file_part
 	= "---
-description: The following are example targets, modify/remove/add according to your project needs.
+description: 'The following are example targets, modify/remove/add according to your project needs.'
 targets:
   all:
     description: used for processing of target files that are produced by other targets
@@ -1740,14 +1740,14 @@ roles:
   docker_build:
     description: interaction with the docker build container
     name: docker_build
-    remote_policy: 'docker exec -it docker_build_container bash -ic'
+    remote_policy: docker exec -it docker_build_container bash -ic
     shared_volumes_examples:
       - description: This is an example for sharing ssh keys read-only (use with caution).
-        inside: %%HOME_DIRECTORY%%/.ssh:ro
-        outside: %%HOME_DIRECTORY%%/.ssh
+        inside: '%%HOME_DIRECTORY%%/.ssh:ro'
+        outside: '%%HOME_DIRECTORY%%/.ssh'
       - description: This is another example for some directory
-        inside: %%HOME_DIRECTORY%%/directory_inside_the_container
-        outside: %%HOME_DIRECTORY%%/directory_outside_the_container
+        inside: '%%HOME_DIRECTORY%%/directory_inside_the_container'
+        outside: '%%HOME_DIRECTORY%%/directory_outside_the_container'
   laptop:
     description: the local computer of the developer
     localuser: yes
@@ -1756,7 +1756,7 @@ roles:
     ssh_server: 192.168.4.70
     ssh_user: $user
   tmux_example:
-    description: an example of a tmux role, tmux roles are prefixed with tmux_
+    description: 'an example of a tmux role, tmux roles are prefixed with tmux_'
     name: tmux_example
     remote_policy: tmux send-keys -t example:0
 ";
@@ -6793,6 +6793,311 @@ options:
 
     ``--py``: Create the workflow in a Python workflow file, the filename is derived from the target and operation names, this is the default.
 
+";
+}
+
+
+sub builtin_workflow_file_remove
+{
+    my $arguments = shift || [];
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $error = '';
+
+    my $filename = $arguments->[0] || '';
+
+    if (not $error)
+    {
+	if (not $filename)
+	{
+	    $error = "expecting the filename of a workflow file on the command line";
+	}
+
+	if ($filename =~ m(/))
+	{
+	    $error = "the given filename should not have directory separators '/'.";
+	}
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $pathname = "$sources_configuration_directory/$filename";
+
+    if (not $error)
+    {
+	if (!-e $pathname)
+	{
+	    $error = "$pathname does not exist.";
+	}
+	else
+	{
+	    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+	    # remove the old filename, add the new filename
+
+	    my $workflow_filenames_array = $workflow_filenames->{workflow_filenames};
+
+	    $workflow_filenames_array
+		= [
+		   grep
+		   {
+		       $_ ne $filename
+		   }
+		   @$workflow_filenames_array,
+		  ];
+
+	    # remove possible duplicate filenames
+
+	    my $workflow_filenames_hash
+		= {
+		   map
+		   {
+		       $_ => $_;
+		   }
+		   @$workflow_filenames_array,
+		  };
+
+	    $workflow_filenames_array = [ sort keys %$workflow_filenames_hash, ];
+
+	    $workflow_filenames->{workflow_filenames} = $workflow_filenames_array;
+
+	    # write the commands configuration file
+
+	    my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
+
+	    YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
+
+	    print "$global_program_name: removed $filename\n";
+
+	    my $commands
+		= [
+		   "rm '$pathname'",
+		  ];
+
+	    execute_shell_command_array($commands);
+	}
+    }
+
+    if ($error)
+    {
+	die "$global_program_name: *** Error: $error";
+    }
+
+    return '';
+}
+
+
+sub builtin_workflow_file_remove_completions
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
+    # print STDERR Dump( { workflow_filenames_known => $workflow_filenames } );
+
+    return
+    {
+     map
+     {
+	 $_ => '',
+     }
+     @$workflow_filenames,
+    };
+}
+
+
+sub builtin_workflow_file_remove_help
+{
+    my $command = shift;
+
+    return "$command: Remove a file that implements workflows.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <workflow-filename>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The workflow filename (tab completion is available).
+";
+}
+
+
+sub builtin_workflow_file_rename
+{
+    my $arguments = shift || [];
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $error = '';
+
+    my $old_filename = $arguments->[0] || '';
+
+    if (not $error)
+    {
+	if (not $old_filename)
+	{
+	    $error = "expecting an old filename followed with a new filename on the command line";
+	}
+
+	if ($old_filename =~ m(/))
+	{
+	    $error = "the given filenames should not have directory separators '/'.";
+	}
+    }
+
+    my $new_filename = $arguments->[1] || '';
+
+    if (not $error)
+    {
+	if (not $new_filename)
+	{
+	    $error = "expecting an old filename followed with a new filename on the command line";
+	}
+
+	if ($new_filename =~ m(/))
+	{
+	    $error = "the given filenames should not have directory separators '/'.";
+	}
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $old_pathname = "$sources_configuration_directory/$old_filename";
+
+    my $new_pathname = "$sources_configuration_directory/$new_filename";
+
+    if (not $error)
+    {
+	if (!-e $old_pathname)
+	{
+	    $error = "$old_pathname does not exist.";
+	}
+	elsif (-e $new_pathname)
+	{
+	    $error = "$new_pathname already exists.";
+	}
+	else
+	{
+	    my $commands
+		= [
+		   "mv '$old_pathname' '$new_pathname'",
+		  ];
+
+	    execute_shell_command_array($commands);
+
+	    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+	    # remove the old filename, add the new filename
+
+	    my $workflow_filenames_array = $workflow_filenames->{workflow_filenames};
+
+	    $workflow_filenames_array
+		= [
+		   grep
+		   {
+		       $_ ne $old_filename
+		   }
+		   @$workflow_filenames_array,
+		  ];
+
+	    push @$workflow_filenames_array, $new_filename;
+
+	    # remove possible duplicate filenames
+
+	    my $workflow_filenames_hash
+		= {
+		   map
+		   {
+		       $_ => $_;
+		   }
+		   @$workflow_filenames_array,
+		  };
+
+	    $workflow_filenames_array = [ sort keys %$workflow_filenames_hash, ];
+
+	    $workflow_filenames->{workflow_filenames} = $workflow_filenames_array;
+
+	    # write the commands configuration file
+
+	    my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
+
+	    YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
+
+	    print "$global_program_name: moved $old_filename to $new_filename\n";
+	}
+    }
+
+    if ($error)
+    {
+	die "$global_program_name: *** Error: $error";
+    }
+
+    return '';
+}
+
+
+sub builtin_workflow_file_rename_completions
+{
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames};
+
+    # print STDERR Dump( { workflow_filenames_known => $workflow_filenames } );
+
+    return
+    {
+     map
+     {
+	 $_ => $_,
+     }
+     @$workflow_filenames,
+    };
+}
+
+
+sub builtin_workflow_file_rename_help
+{
+    my $command = shift;
+
+    return "$command: Rename a file that implements workflows.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <old-filename> <new-filename>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The old filename (tab completion is available).
+
+    ``ARGV[1]``: The new filename.
 ";
 }
 
@@ -12703,7 +13008,7 @@ sub parse_command_line
     {
         print
             "
-$global_program_name: support for workflow design for embedded software engineers.
+$global_program_name: queryable workflow knowledge base creation for complex command line based software projects.
 
 SYNOPSIS
 

@@ -1,0 +1,19 @@
+---
+command: bin/workflow builtin workflow_file_remove --help
+command_tests:
+  - description: Do we see the help page for removing workflow files?
+    read: |
+      workflow builtin workflow_file_remove: Remove a file that implements workflows.
+      
+      synopsis:
+      ~~~~~~~~~
+      
+      .. code-block:: bash
+      
+      builtin workflow_file_remove <workflow-filename>
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: The workflow filename (tab completion is available).
+description: Do we see the help page for removing workflow files?
