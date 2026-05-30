@@ -1,0 +1,21 @@
+---
+command: bin/workflow builtin workflow_file_rename --help
+command_tests:
+  - description: Do we see the help page for renaming workflow files?
+    read: |
+      workflow builtin workflow_file_rename: Rename a file that implements workflows.
+      
+      synopsis:
+      ~~~~~~~~~
+      
+      .. code-block:: bash
+      
+      builtin workflow_file_rename <old-filename> <new-filename>
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: The old filename (tab completion is available).
+      
+          ``ARGV[1]``: The new filename.
+description: Do we see the help page for renaming workflow files?
