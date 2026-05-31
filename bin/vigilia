@@ -4815,8 +4815,10 @@ sub is_selected_by_tag
     {
 	if ($global_test_report->{output_format} eq 'executor')
 	{
+	    my $error_count = $reporter->get_error_count();
+
 	    $reporter->report_message_info("message_info", "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) so far)");
 	}
 
 	$global_test_report->{not_selected_by_tag}->{elements}->{$element_name} = 'not_selected_by_tag';
@@ -5203,8 +5205,10 @@ sub ec_end
 	}
 	else
 	{
+	    my $error_count = $reporter->get_error_count();
+
 	    $reporter->report_message_end($message_level, "End of tests of $description
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) so far)");
 	}
     }
 
@@ -5614,8 +5618,10 @@ sub is_disabled
 	{
 	    my $reporter = $self->{reporter};
 
+	    my $error_count = $reporter->get_error_count();
+
 	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) so far)");
 	}
 
 	return 1;
@@ -7495,8 +7501,10 @@ sub ex_terminate
 
     my $reporter = $execution_context->{reporter};
 
+    my $error_count = $reporter->get_error_count();
+
     $reporter->report_message("message_info", "
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) in total)
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) in total)
  Started at: $global_test_report->{global}->{time_start},
 Finished at: $global_test_report->{global}->{time_end}.
 ");
@@ -12144,6 +12152,14 @@ sub end
 }
 
 
+sub get_error_count
+{
+    my $self = shift;
+
+    return $self->{error_count} || 0;
+}
+
+
 sub new
 {
     my $package = shift;
@@ -12175,6 +12191,8 @@ sub message
 
 sub _differences_report
 {
+    my $self = shift;
+
     my $fd_output = shift;
 
     my $summary_report = shift;
@@ -12254,21 +12272,23 @@ sub _differences_report
 
 
 	{
+	    my $error_count = $self->get_error_count();
+
 	    my $processed_expected = [ split "\n", $expected, ];
 
-	    $processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+	    $processed_expected = join "\n*** Error $error_count: expected: ", "", @$processed_expected, "\n";
 
 	    $differences_report->{processed_expected} = $processed_expected;
 
 	    my $processed_seen = [ split "\n", $seen, ];
 
-	    $processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
+	    $processed_seen = join "\n*** Error $error_count: seen: ", "", @$processed_seen, "\n";
 
 	    $differences_report->{processed_seen} = $processed_seen;
 
 	    my $processed_diff = [ split "\n", $diff, ];
 
-	    $processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+	    $processed_diff = join "\n*** Error $error_count: diff: ", "", @$processed_diff, "\n";
 
 	    $differences_report->{processed_diff} = $processed_diff;
 	}
@@ -12317,6 +12337,8 @@ sub _get_terminal_width
 
 sub _global_error_add
 {
+    my $self = shift;
+
     my $error_report = shift;
 
     my $context_path = $error_report->{context_path};
@@ -12326,11 +12348,15 @@ sub _global_error_add
     my $module_name = $error_report->{module_name};
     my $subdescription = $error_report->{subdescription};
 
-    $global_error_count++;
+    $self->{error_count}++;
+
+    my $error_count = $self->{error_count};
+
+    $global_error_count = $error_count;
 
     # fill in the error report
 
-    $global_test_report->{global}->{error_count} = $global_error_count;
+    $global_test_report->{global}->{error_count} = $error_count;
 
     my $error_report_brief
 	= {
@@ -12346,9 +12372,9 @@ sub _global_error_add
 	$error_report_brief->{$subdescription}->{report} = $message;
     }
 
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count} = $error_report_brief;
+    $global_test_report->{errors}->{modules}->{$module_name}->{$error_count} = $error_report_brief;
 
-    $global_test_report->{errors}->{error_reports}->{$global_error_count} = $error_report;
+    $global_test_report->{errors}->{error_reports}->{$error_count} = $error_report;
 }
 
 
@@ -12381,7 +12407,7 @@ sub _report_error_add
 
     my $fd_output = $self->{fd_output};
 
-    my $error_count = sprintf("%03s", $global_error_count);
+    my $error_count = sprintf("%03s", $self->{error_count});
 
     my $report_error_directory_suffix = "$error_count-" . Heterarch::Test::Library::sentence_summarize($error_report->{description}, 80);
 
@@ -12389,7 +12415,7 @@ sub _report_error_add
 
     # just a best shot at removing the previous error directory
 
-    if ($global_error_count == 0)
+    if ($self->{error_count} == 0)
     {
 	`rm -fr '$error_directory'`;
     }
@@ -12400,7 +12426,7 @@ sub _report_error_add
 
     if (!$error)
     {
-	my $summary_report = _report_error_summary($fd_output, $report_error_directory, $error_report);
+	my $summary_report = _report_error_summary($self, $fd_output, $report_error_directory, $error_report);
 
 	$error_report->{differences_report} = $summary_report->{differences_report};
     }
@@ -12409,7 +12435,7 @@ sub _report_error_add
 	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting ($error).\n";
     }
 
-    _global_error_add($error_report);
+    _global_error_add($self, $error_report);
 
     return $error_report;
 }
@@ -12439,6 +12465,8 @@ sub _report_error_directory_create
 
 sub _report_error_summary
 {
+    my $self = shift;
+
     my $fd_output = shift;
 
     my $report_error_directory = shift;
@@ -12476,7 +12504,7 @@ sub _report_error_summary
 	print $fd_output "*** Warning: cannot create $summary_filename\n";
     }
 
-    my $differences_report = _differences_report($fd_output, $summary_report, $error_report);
+    my $differences_report = _differences_report($self, $fd_output, $summary_report, $error_report);
 
     $summary_report->{differences_report} = $differences_report;
 
@@ -12844,11 +12872,13 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+    my $error_count = $self->{error_count};
+
+    print $fd_output "*** Error $error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
 
     my $context_path = $arguments->{context_path};
 
-    print $fd_output "*** Error $global_error_count: $context_path\n";
+    print $fd_output "*** Error $error_count: $context_path\n";
 
     _error_report_differences($fd_output, $error_report);
 
@@ -13025,7 +13055,9 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    my $message = "Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
+    my $error_count = $self->{error_count};
+
+    my $message = "Error $error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
 
     $self->message("message_error", { message => $message, }, );
 
