@@ -4,6 +4,6 @@ command_tests:
   - description: Do we get a correct error message when the custom configuration file has syntax errors?
     read: |
       /usr/local/bin/vigilia: Error reading './vigilia2.config' (syntax error at ./vigilia2.config line 32, near "+ ;"
-      ) at /usr/local/bin/vigilia line 2212.
+      ) at /usr/local/bin/vigilia line 2215.
     white_space: convert seen 0a to 0d 0a newlines
 description: Do we get a correct error message when the custom configuration file has syntax errors?

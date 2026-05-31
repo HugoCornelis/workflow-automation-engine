@@ -82,6 +82,9 @@ my $global_reporter_classes
        'linear' => {
 		    class => "Heterarch::Test::Reporting::Linear",
 		   },
+       'multiplexer' => {
+			 class => "Heterarch::Test::Reporting::Multiplexer",
+			},
        'status' => {
 		    class => "Heterarch::Test::Reporting::Status",
 		   },
@@ -12142,6 +12145,7 @@ package Heterarch::Test::Reporting;
 our $console_types
     = {
        linear => 'linearly flowing text',
+       multiplexer => 'combines linear and status',
        status => 'single line status bars',
       };
 
@@ -12172,6 +12176,8 @@ sub new
 	  };
 
     bless $self, $package;
+
+    $self->{error_count} = 0;
 
     return $self;
 }
@@ -12413,16 +12419,9 @@ sub _report_error_add
 
     my $error_directory = "$global_config->{reporting_directory}";
 
-    # just a best shot at removing the previous error directory
-
-    if ($self->{error_count} == 0)
-    {
-	`rm -fr '$error_directory'`;
-    }
-
     my $report_error_directory = "$error_directory/$report_error_directory_suffix";
 
-    my $error = _report_error_directory_create($fd_output, $report_error_directory);
+    my $error = _reporting_directory_create($report_error_directory);
 
     if (!$error)
     {
@@ -12441,10 +12440,8 @@ sub _report_error_add
 }
 
 
-sub _report_error_directory_create
+sub _reporting_directory_create
 {
-    my $fd_output = shift;
-
     my $report_error_directory = shift;
 
     my $error;
@@ -13008,6 +13005,217 @@ sub _report_message_with_rulers
     {
 	print $fd_output "$line\n" for 0 .. $bottom_ruler;
 	print $fd_output "\n";
+    }
+}
+
+
+package Heterarch::Test::Reporting::Multiplexer;
+
+# A reporter that prints the given messages to a file and shows a
+# status bar.
+
+our @ISA = ("Heterarch::Test::Reporting");
+
+
+# new assumes that the given options only apply to the status bar
+# reporter.
+
+sub new
+{
+    my $package = shift;
+
+    my $options = shift || {};
+
+    my $reporter_type_1 = 'linear';
+
+    my $reporter_class_1 = $global_reporter_classes->{$reporter_type_1}->{class};
+
+    # just a best shot at removing the previous reporting_directory
+
+    my $reporting_directory = $global_config->{reporting_directory};
+
+    `rm -fr '$reporting_directory'`;
+
+    my $error = Heterarch::Test::Reporting::_reporting_directory_create($reporting_directory);
+
+    if ($error)
+    {
+	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+    }
+
+    my $output_linear_path = "$reporting_directory/linear_log.txt";
+
+    my $fd_output_linear = IO::File->new();
+
+    if (! $fd_output_linear->open(">$output_linear_path"))
+    {
+	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+    }
+
+    my $reporter1
+	= $reporter_class_1->new
+	  (
+	   {
+	    configuration => $global_console_window_library_configuration,
+	    fd_output => $fd_output_linear,
+	   }
+	  );
+
+    my $reporter_type_2 = 'status';
+
+    my $reporter_class_2 = $global_reporter_classes->{$reporter_type_2}->{class};
+
+    my $reporter2 = $reporter_class_2->new($options);
+
+    my $self
+	= {
+	   constructor_options => { %$options, },
+	   reporters => [ $reporter1, $reporter2, ],
+	  };
+
+    bless $self, $package;
+
+    return $self;
+}
+
+
+sub report_error_add
+{
+    my $self = shift;
+
+    my $arguments = shift;
+
+    my $error_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$error_report = $reporter->report_error_add($arguments);
+    }
+
+    return $error_report;
+}
+
+
+sub report_message
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $error_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$error_report = $reporter->report_message($type, $message);
+    }
+}
+
+
+sub report_message_end
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_end($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_message_info
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_info($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_message_info_no_rulers
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_info_no_rulers($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_message_start
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_start($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_progress
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $iteration = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_progress($type, $iteration);
     }
 }
 
