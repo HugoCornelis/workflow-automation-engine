@@ -11,6 +11,8 @@ our $option_verbose;
 
 our $global_technical_project_configuration;
 
+our $global_field_project_configuration;
+
 our $global_execute_scheduled_commands;
 
 
@@ -19,7 +21,9 @@ package Command;
 
 my $container_enter_command = "docker exec -it workflow_automation_test_container bash";
 
-my $workflow_project_directory = "$ENV{HOME}/projects/workflow-automation-engine/source/snapshots/master";
+my $configuration_directory = "$global_field_project_configuration->{sources_configuration_directory}";
+
+my $workflow_project_directory = "$configuration_directory/..";
 
 
 sub test_enter
