@@ -394,6 +394,10 @@ sub command_line_dispatch
 
     open($global_fd_output, ">&STDOUT");
 
+    # assume stdout is not a file -- change this to TRUE if it is a file
+
+    my $capture_stdout = 0;
+
     # instantiate the reporter
 
     my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
@@ -403,13 +407,24 @@ sub command_line_dispatch
 			       {
 				configuration => $global_console_window_library_configuration,
 				fd_output => $global_fd_output,
+				capture_stdout => $capture_stdout,
 			       },
 			      );
 
     {
 	no strict "refs";
 
-	my $error = &$harness_command_executor($harness_command_definition, $harness_command, $arguments, $default_reporter);
+	my $error
+	    = $default_reporter->run_with_stdout_captured
+	          (sub
+		   {
+		       return &$harness_command_executor(
+							 $harness_command_definition,
+							 $harness_command,
+							 $arguments,
+							 $default_reporter
+							);
+		   });
 
 	return $error;
     }
@@ -3047,7 +3062,11 @@ sub spawn_new
 
 		$global_exp->raw_pty(1);
 
-		if (not $reporter->isa("Heterarch::Test::Reporting::Linear"))
+		if ($reporter->{capture_stdout})
+		{
+		    $global_exp->log_file($reporter->{fd_output});
+		}
+		elsif (not $reporter->isa("Heterarch::Test::Reporting::Linear"))
 		{
 		    $global_exp->log_stdout(0);
 		}
@@ -12150,6 +12169,85 @@ our $console_types
       };
 
 
+sub run_with_stdout_captured
+{
+    my $self = shift;
+
+    my $code = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    # if no output filehandle exists, just run normally.
+
+    return $code->() if !defined $fd_output;
+
+    my $target_fd = fileno($fd_output);
+
+    # if fd_output is not a real file descriptor, just run normally.
+
+    return $code->() if !defined $target_fd;
+
+    # enable this only for reporters that really want process STDOUT captured.
+
+    return $code->() if !$self->{capture_stdout};
+
+    # save current STDOUT.
+
+    open(my $saved_stdout, ">&", \*STDOUT)
+        or die "$0: cannot save STDOUT: $!";
+
+    # avoid buffered output being written to the wrong destination.
+
+    select((select(STDOUT), $| = 1)[0]);
+
+    select((select($fd_output), $| = 1)[0]);
+
+    my $wantarray = wantarray;
+
+    my (@result, $result);
+
+    my $error;
+
+    eval
+    {
+	use POSIX qw(dup2);
+
+        # Redirect real fd 1 to the reporter output fd.
+
+	dup2($target_fd, fileno(STDOUT))
+            or die "$0: cannot redirect STDOUT to reporter output: $!";
+
+        if ($wantarray)
+	{
+            @result = $code->();
+        }
+        elsif (defined $wantarray)
+	{
+            $result = $code->();
+        }
+        else
+	{
+            $code->();
+        }
+
+        1;
+    }
+    or
+    do {
+	$error = $@ || "$0: unknown error while running with captured STDOUT";
+    };
+
+    # restore original STDOUT even after failure.
+
+    dup2(fileno($saved_stdout), fileno(STDOUT))
+        or die "$0: cannot restore STDOUT: $!";
+
+    die $error if $error;
+
+    return $wantarray ? @result : $result;
+}
+
+
 sub end
 {
     my $self = shift;
@@ -13058,6 +13156,7 @@ sub new
 	   {
 	    configuration => $global_console_window_library_configuration,
 	    fd_output => $fd_output_linear,
+	    capture_stdout => 1,
 	   }
 	  );
 
