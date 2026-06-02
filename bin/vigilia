@@ -3062,16 +3062,25 @@ sub spawn_new
 
 		$global_exp->raw_pty(1);
 
-		if ($reporter->{capture_stdout})
+		# 		    $exp->slave->stty(qw(raw -echo));
+
+		if ($reporter->{capture_stdout}
+		    and defined $reporter->{fd_output})
 		{
+		    # Expect-spawned programs write to a pseudo-terminal.
+		    # Redirecting the Perl process' STDOUT is not enough to capture
+		    # that pty stream, Expect must explicitly mirror it to the
+		    # reporter's filehandle.  For the multiplexer reporter this
+		    # filehandle is the linear_log.txt filehandle exposed by
+		    # Heterarch::Test::Reporting::Multiplexer::new().
+
 		    $global_exp->log_file($reporter->{fd_output});
 		}
-		elsif (not $reporter->isa("Heterarch::Test::Reporting::Linear"))
+
+		if (not $reporter->isa("Heterarch::Test::Reporting::Linear"))
 		{
 		    $global_exp->log_stdout(0);
 		}
-
-		# 		    $exp->slave->stty(qw(raw -echo));
 
 		my $spawned
 		    = $global_exp->spawn
@@ -13170,6 +13179,16 @@ sub new
 	= {
 	   constructor_options => { %$options, },
 	   reporters => [ $reporter1, $reporter2, ],
+
+	   # The multiplexer itself is the object passed through the
+	   # execution context.  Command runners, including Expect-based
+	   # command runners, therefore inspect this top-level reporter rather
+	   # than the contained linear reporter.  Expose the linear reporter's
+	   # output filehandle here so process stdout and Expect pty output can
+	   # be mirrored into linear_log.txt.
+
+	   fd_output => $fd_output_linear,
+	   capture_stdout => 1,
 	  };
 
     bless $self, $package;
