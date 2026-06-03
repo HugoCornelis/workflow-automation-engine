@@ -199,120 +199,122 @@ options:
 
 
 my $global_console_window_configuration
-    = {
-       "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::progress,
-			  "formatter_options" => {
-						  "decimals" => 0,
-						  "empty" => '-',
-						  "fill" => '█',
-						  "prefix" => '',
-						  "suffix" => 'Complete',
-						  "total" => -1,
-						 },
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 0,
-			  "prompt" => "   Progress: ",
-			 },
-       "message_module" => {
-			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			    "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			    "line_number" => 2,
-			    "prompt" => "     Module: ",
-			   },
-       "message_harnessing" => {
-				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+    = bless(
+	    {
+	     "progress_bar" => {
+				"formatter" => "cw_progress",
+				"formatter_options" => {
+							"decimals" => 0,
+							"empty" => '-',
+							"fill" => '█',
+							"prefix" => '',
+							"suffix" => 'Complete',
+							"total" => -1,
+						       },
 				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
-				"line_number" => 3,
-				"prompt" => "    Harness: ",
+				"line_number" => 0,
+				"prompt" => "   Progress: ",
 			       },
-       "message_command" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 4,
-			     "prompt" => "    Command: ",
-			    },
-       "message_test" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 5,
-			  "prompt" => "       Test: ",
-			 },
-       "message_details" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 6,
-			     "prompt" => "    Details: ",
-			    },
-       "message_info" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 8,
-			  "prompt" => "Information: ",
-			 },
-       "message_warning" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 10,
-			     "prompt" => "    Warning: ",
-			    },
-       "message_error" => {
-			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			   "line_number" => 11,
-			   "prompt" => " Last Error: ",
-			  },
-       "end" => {
-		 "enabled" => "yes",
-		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-		 "line_number" => 12,
-		 "prompt" => "   Finished: ",
-		},
-      };
+	     "message_module" => {
+				  "formatter" => "cw_note",
+				  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				  "line_number" => 2,
+				  "prompt" => "     Module: ",
+				 },
+	     "message_harnessing" => {
+				      "formatter" => "cw_note",
+				      "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				      "line_number" => 3,
+				      "prompt" => "    Harness: ",
+				     },
+	     "message_command" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 4,
+				   "prompt" => "    Command: ",
+				  },
+	     "message_test" => {
+				"formatter" => "cw_note",
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 5,
+				"prompt" => "       Test: ",
+			       },
+	     "message_details" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 6,
+				   "prompt" => "    Details: ",
+				  },
+	     "message_info" => {
+				"formatter" => "cw_note",
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 8,
+				"prompt" => "Information: ",
+			       },
+	     "message_warning" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 10,
+				   "prompt" => "    Warning: ",
+				  },
+	     "message_error" => {
+				 "formatter" => "cw_note",
+				 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				 "line_number" => 11,
+				 "prompt" => " Last Error: ",
+				},
+	     "end" => {
+		       "enabled" => "yes",
+		       "formatter" => "cw_note",
+		       "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+		       "line_number" => 12,
+		       "prompt" => "   Finished: ",
+		      },
+	    }, "Heterarch::Test::Reporting::ConsoleWindow");
 
 my $global_console_window_library_configuration
-    = {
-       "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::progress,
-			  "formatter_options" => {
-						  "decimals" => 0,
-						  "empty" => '-',
-						  "fill" => '█',
-						  "prefix" => '',
-						  "suffix" => 'Complete',
-						  "total" => -1,
-						 },
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 0,
-			  "prompt" => "   Progress: ",
-			 },
-       "message_info" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 1,
-			  "prompt" => "Information: ",
-			 },
-       "message_warning" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 2,
-			     "prompt" => "    Warning: ",
-			    },
-       "message_error" => {
-			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			   "line_number" => 3,
-			   "prompt" => "      Error: ",
-			  },
-       "end" => {
-		 "enabled" => "yes",
-		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-		 "line_number" => 4,
-		 "prompt" => "   Finished: ",
-		},
-      };
+    = bless(
+	    {
+	     "progress_bar" => {
+				"formatter" => "cw_progress",
+				"formatter_options" => {
+							"decimals" => 0,
+							"empty" => '-',
+							"fill" => '█',
+							"prefix" => '',
+							"suffix" => 'Complete',
+							"total" => -1,
+						       },
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 0,
+				"prompt" => "   Progress: ",
+			       },
+	     "message_info" => {
+				"formatter" => "cw_note",
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 1,
+				"prompt" => "Information: ",
+			       },
+	     "message_warning" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 2,
+				   "prompt" => "    Warning: ",
+				  },
+	     "message_error" => {
+				 "formatter" => "cw_note",
+				 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				 "line_number" => 3,
+				 "prompt" => "      Error: ",
+				},
+	     "end" => {
+		       "enabled" => "yes",
+		       "formatter" => "cw_note",
+		       "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+		       "line_number" => 4,
+		       "prompt" => "   Finished: ",
+		      },
+	    }, "Heterarch::Test::Reporting::ConsoleWindow");
 
 my $global_configuration_initialized;
 
@@ -12298,7 +12300,7 @@ sub message
 
     my $arguments = shift;
 
-    Heterarch::Test::Reporting::ConsoleWindow::message($self->{configuration}, $line, $arguments);
+    $self->{configuration}->cw_message($line, $arguments);
 }
 
 
@@ -12634,7 +12636,7 @@ my $cursor_forced_down = "\n";
 my $erase_line = "\33[2K";
 
 
-sub message
+sub cw_message
 {
     my $self = shift;
 
@@ -12658,11 +12660,11 @@ sub message
 
 	my $formatter = $formatter_options->{formatter};
 
-        my $user_message = &$formatter($formatter_options, $arguments);
+        my $user_message = $self->$formatter($formatter_options, $arguments);
 
 	my $control_suffix = ($line ne "end") ? ("\r" . ($cursor_up x $line_number)) : "\n";
 
-	_emit($control_prefix, $user_message, $control_suffix);
+	$self->_cw_emit($control_prefix, $user_message, $control_suffix);
 
 	if ($line ne "end")
 	{
@@ -12674,8 +12676,10 @@ sub message
 }
 
 
-sub _emit
+sub _cw_emit
 {
+    my $self = shift;
+
     my $control_prefix = shift;
 
     my $user_message = shift;
@@ -12694,8 +12698,10 @@ sub _emit
 }
 
 
-sub note
+sub cw_note
 {
+    my $self = shift;
+
     my $line_options = shift;
 
     my $arguments = shift;
@@ -12805,8 +12811,10 @@ my $global_scalar_spinner = scalar @$global_spinner;
 
 my $global_iteration_no_total = 0;
 
-sub progress
+sub cw_progress
 {
+    my $self = shift;
+
     my $line_options = shift;
 
     my $arguments = shift;
