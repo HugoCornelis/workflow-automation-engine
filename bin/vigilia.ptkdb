@@ -1,24 +1,104 @@
 $files = {
            '_<./bin/vigilia' => [
                                   {
-                                    'line' => '12408',
+                                    'text' => '		if ($reporter->{capture_stdout}
+',
+                                    'expr' => undef,
                                     'type' => 'user',
+                                    'line' => 3069,
+                                    'fname' => './bin/vigilia',
+                                    'value' => '1'
+                                  },
+                                  {
                                     'value' => '1',
                                     'expr' => undef,
-                                    'text' => '    if (!defined $iteration)
+                                    'fname' => './bin/vigilia',
+                                    'text' => '    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
 ',
+                                    'line' => 5959,
+                                    'type' => 'user'
+                                  },
+                                  {
+                                    'fname' => './bin/vigilia',
+                                    'value' => '1',
+                                    'type' => 'user',
+                                    'line' => 13218,
+                                    'text' => '    foreach my $reporter (@$reporters)
+',
+                                    'expr' => undef
+                                  },
+                                  {
+                                    'line' => 13300,
+                                    'type' => 'user',
+                                    'expr' => undef,
+                                    'text' => '    foreach my $reporter (@$reporters)
+',
+                                    'value' => '1',
                                     'fname' => './bin/vigilia'
+                                  },
+                                  {
+                                    'expr' => undef,
+                                    'value' => '1',
+                                    'fname' => './bin/vigilia',
+                                    'text' => '    foreach my $reporter (@$reporters)
+',
+                                    'line' => 13321,
+                                    'type' => 'user'
+                                  },
+                                  {
+                                    'expr' => undef,
+                                    'text' => '    foreach my $reporter (@$reporters)
+',
+                                    'line' => 13279,
+                                    'type' => 'user',
+                                    'value' => '1',
+                                    'fname' => './bin/vigilia'
+                                  },
+                                  {
+                                    'type' => 'user',
+                                    'line' => 13258,
+                                    'text' => '    foreach my $reporter (@$reporters)
+',
+                                    'fname' => './bin/vigilia',
+                                    'expr' => undef,
+                                    'value' => '1'
+                                  },
+                                  {
+                                    'text' => '    my $newline_count = $user_message =~ tr/\\n/\\n/;
+',
+                                    'expr' => undef,
+                                    'type' => 'user',
+                                    'line' => '12691',
+                                    'fname' => './bin/vigilia',
+                                    'value' => '1'
+                                  },
+                                  {
+                                    'text' => '    foreach my $reporter (@$reporters)
+',
+                                    'expr' => undef,
+                                    'type' => 'user',
+                                    'line' => 13239,
+                                    'fname' => './bin/vigilia',
+                                    'value' => '1'
                                   }
                                 ]
          };
 $expr_list = [
                {
-                 'depth' => -1,
-                 'expr' => '$error'
+                 'expr' => '$error',
+                 'depth' => -1
                },
                {
-                 'depth' => -1,
-                 'expr' => '$test_result'
+                 'expr' => '$test_result',
+                 'depth' => -1
+               },
+               {
+                 'depth' => 1,
+                 'expr' => '$reporter'
+               },
+               {
+                 'expr' => '$self',
+                 'depth' => -1
                }
              ];
 $eval_saved_text = undef;
