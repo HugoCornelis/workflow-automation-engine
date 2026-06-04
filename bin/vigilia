@@ -13029,7 +13029,7 @@ sub report_message_end
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 2, "*** $message");
+    return $self->_report_message_with_rulers(1, 2, "*** $message");
 }
 
 
@@ -13043,7 +13043,7 @@ sub report_message_info
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 1, "*** $message");
+    return $self->_report_message_with_rulers(1, 1, "*** $message");
 }
 
 
@@ -13057,7 +13057,7 @@ sub report_message_info_no_rulers
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, -1, -1, "*** $message");
+    return $self->_report_message_with_rulers(-1, -1, "*** $message");
 }
 
 
@@ -13069,31 +13069,24 @@ sub report_message_start
 
     my $message = shift;
 
-    my $fd_output = $self->{fd_output};
-
-    return _report_message_with_rulers($fd_output, 2, 1, "*** $message");
+    return $self->_report_message_with_rulers(2, 1, "*** $message");
 }
 
 
-sub report_progress
-{
-    my $self = shift;
-
-    my $type = shift;
-
-    my $iteration = shift;
-}
+sub report_progress {}
 
 
 sub _report_message_with_rulers
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $top_ruler = shift;
 
     my $bottom_ruler = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     my $lines = [ split '\n', $message, ];
 
