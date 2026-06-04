@@ -12259,10 +12259,7 @@ sub run_with_stdout_captured
 }
 
 
-sub end
-{
-    my $self = shift;
-}
+sub end {}
 
 
 sub get_error_count
@@ -12308,8 +12305,6 @@ sub _differences_report
 {
     my $self = shift;
 
-    my $fd_output = shift;
-
     my $summary_report = shift;
 
     my $arguments = shift;
@@ -12344,6 +12339,8 @@ sub _differences_report
 	}
 	else
 	{
+	    my $fd_output = $self->{fd_output};
+
 	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
@@ -12361,6 +12358,8 @@ sub _differences_report
 	}
 	else
 	{
+	    my $fd_output = $self->{fd_output};
+
 	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
 	}
 
@@ -12382,6 +12381,8 @@ sub _differences_report
 	}
 	else
 	{
+	    my $fd_output = $self->{fd_output};
+
 	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
 	}
 
@@ -12520,8 +12521,6 @@ sub _report_error_add
 	print Carp::cluck(@_);
     }
 
-    my $fd_output = $self->{fd_output};
-
     my $error_count = sprintf("%03s", $self->{error_count});
 
     my $report_error_directory_suffix = "$error_count-" . Heterarch::Test::Library::sentence_summarize($error_report->{description}, 80);
@@ -12534,12 +12533,14 @@ sub _report_error_add
 
     if (!$error)
     {
-	my $summary_report = _report_error_summary($self, $fd_output, $report_error_directory, $error_report);
+	my $summary_report = _report_error_summary($self, $report_error_directory, $error_report);
 
 	$error_report->{differences_report} = $summary_report->{differences_report};
     }
     else
     {
+	my $fd_output = $self->{fd_output};
+
 	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting ($error).\n";
     }
 
@@ -12573,8 +12574,6 @@ sub _report_error_summary
 {
     my $self = shift;
 
-    my $fd_output = shift;
-
     my $report_error_directory = shift;
 
     my $error_report = shift;
@@ -12607,10 +12606,12 @@ sub _report_error_summary
 
     if ($@)
     {
+	my $fd_output = $self->{fd_output};
+
 	print $fd_output "*** Warning: cannot create $summary_filename\n";
     }
 
-    my $differences_report = _differences_report($self, $fd_output, $summary_report, $error_report);
+    my $differences_report = $self->_differences_report($summary_report, $error_report);
 
     $summary_report->{differences_report} = $differences_report;
 
