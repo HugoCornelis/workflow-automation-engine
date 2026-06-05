@@ -12209,9 +12209,18 @@ sub run_with_stdout_captured
 
     # avoid buffered output being written to the wrong destination.
 
-    select((select(STDOUT), $| = 1)[0]);
+    # put a file handle and an autoflush turned on statement in a
+    # list, select the first element of the list as the currently
+    # selected file handle.
 
-    select((select($fd_output), $| = 1)[0]);
+    # select((select(STDOUT), $| = 1)[0]);
+    # select((select($fd_output), $| = 1)[0]);
+
+    # which is equivalent to:
+
+    STDOUT->autoflush(1);
+
+    $fd_output->autoflush(1);
 
     my $wantarray = wantarray;
 
