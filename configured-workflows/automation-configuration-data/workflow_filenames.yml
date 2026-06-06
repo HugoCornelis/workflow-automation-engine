@@ -1,4 +1,5 @@
 ---
-command_filenames:
+workflow_filenames:
   - automation-commands
   - automation-commands-documentation
+  - automation-commands-git-rewrite.py
