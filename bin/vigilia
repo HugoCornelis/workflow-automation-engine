@@ -19,7 +19,7 @@ use YAML;
 
 my $config_filename_default = './vigilia.config';
 my $option_config_filename;
-my $option_console_type = 'status';
+my $option_console_type = 'multiplexer';
 our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
