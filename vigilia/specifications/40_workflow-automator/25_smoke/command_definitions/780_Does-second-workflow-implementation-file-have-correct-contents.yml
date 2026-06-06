@@ -23,7 +23,7 @@ command_tests:
           #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
           #               the hash value is either just '1' or a string that is used for the <suffix>.
           #
-          # execute_shell_command($command, { 'role': '<name of a role that is defined in workflow-tests-configuration>, } )
+          # execute_shell_command(command, { 'role': '<name of a role that is defined in the global global_roles>', } )
           #
           # These options can given to any of the functions that execute commands.
       

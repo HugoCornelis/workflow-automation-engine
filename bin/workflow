@@ -3057,9 +3057,11 @@ sub _workflow_commands_2_implementation
 	{
 	    $implementation = "#!/usr/bin/python3
 
-# use the variable global_technical_project_configuration to access the configuration
-# roles are available as the variable global_roles
-# targets are available as the variable global_targets
+# Use the variable global_technical_project_configuration to access the configuration.
+# Roles are available as the variable global_roles.
+# Targets are available as the variable global_targets.
+# The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
+# The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
 
 
 def ${target}_${operation}(argv):
@@ -3120,7 +3122,7 @@ def ${target}_${operation}(argv):
     #   with_stamp: create a .timestamp_<subname>_<suffix> file in the current directory,
     #               the hash value is either just '1' or a string that is used for the <suffix>.
     #
-    # execute_shell_command(\$command, { 'role': '<name of a role that is defined in $project_name-configuration>, } )
+    # execute_shell_command(command, { 'role': '<name of a role that is defined in the global global_roles>', } )
     #
     # These options can given to any of the functions that execute commands.
 ";
