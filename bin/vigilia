@@ -12306,7 +12306,7 @@ sub message
 
     my $arguments = shift;
 
-    $self->{configuration}->cw_message($line, $arguments);
+    $self->{configuration}->cw_message($self->{fd_output}, $line, $arguments);
 }
 
 
@@ -12650,6 +12650,8 @@ sub cw_message
 {
     my $self = shift;
 
+    my $fd_output = shift;
+
     my $line = shift;
 
     my $arguments = shift;
@@ -12674,13 +12676,15 @@ sub cw_message
 
 	my $control_suffix = ($line ne "end") ? ("\r" . ($cursor_up x $line_number)) : "\n";
 
-	$self->_cw_emit($control_prefix, $user_message, $control_suffix);
+	$self->_cw_emit($fd_output, $control_prefix, $user_message, $control_suffix);
 
 	if ($line ne "end")
 	{
 	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
 
-	    select()->flush();
+	    # select()->flush();
+
+	    $fd_output->flush();
 	}
     }
 }
@@ -12689,6 +12693,8 @@ sub cw_message
 sub _cw_emit
 {
     my $self = shift;
+
+    my $fd_output = shift;
 
     my $control_prefix = shift;
 
@@ -12704,7 +12710,7 @@ sub _cw_emit
 
     # print the message at the correct location and move the cursor back to the origin
 
-    print $control_prefix . $message . $control_suffix;
+    print $fd_output $control_prefix . $message . $control_suffix;
 }
 
 
