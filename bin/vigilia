@@ -12268,9 +12268,6 @@ sub run_with_stdout_captured
 }
 
 
-sub end {}
-
-
 sub get_error_count
 {
     my $self = shift;
@@ -12984,6 +12981,9 @@ sub _error_report_differences
 }
 
 
+sub end {}
+
+
 sub report_error_add
 {
     my $self = shift;
@@ -13143,6 +13143,23 @@ our @ISA = ("Heterarch::Test::Reporting");
 
 # new assumes that the given options only apply to the status bar
 # reporter.
+
+sub end
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$reporter->end();
+    }
+}
+
 
 sub new
 {
