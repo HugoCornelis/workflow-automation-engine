@@ -19,7 +19,7 @@ use YAML;
 
 my $config_filename_default = './vigilia.config';
 my $option_config_filename;
-my $option_console_type = 'status';
+my $option_console_type = 'multiplexer';
 our $option_debugging;
 my $option_dump_json;
 my $option_dump_perl;
@@ -82,6 +82,9 @@ my $global_reporter_classes
        'linear' => {
 		    class => "Heterarch::Test::Reporting::Linear",
 		   },
+       'multiplexer' => {
+			 class => "Heterarch::Test::Reporting::Multiplexer",
+			},
        'status' => {
 		    class => "Heterarch::Test::Reporting::Status",
 		   },
@@ -196,120 +199,122 @@ options:
 
 
 my $global_console_window_configuration
-    = {
-       "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::progress,
-			  "formatter_options" => {
-						  "decimals" => 0,
-						  "empty" => '-',
-						  "fill" => '█',
-						  "prefix" => '',
-						  "suffix" => 'Complete',
-						  "total" => -1,
-						 },
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 0,
-			  "prompt" => "   Progress: ",
-			 },
-       "message_module" => {
-			    "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			    "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			    "line_number" => 2,
-			    "prompt" => "     Module: ",
-			   },
-       "message_harnessing" => {
-				"formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
+    = bless(
+	    {
+	     "progress_bar" => {
+				"formatter" => "cw_progress",
+				"formatter_options" => {
+							"decimals" => 0,
+							"empty" => '-',
+							"fill" => '█',
+							"prefix" => '',
+							"suffix" => 'Complete',
+							"total" => -1,
+						       },
 				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
-				"line_number" => 3,
-				"prompt" => "    Harness: ",
+				"line_number" => 0,
+				"prompt" => "   Progress: ",
 			       },
-       "message_command" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 4,
-			     "prompt" => "    Command: ",
-			    },
-       "message_test" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 5,
-			  "prompt" => "       Test: ",
-			 },
-       "message_details" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 6,
-			     "prompt" => "    Details: ",
-			    },
-       "message_info" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 8,
-			  "prompt" => "Information: ",
-			 },
-       "message_warning" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 10,
-			     "prompt" => "    Warning: ",
-			    },
-       "message_error" => {
-			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			   "line_number" => 11,
-			   "prompt" => " Last Error: ",
-			  },
-       "end" => {
-		 "enabled" => "yes",
-		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-		 "line_number" => 12,
-		 "prompt" => "   Finished: ",
-		},
-      };
+	     "message_module" => {
+				  "formatter" => "cw_note",
+				  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				  "line_number" => 2,
+				  "prompt" => "     Module: ",
+				 },
+	     "message_harnessing" => {
+				      "formatter" => "cw_note",
+				      "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				      "line_number" => 3,
+				      "prompt" => "    Harness: ",
+				     },
+	     "message_command" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 4,
+				   "prompt" => "    Command: ",
+				  },
+	     "message_test" => {
+				"formatter" => "cw_note",
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 5,
+				"prompt" => "       Test: ",
+			       },
+	     "message_details" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 6,
+				   "prompt" => "    Details: ",
+				  },
+	     "message_info" => {
+				"formatter" => "cw_note",
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 8,
+				"prompt" => "Information: ",
+			       },
+	     "message_warning" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 10,
+				   "prompt" => "    Warning: ",
+				  },
+	     "message_error" => {
+				 "formatter" => "cw_note",
+				 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				 "line_number" => 11,
+				 "prompt" => " Last Error: ",
+				},
+	     "end" => {
+		       "enabled" => "yes",
+		       "formatter" => "cw_note",
+		       "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+		       "line_number" => 12,
+		       "prompt" => "   Finished: ",
+		      },
+	    }, "Heterarch::Test::Reporting::ConsoleWindow");
 
 my $global_console_window_library_configuration
-    = {
-       "progress_bar" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::progress,
-			  "formatter_options" => {
-						  "decimals" => 0,
-						  "empty" => '-',
-						  "fill" => '█',
-						  "prefix" => '',
-						  "suffix" => 'Complete',
-						  "total" => -1,
-						 },
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 0,
-			  "prompt" => "   Progress: ",
-			 },
-       "message_info" => {
-			  "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			  "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			  "line_number" => 1,
-			  "prompt" => "Information: ",
-			 },
-       "message_warning" => {
-			     "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			     "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			     "line_number" => 2,
-			     "prompt" => "    Warning: ",
-			    },
-       "message_error" => {
-			   "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-			   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-			   "line_number" => 3,
-			   "prompt" => "      Error: ",
-			  },
-       "end" => {
-		 "enabled" => "yes",
-		 "formatter" => \&Heterarch::Test::Reporting::ConsoleWindow::note,
-		 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
-		 "line_number" => 4,
-		 "prompt" => "   Finished: ",
-		},
-      };
+    = bless(
+	    {
+	     "progress_bar" => {
+				"formatter" => "cw_progress",
+				"formatter_options" => {
+							"decimals" => 0,
+							"empty" => '-',
+							"fill" => '█',
+							"prefix" => '',
+							"suffix" => 'Complete',
+							"total" => -1,
+						       },
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 0,
+				"prompt" => "   Progress: ",
+			       },
+	     "message_info" => {
+				"formatter" => "cw_note",
+				"length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				"line_number" => 1,
+				"prompt" => "Information: ",
+			       },
+	     "message_warning" => {
+				   "formatter" => "cw_note",
+				   "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				   "line_number" => 2,
+				   "prompt" => "    Warning: ",
+				  },
+	     "message_error" => {
+				 "formatter" => "cw_note",
+				 "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+				 "line_number" => 3,
+				 "prompt" => "      Error: ",
+				},
+	     "end" => {
+		       "enabled" => "yes",
+		       "formatter" => "cw_note",
+		       "length" => Heterarch::Test::Reporting::_get_terminal_width(),
+		       "line_number" => 4,
+		       "prompt" => "   Finished: ",
+		      },
+	    }, "Heterarch::Test::Reporting::ConsoleWindow");
 
 my $global_configuration_initialized;
 
@@ -391,6 +396,10 @@ sub command_line_dispatch
 
     open($global_fd_output, ">&STDOUT");
 
+    # assume stdout is not a file -- change this to TRUE if it is a file
+
+    my $capture_stdout = 0;
+
     # instantiate the reporter
 
     my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
@@ -400,13 +409,24 @@ sub command_line_dispatch
 			       {
 				configuration => $global_console_window_library_configuration,
 				fd_output => $global_fd_output,
+				capture_stdout => $capture_stdout,
 			       },
 			      );
 
     {
 	no strict "refs";
 
-	my $error = &$harness_command_executor($harness_command_definition, $harness_command, $arguments, $default_reporter);
+	my $error
+	    = $default_reporter->run_with_stdout_captured
+	          (sub
+		   {
+		       return &$harness_command_executor(
+							 $harness_command_definition,
+							 $harness_command,
+							 $arguments,
+							 $default_reporter
+							);
+		   });
 
 	return $error;
     }
@@ -3044,12 +3064,25 @@ sub spawn_new
 
 		$global_exp->raw_pty(1);
 
+		# 		    $exp->slave->stty(qw(raw -echo));
+
+		if ($reporter->{capture_stdout}
+		    and defined $reporter->{fd_output})
+		{
+		    # Expect-spawned programs write to a pseudo-terminal.
+		    # Redirecting the Perl process' STDOUT is not enough to capture
+		    # that pty stream, Expect must explicitly mirror it to the
+		    # reporter's filehandle.  For the multiplexer reporter this
+		    # filehandle is the linear_log.txt filehandle exposed by
+		    # Heterarch::Test::Reporting::Multiplexer::new().
+
+		    $global_exp->log_file($reporter->{fd_output});
+		}
+
 		if (not $reporter->isa("Heterarch::Test::Reporting::Linear"))
 		{
 		    $global_exp->log_stdout(0);
 		}
-
-		# 		    $exp->slave->stty(qw(raw -echo));
 
 		my $spawned
 		    = $global_exp->spawn
@@ -4815,8 +4848,10 @@ sub is_selected_by_tag
     {
 	if ($global_test_report->{output_format} eq 'executor')
 	{
+	    my $error_count = $reporter->get_error_count();
+
 	    $reporter->report_message_info("message_info", "Element $element_definition->{description} is not selected by tag (" . (join ", ", @$option_tags ) . " are selected tags).
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) so far)");
 	}
 
 	$global_test_report->{not_selected_by_tag}->{elements}->{$element_name} = 'not_selected_by_tag';
@@ -5203,8 +5238,10 @@ sub ec_end
 	}
 	else
 	{
+	    my $error_count = $reporter->get_error_count();
+
 	    $reporter->report_message_end($message_level, "End of tests of $description
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) so far)");
 	}
     }
 
@@ -5614,8 +5651,10 @@ sub is_disabled
 	{
 	    my $reporter = $self->{reporter};
 
+	    my $error_count = $reporter->get_error_count();
+
 	    $reporter->report_message_info("message_info", "Tests of $description are disabled ($disabled)
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) so far)");
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) so far)");
 	}
 
 	return 1;
@@ -7495,8 +7534,10 @@ sub ex_terminate
 
     my $reporter = $execution_context->{reporter};
 
+    my $error_count = $reporter->get_error_count();
+
     $reporter->report_message("message_info", "
-Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $global_error_count error(s) in total)
+Total of $global_test_report->{global}->{test_counters}->{current}->{command_test} test(s) (encountered $error_count error(s) in total)
  Started at: $global_test_report->{global}->{time_start},
 Finished at: $global_test_report->{global}->{time_end}.
 ");
@@ -12134,13 +12175,104 @@ package Heterarch::Test::Reporting;
 our $console_types
     = {
        linear => 'linearly flowing text',
+       multiplexer => 'combines linear and status',
        status => 'single line status bars',
       };
 
 
-sub end
+sub run_with_stdout_captured
 {
     my $self = shift;
+
+    my $code = shift;
+
+    my $fd_output = $self->{fd_output};
+
+    # if no output filehandle exists, just run normally.
+
+    return $code->() if !defined $fd_output;
+
+    my $target_fd = fileno($fd_output);
+
+    # if fd_output is not a real file descriptor, just run normally.
+
+    return $code->() if !defined $target_fd;
+
+    # enable this only for reporters that really want process STDOUT captured.
+
+    return $code->() if !$self->{capture_stdout};
+
+    # save current STDOUT.
+
+    open(my $saved_stdout, ">&", \*STDOUT)
+        or die "$0: cannot save STDOUT: $!";
+
+    # avoid buffered output being written to the wrong destination.
+
+    # put a file handle and an autoflush turned on statement in a
+    # list, select the first element of the list as the currently
+    # selected file handle.
+
+    # select((select(STDOUT), $| = 1)[0]);
+    # select((select($fd_output), $| = 1)[0]);
+
+    # which is equivalent to:
+
+    STDOUT->autoflush(1);
+
+    $fd_output->autoflush(1);
+
+    my $wantarray = wantarray;
+
+    my (@result, $result);
+
+    my $error;
+
+    eval
+    {
+	use POSIX qw(dup2);
+
+        # Redirect real fd 1 to the reporter output fd.
+
+	dup2($target_fd, fileno(STDOUT))
+            or die "$0: cannot redirect STDOUT to reporter output: $!";
+
+        if ($wantarray)
+	{
+            @result = $code->();
+        }
+        elsif (defined $wantarray)
+	{
+            $result = $code->();
+        }
+        else
+	{
+            $code->();
+        }
+
+        1;
+    }
+    or
+    do {
+	$error = $@ || "$0: unknown error while running with captured STDOUT";
+    };
+
+    # restore original STDOUT even after failure.
+
+    dup2(fileno($saved_stdout), fileno(STDOUT))
+        or die "$0: cannot restore STDOUT: $!";
+
+    die $error if $error;
+
+    return $wantarray ? @result : $result;
+}
+
+
+sub get_error_count
+{
+    my $self = shift;
+
+    return $self->{error_count} || 0;
 }
 
 
@@ -12157,6 +12289,8 @@ sub new
 
     bless $self, $package;
 
+    $self->{error_count} = 0;
+
     return $self;
 }
 
@@ -12169,13 +12303,13 @@ sub message
 
     my $arguments = shift;
 
-    Heterarch::Test::Reporting::ConsoleWindow::message($self->{configuration}, $line, $arguments);
+    $self->{configuration}->cw_message($self->{fd_output}, $line, $arguments);
 }
 
 
 sub _differences_report
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $summary_report = shift;
 
@@ -12211,6 +12345,8 @@ sub _differences_report
 	}
 	else
 	{
+	    my $fd_output = $self->{fd_output};
+
 	    print $fd_output "*** Warning: cannot open $expected_filename for writing\n";
 	}
 
@@ -12228,6 +12364,8 @@ sub _differences_report
 	}
 	else
 	{
+	    my $fd_output = $self->{fd_output};
+
 	    print $fd_output "*** Warning: cannot open $seen_filename for writing\n";
 	}
 
@@ -12249,26 +12387,30 @@ sub _differences_report
 	}
 	else
 	{
+	    my $fd_output = $self->{fd_output};
+
 	    print $fd_output "*** Warning: cannot open $diff_filename for writing\n";
 	}
 
 
 	{
+	    my $error_count = $self->get_error_count();
+
 	    my $processed_expected = [ split "\n", $expected, ];
 
-	    $processed_expected = join "\n*** Error $global_error_count: expected: ", "", @$processed_expected, "\n";
+	    $processed_expected = join "\n*** Error $error_count: expected: ", "", @$processed_expected, "\n";
 
 	    $differences_report->{processed_expected} = $processed_expected;
 
 	    my $processed_seen = [ split "\n", $seen, ];
 
-	    $processed_seen = join "\n*** Error $global_error_count: seen: ", "", @$processed_seen, "\n";
+	    $processed_seen = join "\n*** Error $error_count: seen: ", "", @$processed_seen, "\n";
 
 	    $differences_report->{processed_seen} = $processed_seen;
 
 	    my $processed_diff = [ split "\n", $diff, ];
 
-	    $processed_diff = join "\n*** Error $global_error_count: diff: ", "", @$processed_diff, "\n";
+	    $processed_diff = join "\n*** Error $error_count: diff: ", "", @$processed_diff, "\n";
 
 	    $differences_report->{processed_diff} = $processed_diff;
 	}
@@ -12317,6 +12459,8 @@ sub _get_terminal_width
 
 sub _global_error_add
 {
+    my $self = shift;
+
     my $error_report = shift;
 
     my $context_path = $error_report->{context_path};
@@ -12326,11 +12470,15 @@ sub _global_error_add
     my $module_name = $error_report->{module_name};
     my $subdescription = $error_report->{subdescription};
 
-    $global_error_count++;
+    $self->{error_count}++;
+
+    my $error_count = $self->{error_count};
+
+    $global_error_count = $error_count;
 
     # fill in the error report
 
-    $global_test_report->{global}->{error_count} = $global_error_count;
+    $global_test_report->{global}->{error_count} = $error_count;
 
     my $error_report_brief
 	= {
@@ -12346,9 +12494,9 @@ sub _global_error_add
 	$error_report_brief->{$subdescription}->{report} = $message;
     }
 
-    $global_test_report->{errors}->{modules}->{$module_name}->{$global_error_count} = $error_report_brief;
+    $global_test_report->{errors}->{modules}->{$module_name}->{$error_count} = $error_report_brief;
 
-    $global_test_report->{errors}->{error_reports}->{$global_error_count} = $error_report;
+    $global_test_report->{errors}->{error_reports}->{$error_count} = $error_report;
 }
 
 
@@ -12379,46 +12527,37 @@ sub _report_error_add
 	print Carp::cluck(@_);
     }
 
-    my $fd_output = $self->{fd_output};
-
-    my $error_count = sprintf("%03s", $global_error_count);
+    my $error_count = sprintf("%03s", $self->{error_count});
 
     my $report_error_directory_suffix = "$error_count-" . Heterarch::Test::Library::sentence_summarize($error_report->{description}, 80);
 
     my $error_directory = "$global_config->{reporting_directory}";
 
-    # just a best shot at removing the previous error directory
-
-    if ($global_error_count == 0)
-    {
-	`rm -fr '$error_directory'`;
-    }
-
     my $report_error_directory = "$error_directory/$report_error_directory_suffix";
 
-    my $error = _report_error_directory_create($fd_output, $report_error_directory);
+    my $error = _reporting_directory_create($report_error_directory);
 
     if (!$error)
     {
-	my $summary_report = _report_error_summary($fd_output, $report_error_directory, $error_report);
+	my $summary_report = _report_error_summary($self, $report_error_directory, $error_report);
 
 	$error_report->{differences_report} = $summary_report->{differences_report};
     }
     else
     {
+	my $fd_output = $self->{fd_output};
+
 	print $fd_output "*** Warning: cannot create directory $report_error_directory for error reporting ($error).\n";
     }
 
-    _global_error_add($error_report);
+    _global_error_add($self, $error_report);
 
     return $error_report;
 }
 
 
-sub _report_error_directory_create
+sub _reporting_directory_create
 {
-    my $fd_output = shift;
-
     my $report_error_directory = shift;
 
     my $error;
@@ -12439,7 +12578,7 @@ sub _report_error_directory_create
 
 sub _report_error_summary
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $report_error_directory = shift;
 
@@ -12473,10 +12612,12 @@ sub _report_error_summary
 
     if ($@)
     {
+	my $fd_output = $self->{fd_output};
+
 	print $fd_output "*** Warning: cannot create $summary_filename\n";
     }
 
-    my $differences_report = _differences_report($fd_output, $summary_report, $error_report);
+    my $differences_report = $self->_differences_report($summary_report, $error_report);
 
     $summary_report->{differences_report} = $differences_report;
 
@@ -12502,9 +12643,11 @@ my $cursor_forced_down = "\n";
 my $erase_line = "\33[2K";
 
 
-sub message
+sub cw_message
 {
     my $self = shift;
+
+    my $fd_output = shift;
 
     my $line = shift;
 
@@ -12526,24 +12669,30 @@ sub message
 
 	my $formatter = $formatter_options->{formatter};
 
-        my $user_message = &$formatter($formatter_options, $arguments);
+        my $user_message = $self->$formatter($formatter_options, $arguments);
 
 	my $control_suffix = ($line ne "end") ? ("\r" . ($cursor_up x $line_number)) : "\n";
 
-	_emit($control_prefix, $user_message, $control_suffix);
+	$self->_cw_emit($fd_output, $control_prefix, $user_message, $control_suffix);
 
 	if ($line ne "end")
 	{
 	    # see https://stackoverflow.com/questions/33812618/can-you-force-flush-output-in-perl
 
-	    select()->flush();
+	    # select()->flush();
+
+	    $fd_output->flush();
 	}
     }
 }
 
 
-sub _emit
+sub _cw_emit
 {
+    my $self = shift;
+
+    my $fd_output = shift;
+
     my $control_prefix = shift;
 
     my $user_message = shift;
@@ -12558,12 +12707,14 @@ sub _emit
 
     # print the message at the correct location and move the cursor back to the origin
 
-    print $control_prefix . $message . $control_suffix;
+    print $fd_output $control_prefix . $message . $control_suffix;
 }
 
 
-sub note
+sub cw_note
 {
+    my $self = shift;
+
     my $line_options = shift;
 
     my $arguments = shift;
@@ -12673,8 +12824,10 @@ my $global_scalar_spinner = scalar @$global_spinner;
 
 my $global_iteration_no_total = 0;
 
-sub progress
+sub cw_progress
 {
+    my $self = shift;
+
     my $line_options = shift;
 
     my $arguments = shift;
@@ -12828,6 +12981,9 @@ sub _error_report_differences
 }
 
 
+sub end {}
+
+
 sub report_error_add
 {
     my $self = shift;
@@ -12844,11 +13000,13 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    print $fd_output "*** Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
+    my $error_count = $self->{error_count};
+
+    print $fd_output "*** Error $error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)\n";
 
     my $context_path = $arguments->{context_path};
 
-    print $fd_output "*** Error $global_error_count: $context_path\n";
+    print $fd_output "*** Error $error_count: $context_path\n";
 
     _error_report_differences($fd_output, $error_report);
 
@@ -12887,7 +13045,7 @@ sub report_message_end
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 2, "*** $message");
+    return $self->_report_message_with_rulers(1, 2, "*** $message");
 }
 
 
@@ -12901,7 +13059,7 @@ sub report_message_info
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, 1, 1, "*** $message");
+    return $self->_report_message_with_rulers(1, 1, "*** $message");
 }
 
 
@@ -12915,7 +13073,7 @@ sub report_message_info_no_rulers
 
     my $fd_output = $self->{fd_output};
 
-    return _report_message_with_rulers($fd_output, -1, -1, "*** $message");
+    return $self->_report_message_with_rulers(-1, -1, "*** $message");
 }
 
 
@@ -12927,31 +13085,24 @@ sub report_message_start
 
     my $message = shift;
 
-    my $fd_output = $self->{fd_output};
-
-    return _report_message_with_rulers($fd_output, 2, 1, "*** $message");
+    return $self->_report_message_with_rulers(2, 1, "*** $message");
 }
 
 
-sub report_progress
-{
-    my $self = shift;
-
-    my $type = shift;
-
-    my $iteration = shift;
-}
+sub report_progress {}
 
 
 sub _report_message_with_rulers
 {
-    my $fd_output = shift;
+    my $self = shift;
 
     my $top_ruler = shift;
 
     my $bottom_ruler = shift;
 
     my $message = shift;
+
+    my $fd_output = $self->{fd_output};
 
     my $lines = [ split '\n', $message, ];
 
@@ -12978,6 +13129,245 @@ sub _report_message_with_rulers
     {
 	print $fd_output "$line\n" for 0 .. $bottom_ruler;
 	print $fd_output "\n";
+    }
+}
+
+
+package Heterarch::Test::Reporting::Multiplexer;
+
+# A reporter that prints the given messages to a file and shows a
+# status bar.
+
+our @ISA = ("Heterarch::Test::Reporting");
+
+
+# new assumes that the given options only apply to the status bar
+# reporter.
+
+sub end
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$reporter->end();
+    }
+}
+
+
+sub new
+{
+    my $package = shift;
+
+    my $options = shift || {};
+
+    my $reporter_type_1 = 'linear';
+
+    my $reporter_class_1 = $global_reporter_classes->{$reporter_type_1}->{class};
+
+    # just a best shot at removing the previous reporting_directory
+
+    my $reporting_directory = $global_config->{reporting_directory};
+
+    `rm -fr '$reporting_directory'`;
+
+    my $error = Heterarch::Test::Reporting::_reporting_directory_create($reporting_directory);
+
+    if ($error)
+    {
+	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+    }
+
+    my $output_linear_path = "$reporting_directory/linear_log.txt";
+
+    my $fd_output_linear = IO::File->new();
+
+    if (! $fd_output_linear->open(">$output_linear_path"))
+    {
+	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+    }
+
+    my $reporter1
+	= $reporter_class_1->new
+	  (
+	   {
+	    configuration => $global_console_window_library_configuration,
+	    fd_output => $fd_output_linear,
+	    capture_stdout => 1,
+	   }
+	  );
+
+    my $reporter_type_2 = 'status';
+
+    my $reporter_class_2 = $global_reporter_classes->{$reporter_type_2}->{class};
+
+    my $reporter2 = $reporter_class_2->new($options);
+
+    my $self
+	= {
+	   constructor_options => { %$options, },
+	   reporters => [ $reporter1, $reporter2, ],
+
+	   # The multiplexer itself is the object passed through the
+	   # execution context.  Command runners, including Expect-based
+	   # command runners, therefore inspect this top-level reporter rather
+	   # than the contained linear reporter.  Expose the linear reporter's
+	   # output filehandle here so process stdout and Expect pty output can
+	   # be mirrored into linear_log.txt.
+
+	   fd_output => $fd_output_linear,
+	   capture_stdout => 1,
+	  };
+
+    bless $self, $package;
+
+    return $self;
+}
+
+
+sub report_error_add
+{
+    my $self = shift;
+
+    my $arguments = shift;
+
+    my $error_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$error_report = $reporter->report_error_add($arguments);
+    }
+
+    return $error_report;
+}
+
+
+sub report_message
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $error_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$error_report = $reporter->report_message($type, $message);
+    }
+}
+
+
+sub report_message_end
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_end($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_message_info
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_info($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_message_info_no_rulers
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_info_no_rulers($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_message_start
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $message = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_message_start($type, $message);
+    }
+
+    return $message_report
+}
+
+
+sub report_progress
+{
+    my $self = shift;
+
+    my $type = shift;
+
+    my $iteration = shift;
+
+    my $message_report;
+
+    my $reporters = $self->{reporters};
+
+    foreach my $reporter (@$reporters)
+    {
+	$message_report = $reporter->report_progress($type, $iteration);
     }
 }
 
@@ -13025,7 +13415,9 @@ sub report_error_add
 
     my $package_name = $global_test_report->{description}->{package}->{name};
 
-    my $message = "Error $global_error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
+    my $error_count = $self->{error_count};
+
+    my $message = "Error $error_count: $error ($description, package $package_name, $module_name, error_count $global_error_count)";
 
     $self->message("message_error", { message => $message, }, );
 
