@@ -86,7 +86,7 @@ AC_MSG_CHECKING(whether we build universal binaries.)
 AC_ARG_WITH(universal,
 [AS_HELP_STRING([--with-universal],
               [Build universal binaries on Mac OS X.])],
-[ case "$val" in
+[ case "$withval" in
   no)
 
     AC_MSG_RESULT(no)
