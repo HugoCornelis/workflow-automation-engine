@@ -1206,6 +1206,13 @@ sub _builtin_project_workflow_template_create_python
     my $commands_template_code
 	= "#!/usr/bin/python3
 
+# Use the variable global_technical_project_configuration to access the configuration.
+# Roles are available as the variable global_roles.
+# Targets are available as the variable global_targets.
+# The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
+# The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
+
+
 def ${target_name}_python_command(argv):
     command = \"echo command1\"
     execute_command(command)
@@ -3081,6 +3088,13 @@ def ${target}_${operation}(argv):
 	{
 	    $implementation = "#!/usr/bin/python3
 
+# Use the variable global_technical_project_configuration to access the configuration.
+# Roles are available as the variable global_roles.
+# Targets are available as the variable global_targets.
+# The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
+# The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
+
+
 def ${target}_${operation}(argv):
     command = \"$shell_commands->[0]\"
     execute_command(command)
@@ -3091,6 +3105,13 @@ def ${target}_${operation}(argv):
 	else
 	{
 	    $implementation = "#!/usr/bin/python3
+
+# Use the variable global_technical_project_configuration to access the configuration.
+# Roles are available as the variable global_roles.
+# Targets are available as the variable global_targets.
+# The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
+# The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
+
 
 def ${target}_${operation}(argv):
     command_array = [

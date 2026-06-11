@@ -5,6 +5,13 @@ command_tests:
     read: |+
       #!/usr/bin/python3
       
+      # Use the variable global_technical_project_configuration to access the configuration.
+      # Roles are available as the variable global_roles.
+      # Targets are available as the variable global_targets.
+      # The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
+      # The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
+      
+      
       def new_target_selected_commands_from_bash_history_2(argv):
           command = "ls -a1"
           execute_command(command)

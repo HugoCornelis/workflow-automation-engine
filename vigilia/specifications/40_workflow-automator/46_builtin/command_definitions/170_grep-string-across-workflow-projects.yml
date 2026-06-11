@@ -37,14 +37,14 @@ command_tests:
       /home/neurospaces/new-project/abcd-commands-perl_examples:322:sub perl_examples_sequencing_and_composition_help
       /home/neurospaces/new-project/abcd-commands-perl_examples:322:sub perl_examples_sequencing_and_composition_help
       /home/neurospaces/new-project/abcd-commands-perl_examples:326:    return "$command: an example that composes other examples into one sequence of commands.
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:13:def python_examples_python_command_completions(command, argv):
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:18:           "4._Look_at_the_completion_function_of_python_examples_single_command_completions_to_understand_how_it_works": "further_explanation",
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:3:def python_examples_python_command(argv):
-      /home/neurospaces/new-project/abcd-commands-python_examples.py:24:def python_examples_python_command_help(command, argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:10:def python_examples_python_command(argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:10:def python_examples_python_command(argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:10:def python_examples_python_command(argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:20:def python_examples_python_command_completions(command, argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:10:def python_examples_python_command(argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:25:           "4._Look_at_the_completion_function_of_python_examples_single_command_completions_to_understand_how_it_works": "further_explanation",
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:10:def python_examples_python_command(argv):
+      /home/neurospaces/new-project/abcd-commands-python_examples.py:31:def python_examples_python_command_help(command, argv):
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:18:sub perl_examples_single_command
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:18:sub perl_examples_single_command
       /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:41:sub perl_examples_single_command_completions

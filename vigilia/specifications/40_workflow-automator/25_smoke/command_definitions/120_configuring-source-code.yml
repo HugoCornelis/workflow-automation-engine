@@ -19,6 +19,7 @@ command_tests:
       checking for dpkg-buildpackage... dpkg-buildpackage
       checking for dh... no
       checking for rpmbuild... no
+      checking for pkg-config... /usr/bin/pkg-config
       checking for python... no
       checking for python2... no
       checking for python3... /usr/bin/python3

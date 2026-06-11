@@ -18,7 +18,7 @@ dnl ##########################################################################
 AC_PREREQ([2.71])
 
 dnl Obtain operating system information.
-AC_CANONICAL_TARGET
+AC_CANONICAL_HOST
 
 # $Format: "AC_INIT([${package}],[${major}.${minor}.${micro}-${label}])"$
 AC_INIT([workflow-automation],[0.1.0-alpha],[hugo.cornelis@gmail.com])
@@ -86,7 +86,7 @@ AC_MSG_CHECKING(whether we build universal binaries.)
 AC_ARG_WITH(universal,
 [AS_HELP_STRING([--with-universal],
               [Build universal binaries on Mac OS X.])],
-[ case "$val" in
+[ case "$withval" in
   no)
 
     AC_MSG_RESULT(no)
@@ -203,6 +203,41 @@ AC_CHECK_PROGS([MTN],mtn monotone,[NULL])
 AC_CHECK_PROGS([DPKG_BUILDPACKAGE],dpkg-buildpackage,[NULL])
 AC_CHECK_PROGS([DH],dh,[NULL])
 AC_CHECK_PROGS([RPMBUILD],rpmbuild,[NULL])
+
+dnl Bash completion support.
+dnl ./configure
+dnl ./configure --disable-bash-completion
+dnl ./configure --with-bash-completion-dir=/some/path
+
+AC_ARG_ENABLE(
+  [bash-completion],
+  [AS_HELP_STRING([--disable-bash-completion],
+                  [Do not install bash completion for workflow])],
+  [],
+  [enable_bash_completion=yes])
+
+AC_ARG_WITH(
+  [bash-completion-dir],
+  [AS_HELP_STRING([--with-bash-completion-dir=DIR],
+                  [Directory for bash completion files])],
+  [bashcompdir="$withval"],
+  [
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config], [no])
+
+    if test "x$PKG_CONFIG" != "xno" &&
+       $PKG_CONFIG --exists bash-completion 2>/dev/null; then
+      bashcompdir=`$PKG_CONFIG --variable=completionsdir bash-completion`
+    else
+      bashcompdir='${datarootdir}/bash-completion/completions'
+    fi
+  ])
+
+AC_SUBST([bashcompdir])
+
+AM_CONDITIONAL(
+  [INSTALL_BASH_COMPLETION],
+  [test "x$enable_bash_completion" = "xyes"])
+
 
 dnl Check for Python and it's headers
 AM_PATH_PYTHON(,[],[
