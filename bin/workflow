@@ -12764,13 +12764,13 @@ sub schedule_operation_execute_call
 
     map { utf8::upgrade($_) } @$arguments;
 
-    my $error;
+    my $error = eval
 
     {
 	no strict "refs";
 
-	$error = &$operation_implementation($arguments);
-    }
+	&$operation_implementation($arguments);
+    };
 
     return $error;
 
@@ -12793,13 +12793,13 @@ sub schedule_help_execute
 
     map { utf8::upgrade($_) } @$arguments, $operation_name;
 
-    my $help_string;
+    my $help_string = eval
 
     {
 	no strict "refs";
 
-	$help_string = &$operation_implementation($operation_name, $arguments);
-    }
+	&$operation_implementation($operation_name, $arguments);
+    };
 
     #t global_program_name should not be inserted here, that is the job of the help page
 
