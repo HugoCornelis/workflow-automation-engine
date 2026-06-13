@@ -8066,7 +8066,12 @@ sub module_read_perl
     {
 	use YAML;
 
-	$result = YAML::LoadFile($pathname);
+	$result = eval
+	{
+	    use YAML;
+
+	    YAML::LoadFile($pathname);
+	};
 
 	if ($@)
 	{
@@ -8641,7 +8646,7 @@ sub module_read_yml
 
     eval
     {
-	local $SIG{'__DIE__'};
+	# local $SIG{'__DIE__'};
 
 	$result = YAML::LoadFile($summary_pathname);
     };
@@ -8672,7 +8677,7 @@ sub module_read_yml
 		my $command_definition
 		    = eval
 		      {
-			  local $SIG{'__DIE__'};
+			  # local $SIG{'__DIE__'};
 
 			  YAML::LoadFile($command_definition_filename);
 		      };
