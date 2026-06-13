@@ -2,7 +2,9 @@
 command: abcd-workflow features --interactions-target
 command_tests:
   - description: abcd project interactions of the features commands
-    read: |
+    read: |+2
+      	main::main() called at /home/neurospaces/bin/abcd-workflow line 13876
+      ---
       WORKFLOW: features_annotations
           ROLE: 'localuser@localhost'
       
@@ -64,6 +66,11 @@ command_tests:
                                                                                           'pwd >>/tmp/tmux-pwd.txt'
       ---
       END WORKFLOW: features_cd_tests_tmux
+      
+      ---
+      WORKFLOW: features_die
+      ---
+      END WORKFLOW: features_die
       
       ---
       WORKFLOW: features_export_sh
