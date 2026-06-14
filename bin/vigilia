@@ -1828,6 +1828,8 @@ sub harness_command_run_tests
 
     my $expected_test_total = 0;
 
+    $reporter->report_progress("progress_bar", 0);
+
     foreach my $module_definition (@$module_definitions)
     {
 	#t should use ->md_run()
