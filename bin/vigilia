@@ -1764,16 +1764,11 @@ sub harness_command_run_tests
 
     my $reporter = shift;
 
-    if (@$arguments)
-    {
-	die "$0: *** Error: run-tests does not expect any command line arguments.";
-    }
-
     # find all the test module files
 
     my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter, );
 
-    $test_library->tl_construct();
+    $test_library->tl_construct($arguments);
 
     $test_library->tl_expand($reporter);
 
@@ -7699,12 +7694,39 @@ sub tl_construct
 {
     my $self = shift;
 
+    my $selected_modules = shift;
+
+    my $filtered = 0;
+
+    if (ref $selected_modules eq 'ARRAY'
+	and scalar @$selected_modules)
+    {
+	$selected_modules
+	    = {
+	       map
+	       {
+		   $_ => 1;
+	       }
+	       @$selected_modules
+	      };
+
+	$filtered = 1;
+    }
+
     my $tests_directory = $self->{tests_directory};
 
     # find the test specifications
 
     my $module_definitions
 	= [
+	   grep
+	   {
+	       my $module_name = $_;
+
+	       $module_name =~ s(^./vigilia/specifications/)()g;
+
+	       !$filtered || ($filtered && $selected_modules->{$module_name});
+	   }
 	   map
 	   {
 	       chomp; $_;
