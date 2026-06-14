@@ -63,7 +63,7 @@ our $option_dump_module_interaction_roles;
 our $option_dump_operation_selector_type;
 our $option_dump_schedule;
 our $option_dump_specific_workflow_roles;
-our $option_interactive_execution_mode = 'system';
+our $option_execution_mode = 'system';
 our $option_export_help_page;
 our $option_export_role;
 our $option_export_sh;
@@ -96,7 +96,7 @@ our $global_options
        "dump-operation-selector-type!" => \$option_dump_operation_selector_type,
        "dump-schedule!" => \$option_dump_schedule,
        "d|details+" => \$option_details,
-       "interactive-execution-mode=s" => \$option_interactive_execution_mode,
+       "execution-mode=s" => \$option_execution_mode,
        "export-help-page!" => \$option_export_help_page,
        "export-role=s" => \$option_export_role,
        "export-sh:s" => \$option_export_sh,
@@ -9922,7 +9922,7 @@ sub execute_interactively
 	   system => "system mode does not capture output",
 	  };
 
-    my $execute_interactively_selection = $option_interactive_execution_mode;
+    my $execute_interactively_selection = $option_execution_mode;
 
     # system mode does not capture output
 
@@ -12329,6 +12329,7 @@ sub bash_completion_generate_options
 			--dump-module-interaction-roles
 			--dump-operation-selector-type
 			--dump-schedule
+                        --execution-mode
 			--export-help-page
 			--export-role
 			--export-sh
@@ -12348,7 +12349,6 @@ sub bash_completion_generate_options
 			--interactions-all
 			--interactions-target
 			--interactions-target-all-roles
-                        --interactive-execution-mode
 			--verbose
 		   )
 		 ];
@@ -13077,6 +13077,7 @@ options:
     --dump-module-interaction-roles dump all the interaction roles found in the module of the given command.
     --dump-operation-selector-type  dump the operation selector type.
     --dump-schedule                 dump the constructed schedule to standard output without executing the scheduled commands.
+    --execution-mode                set the interactive execution mode (default is: '$option_execution_mode').
     --export-help-page              export the help page of the command as comments to the shell script.
     --export-role                   include the role, ie. the remote access part of exported commands.
                                     this option takes a number: 0 means all roles are exported, any other number exports only that respective role.
@@ -13097,7 +13098,6 @@ options:
     --interactions-all              show a diagram with all the commands and all the interaction roles.
     --interactions-target           show the interaction diagram of all the commands for the given target.
     --interactions-target-all-roles show the interaction diagram of the commands using all the found interaction roles in the configuration.
-    --interactive-execution-mode    set the interactive execution mode (default is: '$option_interactive_execution_mode').
     --verbose                       set verbosity level.
 
 ";
