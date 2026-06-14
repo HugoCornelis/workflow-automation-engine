@@ -1,7 +1,7 @@
 ---
 command: feature-testing-workflow builtin grep_commands :all feature
 command_tests:
-  - description: 'Is a query that builds an interaction diagramma and examines it, executed correctly?'
+  - description: 'Does a grep for "feature" on the commands of a given target, report the correct workflows?'
     read: |2
           ROLE: 'localuser@localhost'
       
@@ -86,4 +86,4 @@ command_tests:
       END WORKFLOW: scripts_feature-shell-script-remote
       
     white_space: convert seen 0a to 0d 0a newlines
-description: 'Is a query that builds an interaction diagramma and examines it, executed correctly?'
+description: 'Does a grep for "feature" on the commands of a given target, report the correct workflows?'
