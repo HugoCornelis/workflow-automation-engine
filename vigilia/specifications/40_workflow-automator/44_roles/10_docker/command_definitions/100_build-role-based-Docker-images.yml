@@ -14,7 +14,7 @@ command_tests:
     read_complete: |+2
       # cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing
       #
-      # docker build --tag docker_source_code_image --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000 --file feature-testing-configuration-data/dockerfiles/Dockerfile.source_code .
+      # docker build --tag docker_source_code_image --build-arg USERNAME=neurospaces --build-arg USERID=1000 --build-arg GID=1000 --build-arg USER_NAME=neurospaces --build-arg USER_ID=1000 --build-arg GROUP_ID=1000 --file Dockerfile.source_code .
       #
       Sending build context to Docker daemon  167.4kB\r\r
       Step 1/46 : FROM debian:bookworm
