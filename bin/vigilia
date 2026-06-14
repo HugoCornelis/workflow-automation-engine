@@ -8315,7 +8315,7 @@ sub sentence_summarize
 
     $result =~ s(\s+)(-)g;
 
-    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+    my $replace_these_chars = [ "'", '"', '\\.', '\\?', '\\(', '\\)', '/', ':' ];
 
     $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
 
