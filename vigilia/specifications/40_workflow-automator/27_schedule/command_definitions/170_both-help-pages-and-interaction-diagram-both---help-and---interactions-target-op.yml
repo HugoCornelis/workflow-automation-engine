@@ -3,7 +3,8 @@ command: feature-testing-workflow features --interactions-target --help
 command_tests:
   - description: Do we see both help pages and an interaction diagram when using both the --help and the --interactions-target options?
     read: |+2
-      
+      	main::main() called at /home/neurospaces/bin/feature-testing-workflow line 13876
+      ---
       WORKFLOW: features_annotations
           ROLE: 'localuser@localhost'
       
@@ -82,6 +83,11 @@ command_tests:
       END WORKFLOW: features_cd_tests_tmux
       
       ---
+      WORKFLOW: features_die
+      ---
+      END WORKFLOW: features_die
+      
+      ---
       WORKFLOW: features_export_sh
           'pwd'
           'cd /bin '
@@ -119,6 +125,6 @@ command_tests:
           'pwd'
       ---
       END WORKFLOW: features_timestamps
-
+      
     white_space: convert seen 0a to 0d 0a newlines
 description: Do we see both help pages and an interaction diagram when using both the --help and the --interactions-target options?

@@ -227,6 +227,62 @@ arguments:
 }
 
 
+sub test_report_error_commands
+{
+    my $arguments = shift || [ '' ];
+
+    my $filter = '';
+
+    my $regex = '050_executed_command';
+
+    if ($arguments->[0] eq 'commands_only')
+    {
+	$filter = "| cut -d: -f3-";
+    }
+    elsif ($arguments->[0] eq 'commands_modules')
+    {
+	$regex = "-E '010_module_name|050_executed_command'";
+	$filter = "| cut -d: -f2- | sed 's/050/    050/g'";
+    }
+
+    my $vigilia_config = do "$workflow_project_directory/vigilia.config";
+
+    my $project_name = $vigilia_config->{package}->{name};
+
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	   "grep $regex report_$project_name/*/*summary.yml $filter"
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub test_report_error_commands_completions
+{
+    return
+    {
+     'commands_only' => '',
+     'commands_modules' => '',
+    };
+}
+
+
+sub test_report_error_commands_help
+{
+    my $command = shift;
+
+    return "$command: Report the commands that produced an test error.
+
+arguments:
+
+    ARGV[0]: 'commands_only' if you want to see the commands without the filename of the summary file.
+
+";
+}
+
+
 sub test_search
 {
     my $arguments = shift || [];

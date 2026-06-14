@@ -144,6 +144,21 @@ sub features_cd_tests_tmux
 }
 
 
+sub features_die
+{
+    die "Die for testing";
+
+    my $commands
+	= [
+	   'pwd',
+	   'cd /bin',
+	   'pwd',
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
 sub features_export_sh
 {
     my $role_tmux = $roles->{tmux_cd};

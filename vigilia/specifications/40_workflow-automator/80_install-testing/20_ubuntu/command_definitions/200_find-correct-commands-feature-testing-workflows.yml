@@ -45,6 +45,7 @@ command_tests:
         - feature-testing-workflow features cd_tests
         - feature-testing-workflow features cd_tests_ssh
         - feature-testing-workflow features cd_tests_tmux
+        - feature-testing-workflow features die
         - feature-testing-workflow features export_sh
         - feature-testing-workflow features export_variables
         - feature-testing-workflow features remote_script_execution
@@ -55,6 +56,7 @@ command_tests:
         - feature-testing-workflow perl_examples sequencing_and_composition
         - feature-testing-workflow perl_examples single_command
         - feature-testing-workflow python python_command
+        - feature-testing-workflow python python_command_that_fails_at_the_python_level
         - feature-testing-workflow scripts feature-shell-script-remote
       
     white_space: convert seen 0a to 0d 0a newlines

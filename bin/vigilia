@@ -1026,7 +1026,7 @@ sub harness_command_module_command_add
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::module_read($reporter, "$module_path_name/summary.yml");
+    my $module_definition = Heterarch::Test::Library::tl_module_read($reporter, "$module_path_name/summary.yml");
 
     if (!$module_definition)
     {
@@ -1262,7 +1262,7 @@ sub harness_command_module_command_update
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::module_read($reporter, "$module_path_name/summary.yml");
+    my $module_definition = Heterarch::Test::Library::tl_module_read($reporter, "$module_path_name/summary.yml");
 
     if (!$module_definition)
     {
@@ -1589,7 +1589,7 @@ sub harness_command_module_renumber
 	$increment = $$option_increment;
     }
 
-    # my $module_definition = Heterarch::Test::Library::module_read_yml($reporter, $module_path_name, 'yml');
+    # my $module_definition = Heterarch::Test::Library::tl_module_read_yml($reporter, $module_path_name, 'yml');
 
     # find the command defintion filenames of the module definition
 
@@ -1695,7 +1695,7 @@ sub harness_command_module_update
 	die "$0: *** Error: $module_path_name not found.";
     }
 
-    my $module_definition = Heterarch::Test::Library::module_read($reporter, $module_path_name);
+    my $module_definition = Heterarch::Test::Library::tl_module_read($reporter, $module_path_name);
 
     my $module_definitions = [ $module_definition, ];
 
@@ -1768,24 +1768,24 @@ sub harness_command_run_tests
 
     my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter, );
 
-    $test_library->construct();
+    $test_library->tl_construct($arguments);
 
-    $test_library->expand($reporter);
+    $test_library->tl_expand($reporter);
 
-    $test_library->read_html
+    $test_library->tl_read_html
 	(
 	 {
 	  introduction_filename => $global_config->{introduction_filename},
 	 },
 	);
 
-    $test_library->merge_modules($option_input_modules);
+    $test_library->tl_merge_modules($option_input_modules);
 
-    $test_library->merge_commands($option_input_commands);
+    $test_library->tl_merge_commands($option_input_commands);
 
-    $test_library->merge_command_tests($option_input_command_tests);
+    $test_library->tl_merge_command_tests($option_input_command_tests);
 
-    my $library_error = $test_library->validate();
+    my $library_error = $test_library->tl_validate();
 
     if ($library_error)
     {
@@ -1827,6 +1827,8 @@ sub harness_command_run_tests
     my $expected_command_total = 0;
 
     my $expected_test_total = 0;
+
+    $reporter->report_progress("progress_bar", 0);
 
     foreach my $module_definition (@$module_definitions)
     {
@@ -7690,9 +7692,28 @@ package Heterarch::Test::Library;
 # of filenames containing the test specifications.
 #
 
-sub construct
+sub tl_construct
 {
     my $self = shift;
+
+    my $selected_modules = shift;
+
+    my $filtered = 0;
+
+    if (ref $selected_modules eq 'ARRAY'
+	and scalar @$selected_modules)
+    {
+	$selected_modules
+	    = {
+	       map
+	       {
+		   $_ => 1;
+	       }
+	       @$selected_modules
+	      };
+
+	$filtered = 1;
+    }
 
     my $tests_directory = $self->{tests_directory};
 
@@ -7700,6 +7721,14 @@ sub construct
 
     my $module_definitions
 	= [
+	   grep
+	   {
+	       my $module_name = $_;
+
+	       $module_name =~ s(^./vigilia/specifications/)()g;
+
+	       !$filtered || ($filtered && $selected_modules->{$module_name});
+	   }
 	   map
 	   {
 	       chomp; $_;
@@ -7720,7 +7749,7 @@ sub construct
 # specifications as a list of executable test definitions.
 #
 
-sub expand
+sub tl_expand
 {
     my $self = shift;
 
@@ -7744,11 +7773,11 @@ sub expand
 	    next;
 	}
 
-	my $module_definition = module_read($reporter, $module_definition_filename);
+	my $module_definition = tl_module_read($reporter, $module_definition_filename);
 
 	if ($module_definition)
 	{
-	    module_read_process_options($module_definition, $reporter, $module_definition_filename, $options);
+	    _module_read_process_options($module_definition, $reporter, $module_definition_filename, $options);
 
 	    push @$module_definitions, $module_definition;
 	}
@@ -7814,17 +7843,17 @@ sub is_yaml
 }
 
 
-sub merge_commands
+sub tl_merge_commands
 {
 }
 
 
-sub merge_command_tests
+sub tl_merge_command_tests
 {
 }
 
 
-sub merge_modules
+sub tl_merge_modules
 {
     my $self = shift;
 
@@ -7840,9 +7869,9 @@ sub merge_modules
 
 	my $test_library = Heterarch::Test::Library->new($input_module_directory, $self->{reporter}, );
 
-	$test_library->construct();
+	$test_library->tl_construct();
 
-	$test_library->expand( { input_module_directory => $input_module_directory, } );
+	$test_library->tl_expand( { input_module_directory => $input_module_directory, } );
 
 	# we have to remap the module names to their pathnames, this is ugly.
 
@@ -7954,7 +7983,7 @@ sub randomize_order
 }
 
 
-sub read_html
+sub tl_read_html
 {
     my $self = shift;
 
@@ -7986,7 +8015,7 @@ sub read_html
 }
 
 
-sub module_read
+sub tl_module_read
 {
     my $reporter = shift;
 
@@ -8003,14 +8032,14 @@ sub module_read
     {
 	if ($allow_perl_format)
 	{
-	    $module_definition = module_read_perl($reporter, $pathname);
+	    $module_definition = _module_read_perl($reporter, $pathname);
 	}
 	else
 	{
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'module_read',
+		  context_path => 'tl_module_read',
 		  description => 'module definition is in perl format but this is not allowed here',
 		  error => 'module definition is in perl format but this is not allowed here',
 		  module_name => $pathname,
@@ -8022,14 +8051,14 @@ sub module_read
     {
 	if ($allow_yml_format)
 	{
-	    $module_definition = module_read_yml($reporter, $pathname);
+	    $module_definition = _module_read_yml($reporter, $pathname);
 	}
 	else
 	{
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'module_read',
+		  context_path => 'tl_module_read',
 		  description => 'module definition is in yml format but this is not allowed here',
 		  error => 'module definition is in yml format but this is not allowed here',
 		  module_name => $pathname,
@@ -8042,7 +8071,7 @@ sub module_read
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'module_read',
+	      context_path => 'tl_module_read',
 	      description => 'invalid module definition pathname syntax',
 	      error => 'invalid module definition pathname syntax',
 	      module_name => $pathname,
@@ -8054,7 +8083,7 @@ sub module_read
 }
 
 
-sub module_read_perl
+sub _module_read_perl
 {
     my $reporter = shift;
 
@@ -8066,14 +8095,19 @@ sub module_read_perl
     {
 	use YAML;
 
-	$result = YAML::LoadFile($pathname);
+	$result = eval
+	{
+	    use YAML;
+
+	    YAML::LoadFile($pathname);
+	};
 
 	if ($@)
 	{
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'module_read_perl',
+		  context_path => '_module_read_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -8106,7 +8140,7 @@ sub module_read_perl
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'module_read_perl',
+		  context_path => '_module_read_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -8123,7 +8157,7 @@ sub module_read_perl
 	    $reporter->report_error_add
 		(
 		 {
-		  context_path => 'module_read_perl',
+		  context_path => '_module_read_perl',
 		  description => $@,
 		  error => $@,
 		  module_name => $pathname,
@@ -8146,7 +8180,7 @@ sub module_read_perl
 # option_dump_file_structured_yaml
 #
 
-sub module_read_process_options
+sub _module_read_process_options
 {
     my $module_definition = shift;
 
@@ -8215,7 +8249,7 @@ sub module_read_process_options
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'module_read_process_options',
+	      context_path => '_module_read_process_options',
 	      description => "the pathname ($pathname) and the test name ($module_definition->{name}) are different",
 	      error => $error,
 	      module_name => $pathname,
@@ -8625,7 +8659,7 @@ sub module_definition_dump_file_structured_yaml_or_json
 }
 
 
-sub module_read_yml
+sub _module_read_yml
 {
     my $reporter = shift;
 
@@ -8641,7 +8675,7 @@ sub module_read_yml
 
     eval
     {
-	local $SIG{'__DIE__'};
+	# local $SIG{'__DIE__'};
 
 	$result = YAML::LoadFile($summary_pathname);
     };
@@ -8672,7 +8706,7 @@ sub module_read_yml
 		my $command_definition
 		    = eval
 		      {
-			  local $SIG{'__DIE__'};
+			  # local $SIG{'__DIE__'};
 
 			  YAML::LoadFile($command_definition_filename);
 		      };
@@ -8702,7 +8736,7 @@ sub module_read_yml
 	$reporter->report_error_add
 	    (
 	     {
-	      context_path => 'module_read_yml',
+	      context_path => '_module_read_yml',
 	      description => $error,
 	      error => $error,
 	      module_name => $summary_pathname,
@@ -8714,7 +8748,7 @@ sub module_read_yml
 }
 
 
-sub validate
+sub tl_validate
 {
     my $test_library = shift;
 

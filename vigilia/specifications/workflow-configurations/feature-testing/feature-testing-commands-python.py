@@ -24,3 +24,13 @@ def python_python_command_completions(command, argv):
 def python_python_command_help(command, perl_argv):
     return f"python_python_command {command} help page"
 
+
+def python_python_command_that_fails_at_the_python_level(argv):
+    command_array = [
+        "echo 'python_command from bash (2)'",
+        "echo 'python_command from bash (3)'"
+    ]
+    command_array = ""
+    execute_command_array(command_array)
+
+

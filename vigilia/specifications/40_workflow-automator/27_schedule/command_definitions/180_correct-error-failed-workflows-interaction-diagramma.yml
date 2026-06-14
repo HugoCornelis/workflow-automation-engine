@@ -1,0 +1,8 @@
+---
+command: feature-testing-workflow features --interactions-target --help
+command_tests:
+  - description: Do we see a correct error message of failed workflows when asking for an interaction diagramma?
+    read: |+2
+      Die for testing at /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-features line 149.
+    white_space: convert seen 0a to 0d 0a newlines
+description: Do we see a correct error message of failed workflows when asking for an interaction diagramma?
