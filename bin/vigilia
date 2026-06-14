@@ -1764,6 +1764,11 @@ sub harness_command_run_tests
 
     my $reporter = shift;
 
+    if (@$arguments)
+    {
+	die "$0: *** Error: run-tests does not expect any command line arguments.";
+    }
+
     # find all the test module files
 
     my $test_library = Heterarch::Test::Library->new($global_config->{tests_directory}, $reporter, );
