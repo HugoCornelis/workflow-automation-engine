@@ -3931,7 +3931,7 @@ sub builtin_ai_document_query
 
     my $option_api_key;
     my $option_base_url;
-    my $option_model = 'gpt-5.5';
+    my $option_model;
     my $option_purpose = 'user_data';
 
     my $options
@@ -3981,7 +3981,7 @@ sub builtin_ai_document_query
 
     my $client_options
 	= {
-	   model => $option_model,
+	   (defined $option_model ? (model => $option_model) : ()),
 	  };
 
     $client_options->{api_key} = $option_api_key
