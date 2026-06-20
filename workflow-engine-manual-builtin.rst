@@ -14,7 +14,7 @@ This manual was automatically generated with the command line:
 
 .. code-block:: bash
 
-    bin/workflow builtin manual builtin
+    /usr/local/bin/workflow builtin manual builtin
 
 Draft Specification Manual: target ``builtin``
 **********************************************
@@ -55,10 +55,30 @@ Alphabetical list of ``builtin`` operations
 
 
 
+Operation: builtin ai_query
+---------------------------
+
+workflow builtin ai_query: Use OpenAI to explain this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin ai_query <pdf-file> <query-string>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of the PDF manual of this project.
+
+    ``ARGV[1]``: The query string with your question.
+
+
 Operation: builtin configuration_archive
 ----------------------------------------
 
-builtin configuration_archive: create a tarball with the configuration of the current workflow project.
+workflow builtin configuration_archive: create a tarball with the configuration of the current workflow project.
 
 synopsis:
 ~~~~~~~~~
@@ -77,7 +97,7 @@ arguments:
 Operation: builtin configuration_directory_print
 ------------------------------------------------
 
-builtin configuration_directory_print : print the directory where the configuration of this project is found.
+workflow builtin configuration_directory_print : print the directory where the configuration of this project is found.
 
 arguments:
 ~~~~~~~~~~
@@ -88,13 +108,13 @@ arguments:
 Operation: builtin configuration_fetch
 --------------------------------------
 
-builtin configuration_fetch: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
+workflow builtin configuration_fetch: do 'git fetch' in the workflow project directory to fetch the latest changes without updating the current workflow configuration.
 
 
 Operation: builtin configuration_install
 ----------------------------------------
 
-builtin configuration_install : install or upgrade the workflow scripts that are found in the current directory.
+workflow builtin configuration_install : install or upgrade the workflow scripts that are found in the current directory.
 
 options:
 ~~~~~~~~
@@ -125,13 +145,13 @@ Note that grc configuration files will also be installed and configured.
 Operation: builtin configuration_pull
 -------------------------------------
 
-builtin configuration_pull: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
+workflow builtin configuration_pull: do 'git pull' in the workflow project directory to fetch the latest changes and immediately update the current workflow configuration.
 
 
 Operation: builtin docker_containers_start
 ------------------------------------------
 
-builtin docker_containers_start: Start the docker images / containers that are required for the roles in this project.
+workflow builtin docker_containers_start: Start the docker images / containers that are required for the roles in this project.
 
 synopsis:
 ~~~~~~~~~
@@ -156,7 +176,7 @@ options:
 Operation: builtin docker_exec
 ------------------------------
 
-builtin docker_exec: Start the docker images / containers that are required for the roles in this project.
+workflow builtin docker_exec: Start the docker images / containers that are required for the roles in this project.
 
 synopsis:
 ~~~~~~~~~
@@ -177,7 +197,7 @@ arguments:
 Operation: builtin docker_images_build
 --------------------------------------
 
-builtin docker_images_build: Build the docker images that are required for the roles in this project.
+workflow builtin docker_images_build: Build the docker images that are required for the roles in this project.
 
 arguments:
 ~~~~~~~~~~
@@ -189,7 +209,7 @@ arguments:
 Operation: builtin grep_code
 ----------------------------
 
-builtin grep_code: Grep for a regex in the workflow code scripts of the selected workflow projects.
+workflow builtin grep_code: Grep for a regex in the workflow code scripts of the selected workflow projects.
 
 synopsis:
 ~~~~~~~~~
@@ -210,7 +230,7 @@ arguments:
 Operation: builtin grep_commands
 --------------------------------
 
-builtin grep_commands: Grep for a regex in the workflow commands of the selected workflow projects.
+workflow builtin grep_commands: Grep for a regex in the workflow commands of the selected workflow projects.
 
 synopsis:
 ~~~~~~~~~
@@ -222,18 +242,43 @@ builtin grep_commands <grep-regex> [ <project-name-regex> <project-name-regex> .
 arguments:
 ~~~~~~~~~~
 
-    ``ARGV[0]``: A regular expression to match the target against, '0' for all targets.
+    ``ARGV[0]``: A regular expression to match the target against, ':all' for all targets.
 
-    ``ARGV[1]``: A regular expression to match the commands against, '0' for all commands.
+    ``ARGV[1]``: A regular expression to match the commands against, ':all' for all commands.
 
     ``ARGV[2] and following``: Regular expressions to match with project names.  The default is this project if there is one, else all known projects.
 
 
 
+Operation: builtin lint
+-----------------------
+
+workflow builtin lint: Generate a report about missing functions for one or more targets.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin lint [ <target-regex> ... ] [ -- <--options> ]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: One or more regular expressions to match the target against, ':all' for all targets.
+
+options:
+~~~~~~~~
+
+    ``--bash-completors``: Check if the bash completion functions are implemented.
+
+    ``--help-pagers``: Check if the help pages are implemented.
+
+
 Operation: builtin manual
 -------------------------
 
-builtin manual : generate the manual, optionally of a target given on the command line.
+workflow builtin manual : generate the manual, optionally of a target given on the command line.
 
 synopsis:
 ~~~~~~~~~
@@ -268,7 +313,7 @@ options:
 Operation: builtin project_rename
 ---------------------------------
 
-builtin project_rename: Rename the project from which this command is invoked (the 'current' project).
+workflow builtin project_rename: Rename the project from which this command is invoked (the 'current' project).
 
 synopsis:
 ~~~~~~~~~
@@ -284,14 +329,14 @@ arguments:
 
     ``ARGV[1]``: the string 'also-bashrc' if you want your ~/.bashrc to be updated automatically.
 
-Note that carelessly updating your ``~/.bashrc`` is is risky.
+Note that carelessly updating your ``~/.bashrc`` is risky.
 
 
 
 Operation: builtin project_start
 --------------------------------
 
-builtin project_start: start a new project with a given name in the current directory.
+workflow builtin project_start: start a new project with a given name in the current directory.
 
 This will create a project descriptor, a configuration file and an
 empty command file in the current working directory.
@@ -305,7 +350,7 @@ arguments:
 Operation: builtin role_add
 ---------------------------
 
-builtin role_add: add a new role and update the configuration to integrate it.
+workflow builtin role_add: add a new role and update the configuration to integrate it.
 
 synopsis:
 ~~~~~~~~~
@@ -364,7 +409,7 @@ It is possible to combine options but you may have to tweak the remote policy af
 Operation: builtin role_print
 -----------------------------
 
-builtin role_print: Print the known roles.
+workflow builtin role_print: Print the known roles.
 
 arguments:
 ~~~~~~~~~~
@@ -378,7 +423,7 @@ arguments:
 Operation: builtin target_add
 -----------------------------
 
-builtin target_add: add a new target and update the configuration to integrate it.
+workflow builtin target_add: add a new target and update the configuration to integrate it.
 
 synopsis:
 ~~~~~~~~~
@@ -407,7 +452,7 @@ options:
 Operation: builtin tmux_sessions_create
 ---------------------------------------
 
-builtin tmux_sessions_create: Create one or more configured tmux session(s).
+workflow builtin tmux_sessions_create: Create one or more configured tmux session(s).
 
     ARGV[0]: Optional name of a configured tmux session (the default is all configured sessions).
 
@@ -418,7 +463,7 @@ Configured tmux sessions are:
 Operation: builtin tmux_sessions_kill
 -------------------------------------
 
-builtin tmux_sessions_kill: Kill one or more configured tmux session(s).
+workflow builtin tmux_sessions_kill: Kill one or more configured tmux session(s).
 
     ARGV[0]: Optional name of a configured tmux session (the default is all configured sessions).
 
@@ -429,7 +474,7 @@ Configured tmux sessions are:
 Operation: builtin workflow_add
 -------------------------------
 
-builtin workflow_add: Add a new workflow.
+workflow builtin workflow_add: Add a new workflow.
 
 synopsis:
 ~~~~~~~~~
@@ -463,10 +508,48 @@ options:
 
 
 
+Operation: builtin workflow_file_remove
+---------------------------------------
+
+workflow builtin workflow_file_remove: Remove a file that implements workflows.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin workflow_file_remove <workflow-filename>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The workflow filename (tab completion is available).
+
+
+Operation: builtin workflow_file_rename
+---------------------------------------
+
+workflow builtin workflow_file_rename: Rename a file that implements workflows.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin workflow_file_rename <old-filename> <new-filename>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The old filename (tab completion is available).
+
+    ``ARGV[1]``: The new filename.
+
+
 Operation: builtin workflow_filenames_known
 -------------------------------------------
 
-builtin workflow_filenames_known : print the known command filenames to stdout.
+workflow builtin workflow_filenames_known : print the known command filenames to stdout.
 
 synopsis:
 ~~~~~~~~~
@@ -480,4 +563,40 @@ arguments:
 
     ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
 
+
+
+Operation: builtin workflow_locate
+----------------------------------
+
+workflow builtin workflow_locate: Report where a Perl workflow function is implemented.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+builtin workflow_locate <target> <operation>
+builtin workflow_locate <target>_<operation>
+builtin workflow_locate Command::<target>_<operation>
+
+examples:
+~~~~~~~~~
+
+.. code-block:: bash
+
+workflow builtin workflow_report builtin lint
+workflow builtin workflow_report builtin_lint
+workflow builtin workflow_report Command::builtin_lint
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]`` and optionally ``ARGV[1]``: The workflow function to inspect.
+
+notes:
+~~~~~~
+
+    The report is most precise for Perl subs compiled after the program starts.
+    Shell and YAML workflows are not Perl subroutines.  Python/Inline workflows
+    may report the generated Perl wrapper rather than the original Python line.
 
