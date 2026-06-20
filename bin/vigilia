@@ -1030,7 +1030,7 @@ sub harness_command_module_command_add
 
     if (!$module_definition)
     {
-	die "$0: *** Error: $module_path_name does not have a valid test module definition..";
+	die "$0: *** Error: $module_path_name does not have a valid test module definition.";
     }
 
     my $command_definition = clone($global_command_definition_template);
@@ -1173,6 +1173,237 @@ sub harness_command_module_command_add
 }
 
 
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"command-correct"}
+    = {
+       description => "Correct an existing command's expected output based on the information in the given error report directory.",
+       executor => "main::harness_command_module_command_correct",
+       help => {
+		synopsis => "$0 command-correct <options> <error-report-directory>",
+		usage => "Options:
+    --help             Show this help message.
+    --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
+    --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
+",
+	       },
+       options => {
+		   "convert-seen-0d-0a-to-0a-newlines!" => do { my $option_convert_seen_0d_0a_to_0a_newlines; \$option_convert_seen_0d_0a_to_0a_newlines; },
+		   "help!" => do { my $option_help; \$option_help; },
+		   "yaml-work-around!" => do { my $option_yaml_work_around; \$option_yaml_work_around; },
+		  },
+      };
+
+sub harness_command_module_command_correct
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift || [];
+
+    my $reporter = shift;
+
+    my $error_report_directory = shift || shift @$arguments;
+
+    if (! defined $error_report_directory)
+    {
+	die "$0: *** Error: $command expects the error_report_directory as an argument.";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_convert_seen_0d_0a_to_0a_newlines = $options->{"convert-seen-0d-0a-to-0a-newlines!"};
+
+    my $convert_seen_0d_0a_to_0a_newlines = "yes";
+
+    if (defined $$option_convert_seen_0d_0a_to_0a_newlines)
+    {
+	$convert_seen_0d_0a_to_0a_newlines = $$option_convert_seen_0d_0a_to_0a_newlines;
+    }
+
+    my $option_help = $options->{"help!"};
+
+    my $help;
+
+    if (defined $$option_help)
+    {
+	$help = $$option_help;
+    }
+
+    my $option_output_stdout = $options->{"output-stdout!"};
+
+    my $output_stdout;
+
+    if (defined $$option_output_stdout)
+    {
+	$output_stdout = $$option_output_stdout;
+    }
+
+    my $option_yaml_work_around = $options->{"yaml-work-around!"};
+
+    my $yaml_work_around = 'yes';
+
+    if (defined $$option_yaml_work_around)
+    {
+	$yaml_work_around = $$option_yaml_work_around;
+    }
+
+    if (! -d $error_report_directory)
+    {
+	$error_report_directory = "$global_config->{reporting_directory}/$error_report_directory";
+    }
+
+    if (! -d $error_report_directory)
+    {
+	die "$0: *** Error: '$error_report_directory' not found.";
+    }
+
+    my $summary = eval
+    {
+	YAML::PP::LoadFile("$error_report_directory/000_summary.yml");
+    };
+
+    if ($@)
+    {
+	die "$0: *** Error: '$error_report_directory/000_summary.yml' not found.";
+    }
+
+    my $tests_directory = $global_config->{tests_directory};
+
+    my $module_path_name = "$tests_directory/$summary->{path}->{'010_module_name'}";
+
+    if (! -f $module_path_name)
+    {
+	die "$0: *** Error: '$module_path_name' not found.";
+    }
+
+    my $module_definition = Heterarch::Test::Library::tl_module_read($reporter, $module_path_name);
+
+    if (!$module_definition)
+    {
+	die "$0: *** Error: $module_path_name does not have a valid test module definition.";
+    }
+
+    my $command_definition_relative_path_name = $summary->{path}->{'020_command_definition_path'};
+
+    my $command_definition_directory = $module_path_name;
+
+    $command_definition_directory =~ s(/summary.yml$)();
+
+    my $command_definition_filename = "$command_definition_directory/$command_definition_relative_path_name";
+
+    if (! -f $command_definition_filename)
+    {
+	die "$0: *** Error: '$command_definition_filename' not found.";
+    }
+
+    my $command_definition = eval
+    {
+	YAML::PP::LoadFile($command_definition_filename);
+    };
+
+    if (!$command_definition)
+    {
+	die "$0: *** Error: $command_definition_directory/$command_definition_filename does not have a valid command_definition.";
+    }
+
+    # some sanity check because this command_correct needs more thought
+
+    my $command_tests = $command_definition->{command_tests};
+
+    if (scalar @$command_tests != 1)
+    {
+	die "$0: *** Error: $command_definition_directory/$command_definition_filename has more than one command_tests.";
+    }
+
+    my $command_test_to_correct = $command_tests->[0];
+
+    if (not exists $command_test_to_correct->{read})
+    {
+	die "$0: *** Error: The specified command_test_to_correct in $command_definition_filename does not have a read clause that can be updated.";
+    }
+
+    my $seen_file = IO::File->new("<$error_report_directory/020_seen.txt");
+
+    if (!$seen_file)
+    {
+	die "$0: *** Error: '$error_report_directory/020_seen.txt' not found.";
+    }
+
+    my $seen;
+
+    {
+	local $/; # enable 'slurp' mode
+
+	$seen = <$seen_file>;
+
+	$seen_file->close();
+    }
+
+    my $output = $seen;
+
+    # correct yaml output to work around a problem with Expect
+
+    if ($yaml_work_around)
+    {
+	if ($output =~ /^---/)
+	{
+	    $output = substr($output, 3);
+	}
+
+	if ($output =~ /^--/)
+	{
+	    $output = substr($output, 2);
+	}
+    }
+
+    if ($convert_seen_0d_0a_to_0a_newlines)
+    {
+	$output =~ s(\x0d\x0a)(\x0a)g;
+    }
+
+    $command_test_to_correct->{read} = $output;
+
+    my $error;
+
+    my $file_type = 'yaml';
+
+    if ($output_stdout)
+    {
+	my $output_yaml
+	    = {
+	       command_definition_filename => $command_definition_filename,
+	       command_definition => $command_definition,
+	       output => $output,
+	      };
+
+	print YAML::PP::Dump($output_yaml);
+    }
+    else
+    {
+	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_filename, $file_type, 'overwrite');
+
+	if (defined $result
+	    && $result =~ /error/i)
+	{
+	    $error = "Error updating the expected output for the first test of $command_definition_filename of the test module $module_path_name ($result).";
+	}
+    }
+
+    if ($error)
+    {
+	print "$0: *** Error: $error\n";
+    }
+    else
+    {
+	print "$0: Update the expected output for the first test of $command_definition_filename the test module $module_path_name.\n";
+    }
+
+    # return the error if there is one
+
+    return $error;
+}
+
+
 $global_command_line_configuration->{command_configuration}->{known_commands}->{"command-update"}
     = {
        description => "Update the given command under the given module by inserting its current output as the expected output.",
@@ -1264,7 +1495,7 @@ sub harness_command_module_command_update
 
     if (!$module_definition)
     {
-	die "$0: *** Error: $module_path_name does not have a valid test module definition..";
+	die "$0: *** Error: $module_path_name does not have a valid test module definition.";
     }
 
     my $command_definition = clone($global_command_definition_template);
@@ -8461,6 +8692,8 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     my $file_type = shift;
 
+    my $overwrite = shift;
+
     my $result;
 
     # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
@@ -8486,7 +8719,12 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     $command_definition->{command_tests} = $command_tests_unblessed;
 
-    if (! -f $command_definition_pathname)
+    if (-f $command_definition_pathname
+        && !$overwrite)
+    {
+	$result = "Error: $command_definition_pathname already exists.";
+    }
+    else
     {
 	if ($file_type eq 'yaml')
 	{
@@ -8496,10 +8734,6 @@ sub command_definition_dump_file_structured_yaml_or_json
 	{
 	    JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
 	}
-    }
-    else
-    {
-	$result = "Error: $command_definition_pathname already exists.";
     }
 
     return $result;
@@ -8693,6 +8927,8 @@ sub _module_read_yml
 		}
 		else
 		{
+		    $command_definition_filename =~ s($directory/)();
+
 		    $command_definition->{command_definition_path} = $command_definition_filename;
 
 		    push @$command_definitions, $command_definition;

@@ -16,6 +16,7 @@ command_tests:
       
       commands:
           command-add          Add a new command with the given name under the given module and insert its current output as the expected output.
+          command-correct      Correct an existing command's expected output based on the information in the given error report directory.
           command-update       Update the given command under the given module by inserting its current output as the expected output.
           configuration-create Create an initial test configuration with instructions how to expand it to a full test suite.
           help                 Show the help page. 
