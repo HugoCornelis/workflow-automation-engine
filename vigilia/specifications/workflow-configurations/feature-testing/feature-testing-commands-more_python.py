@@ -15,7 +15,7 @@ def more_python_python_command_completions(command, argv):
            "1._<your_completion_without_spaces_here>": "explain_the_purpose_of_the_completion_here",
            "2._<another_completion_here>": "the_numbers_preserve_the_order_for_this_example",
            "3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash": "further_explanation",
-           "4._Look_at_the_completion_function_of_more_python_single_command_completions_to_understand_how_it_works": "further_explanation",
+           "4._Look_at_the_completion_function_of_more_python_single_command_completor_to_understand_how_it_works": "further_explanation",
           }
 
     return completions_hash

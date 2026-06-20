@@ -37,7 +37,7 @@ command_tests:
           #
           # These options can given to any of the functions that execute commands.
       
-      def new_target_selected_commands_from_bash_history_completions(command, argv):
+      def new_target_selected_commands_from_bash_history_completor(command, argv, analysis):
           completions_hash = {
                  "1._<your_completion_without_spaces_here>": "more_nested_dictionary_items_here",
                  "2._<another_completion_here>": "the_numbers_preserve_the_order_for_this_example",

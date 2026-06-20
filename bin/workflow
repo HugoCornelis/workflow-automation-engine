@@ -1536,18 +1536,20 @@ our \$roles = \$::global_technical_project_configuration->{roles};
 }
 
 
-sub ${target_name}_single_command_completions
+sub ${target_name}_single_command_completor
 {
     my \$complete_command_string = shift;
 
     my \$complete_arguments_array = shift;
+
+    my \$complete_analysis = shift;
 
     my \$completions_hash
 	= {
 	   \"1._<your_completion_without_spaces_here>\" => \"explain_the_purpose_of_the_completion_here\",
 	   \"2._<another_completion_here>\" => \"the_numbers_preserve_the_order_for_this_example\",
 	   \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\" => \"further_explanation\",
-	   \"4._Look_at_the_completion_function_of_${target_name}_single_command_completions_to_understand_how_it_works\" => \"further_explanation\",
+	   \"4._Look_at_the_completion_function_of_${target_name}_single_command_completor_to_understand_how_it_works\" => \"further_explanation\",
 	  };
 
     # the following logic uses bash completion as a help message when there are no arguments to complete
@@ -1621,11 +1623,13 @@ arguments:
 }
 
 
-sub ${target_name}_array_of_commands_completions
+sub ${target_name}_array_of_commands_completor
 {
     my \$complete_command_string = shift;
 
     my \$complete_arguments_array = shift;
+
+    my \$complete_analysis = shift;
 
     my \$completions_hash
 	= {
@@ -1712,11 +1716,13 @@ arguments:
 }
 
 
-sub ${target_name}_array_of_commands_remote_execution_completions
+sub ${target_name}_array_of_commands_remote_execution_completor
 {
     my \$complete_command_string = shift;
 
     my \$complete_arguments_array = shift;
+
+    my \$complete_analysis = shift;
 
     my \$completions_hash
 	= {
@@ -1779,11 +1785,13 @@ arguments:
 }
 
 
-sub ${target_name}_sequencing_and_composition_completions
+sub ${target_name}_sequencing_and_composition_completor
 {
     my \$complete_command_string = shift;
 
     my \$complete_arguments_array = shift;
+
+    my \$complete_analysis = shift;
 
     my \$completions_hash
 	= {
@@ -1898,12 +1906,12 @@ def ${target_name}_python_command(argv):
     execute_command_array(command_array)
 
 
-def ${target_name}_python_command_completions(command, argv):
+def ${target_name}_python_command_completor(command, argv, analysis):
     completions_hash = {
            \"1._<your_completion_without_spaces_here>\": \"explain_the_purpose_of_the_completion_here\",
            \"2._<another_completion_here>\": \"the_numbers_preserve_the_order_for_this_example\",
            \"3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash\": \"further_explanation\",
-           \"4._Look_at_the_completion_function_of_${target_name}_single_command_completions_to_understand_how_it_works\": \"further_explanation\",
+           \"4._Look_at_the_completion_function_of_${target_name}_single_command_completor_to_understand_how_it_works\": \"further_explanation\",
           }
 
     return completions_hash
@@ -3902,7 +3910,7 @@ def ${target}_${operation}(argv):
 	{
 	    $implementation
 		.= "
-def ${target}_${operation}_completions(command, argv):
+def ${target}_${operation}_completor(command, argv, analysis):
     completions_hash = {
            \"1._<your_completion_without_spaces_here>\": \"more_nested_dictionary_items_here\",
            \"2._<another_completion_here>\": \"the_numbers_preserve_the_order_for_this_example\",
@@ -4045,6 +4053,8 @@ sub ${target}_${operation}_completions
 
     my \$complete_arguments_array = shift;
 
+    my \$complete_analysis = shift;
+
     my \$completions_hash
 	= {
            \"1._<your_completion_without_spaces_here>\" => \"more_nested_dictionary_items_here\",
@@ -4183,7 +4193,7 @@ sub _workflow_operations_load
 	# Subroutine Command::_load_json_configuration_file redefined at (eval 44) line 1.
 	# Subroutine Command::assign_api_functions redefined at (eval 45) line 1.
 	# Subroutine Command::more_python_python_command redefined at (eval 46) line 1.
-	# Subroutine Command::more_python_python_command_completions redefined at (eval 47) line 1.
+	# Subroutine Command::more_python_python_command_completor redefined at (eval 47) line 1.
 	# Subroutine Command::more_python_python_command_help redefined at (eval 48) line 1.
 
 	#t another work around could be to first load the files as ascii,
@@ -4392,7 +4402,7 @@ sub builtin_ai_document_query
 }
 
 
-sub builtin_ai_document_query_completions
+sub builtin_ai_document_query_completor
 {
     my $operation_name = shift;
 
@@ -4747,7 +4757,7 @@ sub builtin_configuration_archive
 }
 
 
-sub builtin_configuration_archive_completions
+sub builtin_configuration_archive_completor
 {
     my $complete_command_string = shift;
 
@@ -5002,7 +5012,7 @@ sub builtin_configuration_install
 }
 
 
-sub builtin_configuration_install_completions
+sub builtin_configuration_install_completor
 {
     my $complete_command_string = shift;
 
@@ -5183,7 +5193,7 @@ sub builtin_docker_containers_start
 }
 
 
-sub builtin_docker_containers_start_completions
+sub builtin_docker_containers_start_completor
 {
     my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
 
@@ -5275,7 +5285,7 @@ sub builtin_docker_exec
 }
 
 
-sub builtin_docker_exec_completions
+sub builtin_docker_exec_completor
 {
     my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
 
@@ -5409,7 +5419,7 @@ sub builtin_docker_images_build
 }
 
 
-sub builtin_docker_images_build_completions
+sub builtin_docker_images_build_completor
 {
     my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
 
@@ -5589,7 +5599,7 @@ sub builtin_grep_code
 }
 
 
-sub builtin_grep_code_completions
+sub builtin_grep_code_completor
 {
     return
     {
@@ -5868,7 +5878,7 @@ sub builtin_grep_commands
 }
 
 
-sub builtin_grep_commands_completions
+sub builtin_grep_commands_completor
 {
     return
     {
@@ -5994,7 +6004,7 @@ sub builtin_lint
 }
 
 
-sub builtin_lint_completions
+sub builtin_lint_completor
 {
     # ($operation_name,
     #  $arguments,
@@ -6492,7 +6502,7 @@ $global_command_line
 }
 
 
-sub builtin_manual_completions
+sub builtin_manual_completor
 {
     my $options_completions
 	= {
@@ -7101,7 +7111,7 @@ sub builtin_project_start
 }
 
 
-sub builtin_project_start_completions
+sub builtin_project_start_completor
 {
     my $complete_command_string = shift;
 
@@ -7359,7 +7369,7 @@ sub builtin_role_add
 
 
 
-sub builtin_role_add_completions
+sub builtin_role_add_completor
 {
     my $complete_command_string = shift;
 
@@ -7488,7 +7498,7 @@ sub builtin_role_print
 }
 
 
-sub builtin_role_print_completions
+sub builtin_role_print_completor
 {
     my $matcher = '.*';
 
@@ -7704,7 +7714,7 @@ sub builtin_target_add
 }
 
 
-sub builtin_target_add_completions
+sub builtin_target_add_completor
 {
     my $complete_command_string = shift;
 
@@ -7819,7 +7829,7 @@ sub builtin_tmux_sessions_create
 }
 
 
-sub builtin_tmux_sessions_create_completions
+sub builtin_tmux_sessions_create_completor
 {
     # ($operation_name,
     #  $arguments,
@@ -7914,7 +7924,7 @@ sub builtin_tmux_sessions_kill
 }
 
 
-sub builtin_tmux_sessions_kill_completions
+sub builtin_tmux_sessions_kill_completor
 {
     # ($operation_name,
     #  $arguments,
@@ -8214,7 +8224,7 @@ sub builtin_workflow_add
 }
 
 
-sub builtin_workflow_add_completions
+sub builtin_workflow_add_completor
 {
     return
     {
@@ -8371,7 +8381,7 @@ sub builtin_workflow_file_remove
 }
 
 
-sub builtin_workflow_file_remove_completions
+sub builtin_workflow_file_remove_completor
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
@@ -8534,7 +8544,7 @@ sub builtin_workflow_file_rename
 }
 
 
-sub builtin_workflow_file_rename_completions
+sub builtin_workflow_file_rename_completor
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
@@ -8636,7 +8646,7 @@ sub builtin_workflow_filenames_known
 }
 
 
-sub builtin_workflow_filenames_known_completions
+sub builtin_workflow_filenames_known_completor
 {
     # generate the list of command filenames
 
@@ -8709,7 +8719,7 @@ sub builtin_workflow_locate
 }
 
 
-sub builtin_workflow_locate_completions
+sub builtin_workflow_locate_completor
 {
     my $operation_name = shift;
 
@@ -9591,7 +9601,7 @@ sub _flags_status
 }
 
 
-sub _repository_completions
+sub _repository_completor
 {
     my $complete_command_string = shift;
 
@@ -9880,7 +9890,7 @@ sub builtin_qemu_qcow2_mount
 }
 
 
-sub builtin_qemu_qcow2_mount_completions
+sub builtin_qemu_qcow2_mount_completor
 {
     return
     {
@@ -12660,7 +12670,7 @@ sub _init_do_eval_python_file
     #t Subroutine Command::_load_json_configuration_file redefined at (eval 44) line 1.
     #t Subroutine Command::assign_api_functions redefined at (eval 45) line 1.
     #t Subroutine Command::more_python_python_command redefined at (eval 46) line 1.
-    #t Subroutine Command::more_python_python_command_completions redefined at (eval 47) line 1.
+    #t Subroutine Command::more_python_python_command_completor redefined at (eval 47) line 1.
     #t Subroutine Command::more_python_python_command_help redefined at (eval 48) line 1.
 
     if (not $error)
@@ -13764,7 +13774,8 @@ sub bash_completion
 	    my $target = shift @$target_operation;
 	    my $operation = shift @$target_operation;
 
-	    my $completion_sub = "Command::${target}_${operation}_completions";
+	    my $completion_sub_without_status = "Command::${target}_${operation}_completions";
+	    my $completion_sub_with_status = "Command::${target}_${operation}_completor";
 
 	    my $operation_hash = operation_hash_typed_generate('with completion subs');
 
@@ -13772,22 +13783,22 @@ sub bash_completion
 
 	    my $external_completions
 		= {
-		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => '',
-		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => '',
+		   "<_please_implement_the_function_with_name_\"$completion_sub_with_status\">" => '',
+		   "__please_implement_the_function_with_name_\"$completion_sub_with_status\"_" => '',
 		  };
 
-	    if (exists $operation_hash->{"$target ${operation}_completions"})
+	    if (exists $operation_hash->{"$target ${operation}_completor"})
 	    {
 		no strict "refs";
 
-		my $operation_name = $completion_sub;
+		my $operation_name = $completion_sub_with_status;
 
 		$operation_name =~ s(^Command::)();
 		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
-		$operation_name =~ s(_completions$)();
+		$operation_name =~ s(_completor$)();
 
 		$external_completions
-		    = &$completion_sub
+		    = &$completion_sub_with_status
 		        ($operation_name,
 		         $arguments,
 			 {
@@ -13804,6 +13815,18 @@ sub bash_completion
 			  string_before_point => $string_before_point,
 			 },
 			);
+	    }
+	    elsif (exists $operation_hash->{"$target ${operation}_completions"})
+	    {
+		no strict "refs";
+
+		my $operation_name = $completion_sub_without_status;
+
+		$operation_name =~ s(^Command::)();
+		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
+		$operation_name =~ s(_completions$)();
+
+		$external_completions = &$completion_sub_without_status($operation_name, $arguments);
 	    }
 
 	    $result = bash_completion_generate($target_operation, $external_completions, $comp_cword - 2, $debug_completion);
@@ -14314,7 +14337,7 @@ sub operation_hash_subs_generate
 
 	       my $is_help = ($sub_name =~ m(_help$));
 
-	       my $is_completion = ($sub_name =~ m(_completions$));
+	       my $is_completion = ($sub_name =~ m(_completor$)) || ($sub_name =~ m(_completions$));
 
 	       my $is_none = !$is_help && !$is_completion;
 

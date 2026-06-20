@@ -3,7 +3,7 @@ command: feature-testing-workflow features --interactions-target
 command_tests:
   - description: Are the commands of a single target in option interactions-target scheduled correctly?
     read: |+2
-      	main::main() called at /home/neurospaces/bin/feature-testing-workflow line 14964
+      	main::main() called at /home/neurospaces/bin/feature-testing-workflow line 15583
       ---
       WORKFLOW: features_annotations
           ROLE: 'localuser@localhost'

@@ -59,6 +59,8 @@ command_tests:
       
           my $complete_arguments_array = shift;
       
+          my $complete_analysis = shift;
+      
           my $completions_hash
       	= {
                  "1._<your_completion_without_spaces_here>" => "more_nested_dictionary_items_here",

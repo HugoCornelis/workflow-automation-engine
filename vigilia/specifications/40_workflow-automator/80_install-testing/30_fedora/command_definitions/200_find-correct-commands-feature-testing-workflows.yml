@@ -13,7 +13,7 @@ command_tests:
     - feature-testing-workflow build operation1
     - feature-testing-workflow build operation2
     - feature-testing-workflow build operation3
-    - feature-testing-workflow builtin ai_query
+    - feature-testing-workflow builtin ai_document_query
     - feature-testing-workflow builtin configuration_archive
     - feature-testing-workflow builtin configuration_directory_print
     - feature-testing-workflow builtin configuration_fetch

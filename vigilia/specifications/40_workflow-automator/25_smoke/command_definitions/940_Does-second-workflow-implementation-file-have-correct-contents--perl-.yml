@@ -54,6 +54,8 @@ command_tests:
           my $complete_command_string = shift;
       
           my $complete_arguments_array = shift;
+
+          my $complete_analysis = shift;
       
           my $completions_hash
       	= {

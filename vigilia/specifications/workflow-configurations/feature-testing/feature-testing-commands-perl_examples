@@ -38,18 +38,20 @@ sub perl_examples_single_command
 }
 
 
-sub perl_examples_single_command_completions
+sub perl_examples_single_command_completor
 {
     my $complete_command_string = shift;
 
     my $complete_arguments_array = shift;
+
+    my $complete_analysis = shift;
 
     my $completions_hash
 	= {
 	   "1._<your_completion_without_spaces_here>" => "explain_the_purpose_of_the_completion_here",
 	   "2._<another_completion_here>" => "the_numbers_preserve_the_order_for_this_example",
 	   "3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash" => "further_explanation",
-	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completions_to_understand_how_it_works" => "further_explanation",
+	   "4._Look_at_the_completion_function_of_perl_examples_single_command_completor_to_understand_how_it_works" => "further_explanation",
 	  };
 
     # the follow logic uses bash completion as a help message when there are no arguments to complete
@@ -116,11 +118,13 @@ sub perl_examples_array_of_commands
 }
 
 
-sub perl_examples_array_of_commands_completions
+sub perl_examples_array_of_commands_completor
 {
     my $complete_command_string = shift;
 
     my $complete_arguments_array = shift;
+
+    my $complete_analysis = shift;
 
     my $completions_hash
 	= {
@@ -202,11 +206,13 @@ sub perl_examples_array_of_commands_remote_execution
 }
 
 
-sub perl_examples_array_of_commands_remote_execution_completions
+sub perl_examples_array_of_commands_remote_execution_completor
 {
     my $complete_command_string = shift;
 
     my $complete_arguments_array = shift;
+
+    my $complete_analysis = shift;
 
     my $completions_hash
 	= {
@@ -267,6 +273,8 @@ sub perl_examples_sequencing_and_composition_completions
     my $complete_command_string = shift;
 
     my $complete_arguments_array = shift;
+
+    my $complete_analysis = shift;
 
     my $completions_hash
 	= {

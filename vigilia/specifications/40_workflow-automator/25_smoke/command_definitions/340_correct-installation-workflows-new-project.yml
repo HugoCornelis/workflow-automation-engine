@@ -10,7 +10,7 @@ command_tests:
          try them with the --dry-run and --interactions options,
          some workflows may implement a usage message available with the --help option):
     1_workflows:
-    - workflow-tests-workflow builtin ai_query
+    - workflow-tests-workflow builtin ai_document_query
     - workflow-tests-workflow builtin configuration_archive
     - workflow-tests-workflow builtin configuration_directory_print
     - workflow-tests-workflow builtin configuration_fetch
