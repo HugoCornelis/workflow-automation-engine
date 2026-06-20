@@ -260,6 +260,170 @@ our $global_target;
 our $global_operation;
 
 
+package AI::OpenAI;
+
+use strict;
+use warnings;
+
+use Carp qw(croak);
+use JSON::PP qw(encode_json decode_json);
+use LWP::UserAgent;
+use HTTP::Request::Common qw(POST);
+
+sub new
+{
+    my ($class, %args) = @_;
+
+    my $api_key = $args{api_key} || $ENV{OPENAI_API_KEY}
+        or croak "Missing api_key or OPENAI_API_KEY";
+
+    my $self = bless {
+        api_key  => $api_key,
+        model    => $args{model}    || 'gpt-5.5',
+        base_url => $args{base_url} || 'https://api.openai.com/v1',
+        ua       => $args{ua}       || LWP::UserAgent->new(timeout => 120),
+    }, $class;
+
+    return $self;
+}
+
+
+sub upload_file
+{
+    my ($self, %args) = @_;
+
+    my $path = $args{path}
+        or croak "upload_file() requires path";
+
+    my $purpose = $args{purpose} || 'user_data';
+
+    -f $path
+        or croak "File does not exist: $path";
+
+    my $url = $self->{base_url} . '/files';
+
+    my $request = POST(
+        $url,
+        Authorization => 'Bearer ' . $self->{api_key},
+        Content_Type  => 'form-data',
+        Content       => [
+            purpose => $purpose,
+            file    => [$path],
+        ],
+    );
+
+    return $self->_perform_json_request($request);
+}
+
+
+sub ask_file
+{
+    my ($self, %args) = @_;
+
+    my $file_id = $args{file_id}
+        or croak "ask_file() requires file_id";
+
+    my $question = $args{question}
+        or croak "ask_file() requires question";
+
+    my $response = $self->create_response(
+        input => [
+            {
+                role    => 'user',
+                content => [
+                    {
+                        type    => 'input_file',
+                        file_id => $file_id,
+                    },
+                    {
+                        type => 'input_text',
+                        text => $question,
+                    },
+                ],
+            },
+        ],
+    );
+
+    return $self->extract_text($response);
+}
+
+
+sub create_response
+{
+    my ($self, %args) = @_;
+
+    my $input = $args{input}
+        or croak "create_response() requires input";
+
+    my $payload = {
+        model => $args{model} || $self->{model},
+        input => $input,
+    };
+
+    my $url = $self->{base_url} . '/responses';
+
+    my $request = HTTP::Request->new(POST => $url);
+    $request->header('Authorization' => 'Bearer ' . $self->{api_key});
+    $request->header('Content-Type'  => 'application/json');
+    $request->content(encode_json($payload));
+
+    return $self->_perform_json_request($request);
+}
+
+
+sub extract_text
+{
+    my ($self, $response) = @_;
+
+    # Some SDKs expose output_text as a convenience field. Raw HTTP responses
+    # normally need to be read from output[].content[].
+    return $response->{output_text}
+        if defined $response->{output_text} && length $response->{output_text};
+
+    my @parts;
+
+    for my $item (@{ $response->{output} || [] }) {
+        for my $content (@{ $item->{content} || [] }) {
+            push @parts, $content->{text}
+                if defined $content->{text};
+        }
+    }
+
+    return join "\n", @parts;
+}
+
+
+sub _perform_json_request
+{
+    my ($self, $request) = @_;
+
+    my $http_response = $self->{ua}->request($request);
+
+    my $body = $http_response->decoded_content;
+
+    my $json;
+    eval {
+        $json = decode_json($body);
+        1;
+    } or do {
+        croak "OpenAI API returned non-JSON response: "
+            . $http_response->status_line . "\n$body";
+    };
+
+    if (!$http_response->is_success) {
+        my $message =
+            $json->{error}{message}
+            || $json->{error}
+            || $body
+            || $http_response->status_line;
+
+        croak "OpenAI API error: $message";
+    }
+
+    return $json;
+}
+
+
 package Command;
 
 
