@@ -1154,7 +1154,7 @@ sub harness_command_module_command_add
 		   output => $output,
 		  };
 
-	    print YAML::PP::Dump($output_yaml);
+	    Utilities::yaml_dump_stdout($output_yaml);
 	}
 	else
 	{
@@ -1390,7 +1390,7 @@ sub harness_command_module_command_correct
 	       output => $output,
 	      };
 
-	print YAML::PP::Dump($output_yaml);
+	Utilities::yaml_dump_stdout($output_yaml);
     }
     else
     {
@@ -2811,7 +2811,7 @@ sub report_file_dump
 
     eval
     {
-	YAML::PP::DumpFile($report_filename, $global_test_report);
+	Utilities::yaml_dump_file($report_filename, $global_test_report);
     };
 
     if ($@)
@@ -3252,13 +3252,13 @@ sub spawn_new
     if (defined $option_debugging
 	and $option_debugging eq 'spawn_new')
     {
-	print YAML::PP::Dump(
-			     {
-			      option_debugging => {
-						   command_line => $command_line,
-						  },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     option_debugging => {
+							  command_line => $command_line,
+							 },
+				    },
+				   );
     }
 
     my $test_startup = "yes, do the startup testing";
@@ -5064,13 +5064,13 @@ sub is_selected_by_tag
     if (defined $option_debugging
 	and $option_debugging eq 'tags')
     {
-	print YAML::PP::Dump(
-			     {
-			      option_debugging => {
-						   selected_by_tag_element_name => $element_name,
-						  },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     option_debugging => {
+							  selected_by_tag_element_name => $element_name,
+							 },
+				    },
+				   );
     }
 
     if (not scalar @$option_tags)
@@ -5370,14 +5370,14 @@ sub ec_construct_command_line
 
 	my $harness_list = $current->{current_harness_list};
 
-	print YAML::PP::Dump(
-			     {
-			      option_debugging => {
-						   harness_current => $harness,
-						   harness_list => $harness_list,
-						  },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     option_debugging => {
+							  harness_current => $harness,
+							  harness_list => $harness_list,
+							 },
+				    },
+				   );
     }
 
     my $command_line;
@@ -5757,14 +5757,14 @@ sub harness_current
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	print YAML::PP::Dump(
-			     {
-			      option_debugging => {
-						   global_active_harness_identifiers => $global_active_harness_identifiers,
-						   global_harnessing_identifiers => $global_harnessing_identifiers,
-						  },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     option_debugging => {
+							  global_active_harness_identifiers => $global_active_harness_identifiers,
+							  global_harnessing_identifiers => $global_harnessing_identifiers,
+							 },
+				    },
+				   );
     }
 
     my $active_harness_identifier = $self->harness_identifier_current();
@@ -5954,13 +5954,13 @@ sub ec_is_selected_by_context_path
     if (defined $option_debugging
 	and $option_debugging eq 'context_path')
     {
-	print YAML::PP::Dump(
-			     {
-			      option_debugging => {
-						   selected_by_context_path => $element_name,
-						  },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     option_debugging => {
+							  selected_by_context_path => $element_name,
+							 },
+				    },
+				   );
     }
 
     my $selected = 'by default';
@@ -6532,15 +6532,15 @@ sub create_or_fetch
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	print YAML::PP::Dump(
-			     {
-			      create_or_fetch => {
-						  global_active_harness_identifiers => $global_active_harness_identifiers,
-						  global_harnessing_identifiers => $global_harnessing_identifiers,
-						  harnessing_identifier => $harnessing_identifier,
-						 },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     create_or_fetch => {
+							 global_active_harness_identifiers => $global_active_harness_identifiers,
+							 global_harnessing_identifiers => $global_harnessing_identifiers,
+							 harnessing_identifier => $harnessing_identifier,
+							},
+				    },
+				   );
     }
 
     # if this harnessing_identifier was not yet created
@@ -7124,13 +7124,13 @@ sub _generate_command_prefix
     if (defined $option_debugging
 	and $option_debugging eq 'generate_command_prefix')
     {
-	print YAML::PP::Dump(
-			     {
-			      option_debugging => {
-						   harness => $self,
-						  },
-			     },
-			    );
+	Utilities::yaml_dump_stdout(
+				    {
+				     option_debugging => {
+							  harness => $self,
+							 },
+				    },
+				   );
     }
 
     my $prefix_docker
@@ -8444,7 +8444,7 @@ sub _module_read_process_options
 
     if ($option_dump_yaml)
     {
-	YAML::PP::DumpFile("$specification_dump_directory/$filename.yml", $module_definition);
+	Utilities::yaml_dump_file("$specification_dump_directory/$filename.yml", $module_definition);
     }
 
     if ($option_dump_file_structured_json)
@@ -8747,7 +8747,7 @@ sub command_definition_dump_file_structured_yaml_or_json
     {
 	if ($file_type eq 'yaml')
 	{
-	    YAML::PP::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	    Utilities::yaml_dump_file($command_definition_pathname, $unblessed_command_definition);
 	}
 	else
 	{
@@ -8777,7 +8777,7 @@ sub module_definition_summary_dump_file_structured_yaml
 
     if ($file_type eq 'yaml')
     {
-	YAML::PP::DumpFile($module_summary_filename, $unblessed_module_definition);
+	Utilities::yaml_dump_file($module_summary_filename, $unblessed_module_definition);
     }
     else
     {
@@ -12038,7 +12038,7 @@ sub render_raw_data
 
     my $figure_definition_filename = $pathname_prefix . "_output_graph_render_figure_definition.yml";
 
-    YAML::PP::DumpFile($figure_definition_filename, $figure_definition);
+    Utilities::yaml_dump_file($figure_definition_filename, $figure_definition);
 
     # create the figure graph
 
@@ -12744,7 +12744,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
+    my $report_text = "\n" . Utilities::yaml_dump_string($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -12904,7 +12904,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
+    my $report_text = "\n" . Utilities::yaml_dump_string($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -13091,7 +13091,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
+    my $report_text = "\n" . Utilities::yaml_dump_string($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -13289,7 +13289,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
+    my $report_text = "\n" . Utilities::yaml_dump_string($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -13865,7 +13865,7 @@ sub _report_error_summary
 
     eval
     {
-	YAML::PP::DumpFile($summary_filename, $summary_report);
+	Utilities::yaml_dump_file($summary_filename, $summary_report);
     };
 
     if ($@)
@@ -14800,6 +14800,93 @@ sub create_directories
     {
 	# print "No error encountered\n";
     }
+
+    return $result;
+}
+
+
+use YAML::PP;
+use YAML::PP::Common qw(
+			   PRESERVE_SCALAR_STYLE
+			   YAML_LITERAL_SCALAR_STYLE
+		      );
+
+
+sub yaml_literal_multiline_scalars
+{
+    my ($yp, $node) = @_;
+
+    if (ref($node) eq 'HASH')
+    {
+        foreach my $key (keys %$node)
+	{
+            $node->{$key} = yaml_literal_multiline_scalars($yp, $node->{$key});
+        }
+
+        return $node;
+    }
+
+    if (ref($node) eq 'ARRAY')
+    {
+        for my $i (0 .. $#$node)
+	{
+            $node->[$i] = yaml_literal_multiline_scalars($yp, $node->[$i]);
+        }
+
+        return $node;
+    }
+
+    return $node if ref($node);
+    return $node unless defined $node;
+    return $node unless $node =~ /\n/;
+
+    return $yp->preserved_scalar(
+				 $node,
+				 style => YAML_LITERAL_SCALAR_STYLE,
+				);
+}
+
+sub yaml_dump_file
+{
+    my $filename = shift;
+
+    my $data = shift;
+
+    my $processor = YAML::PP->new(
+				  schema   => [ 'Core' ],
+				  preserve => PRESERVE_SCALAR_STYLE,
+				  header   => 0,     # optional: omit leading ---
+				 );
+
+    yaml_literal_multiline_scalars($processor, $data);
+
+    YAML::PP::DumpFile($filename, $data);
+}
+
+
+sub yaml_dump_stdout
+{
+    my $data = shift;
+
+    print yaml_dump_string($data);
+}
+
+
+sub yaml_dump_string
+{
+    my $data = shift;
+
+    my $processor = YAML::PP->new(
+				  schema   => [ 'Core' ],
+				  preserve => PRESERVE_SCALAR_STYLE,
+				  header   => 0,     # optional: omit leading ---
+				 );
+
+    #     return YAML::PP::Dump($data);
+
+    yaml_literal_multiline_scalars($processor, $data);
+
+    my $result = $processor->dump_string($data);
 
     return $result;
 }
