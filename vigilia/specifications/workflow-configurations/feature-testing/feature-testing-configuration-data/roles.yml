@@ -31,7 +31,7 @@ roles:
         outside: '%%HOME_DIRECTORY%%/directory_outside_the_container'
   laptop:
     description: the local computer of the developer
-    localuser: yes
+    localuser: 'yes'
     name: laptop
     ssh_port: 22
     ssh_server: 192.168.4.70
