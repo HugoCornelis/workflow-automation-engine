@@ -18,7 +18,6 @@ SUBDIRS = perl
 
 dist_bin_SCRIPTS = \
 	bin/vigilia \
-	bin/vigilia_2_html \
 	bin/workflow
 
 workflowautomationtestdir=$(prefix)/neurospaces/workflow-automation
@@ -37,6 +36,7 @@ endif
 # The variable EXTRA_DIST could also be used here.
 
 EXTRA_DIST = \
+	vigilia.config \
 	bin/workflow-files/conf.neurospaces-configuration \
 	bin/workflow-files/conf.neurospaces-workflow \
 	bin/workflow-files/conf.workflow \
@@ -64,7 +64,7 @@ clean-local:
 dist-hook:
 	$(srcdir)/install-sh -d $(distdir)/vigilia
 	$(srcdir)/install-sh -d $(distdir)/vigilia/html
-	( cd $(distdir)/vigilia && chmod -R u+w . && ../bin/vigilia_2_html --introduction introduction.html )
+	( cd $(distdir) && chmod -R u+w vigilia && bin/vigilia --output-html )
 
 install-data-local: neurospaces_cpan_modules
 
@@ -80,11 +80,13 @@ test: check
 
 TESTS = run_harness.sh
 
-html-upload-prepare:
+vigilia-html:
+	( cd $(top_srcdir) && bin/vigilia --output-html )
+
+html-upload-prepare: vigilia-html
 	rm -fr html/htdocs/neurospaces_project/$(PACKAGE)
 	mkdir -p html/htdocs/neurospaces_project/$(PACKAGE)
-# $Format: "	( cd viglia && vigilia_2_html --header '<img src=\"ns-main-logo-dark2-notext-32x32.jpg\" alt=\"Main Neurospaces logo\"> ${package}, ${label}, ${email} <hr>' --introduction introduction.html )" $
-	( cd vigilia && vigilia_2_html --header '<img src="ns-main-logo-dark2-notext-32x32.jpg" alt="Main Neurospaces logo"> neurospaces 0.1675 Thu, 27 Dec 2007 15:58:18 -0600 hugo<hr>' --introduction introduction.html )
+	cp -R $(top_srcdir)/vigilia/html/. html/htdocs/neurospaces_project/$(PACKAGE)/
 
 #t perhaps also add a target to check the syntax of all the html ?
 

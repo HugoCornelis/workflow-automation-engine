@@ -20,6 +20,8 @@ try-graph.pl
 python-tests/
 testing/
 
+html/
+
 report_workflow-automation-engine/
 
 configured-workflows/automation-commands-data/cache/
@@ -28,6 +30,8 @@ vigilia/specifications/workflow-configurations/feature-testing/feature-testing-c
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/
 
+
+workflow-automation-*
 
 # http://www.gnu.org/software/automake
 
