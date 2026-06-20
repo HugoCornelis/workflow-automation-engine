@@ -12331,6 +12331,23 @@ sub _differences_report
 
 	$differences_report->{expected_filename} = $expected_filename;
 
+	my $expected_file_raw = IO::File->new(">$expected_filename.raw");
+
+	if ($expected_file_raw)
+	{
+	    print $expected_file_raw $expected;
+
+	    $expected_file_raw->close();
+	}
+	else
+	{
+	    my $fd_output = $self->{fd_output};
+
+	    print $fd_output "*** Warning: cannot open $expected_filename.raw for writing\n";
+	}
+
+	$expected =~ s(\r)()g;
+
 	my $expected_file = IO::File->new(">$expected_filename");
 
 	if ($expected_file)
@@ -12349,6 +12366,23 @@ sub _differences_report
 	my $seen_filename = "$report_error_directory/020_seen.txt";
 
 	$differences_report->{seen_filename} = $seen_filename;
+
+	my $seen_file_raw = IO::File->new(">$seen_filename.raw");
+
+	if ($seen_file_raw)
+	{
+	    print $seen_file_raw $seen;
+
+	    $seen_file_raw->close();
+	}
+	else
+	{
+	    my $fd_output = $self->{fd_output};
+
+	    print $fd_output "*** Warning: cannot open $seen_filename.raw for writing\n";
+	}
+
+	$seen =~ s(\r)()g;
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
