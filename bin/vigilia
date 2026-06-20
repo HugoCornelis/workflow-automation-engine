@@ -567,7 +567,7 @@ sub parse_options
     {
 	if ($option_output_html)
 	{
-	    $global_test_report->{output_format} = 'yaml_exit';
+	    $global_test_report->{output_format} = 'html';
 
 	    $option_output = "Heterarch::Test::Output::Formatter::HTMLTable";
 	}
@@ -9454,64 +9454,839 @@ sub ex_cd_start
 {
     my $self = shift;
 
-    my $execution_context = $self->{execution_context};
+    # Reuse the generic Formatter implementation.  It clones the current
+    # command definition into $global_test_report->{selected}; the previous
+    # HTMLTable stub only inspected the command and therefore left the final
+    # HTML formatter without command/test content to render.
 
-    my $module_definition = $execution_context->get_module_definition();
+    return $self->SUPER::ex_cd_start(@_);
+}
 
-    my $command_definition = $execution_context->get_command_definition();
 
-    # we have to either instantiate an object that produces output ...
+our $output_file;
 
-    if ($command_definition->{class})
+
+sub _output_html_escape
+{
+    my $contents = shift;
+
+    return '' if not defined $contents;
+
+    $contents =~ s/&/&amp;/g;
+    $contents =~ s/</&lt;/g;
+    $contents =~ s/>/&gt;/g;
+    $contents =~ s/"/&quot;/g;
+    $contents =~ s/'/&#39;/g;
+
+    return $contents;
+}
+
+
+sub _output_html
+{
+    my $outputfile = shift;
+
+    my $contents = shift;
+
+    print $outputfile $contents if defined $contents;
+}
+
+
+sub _output_html_text
+{
+    my $outputfile = shift;
+
+    my $contents = shift;
+
+    print $outputfile _output_html_escape($contents);
+}
+
+
+sub _output_html_preamble_construct
+{
+    my $html_introduction_original = shift || '';
+
+    my $html_introduction = $html_introduction_original;
+
+    my $author = '';
+
+    if ($html_introduction =~ m(<address>(.*?)</address>)is)
     {
-	# instantiate the object
+	my $address = $1;
 
-	my $class = $command_definition->{class};
+	if ($address =~ m(<a.*?>(.*?)</a>)is)
+	{
+	    $author = $1;
+	}
+	else
+	{
+	    $author = $address;
+	}
 
-	my $filename = $class . ".pm";
-
-	$filename =~ s(::)(/)g;
-
-	# require $filename;
-
-	# $self->{command_object} = eval "$class->new()";
+	$author =~ s/<[^>]+>//g;
     }
 
-    # ... or run perl code that produces output
+    my $title = '';
 
-    elsif (ref $command_definition->{command} eq 'CODE')
+    if ($html_introduction =~ s(<h1>(.*?)</h1>)()is)
     {
-	# code is already instantiated, nothing to do here
+	$title = $1;
+	$title =~ s/<[^>]+>//g;
     }
 
-    # ... or run a command that produces output
+    $html_introduction =~ s(<address>.*?</address>)()gis;
 
-    else
+    my $summary_html = $html_introduction;
+
+    my $result
+	= {
+	   author => $author,
+	   original_contents => $html_introduction_original,
+	   summary_html => $summary_html,
+	   title => $title || 'Vigilia test specifications',
+	  };
+
+    return $result;
+}
+
+
+sub _output_html_preamble
+{
+    my $output_pathname = shift;
+
+    my $html_introduction = shift;
+
+    use File::Basename qw( fileparse );
+    use File::Copy;
+    use File::Path qw( make_path );
+    use IO::File;
+    use POSIX qw(strftime);
+
+    my ( $filename_prefix, $directory ) = fileparse($output_pathname);
+
+    make_path($directory) if defined $directory and length $directory and !-d $directory;
+
+    my $figures_directory = 'figures';
+
+    make_path("$directory/$figures_directory") if defined $directory and length $directory and !-d "$directory/$figures_directory";
+
+    my $logo_relative_pathname;
+
+    if (defined $option_output_logo and -r $option_output_logo)
     {
-	# start the command and connect with its I/O channels
+	$logo_relative_pathname = "$figures_directory/main-page-logo.jpg";
 
-	# my ($exp, $test_startup) = $command_definition->spawn_new($execution_context, $fd_output);
+	copy($option_output_logo, "$directory/$logo_relative_pathname");
+    }
 
-	# remember to spawn a new command
+    $output_file = IO::File->new(">$output_pathname.html")
+	or die "$0: cannot open $output_pathname.html for writing: $!";
 
-	my $spawn_new = not $command_definition->{recycle};
+    my $title_paragraphs = _output_html_preamble_construct($html_introduction);
 
-	# retrieve the shell command and its arguments
+    my $title = _output_html_escape($title_paragraphs->{title});
 
+    my $author = _output_html_escape($title_paragraphs->{author});
+
+    my $now_string = strftime("%Y-%m-%d", localtime());
+
+    print $output_file <<"HTML";
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$title</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #ffffff;
+      --foreground: #17202a;
+      --muted: #5f6c7b;
+      --border: #d6dbe1;
+      --panel: #f7f9fb;
+      --accent: #1f4e79;
+      --code-background: #f0f3f6;
+    }
+    body {
+      background: var(--background);
+      color: var(--foreground);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      margin: 0 auto;
+      max-width: 78rem;
+      padding: 2rem;
+    }
+    header.document-header {
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      text-align: center;
+    }
+    header.document-header img.logo {
+      max-height: 7rem;
+      max-width: 24rem;
+    }
+    h1, h2, h3, h4 {
+      line-height: 1.2;
+    }
+    h2 {
+      border-bottom: 1px solid var(--border);
+      margin-top: 2.5rem;
+      padding-bottom: 0.35rem;
+    }
+    article.module,
+    article.command-definition,
+    article.command-test,
+    section.summary {
+      margin-bottom: 1.5rem;
+    }
+    article.command-definition,
+    article.command-test,
+    div.note,
+    div.harnessing,
+    div.content-block,
+    figure.test-figure {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+    article.command-test,
+    div.content-block,
+    figure.test-figure {
+      margin-top: 1rem;
+    }
+    .metadata,
+    .prompt,
+    figcaption {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .prompt {
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    code {
+      background: var(--code-background);
+      border-radius: 0.25rem;
+      padding: 0.1rem 0.25rem;
+    }
+    pre {
+      background: var(--code-background);
+      border-radius: 0.35rem;
+      overflow-x: auto;
+      padding: 0.75rem;
+      white-space: pre-wrap;
+    }
+    ul.compact {
+      margin-bottom: 0;
+      margin-top: 0.25rem;
+    }
+    div.note {
+      border-left: 0.35rem solid var(--accent);
+      margin: 1rem 0;
+    }
+    figure.test-figure img {
+      display: block;
+      margin: 0.5rem auto;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+<header class="document-header">
+HTML
+
+    if ($logo_relative_pathname)
+    {
+	print $output_file '  <img class="logo" src="' . _output_html_escape($logo_relative_pathname) . '" alt="Logo">' . "\n";
+    }
+
+    print $output_file <<"HTML";
+  <h1>$title</h1>
+  <p class="metadata">Automatically generated draft document</p>
+HTML
+
+    print $output_file '  <p class="metadata"><strong>' . $author . '</strong></p>' . "\n" if $author;
+
+    print $output_file '  <p class="metadata"><strong>' . _output_html_escape($now_string) . '</strong></p>' . "\n";
+
+    print $output_file "</header>\n";
+
+    if ($title_paragraphs->{summary_html} =~ /\S/)
+    {
+	print $output_file "<section class=\"summary\">\n<h2>Summary</h2>\n";
+
+	# The introduction file is already HTML.  Keep it as markup so existing
+	# vigilia/introduction.html files continue to render as intended.
+
+	print $output_file $title_paragraphs->{summary_html};
+
+	print $output_file "\n</section>\n";
+    }
+
+    return $output_file;
+}
+
+
+sub _output_html_postamble
+{
+    my $outputfile = shift;
+
+    print $outputfile "</body>\n</html>\n";
+
+    $outputfile->close();
+}
+
+
+sub _output_html_limited_content
+{
+    my $content = shift || '';
+
+    my $content_line_limit = shift;
+
+    if ($content_line_limit)
+    {
+	my @lines = split /\n/, $content;
+
+	if (scalar @lines > $content_line_limit)
+	{
+	    @lines = @lines[0 .. $content_line_limit - 1];
+
+	    push @lines, " ... < cut at $content_line_limit lines, more follows > ...";
+
+	    $content = join "\n", @lines;
+	}
+    }
+
+    return $content;
+}
+
+
+sub _output_html_environment_prompt
+{
+    my $outputfile = shift;
+
+    my $content_options = shift;
+
+    my $content = _output_html_limited_content($content_options->{content}, $content_options->{content_line_limit});
+
+    return if not defined $content or $content eq '';
+
+    my $prompt = $content_options->{prompt} || '';
+
+    print $outputfile '<div class="content-block">' . "\n";
+
+    if ($prompt)
+    {
+	print $outputfile '  <div class="prompt">' . _output_html_escape($prompt) . '</div>' . "\n";
+    }
+
+    print $outputfile '  <pre>' . _output_html_escape($content) . '</pre>' . "\n";
+
+    print $outputfile "</div>\n";
+}
+
+
+sub _output_html_note
+{
+    my $prompt = shift;
+
+    my $content = shift;
+
+    return if not defined $content or $content eq '';
+
+    print $output_file '<div class="note">' . "\n";
+
+    print $output_file '  <strong>' . _output_html_escape($prompt) . '</strong>' . "\n";
+
+    print $output_file '  <p>' . _output_html_escape($content) . '</p>' . "\n";
+
+    print $output_file "</div>\n";
+}
+
+
+sub _output_html_module_comments
+{
+    my $module_definition = shift;
+
+    _output_html_note('NOTE:', $module_definition->{comment});
+}
+
+
+sub _output_html_module_documentation
+{
+    my $module_definition_documentation = shift;
+
+    if ($module_definition_documentation)
+    {
+	if ($module_definition_documentation->{purpose})
+	{
+	    print $output_file '<p>' . _output_html_escape($module_definition_documentation->{purpose}) . '</p>' . "\n";
+	}
+
+	if ($module_definition_documentation->{explanation})
+	{
+	    print $output_file '<p>' . _output_html_escape($module_definition_documentation->{explanation}) . '</p>' . "\n";
+	}
+    }
+}
+
+
+sub _output_html_module_filename_insert
+{
+    my $module_definition = shift;
+
+    my $module_definition_documentation = shift;
+
+    return if $option_output_concise eq 'manual';
+
+    my $module_name = $module_definition->{name};
+
+    my $test_count = 0;
+
+    foreach my $command_definition (@{ $module_definition->{command_definitions} || [] })
+    {
+	$test_count += scalar @{ $command_definition->{command_tests} || [] };
+    }
+
+    my $defines = $test_count == 1 ? 'test' : 'tests';
+
+    print $output_file '<p class="metadata">File <code>'
+	. _output_html_escape($module_name)
+	. '</code> defines the '
+	. _output_html_escape($defines)
+	. ' explained in this section.</p>'
+	. "\n";
+}
+
+
+sub _output_html_module_harnessing
+{
+    my $module_definition = shift;
+
+    my $harnessing = $module_definition->{harnessing} || {};
+
+    return if not $harnessing->{preparation} and not $harnessing->{reparation};
+
+    print $output_file '<div class="harnessing"><strong>Harnessing</strong><ul class="compact">' . "\n";
+
+    if ($harnessing->{preparation})
+    {
+	print $output_file '  <li><strong>Preparation:</strong> ' . _output_html_escape($harnessing->{preparation}) . '</li>' . "\n";
+    }
+
+    if ($harnessing->{reparation})
+    {
+	print $output_file '  <li><strong>Reparation:</strong> ' . _output_html_escape($harnessing->{reparation}) . '</li>' . "\n";
+    }
+
+    print $output_file "</ul></div>\n";
+}
+
+
+sub _output_html_command_definition_command_arguments
+{
+    my $command_definition = shift;
+
+    my $ss = shift;
+
+    my $ct_1 = $ss->{ct_1};
+
+    my $command_string;
+
+    eval
+    {
 	my $command_line = $command_definition->cd_construct_command_line();
 
-	# if the command can be executed
+	my $command = $command_line->{command};
 
-	if (exists $command_line->{command})
+	my $arguments = $command_line->{arguments} || [];
+
+	$command_string = join ' ', grep { defined $_ and $_ ne '' } ($command, @$arguments);
+    };
+
+    if (!$command_string)
+    {
+	if ($command_definition->{class})
 	{
-	    if ($spawn_new)
-	    {
-	    }
-	    else
-	    {
-		# print $fd_output "*** Recycling $command " . (join ' ', map { "'$_'" } @$arguments) . "\n";
-	    }
+	    $command_string = 'class ' . $command_definition->{class};
 	}
+	elsif (ref $command_definition->{command} eq 'CODE')
+	{
+	    $command_string = 'embedded Perl code';
+	}
+	else
+	{
+	    $command_string = $command_definition->{command} || '';
+	}
+    }
+
+    return if $command_string eq '';
+
+    my $prompt
+	= $option_output_concise eq 'manual'
+	? ($ct_1 ? 'Executed system shell command:' : 'Executed system shell command:')
+	: ($ct_1 ? 'The test is started with the system shell command:' : 'The tests are started with the system shell command:');
+
+    print $output_file '<p>' . _output_html_escape($prompt) . ' <code>' . _output_html_escape($command_string) . '</code></p>' . "\n";
+}
+
+
+sub _output_html_command_definition_comments
+{
+    my $command_definition = shift;
+
+    my $ss = shift;
+
+    _output_html_note('NOTE:', $command_definition->{comment}) if $ss->{cd_1_comment};
+}
+
+
+sub _output_html_command_definition_description
+{
+    my $command_definition = shift;
+
+    my $ss = shift;
+
+    my $description = $command_definition->{description} || 'unnamed command definition';
+
+    my $command_tests = $command_definition->{command_tests} || [];
+
+    if (!$ss->{cd_1} and $ss->{ct_1})
+    {
+	my $subdescription = $command_tests->[0]->{description};
+
+	$description .= ": $subdescription" if $subdescription;
+    }
+
+    if ($ss->{cd_1})
+    {
+	if ($option_output_concise eq 'manual')
+	{
+	    print $output_file '<p>' . _output_html_escape($description) . '</p>' . "\n";
+	}
+	else
+	{
+	    print $output_file '<p>The following test is described as: ' . _output_html_escape($description) . '</p>' . "\n";
+	}
+    }
+    else
+    {
+	print $output_file '<h3>' . _output_html_escape(ucfirst $description) . '</h3>' . "\n";
+    }
+}
+
+
+sub _output_html_command_definition_disabled
+{
+    my $command_definition = shift;
+
+    my $ss = shift;
+
+    if ($ss->{cd_1} and $command_definition->{disabled})
+    {
+	_output_html_note('DISABLED:', $command_definition->{disabled});
+    }
+}
+
+
+sub _output_html_command_definition_harnessing
+{
+    my $command_definition = shift;
+
+    my $ss = shift;
+
+    my $harnessing = $command_definition->{harnessing} || {};
+
+    return if not $harnessing->{preparation} and not $harnessing->{reparation};
+
+    print $output_file '<div class="harnessing"><strong>Command harnessing</strong><ul class="compact">' . "\n";
+
+    if ($harnessing->{preparation})
+    {
+	print $output_file '  <li><strong>Preparation:</strong> ' . _output_html_escape($harnessing->{preparation}) . '</li>' . "\n";
+    }
+
+    if ($harnessing->{reparation})
+    {
+	print $output_file '  <li><strong>Reparation:</strong> ' . _output_html_escape($harnessing->{reparation}) . '</li>' . "\n";
+    }
+
+    print $output_file "</ul></div>\n";
+}
+
+
+sub _output_html_command_test_comments
+{
+    my $command_test = shift;
+
+    _output_html_note('NOTE:', $command_test->{comment} || $command_test->{comments});
+}
+
+
+sub _output_html_command_test_description
+{
+    my $command_test = shift;
+
+    my $ss = shift;
+
+    my $description = $command_test->{description} || 'unnamed command test';
+
+    if (!$ss->{ct_1})
+    {
+	print $output_file '<h4>' . _output_html_escape(ucfirst $description) . '</h4>' . "\n";
+    }
+}
+
+
+sub _output_html_command_test_disabled
+{
+    my $command_test = shift;
+
+    my $ss = shift;
+
+    if ($ss->{cd_1} and $command_test->{disabled})
+    {
+	_output_html_note('DISABLED:', $command_test->{disabled});
+    }
+}
+
+
+sub _output_html_command_test_read
+{
+    my $command_test = shift;
+
+    my $read = $command_test->{read} || '';
+
+    return if $read eq '';
+
+    my $prompt
+	= $option_output_concise eq 'manual'
+	? 'Output:'
+	: 'Expected application output:';
+
+    _output_html_environment_prompt
+	(
+	 $output_file,
+	 {
+	  content => $read,
+	  content_line_limit => $option_output_content_line_limit,
+	  prompt => $prompt,
+	 },
+	);
+}
+
+
+sub _output_html_command_test_write
+{
+    my $command_test = shift;
+
+    my $write = $command_test->{write} || '';
+
+    return if $write eq '';
+
+    _output_html_environment_prompt
+	(
+	 $output_file,
+	 {
+	  content => $write,
+	  content_line_limit => $option_output_content_line_limit,
+	  prompt => 'The input to the application is:',
+	 },
+	);
+}
+
+
+sub _output_html_figure_path_relative_to_document
+{
+    my $output_pathname = shift;
+
+    my $figure_filename = shift;
+
+    use Cwd qw( abs_path );
+    use File::Basename qw( fileparse );
+    use File::Spec;
+
+    my ( $html_filename, $html_directory ) = fileparse("$output_pathname.html");
+
+    my $html_directory_abs = abs_path($html_directory || '.') || ($html_directory || '.');
+
+    my $figure_filename_abs = abs_path($figure_filename) || $figure_filename;
+
+    return File::Spec->abs2rel($figure_filename_abs, $html_directory_abs);
+}
+
+
+sub _output_html_figure_generate_insert
+{
+    my $figure = shift;
+
+    my $output_pathname = shift;
+
+    my $command_test = shift;
+
+    my $read = shift;
+
+    my $figure_class = exists $figure->{class} ? $figure->{class} : 'simple';
+
+    my $figure_class_2_package
+	= {
+	   hh_gates_A_B => 'Heterarch::Test::Output::Formatter::Figure::HHGatesAB',
+	   hh_gates_alpha_beta => 'Heterarch::Test::Output::Formatter::Figure::HHGatesAlphaBeta',
+	   hh_gates_internal => 'Heterarch::Test::Output::Formatter::Figure::HHGatesInternal',
+	   hh_gates_steady_state_tau => 'Heterarch::Test::Output::Formatter::Figure::HHGatesSteadyStateTau',
+	   simple => 'Heterarch::Test::Output::Formatter::Figure::Simple',
+	  };
+
+    my $figure_package = $figure_class_2_package->{$figure_class};
+
+    if (!$figure_package)
+    {
+	_output_html_note('ERROR:', "Unknown figure class '$figure_class'");
+
+	return;
+    }
+
+    my $figure_object = $figure_package->new($figure, $output_pathname, $command_test, [], $read);
+
+    my $render_error = $figure_object->render();
+
+    if ($render_error)
+    {
+	_output_html_note('ERROR:', "Please install the figure rendering dependencies to render figures");
+
+	return;
+    }
+
+    my $filenames = $figure_object->{filenames} || [];
+
+    return if not scalar @$filenames;
+
+    my $caption = '';
+
+    if ($figure->{caption})
+    {
+	$caption = $figure->{caption}->{full} || $figure->{caption}->{short} || '';
+    }
+
+    print $output_file '<figure class="test-figure">' . "\n";
+
+    foreach my $filename (@$filenames)
+    {
+	my $src = _output_html_figure_path_relative_to_document($output_pathname, $filename);
+
+	print $output_file '  <img src="' . _output_html_escape($src) . '" alt="' . _output_html_escape($caption || 'Generated test figure') . '">' . "\n";
+    }
+
+    print $output_file '  <figcaption>' . _output_html_escape($caption) . '</figcaption>' . "\n" if $caption;
+
+    print $output_file "</figure>\n";
+}
+
+
+sub _output_html_process
+{
+    my $output_file = shift;
+
+    my $output_pathname = shift;
+
+    my $test_report = shift;
+
+    my $module_definitions = $test_report->{selected};
+
+    my $ss = Heterarch::Test::Output::StructureSummary->new();
+
+    foreach my $module_definition_key (sort
+				       {
+					   my $selected_a = $a;
+					   my $selected_b = $b;
+
+					   my $counter_a = $module_definitions->{$selected_a}->{count};
+					   my $counter_b = $module_definitions->{$selected_b}->{count};
+
+					   $counter_a <=> $counter_b;
+				       }
+				       keys %$module_definitions)
+    {
+	my $module_definition = $module_definitions->{$module_definition_key};
+
+	my $module_definition_description = $module_definition->{description} || $module_definition->{name};
+
+	my $module_definition_documentation = $module_definition->{documentation} || '';
+
+	my $command_definitions = $module_definition->{command_definitions} || [];
+
+	print $output_file '<article class="module" id="' . _output_html_escape($module_definition->{context_path} || $module_definition->{name}) . '">' . "\n";
+
+	print $output_file '<h2>' . _output_html_escape(ucfirst $module_definition_description) . '</h2>' . "\n";
+
+	$ss->ss_command_definitions($command_definitions);
+
+	_output_html_module_filename_insert($module_definition, $module_definition_documentation, $ss);
+
+	_output_html_module_documentation($module_definition_documentation);
+
+	_output_html_module_harnessing($module_definition, $ss);
+
+	_output_html_module_comments($module_definition);
+
+	foreach my $command_definition (@$command_definitions)
+	{
+	    my $command_tests = $command_definition->{command_tests} || [];
+
+	    $ss->ss_command_tests($command_tests);
+
+	    print $output_file '<article class="command-definition" id="' . _output_html_escape($command_definition->{context_path} || '') . '">' . "\n";
+
+	    _output_html_command_definition_disabled($command_definition, $ss);
+
+	    _output_html_command_definition_description($command_definition, $ss);
+
+	    _output_html_command_definition_command_arguments($command_definition, $ss);
+
+	    _output_html_command_definition_comments($command_definition, $ss);
+
+	    _output_html_command_definition_harnessing($command_definition, $ss);
+
+	    foreach my $command_test (@$command_tests)
+	    {
+		print $output_file '<article class="command-test" id="' . _output_html_escape($command_test->{context_path} || '') . '">' . "\n";
+
+		_output_html_command_test_disabled($command_test, $ss);
+
+		_output_html_command_test_description($command_test, $ss);
+
+		_output_html_command_test_write($command_test, $ss);
+
+		_output_html_command_test_read($command_test, $ss);
+
+		if ($option_output_figures)
+		{
+		    my $figures = $command_test->{figures} || [];
+
+		    my $read = $command_test->{read} || '';
+
+		    foreach my $figure (@$figures)
+		    {
+			_output_html_figure_generate_insert($figure, $output_pathname, $command_test, $read);
+		    }
+		}
+
+		_output_html_command_test_comments($command_test, $ss);
+
+		print $output_file "</article>\n";
+	    }
+
+	    print $output_file "</article>\n";
+	}
+
+	print $output_file "</article>\n";
     }
 }
 
