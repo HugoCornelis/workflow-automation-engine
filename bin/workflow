@@ -5751,7 +5751,7 @@ arguments:
 
     ``ARGV[1]``: the string 'also-bashrc' if you want your ~/.bashrc to be updated automatically.
 
-Note that carelessly updating your ``~/.bashrc`` is is risky.
+Note that carelessly updating your ``~/.bashrc`` is risky.
 
 ";
 }
