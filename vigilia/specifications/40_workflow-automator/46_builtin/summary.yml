@@ -17,7 +17,7 @@ harnessing:
           description: used for running commands outside the container
         neurospaces2:
           description: used for running commands inside the container
-          is_remote: yes
+          is_remote: 'yes'
       default_user: neurospaces
       dockerfile: ./vigilia/specifications/dockerfiles/Dockerfile.features-workflow-installed-testing
       name_container: workflow_features_installed_container

@@ -24,7 +24,7 @@ my $test
 				command_tests => [
 						  {
 						   description => "Can we inspect the commands that will be run during the tests?",
-						   read => "
+						   read => "*** 
 ---
 description:
   command: /usr/local/bin/vigilia
@@ -32,22 +32,23 @@ description:
   package:
     name: workflow-automation-engine
     version: beta
-disabled: ~
+disabled: null
 selected:
   20_vigilia/30_docker.t:
-    - description: 'showing that the container works: working directory'
-      tests:
-        - '1/_1/_1: Are we in the correct working directory in the Docker container ?'
-    - description: 'showing that the container works: working directory contents'
-      tests:
-        - '1/_2/_1: Can we list the working directory in the Docker container ?'
-    - description: 'showing that the container works: root directory contents'
-      tests:
-        - '1/_3/_1: Can we list the root directory in the Docker container ?'
+  - description: 'showing that the container works: working directory'
+    tests:
+    - '1/_1/_1: Are we in the correct working directory in the Docker container ?'
+  - description: 'showing that the container works: working directory contents'
+    tests:
+    - '1/_2/_1: Can we list the working directory in the Docker container ?'
+  - description: 'showing that the container works: root directory contents'
+    tests:
+    - '1/_3/_1: Can we list the root directory in the Docker container ?'
 
 *** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
+
 ",
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -59,7 +60,7 @@ No email sent.
 				command_tests => [
 						  {
 						   description => "Can we inspect the command tests that will be run using the regular options?",
-						   read => "
+						   read => "*** 
 ---
 description:
   command: /usr/local/bin/vigilia
@@ -67,16 +68,17 @@ description:
   package:
     name: workflow-automation-engine
     version: beta
-disabled: ~
+disabled: null
 selected:
   20_vigilia/30_docker.t:
-    - 1/_1/_-1 command: 'pwd '
-    - 1/_2/_-1 command: 'ls '
-    - 1/_3/_-1 command: ls -1 /
+  - 1/_1/_-1 command: 'pwd '
+  - 1/_2/_-1 command: 'ls '
+  - 1/_3/_-1 command: ls -1 /
 
 *** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
+
 ",
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -88,7 +90,7 @@ No email sent.
 				command_tests => [
 						  {
 						   description => "Can we inspect the command tests that will be run using the YAML output formatter?",
-						   read => "
+						   read => "*** 
 ---
 description:
   command: /usr/local/bin/vigilia
@@ -98,13 +100,14 @@ description:
     version: beta
 selected:
   20_vigilia/30_docker.t:
-    - 1/_1/_-1 command: 'pwd '
-    - 1/_2/_-1 command: 'ls '
-    - 1/_3/_-1 command: ls -1 /
+  - 1/_1/_-1 command: 'pwd '
+  - 1/_2/_-1 command: 'ls '
+  - 1/_3/_-1 command: ls -1 /
 
 *** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
+
 ",
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -116,7 +119,7 @@ No email sent.
 				command_tests => [
 						  {
 						   description => "Can we convert the test specifications to a YAML formatted summary?",
-						   read => "
+						   read => "*** 
 ---
 description:
   command: /usr/local/bin/vigilia
@@ -126,19 +129,20 @@ description:
     version: beta
 selected:
   20_vigilia/30_docker.t:
-    - description: 'showing that the container works: working directory'
-      tests:
-        - '1/_1/_1: Are we in the correct working directory in the Docker container ?'
-    - description: 'showing that the container works: working directory contents'
-      tests:
-        - '1/_2/_1: Can we list the working directory in the Docker container ?'
-    - description: 'showing that the container works: root directory contents'
-      tests:
-        - '1/_3/_1: Can we list the root directory in the Docker container ?'
+  - description: 'showing that the container works: working directory'
+    tests:
+    - '1/_1/_1: Are we in the correct working directory in the Docker container ?'
+  - description: 'showing that the container works: working directory contents'
+    tests:
+    - '1/_2/_1: Can we list the working directory in the Docker container ?'
+  - description: 'showing that the container works: root directory contents'
+    tests:
+    - '1/_3/_1: Can we list the root directory in the Docker container ?'
 
 *** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
+
 ",
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },
@@ -151,7 +155,7 @@ No email sent.
 						  {
 						   comment => "It is not entirely clear what exactly Heterarch::Test::Output::List should do and how it can be useful.",
 						   description => "Can we list the constructs used in the test specifications?",
-						   read => "
+						   read => "*** 
 ---
 description:
   command: /usr/local/bin/vigilia
@@ -161,16 +165,17 @@ description:
     version: beta
 selected:
   20_vigilia/30_docker.t:
-    - description: 'showing that the container works: working directory'
-      tests: []
-    - description: 'showing that the container works: working directory contents'
-      tests: []
-    - description: 'showing that the container works: root directory contents'
-      tests: []
+  - description: 'showing that the container works: working directory'
+    tests: []
+  - description: 'showing that the container works: working directory contents'
+    tests: []
+  - description: 'showing that the container works: root directory contents'
+    tests: []
 
 *** Info: See './report_workflow-automation-engine/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
+
 ",
 						   white_space => 'convert seen 0a to 0d 0a newlines',
 						  },

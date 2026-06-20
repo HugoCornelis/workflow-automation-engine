@@ -25,7 +25,7 @@ RUN apt-get update && \
         libjson-perl \
         libnet-ip-perl \
         libtoml-perl \
-        libyaml-perl \
+        libyaml-pp-perl \
         libwww-perl \
         grc \
         openssh-server \

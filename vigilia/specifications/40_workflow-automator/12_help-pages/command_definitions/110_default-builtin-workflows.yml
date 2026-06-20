@@ -1,39 +1,39 @@
 ---
 command: bin/workflow --help-workflows
 command_tests:
-  - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
-    description: Can we display the builtin workflows help page?
-    read: |2
-      
-      0_description: |-
-        The list of available workflows for this project are
-          (copy-paste the one you would like to execute,
-           try them with the --dry-run and --interactions options,
-           some workflows may implement a usage message available with the --help option):
-      1_workflows:
-        - workflow builtin ai_query
-        - workflow builtin configuration_archive
-        - workflow builtin configuration_directory_print
-        - workflow builtin configuration_fetch
-        - workflow builtin configuration_install
-        - workflow builtin configuration_pull
-        - workflow builtin docker_containers_start
-        - workflow builtin docker_exec
-        - workflow builtin docker_images_build
-        - workflow builtin grep_code
-        - workflow builtin grep_commands
-        - workflow builtin lint
-        - workflow builtin manual
-        - workflow builtin project_rename
-        - workflow builtin project_start
-        - workflow builtin role_add
-        - workflow builtin role_print
-        - workflow builtin target_add
-        - workflow builtin tmux_sessions_create
-        - workflow builtin tmux_sessions_kill
-        - workflow builtin workflow_add
-        - workflow builtin workflow_file_remove
-        - workflow builtin workflow_file_rename
-        - workflow builtin workflow_filenames_known
-        - workflow builtin workflow_locate
+- comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
+  description: Can we display the builtin workflows help page?
+  read: |
+
+    0_description: |-
+      The list of available workflows for this project are
+        (copy-paste the one you would like to execute,
+         try them with the --dry-run and --interactions options,
+         some workflows may implement a usage message available with the --help option):
+    1_workflows:
+    - workflow builtin ai_query
+    - workflow builtin configuration_archive
+    - workflow builtin configuration_directory_print
+    - workflow builtin configuration_fetch
+    - workflow builtin configuration_install
+    - workflow builtin configuration_pull
+    - workflow builtin docker_containers_start
+    - workflow builtin docker_exec
+    - workflow builtin docker_images_build
+    - workflow builtin grep_code
+    - workflow builtin grep_commands
+    - workflow builtin lint
+    - workflow builtin manual
+    - workflow builtin project_rename
+    - workflow builtin project_start
+    - workflow builtin role_add
+    - workflow builtin role_print
+    - workflow builtin target_add
+    - workflow builtin tmux_sessions_create
+    - workflow builtin tmux_sessions_kill
+    - workflow builtin workflow_add
+    - workflow builtin workflow_file_remove
+    - workflow builtin workflow_file_rename
+    - workflow builtin workflow_filenames_known
+    - workflow builtin workflow_locate
 description: default builtin workflows

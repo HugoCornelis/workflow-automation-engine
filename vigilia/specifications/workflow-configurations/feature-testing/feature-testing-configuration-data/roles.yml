@@ -24,14 +24,14 @@ roles:
     remote_policy: 'docker exec -it docker_source_code_container'
     shared_volumes_examples:
       - description: This is an example for sharing ssh keys read-only (use with caution).
-        inside: %%HOME_DIRECTORY%%/.ssh
-        outside: %%HOME_DIRECTORY%%/.ssh:ro
+        inside: '%%HOME_DIRECTORY%%/.ssh'
+        outside: '%%HOME_DIRECTORY%%/.ssh:ro'
       - description: This is another example for some directory
-        inside: %%HOME_DIRECTORY%%/directory_inside_the_container
-        outside: %%HOME_DIRECTORY%%/directory_outside_the_container
+        inside: '%%HOME_DIRECTORY%%/directory_inside_the_container'
+        outside: '%%HOME_DIRECTORY%%/directory_outside_the_container'
   laptop:
     description: the local computer of the developer
-    localuser: yes
+    localuser: 'yes'
     name: laptop
     ssh_port: 22
     ssh_server: 192.168.4.70

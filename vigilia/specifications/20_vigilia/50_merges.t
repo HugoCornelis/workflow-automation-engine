@@ -12,7 +12,7 @@ my $test
 				command_tests => [
 						  {
 						   description => "Can we merge several partial test specifications and then run these merged tests?",
-						   read => "
+						   read => "*** 
 ---
 description:
   command: /usr/local/bin/vigilia
@@ -22,12 +22,13 @@ description:
     version: alpha
 selected:
   111_low-level.t:
-    - 1/_1/_-1 command: 'ifconfig '
-    - 1/_2/_-1 command: netstat -rn
+  - 1/_1/_-1 command: 'ifconfig '
+  - 1/_2/_-1 command: netstat -rn
 
 *** Info: See './report_developer-test-merge/report.yml' for the detailed report.
 No email sent.
 /usr/local/bin/vigilia: 0 error(s)
+
 ",
 						   timeout => 10,
 						   white_space => 'convert seen 0a to 0d 0a newlines',

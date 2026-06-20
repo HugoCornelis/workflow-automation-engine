@@ -1,0 +1,16 @@
+---
+command: bin/vigilia command-correct --help
+command_tests:
+- description: Is a help message given (command-correct)?
+  read: |+
+
+    bin/vigilia command-correct <options> <error-report-directory>
+
+    Correct an existing command's expected output based on the information in the given error report directory.
+
+    Options:
+        --help             Show this help message.
+        --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
+        --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
+
+description: Is a help message given (command-correct)?

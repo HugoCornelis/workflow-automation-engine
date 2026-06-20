@@ -14,7 +14,7 @@ use Neurospaces::Tester;
 
 use POSIX qw( strftime );
 use Symbol qw(gensym);
-use YAML;
+use YAML::PP;
 
 
 my $config_filename_default = './vigilia.config';
@@ -399,6 +399,20 @@ sub command_line_dispatch
     # assume stdout is not a file -- change this to TRUE if it is a file
 
     my $capture_stdout = 0;
+
+    my $reporting_directory = $global_config->{reporting_directory};
+
+    if ($harness_command eq 'run-tests')
+    {
+	`rm -fr '$reporting_directory'`;
+    }
+
+    my $error = Heterarch::Test::Reporting::_reporting_directory_create($reporting_directory);
+
+    if ($error)
+    {
+	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+    }
 
     # instantiate the reporter
 
@@ -890,7 +904,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
     --command-comment  A comment to insert at the command definition level, '0' to insert a comment with instructions.
     --command-output   The correct output, if no command-output is given the tested command is used to produce it.
     --command-prefix   Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
-    --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.
+    --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.  If this is '0', a default explanatory comment is used.
     --description      The description to insert.  The description is inserted both at command definition level and at command test level.
     --help             Show this help message.
     --output-json      Output in json format.
@@ -1030,7 +1044,7 @@ sub harness_command_module_command_add
 
     if (!$module_definition)
     {
-	die "$0: *** Error: $module_path_name does not have a valid test module definition..";
+	die "$0: *** Error: $module_path_name does not have a valid test module definition.";
     }
 
     my $command_definition = clone($global_command_definition_template);
@@ -1140,9 +1154,7 @@ sub harness_command_module_command_add
 		   output => $output,
 		  };
 
-	    use YAML;
-
-	    print Dump($output_yaml);
+	    print YAML::PP::Dump($output_yaml);
 	}
 	else
 	{
@@ -1167,6 +1179,237 @@ sub harness_command_module_command_add
     else
     {
 	print "$0: Added a test with filename $command_definition_filename for this command to the test module $module_name.\n";
+    }
+
+    # return the error if there is one
+
+    return $error;
+}
+
+
+$global_command_line_configuration->{command_configuration}->{known_commands}->{"command-correct"}
+    = {
+       description => "Correct an existing command's expected output based on the information in the given error report directory.",
+       executor => "main::harness_command_module_command_correct",
+       help => {
+		synopsis => "$0 command-correct <options> <error-report-directory>",
+		usage => "Options:
+    --help             Show this help message.
+    --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
+    --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
+",
+	       },
+       options => {
+		   "convert-seen-0d-0a-to-0a-newlines!" => do { my $option_convert_seen_0d_0a_to_0a_newlines; \$option_convert_seen_0d_0a_to_0a_newlines; },
+		   "help!" => do { my $option_help; \$option_help; },
+		   "yaml-work-around!" => do { my $option_yaml_work_around; \$option_yaml_work_around; },
+		  },
+      };
+
+sub harness_command_module_command_correct
+{
+    my $harness_command_definition = shift;
+
+    my $command = shift;
+
+    my $arguments = shift || [];
+
+    my $reporter = shift;
+
+    my $error_report_directory = shift || shift @$arguments;
+
+    if (! defined $error_report_directory)
+    {
+	die "$0: *** Error: $command expects the error_report_directory as an argument.";
+    }
+
+    my $options = $harness_command_definition->{options};
+
+    my $option_convert_seen_0d_0a_to_0a_newlines = $options->{"convert-seen-0d-0a-to-0a-newlines!"};
+
+    my $convert_seen_0d_0a_to_0a_newlines = "yes";
+
+    if (defined $$option_convert_seen_0d_0a_to_0a_newlines)
+    {
+	$convert_seen_0d_0a_to_0a_newlines = $$option_convert_seen_0d_0a_to_0a_newlines;
+    }
+
+    my $option_help = $options->{"help!"};
+
+    my $help;
+
+    if (defined $$option_help)
+    {
+	$help = $$option_help;
+    }
+
+    my $option_output_stdout = $options->{"output-stdout!"};
+
+    my $output_stdout;
+
+    if (defined $$option_output_stdout)
+    {
+	$output_stdout = $$option_output_stdout;
+    }
+
+    my $option_yaml_work_around = $options->{"yaml-work-around!"};
+
+    my $yaml_work_around = 'yes';
+
+    if (defined $$option_yaml_work_around)
+    {
+	$yaml_work_around = $$option_yaml_work_around;
+    }
+
+    if (! -d $error_report_directory)
+    {
+	$error_report_directory = "$global_config->{reporting_directory}/$error_report_directory";
+    }
+
+    if (! -d $error_report_directory)
+    {
+	die "$0: *** Error: '$error_report_directory' not found.";
+    }
+
+    my $summary = eval
+    {
+	YAML::PP::LoadFile("$error_report_directory/000_summary.yml");
+    };
+
+    if ($@)
+    {
+	die "$0: *** Error: '$error_report_directory/000_summary.yml' not found.";
+    }
+
+    my $tests_directory = $global_config->{tests_directory};
+
+    my $module_path_name = "$tests_directory/$summary->{path}->{'010_module_name'}";
+
+    if (! -f $module_path_name)
+    {
+	die "$0: *** Error: '$module_path_name' not found.";
+    }
+
+    my $module_definition = Heterarch::Test::Library::tl_module_read($reporter, $module_path_name);
+
+    if (!$module_definition)
+    {
+	die "$0: *** Error: $module_path_name does not have a valid test module definition.";
+    }
+
+    my $command_definition_relative_path_name = $summary->{path}->{'020_command_definition_path'};
+
+    my $command_definition_directory = $module_path_name;
+
+    $command_definition_directory =~ s(/summary.yml$)();
+
+    my $command_definition_filename = "$command_definition_directory/$command_definition_relative_path_name";
+
+    if (! -f $command_definition_filename)
+    {
+	die "$0: *** Error: '$command_definition_filename' not found.";
+    }
+
+    my $command_definition = eval
+    {
+	YAML::PP::LoadFile($command_definition_filename);
+    };
+
+    if (!$command_definition)
+    {
+	die "$0: *** Error: $command_definition_directory/$command_definition_filename does not have a valid command_definition.";
+    }
+
+    # some sanity check because this command_correct needs more thought
+
+    my $command_tests = $command_definition->{command_tests};
+
+    if (scalar @$command_tests != 1)
+    {
+	die "$0: *** Error: $command_definition_directory/$command_definition_filename has more than one command_tests.";
+    }
+
+    my $command_test_to_correct = $command_tests->[0];
+
+    if (not exists $command_test_to_correct->{read})
+    {
+	die "$0: *** Error: The specified command_test_to_correct in $command_definition_filename does not have a read clause that can be updated.";
+    }
+
+    my $seen_file = IO::File->new("<$error_report_directory/020_seen.txt");
+
+    if (!$seen_file)
+    {
+	die "$0: *** Error: '$error_report_directory/020_seen.txt' not found.";
+    }
+
+    my $seen;
+
+    {
+	local $/; # enable 'slurp' mode
+
+	$seen = <$seen_file>;
+
+	$seen_file->close();
+    }
+
+    my $output = $seen;
+
+    # correct yaml output to work around a problem with Expect
+
+    if ($yaml_work_around)
+    {
+	if ($output =~ /^---/)
+	{
+	    $output = substr($output, 3);
+	}
+
+	if ($output =~ /^--/)
+	{
+	    $output = substr($output, 2);
+	}
+    }
+
+    if ($convert_seen_0d_0a_to_0a_newlines)
+    {
+	$output =~ s(\x0d\x0a)(\x0a)g;
+    }
+
+    $command_test_to_correct->{read} = $output;
+
+    my $error;
+
+    my $file_type = 'yaml';
+
+    if ($output_stdout)
+    {
+	my $output_yaml
+	    = {
+	       command_definition_filename => $command_definition_filename,
+	       command_definition => $command_definition,
+	       output => $output,
+	      };
+
+	print YAML::PP::Dump($output_yaml);
+    }
+    else
+    {
+	my $result = Heterarch::Test::Library::command_definition_dump_file_structured_yaml_or_json($command_definition, $command_definition_filename, $file_type, 'overwrite');
+
+	if (defined $result
+	    && $result =~ /error/i)
+	{
+	    $error = "Error updating the expected output for the first test of $command_definition_filename of the test module $module_path_name ($result).";
+	}
+    }
+
+    if ($error)
+    {
+	print "$0: *** Error: $error\n";
+    }
+    else
+    {
+	print "$0: Update the expected output for the first test of $command_definition_filename the test module $module_path_name.\n";
     }
 
     # return the error if there is one
@@ -1266,7 +1509,7 @@ sub harness_command_module_command_update
 
     if (!$module_definition)
     {
-	die "$0: *** Error: $module_path_name does not have a valid test module definition..";
+	die "$0: *** Error: $module_path_name does not have a valid test module definition.";
     }
 
     my $command_definition = clone($global_command_definition_template);
@@ -2026,9 +2269,7 @@ sub harness_command_report_summaries
 
 	my $yaml = eval
 	{
-	    use YAML;
-
-	    YAML::LoadFile($filename);
+	    YAML::PP::LoadFile($filename);
 	};
 
 	if ($@)
@@ -2565,7 +2806,7 @@ sub report_file_dump
 
     eval
     {
-	YAML::DumpFile(">$report_filename", $global_test_report);
+	YAML::PP::DumpFile($report_filename, $global_test_report);
     };
 
     if ($@)
@@ -3006,15 +3247,13 @@ sub spawn_new
     if (defined $option_debugging
 	and $option_debugging eq 'spawn_new')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 command_line => $command_line,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   command_line => $command_line,
+						  },
+			     },
+			    );
     }
 
     my $test_startup = "yes, do the startup testing";
@@ -4820,15 +5059,13 @@ sub is_selected_by_tag
     if (defined $option_debugging
 	and $option_debugging eq 'tags')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 selected_by_tag_element_name => $element_name,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   selected_by_tag_element_name => $element_name,
+						  },
+			     },
+			    );
     }
 
     if (not scalar @$option_tags)
@@ -5124,20 +5361,18 @@ sub ec_construct_command_line
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	use YAML;
-
 	my $current = $self->_path_get_current();
 
 	my $harness_list = $current->{current_harness_list};
 
-	print Dump(
-		   {
-		    option_debugging => {
-					 harness_current => $harness,
-					 harness_list => $harness_list,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   harness_current => $harness,
+						   harness_list => $harness_list,
+						  },
+			     },
+			    );
     }
 
     my $command_line;
@@ -5517,16 +5752,14 @@ sub harness_current
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 global_active_harness_identifiers => $global_active_harness_identifiers,
-					 global_harnessing_identifiers => $global_harnessing_identifiers,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   global_active_harness_identifiers => $global_active_harness_identifiers,
+						   global_harnessing_identifiers => $global_harnessing_identifiers,
+						  },
+			     },
+			    );
     }
 
     my $active_harness_identifier = $self->harness_identifier_current();
@@ -5716,15 +5949,13 @@ sub ec_is_selected_by_context_path
     if (defined $option_debugging
 	and $option_debugging eq 'context_path')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 selected_by_context_path => $element_name,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   selected_by_context_path => $element_name,
+						  },
+			     },
+			    );
     }
 
     my $selected = 'by default';
@@ -6296,17 +6527,15 @@ sub create_or_fetch
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    create_or_fetch => {
-					global_active_harness_identifiers => $global_active_harness_identifiers,
-					global_harnessing_identifiers => $global_harnessing_identifiers,
-					harnessing_identifier => $harnessing_identifier,
-				       },
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      create_or_fetch => {
+						  global_active_harness_identifiers => $global_active_harness_identifiers,
+						  global_harnessing_identifiers => $global_harnessing_identifiers,
+						  harnessing_identifier => $harnessing_identifier,
+						 },
+			     },
+			    );
     }
 
     # if this harnessing_identifier was not yet created
@@ -6890,15 +7119,13 @@ sub _generate_command_prefix
     if (defined $option_debugging
 	and $option_debugging eq 'generate_command_prefix')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 harness => $self,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   harness => $self,
+						  },
+			     },
+			    );
     }
 
     my $prefix_docker
@@ -7528,9 +7755,7 @@ sub ex_terminate
     # $report_yaml->{errors} = $global_test_report->{errors};
     # $report_yaml->{global} = $global_test_report->{global};
 
-    # use YAML;
-
-    # my $report_text = "\n" . Dump($report_yaml);
+    # my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -8093,13 +8318,9 @@ sub _module_read_perl
 
     if (is_yaml($pathname))
     {
-	use YAML;
-
 	$result = eval
 	{
-	    use YAML;
-
-	    YAML::LoadFile($pathname);
+	    YAML::PP::LoadFile($pathname);
 	};
 
 	if ($@)
@@ -8218,7 +8439,7 @@ sub _module_read_process_options
 
     if ($option_dump_yaml)
     {
-	YAML::DumpFile("$specification_dump_directory/$filename.yml", $module_definition);
+	YAML::PP::DumpFile("$specification_dump_directory/$filename.yml", $module_definition);
     }
 
     if ($option_dump_file_structured_json)
@@ -8485,6 +8706,8 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     my $file_type = shift;
 
+    my $overwrite = shift;
+
     my $result;
 
     # https://metacpan.org/release/ANDYA/Data-Structure-Util-0.16/source/Util.xs#L239
@@ -8510,20 +8733,21 @@ sub command_definition_dump_file_structured_yaml_or_json
 
     $command_definition->{command_tests} = $command_tests_unblessed;
 
-    if (! -f $command_definition_pathname)
+    if (-f $command_definition_pathname
+        && !$overwrite)
+    {
+	$result = "Error: $command_definition_pathname already exists.";
+    }
+    else
     {
 	if ($file_type eq 'yaml')
 	{
-	    YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	    YAML::PP::DumpFile($command_definition_pathname, $unblessed_command_definition);
 	}
 	else
 	{
 	    JSON_DumpFile($command_definition_pathname, $unblessed_command_definition);
 	}
-    }
-    else
-    {
-	$result = "Error: $command_definition_pathname already exists.";
     }
 
     return $result;
@@ -8548,7 +8772,7 @@ sub module_definition_summary_dump_file_structured_yaml
 
     if ($file_type eq 'yaml')
     {
-	YAML::DumpFile($module_summary_filename, $unblessed_module_definition);
+	YAML::PP::DumpFile($module_summary_filename, $unblessed_module_definition);
     }
     else
     {
@@ -8671,13 +8895,11 @@ sub _module_read_yml
 
     # read the meta information of the module definition
 
-    use YAML;
-
     eval
     {
 	# local $SIG{'__DIE__'};
 
-	$result = YAML::LoadFile($summary_pathname);
+	$result = YAML::PP::LoadFile($summary_pathname);
     };
 
     if ($@)
@@ -8708,7 +8930,7 @@ sub _module_read_yml
 		      {
 			  # local $SIG{'__DIE__'};
 
-			  YAML::LoadFile($command_definition_filename);
+			  YAML::PP::LoadFile($command_definition_filename);
 		      };
 
 		if ($@)
@@ -8719,6 +8941,8 @@ sub _module_read_yml
 		}
 		else
 		{
+		    $command_definition_filename =~ s($directory/)();
+
 		    $command_definition->{command_definition_path} = $command_definition_filename;
 
 		    push @$command_definitions, $command_definition;
@@ -10834,7 +11058,7 @@ sub render_raw_data
 
     my $figure_definition_filename = $pathname_prefix . "_output_graph_render_figure_definition.yml";
 
-    YAML::DumpFile($figure_definition_filename, $figure_definition);
+    YAML::PP::DumpFile($figure_definition_filename, $figure_definition);
 
     # create the figure graph
 
@@ -11028,8 +11252,6 @@ sub render
 
     # convert the data string to a data structure
 
-    use YAML;
-
     my $data_string = $self->{data_string};
 
     # remove object class references
@@ -11038,7 +11260,7 @@ sub render
 
     # load all documents
 
-    my $data_structured = [ Load($data_string), ];
+    my $data_structured = [ YAML::PP::Load($data_string), ];
 
     # split the data into its two components
 
@@ -11252,8 +11474,6 @@ sub render
 
     # convert the data string to a data structure
 
-    use YAML;
-
     my $data_string = "---
 $self->{data_string}";
 
@@ -11261,7 +11481,7 @@ $self->{data_string}";
 
     $data_string =~ s(!!.*?\n)();
 
-    my $data_structured = Load($data_string);
+    my $data_structured = YAML::PP::Load($data_string);
 
     # split the data into its two components
 
@@ -11544,9 +11764,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -11706,9 +11924,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -11895,9 +12111,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -12095,9 +12309,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -12369,6 +12581,23 @@ sub _differences_report
 
 	$differences_report->{expected_filename} = $expected_filename;
 
+	my $expected_file_raw = IO::File->new(">$expected_filename.raw");
+
+	if ($expected_file_raw)
+	{
+	    print $expected_file_raw $expected;
+
+	    $expected_file_raw->close();
+	}
+	else
+	{
+	    my $fd_output = $self->{fd_output};
+
+	    print $fd_output "*** Warning: cannot open $expected_filename.raw for writing\n";
+	}
+
+	$expected =~ s(\r)()g;
+
 	my $expected_file = IO::File->new(">$expected_filename");
 
 	if ($expected_file)
@@ -12387,6 +12616,23 @@ sub _differences_report
 	my $seen_filename = "$report_error_directory/020_seen.txt";
 
 	$differences_report->{seen_filename} = $seen_filename;
+
+	my $seen_file_raw = IO::File->new(">$seen_filename.raw");
+
+	if ($seen_file_raw)
+	{
+	    print $seen_file_raw $seen;
+
+	    $seen_file_raw->close();
+	}
+	else
+	{
+	    my $fd_output = $self->{fd_output};
+
+	    print $fd_output "*** Warning: cannot open $seen_filename.raw for writing\n";
+	}
+
+	$seen =~ s(\r)()g;
 
 	my $seen_file = IO::File->new(">$seen_filename");
 
@@ -12639,9 +12885,7 @@ sub _report_error_summary
 
     eval
     {
-	use YAML;
-
-	YAML::DumpFile($summary_filename, $summary_report);
+	YAML::PP::DumpFile($summary_filename, $summary_report);
     };
 
     if ($@)
@@ -13209,22 +13453,13 @@ sub new
 
     my $reporting_directory = $global_config->{reporting_directory};
 
-    `rm -fr '$reporting_directory'`;
-
-    my $error = Heterarch::Test::Reporting::_reporting_directory_create($reporting_directory);
-
-    if ($error)
-    {
-	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
-    }
-
     my $output_linear_path = "$reporting_directory/linear_log.txt";
 
     my $fd_output_linear = IO::File->new();
 
     if (! $fd_output_linear->open(">$output_linear_path"))
     {
-	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+	die "*** Error: cannot create directory $reporting_directory for error reporting.\n";
     }
 
     my $reporter1
@@ -13270,6 +13505,8 @@ sub report_error_add
     my $self = shift;
 
     my $arguments = shift;
+
+    $self->{error_count}++;
 
     my $error_report;
 

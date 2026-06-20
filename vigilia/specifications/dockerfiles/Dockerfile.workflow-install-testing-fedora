@@ -26,7 +26,7 @@ RUN dnf -y update && \
         perl-JSON \
         perl-Net-IP \
         perl-App-cpanminus \
-        perl-YAML \
+        perl-YAML-PP \
         perl-libwww-perl \
         perl-LWP-Protocol-https \
         grc \

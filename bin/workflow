@@ -301,13 +301,9 @@ sub read_volatile_data
 
     my $volatile_data_directory = Utilities::volatile_data_directory();
 
-    use YAML;
+    my ($data, $error) = Utilities::yaml_file_load("$volatile_data_directory/$pathname");
 
-    my $data = eval {
-	YAML::LoadFile("$volatile_data_directory/$pathname");
-    };
-
-    if ($@)
+    if ($error)
     {
 	# this is ok
 
@@ -660,7 +656,7 @@ sub _builtin_add_workflow_filename
     {
 	my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
-	YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
+	YAML::PP::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
 
 	print "$global_program_name: registered the $type command file name $new_command_filename for target $target_name\n";
     }
@@ -894,9 +890,9 @@ if ($program_name =~ m(configuration$))
 
     if ($output_format eq "yaml")
     {
-	require YAML;
+	require YAML::PP;
 
-	print YAML::Dump($configuration);
+	print YAML::PP::Dump($configuration);
     }
     elsif ($output_format eq "json")
     {
@@ -1789,15 +1785,15 @@ use strict;
 
 use warnings;
 
-require YAML;
+require YAML::PP;
 
-my \$workflow_filenames = eval { YAML::LoadFile('$configuration_data_directory/workflow_filenames.yml'); };
+my \$workflow_filenames = eval { YAML::PP::LoadFile('$configuration_data_directory/workflow_filenames.yml'); };
 
-my \$node_configuration = eval { YAML::LoadFile('$configuration_data_directory/node_configuration.yml'); };
+my \$node_configuration = eval { YAML::PP::LoadFile('$configuration_data_directory/node_configuration.yml'); };
 
-my \$roles = eval { YAML::LoadFile('$configuration_data_directory/roles.yml'); };
+my \$roles = eval { YAML::PP::LoadFile('$configuration_data_directory/roles.yml'); };
 
-my \$targets = eval { YAML::LoadFile('$configuration_data_directory/targets.yml'); };
+my \$targets = eval { YAML::PP::LoadFile('$configuration_data_directory/targets.yml'); };
 
 my \$configuration = {
 		      \%{ ref \$workflow_filenames eq 'HASH' ? \$workflow_filenames : {}; },
@@ -4225,11 +4221,16 @@ sub builtin_configuration_archive
 
 	if ($option_verbose)
 	{
-	    use YAML;
+	    use YAML::PP;
 
-	    print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+	    print YAML::PP::Dump
+		(
+		 {
+		  global_field_project_configuration => $global_field_project_configuration,
+		 },
+		);
 
-	    print Dump
+	    print YAML::PP::Dump
 		(
 		 {
 		  CWD => $CWD,
@@ -4289,9 +4290,14 @@ sub builtin_configuration_directory_print
 
     if ($global_execute_scheduled_commands)
     {
-	use YAML;
+	use YAML::PP;
 
-	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+	print YAML::PP::Dump
+	    (
+	     {
+	      global_field_project_configuration => $global_field_project_configuration,
+	     },
+	    );
     }
 
     my $error = '';
@@ -5472,16 +5478,16 @@ sub builtin_lint
 
     if ($option_bash_completors)
     {
-	use YAML;
+	use YAML::PP;
 
-	print Dump( { missing_bash_completors => $missing_bash_completors, } );
+	print YAML::PP::Dump( { missing_bash_completors => $missing_bash_completors, } );
     }
 
     if ($option_help_pagers)
     {
-	use YAML;
+	use YAML::PP;
 
-	print Dump( { missing_help_pagers => $missing_help_pagers, } );
+	print YAML::PP::Dump( { missing_help_pagers => $missing_help_pagers, } );
     }
 
     return '';
@@ -6260,15 +6266,15 @@ sub builtin_project_rename
 
 	my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
-	use YAML;
+	use YAML::PP;
 
 	if ($option_dry_run)
 	{
-	    print Dump( { new_workflow_filenames => $new_workflow_filenames } );
+	    print YAML::PP::Dump( { new_workflow_filenames => $new_workflow_filenames } );
 	}
 	else
 	{
-	    YAML::DumpFile($workflow_filenames_configuration_filename, { workflow_filenames => $new_workflow_filenames });
+	    YAML::PP::DumpFile($workflow_filenames_configuration_filename, { workflow_filenames => $new_workflow_filenames });
 	}
     }
 
@@ -6738,7 +6744,7 @@ sub builtin_role_add
 
     #t we should also come up with a policy to generate backup files of the configuration.
 
-    my $roles = YAML::LoadFile($roles_configuration_filename);
+    my $roles = YAML::PP::LoadFile($roles_configuration_filename);
 
     if (not $error)
     {
@@ -6840,7 +6846,7 @@ sub builtin_role_add
 	{
 	    $roles->{roles}->{$role_name} = $role;
 
-	    YAML::DumpFile($roles_configuration_filename, $roles);
+	    YAML::PP::DumpFile($roles_configuration_filename, $roles);
 
 	    print "$global_program_name: added role $role_name to $roles_configuration_filename\n";
 	}
@@ -6973,9 +6979,9 @@ sub builtin_role_print
 
     if ($global_execute_scheduled_commands)
     {
-	use YAML;
+	use YAML::PP;
 
-	print Dump($matching_roles);
+	print YAML::PP::Dump($matching_roles);
     }
 
     return 0;
@@ -7111,7 +7117,7 @@ sub builtin_target_add
 
     my $targets_configuration_filename = "$configuration_data_directory/targets.yml";
 
-    my $targets = YAML::LoadFile($targets_configuration_filename);
+    my $targets = YAML::PP::LoadFile($targets_configuration_filename);
 
     if (not $error)
     {
@@ -7134,7 +7140,7 @@ sub builtin_target_add
     if (!$error
 	|| $error eq "target $target_name already exists")
     {
-	YAML::DumpFile($targets_configuration_filename, $targets);
+	YAML::PP::DumpFile($targets_configuration_filename, $targets);
 
 	print "$global_program_name: added target $target_name to $targets_configuration_filename\n";
     }
@@ -7843,7 +7849,7 @@ sub builtin_workflow_file_remove
 
 	    my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
-	    YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
+	    YAML::PP::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
 
 	    print "$global_program_name: removed $filename\n";
 
@@ -8013,7 +8019,7 @@ sub builtin_workflow_file_rename
 
 	    my $workflow_filenames_configuration_filename = "$configuration_data_directory/workflow_filenames.yml";
 
-	    YAML::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
+	    YAML::PP::DumpFile($workflow_filenames_configuration_filename, $workflow_filenames);
 
 	    print "$global_program_name: moved $old_filename to $new_filename\n";
 	}
@@ -8120,9 +8126,9 @@ sub builtin_workflow_filenames_known
 
 	    $workflow_filenames = $workflow_filenames->{workflow_filenames};
 
-	    use YAML;
+	    use YAML::PP;
 
-	    print Dump( { workflow_filenames_known => $workflow_filenames } );
+	    print YAML::PP::Dump( { workflow_filenames_known => $workflow_filenames } );
 	}
     }
 
@@ -8195,9 +8201,9 @@ sub builtin_workflow_locate
 
     my $location = _subroutine_name_2_implementation_location($subroutine_name);
 
-    use YAML;
+    use YAML::PP;
 
-    print Dump( { location => { workflow_name => $workflow_name, %$location, } } );
+    print YAML::PP::Dump( { location => { workflow_name => $workflow_name, %$location, } } );
 
     return '';
 }
@@ -11894,11 +11900,11 @@ sub _configuration_export
 
 	    eval
 	    {
-		use YAML;
+		use YAML::PP;
 
 		# local $SIG{'__DIE__'};
 
-		YAML::DumpFile($yaml_export_filename, $configuration);
+		YAML::PP::DumpFile($yaml_export_filename, $configuration);
 	    };
 
 	    eval
@@ -12371,9 +12377,9 @@ sub _init_do_eval_yaml_command_file
 
     # read the yaml file
 
-    use YAML;
+    use YAML::PP;
 
-    my $result = YAML::LoadFile($filename);
+    my $result = YAML::PP::LoadFile($filename);
 
     #t this needs more work
 
@@ -12946,6 +12952,24 @@ sub volatile_data_directory
 }
 
 
+sub yaml_file_load
+{
+    my $filename = shift;
+
+    use YAML::PP;
+
+    my $yp
+	= YAML::PP->new(
+			schema => [ 'Core' ],
+			cyclic_refs => 'fatal',
+		       );
+
+    my $data = eval { $yp->load_file($filename) };
+
+    return ($data, $@);
+}
+
+
 package main;
 
 
@@ -13429,7 +13453,7 @@ sub operation_filenames_file_read
 
 	    local $SIG{'__DIE__'};
 
-	    YAML::LoadFile($workflow_filenames_configuration_filename);
+	    YAML::PP::LoadFile($workflow_filenames_configuration_filename);
 	};
 
     if ($@)
@@ -14155,7 +14179,7 @@ options:
 
     if ($option_help_workflows)
     {
-	use YAML;
+	use YAML::PP;
 
 	my $operation_hash = operation_hash_typed_generate();
 
@@ -14186,15 +14210,15 @@ options:
 	       @$operations,
 	      ];
 
-	print Dump(
-		   {
-		    '0_description' => "The list of available workflows for this project are
+	print YAML::PP::Dump(
+			     {
+			      '0_description' => "The list of available workflows for this project are
   (copy-paste the one you would like to execute,
    try them with the --dry-run and --interactions options,
    some workflows may implement a usage message available with the --help option):",
-		    '1_workflows' => $operations,
-		   },
-		  );
+			      '1_workflows' => $operations,
+			     },
+			    );
 
 	exit 0;
     }
@@ -14230,11 +14254,11 @@ options:
 	{
 	    if (exists $known_operation_packages->{$global_target})
 	    {
-		use YAML;
+		use YAML::PP;
 
-		print Dump( { $global_target => $known_operation_packages->{$global_target}, }, );
+		print YAML::PP::Dump( { $global_target => $known_operation_packages->{$global_target}, }, );
 
-		print Dump( { $global_target => $all_module_all_subs->{$global_target} } );
+		print YAML::PP::Dump( { $global_target => $all_module_all_subs->{$global_target} } );
 
 		exit 0;
 	    }
@@ -14245,9 +14269,9 @@ options:
 	}
 	elsif ($option_help_builtin_packages_all)
 	{
-	    use YAML;
+	    use YAML::PP;
 
-	    print Dump( { help_module_all => $known_operation_packages, }, );
+	    print YAML::PP::Dump( { help_module_all => $known_operation_packages, }, );
 
 	    exit 0;
 	}
@@ -14259,34 +14283,34 @@ options:
 
     if ($option_help_options)
     {
-	use YAML;
+	use YAML::PP;
 
-	print Dump( { "global_options" => $global_options, }, );
+	print YAML::PP::Dump( { "global_options" => $global_options, }, );
 
 	exit 0;
     }
 
     if ($option_help_field_project_name)
     {
-	use YAML;
+	use YAML::PP;
 
-	print Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
+	print YAML::PP::Dump( { global_field_project_configuration => $global_field_project_configuration, }, );
 
 	exit 0;
     }
 
     # if ($option_help_node_configuration)
     # {
-    # 	use YAML;
+    # 	use YAML::PP;
 
-    # 	print Dump( { configuration => $global_node_configuration, }, );
+    # 	print YAML::PP::Dump( { configuration => $global_node_configuration, }, );
 
     # 	exit 0;
     # }
 
     if ($option_help_projects)
     {
-	use YAML;
+	use YAML::PP;
 
 	my $all_workflow_projects = workflow_project_list_generate();
 
@@ -14306,14 +14330,14 @@ options:
 	       @$all_workflow_projects,
 	      ];
 
-	print Dump( { "available_workflow automation projects (copy-paste the one you would like to get help for)" => $workflow_projects, }, );
+	print YAML::PP::Dump( { "available_workflow automation projects (copy-paste the one you would like to get help for)" => $workflow_projects, }, );
 
 	exit 0;
     }
 
     if ($option_help_targets)
     {
-	use YAML;
+	use YAML::PP;
 
 	my $targets = $global_technical_project_configuration->{targets};
 
@@ -14326,7 +14350,7 @@ options:
 	    }
 	}
 
-	print Dump( { targets => $targets, }, );
+	print YAML::PP::Dump( { targets => $targets, }, );
 
 	exit 0;
     }
@@ -14344,9 +14368,9 @@ sub project_name_2_configuration_data_directory
 
     my $output_yaml = `$project_name builtin configuration_directory_print`;
 
-    use YAML;
+    use YAML::PP;
 
-    my $field_project_configuration = YAML::Load($output_yaml);
+    my $field_project_configuration = YAML::PP::Load($output_yaml);
 
     $field_project_configuration = $field_project_configuration->{global_field_project_configuration};
 

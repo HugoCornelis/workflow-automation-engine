@@ -34,7 +34,7 @@ RUN zypper --non-interactive refresh && \
         perl-IPC-System-Simple \
         perl-JSON \
         perl-Net-IP \
-        perl-YAML \
+        perl-YAML-PP \
         perl-libwww-perl \
         grc \
         openssh \
