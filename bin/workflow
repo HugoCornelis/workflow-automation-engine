@@ -271,12 +271,18 @@ use JSON::PP qw(encode_json decode_json);
 use LWP::UserAgent;
 use HTTP::Request::Common qw(POST);
 
+
 sub new
 {
     my ($class, %args) = @_;
 
-    my $api_key = $args{api_key} || $ENV{OPENAI_API_KEY}
-        or croak "Missing api_key or OPENAI_API_KEY";
+    my $api_key = $args{api_key} if exists $args{api_key};
+
+    $api_key = read_volatile_data("secret-tokens/openai.yml", 'key-value');
+
+    $api_key = $ENV{OPENAI_API_KEY} if not $api_key;
+
+    $api_key or croak "Missing api_key or OPENAI_API_KEY";
 
     my $self = bless {
         api_key  => $api_key,
@@ -286,6 +292,29 @@ sub new
     }, $class;
 
     return $self;
+}
+
+
+sub read_volatile_data
+{
+    my ($pathname, $key) = @_;
+
+    my $volatile_data_directory = Utilities::volatile_data_directory();
+
+    use YAML;
+
+    my $data = eval {
+	YAML::LoadFile("$volatile_data_directory/$pathname");
+    };
+
+    if ($@)
+    {
+	# this is ok
+
+	return undef;
+    }
+
+    return $data->{$key};
 }
 
 
@@ -12762,6 +12791,21 @@ sub interaction_roles_identify
 package Utilities;
 
 
+sub bin_path_choice
+{
+    # should we install to ~/bin or to ~/.local/bin?
+
+    my $use_dot_local = 1;
+
+    if (!-d "$ENV{HOME}/.local/bin")
+    {
+	$use_dot_local = 0;
+    }
+
+    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+}
+
+
 #
 # The commands_cache_directory is a directory where the workflow
 # engine caches dynamically generated scripts before their execution.
@@ -12890,18 +12934,15 @@ sub read_directory
 }
 
 
-sub bin_path_choice
+sub volatile_data_directory
 {
-    # should we install to ~/bin or to ~/.local/bin?
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
-    my $use_dot_local = 1;
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-    if (!-d "$ENV{HOME}/.local/bin")
-    {
-	$use_dot_local = 0;
-    }
+    my $volatile_data_directory = "$sources_configuration_directory/$field_project_name-volatile-data";
 
-    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+    return $volatile_data_directory;
 }
 
 
