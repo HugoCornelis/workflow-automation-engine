@@ -7148,93 +7148,22 @@ sub builtin_project_start_completor
 {
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift || [];
+    my $complete_arguments_array = shift;
 
-    my $analysis = shift || {};
-
-    my $option_descriptions
+    my $completions_hash
 	= {
-	   '--minimal' => "create a minimal configuration without the examples",
-	   '--perl' => "add the perl examples to the configuration",
-	   '--python' => "add the python examples to the configuration",
-	   '--shell' => "add the shell examples to the configuration",
+	   '0.Necessary_argument:' => 'help message',
+	   '<project_name>' => 'name of the new project',
+	   '--' => {
+		    '0.Available_options:' => '',
+		    '--minimal' => "create a minimal configuration without the examples",
+		    '--perl' => "add the perl examples to the configuration",
+		    '--python' => "add the python examples to the configuration",
+		    '--shell' => "add the shell examples to the configuration",
+		   },
 	  };
 
-    my $option_names = [ sort keys %$option_descriptions ];
-
-    my $operation_arguments = [ @$complete_arguments_array ];
-
-    # The completion dispatcher passes the full workflow command line without
-    # the shell command itself.  Remove the target and operation such that only
-    # the arguments of `workflow builtin project_start ...` remain here.
-
-    if (@$operation_arguments >= 2
-	and $operation_arguments->[0] eq 'builtin'
-	and $operation_arguments->[1] eq 'project_start')
-    {
-	splice @$operation_arguments, 0, 2;
-    }
-
-    my $separator_index;
-
-    foreach my $index (0 .. $#$operation_arguments)
-    {
-	if ($operation_arguments->[$index] eq '--')
-	{
-	    $separator_index = $index;
-
-	    last;
-	}
-    }
-
-    my $available_options
-	= {
-	   map
-	   {
-	       $_ => $option_descriptions->{$_}
-	   }
-	   grep
-	   {
-	       my $option_name = $_;
-
-	       not grep { $_ eq $option_name } @$operation_arguments;
-	   }
-	   @$option_names
-	  };
-
-    # Once the command-specific option separator has been entered, first
-    # complete a second `--`.  That second `--` then opens the actual command
-    # options such as `--minimal`, `--perl`, `--python` and `--shell`.
-
-    if (defined $separator_index)
-    {
-	my $arguments_after_separator
-	    = [ @$operation_arguments[$separator_index + 1 .. $#$operation_arguments] ];
-
-	if (scalar @$arguments_after_separator
-	    and $arguments_after_separator->[-1] =~ /^--/)
-	{
-	    return $available_options;
-	}
-
-	return { '--' => $available_options };
-    }
-
-    if (scalar @$operation_arguments)
-    {
-	return {
-		 '0.Type_--_then_--_to_complete_options:' => '',
-		 '--' => { '--' => $available_options },
-		 '1.Available_options:_--minimal_--perl_--python_--shell' => '',
-	       };
-    }
-
-    return {
-	    '0.Necessary_argument:' => 'help message',
-	    '<project_name>' => 'name of the new project',
-	    '1.Options_after_project_name:_--_--minimal_--perl_--python_--shell' => '',
-	    '--' => { '--' => $available_options },
-	   };
+    return $completions_hash;
 }
 
 
