@@ -4734,6 +4734,186 @@ sub builtin_help
 }
 
 
+sub builtin_lint
+{
+    my $arguments = shift || [];
+
+    my $option_bash_completors = 1;
+    my $option_help_pagers = 1;;
+
+    our $options
+	= {
+	   'bash-completors' => \$option_bash_completors,
+	   'help-pages' => \$option_help_pagers,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
+
+    my $operations_with_help = main::operation_hash_typed_generate('with help subs');
+
+    my $operations_with_completors = main::operation_hash_typed_generate('with completion subs');
+
+    my $operations = main::operation_hash_typed_generate();
+
+    my $target_regex = $arguments->[0] || ':all';
+
+    if ($target_regex eq ':all')
+    {
+	$target_regex = '.*';
+    }
+
+    my $operations_target
+	= [
+	   grep
+	   {
+	       /$target_regex/;
+	   }
+	   sort keys %$operations,
+	  ];
+
+    my $missing_bash_completors = [];
+
+    my $missing_help_pagers = [];
+
+    foreach my $operation_target (@$operations_target)
+    {
+	if (not exists $operations_with_completors->{"${operation_target}_completions"})
+	{
+	    push @$missing_bash_completors, $operation_target;
+	}
+
+	if (not exists $operations_with_help->{"${operation_target}_help"})
+	{
+	    push @$missing_help_pagers, $operation_target;
+	}
+    }
+
+    if ($option_bash_completors)
+    {
+	use YAML;
+
+	print Dump( { missing_bash_completors => $missing_bash_completors, } );
+    }
+
+    if ($option_help_pagers)
+    {
+	use YAML;
+
+	print Dump( { missing_help_pagers => $missing_help_pagers, } );
+    }
+
+    return '';
+}
+
+
+sub builtin_lint_completions
+{
+    # ($operation_name,
+    #  $arguments,
+    #  {
+    #   bash => {
+    # 	   command_line => $command_line,
+    # 	   comp_cword => $comp_cword,
+    # 	   comp_point => $comp_point,
+    # 	  },
+    #   status => {
+    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
+    # 	     perform_option_completion => $perform_option_completion,
+    # 	    },
+    #   string_after_point => $string_after_point,
+    #   string_before_point => $string_before_point,
+    #  },
+
+    my $debug_builtin_lint_completions = 0;
+
+    if ($debug_builtin_lint_completions)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper(\@_);
+    }
+
+    my $operation_name = shift;
+
+    my $arguments = shift;
+
+    my $analysis = shift;
+
+    my $bash_variables = $analysis->{bash};
+
+    my $status = $analysis->{status};
+
+    my $perform_option_completion = $status->{perform_option_completion};
+
+    my $string_after_point = $analysis->{string_after_point};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    my $all_targets = $global_technical_project_configuration->{targets};
+
+    my $target_completions
+	= {
+	   map
+	   {
+	       $_ => '';
+	   }
+	   keys %$all_targets, ':all',
+	  };
+
+    my $option_completions
+	= {
+	   '--bash-completors' => '',
+	   '--help-pages' => '',
+	  };
+
+    my $completions = $target_completions;
+
+    if ($perform_option_completion)
+    {
+	$completions = $option_completions;
+    }
+
+    return $completions;
+}
+
+
+sub builtin_lint_help
+{
+    my $command = shift;
+
+    return "$command: Generate a report about missing functions for one or more targets.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command \[ <target-regex> ... ] \[ -- <--options> \]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: One or more regular expressions to match the target against, ':all' for all targets.
+
+options:
+~~~~~~~~
+
+    ``--bash-completors``: Check if the bash completion functions are implemented.
+
+    ``--help-pagers``: Check if the help pages are implemented.
+";
+}
+
+
 sub builtin_manual
 {
     my $arguments = shift || [];
