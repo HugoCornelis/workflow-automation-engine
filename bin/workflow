@@ -189,6 +189,7 @@ our $global_execute_scheduled_commands = 'yes';
 
 my $global_builtin_operations
     = {
+       ai_query => 1,
        configuration_archive => 1,
        configuration_directory_print => 1,
        configuration_fetch => 1,
@@ -3752,11 +3753,102 @@ sub builtin_ai_query
 {
     my $arguments = shift || [];
 
-    my $pdf_manual_filename = $arguments->[0];
+    my $option_api_key;
+    my $option_base_url;
+    my $option_model = 'gpt-5.5';
+    my $option_purpose = 'user_data';
 
-    my $ai_query = $arguments->[1];
+    my $options
+	= {
+	   "api-key=s" => \$option_api_key,
+	   "base-url=s" => \$option_base_url,
+	   "model=s" => \$option_model,
+	   "purpose=s" => \$option_purpose,
+	  };
 
-    
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+	die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    # Do not upload the file or spend API tokens when --dry-run, --help,
+    # --interactions, --export-sh, etc. have disabled execution.
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $pdf_manual_filename = shift @$arguments;
+
+    if (not defined $pdf_manual_filename)
+    {
+	die "$global_program_name: *** Error: builtin ai_query expects the PDF filename as its first argument";
+    }
+
+    if (not -f $pdf_manual_filename)
+    {
+	die "$global_program_name: *** Error: PDF file does not exist: $pdf_manual_filename";
+    }
+
+    my $ai_query = join ' ', @$arguments;
+
+    if (not defined $ai_query
+	or $ai_query eq '')
+    {
+	die "$global_program_name: *** Error: builtin ai_query expects a query string after the PDF filename";
+    }
+
+    my $client_options
+	= {
+	   model => $option_model,
+	  };
+
+    $client_options->{api_key} = $option_api_key
+	if defined $option_api_key;
+
+    $client_options->{base_url} = $option_base_url
+	if defined $option_base_url;
+
+    my $client = AI::OpenAI->new(%$client_options);
+
+    print STDERR "$global_program_name: uploading $pdf_manual_filename to OpenAI\n"
+	if defined $option_verbose and $option_verbose;
+
+    my $file
+	= $client->upload_file
+	  (
+	   path    => $pdf_manual_filename,
+	   purpose => $option_purpose,
+	  );
+
+    my $file_id = $file->{id};
+
+    if (not defined $file_id
+	or $file_id eq '')
+    {
+	die "$global_program_name: *** Error: OpenAI file upload did not return a file id";
+    }
+
+    print STDERR "$global_program_name: querying OpenAI with uploaded file $file_id\n"
+	if defined $option_verbose and $option_verbose;
+
+    my $answer
+	= $client->ask_file
+	  (
+	   file_id  => $file_id,
+	   question => $ai_query,
+	  );
+
+    print $answer;
+
+    print "\n" if defined $answer and $answer !~ /\n\z/;
+
+    return '';
 }
 
 
