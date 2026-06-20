@@ -9516,6 +9516,29 @@ sub ex_cd_start
 }
 
 
+sub process
+{
+    my $self = shift;
+
+    my $output_pathname = shift;
+
+    my $test_module_library_contents = shift;
+
+    my $global_test_report = shift;
+
+    my $output_file
+	= _output_html_preamble
+	  (
+	   $output_pathname,
+	   $test_module_library_contents->{html_introduction},
+	  );
+
+    _output_html_process($output_file, $output_pathname, $global_test_report);
+
+    _output_html_postamble($output_file);
+}
+
+
 package Heterarch::Test::Output::Formatter::Latex;
 
 # The Heterarch::Test::Output::Formatter::Latex package converts the test specifications
@@ -10817,8 +10840,6 @@ sub process
     my $test_module_library_contents = shift;
 
     my $global_test_report = shift;
-
-    # _output_latex_preamble creates $output_file for others to use.
 
     my $output_file
 	= _output_latex_preamble
