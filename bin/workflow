@@ -516,7 +516,12 @@ sub response_create
 
     my $payload
       = {
-	 model => $args{model} || $self->{model},
+	 instructions => "Answer concisely. Prefer at most 8 bullets unless the user asks for more detail.",
+	 reasoning => {
+		       effort => "none",
+		      },
+	 max_output_tokens => 400,
+	 model => $self->{model},
 	 input => $input,
 	};
 
