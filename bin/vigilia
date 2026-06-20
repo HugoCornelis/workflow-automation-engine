@@ -2512,6 +2512,11 @@ sub initialize_config
 	$global_config->{specification_dump_directory} = "/tmp";
     }
 
+    if (not exists $global_config->{html_output_directory})
+    {
+	$global_config->{html_output_directory} = "./vigilia/html";
+    }
+
     if (not exists $global_config->{reporting_directory})
     {
 	$global_config->{reporting_directory} = "./report_$global_config->{package}->{name}";
@@ -9438,17 +9443,12 @@ sub ex_terminate
 package Heterarch::Test::Output::Formatter::HTMLTable;
 
 # the Formatter:: HTMLTable package converts the test specifications
-# to HTML tables.
+# to HTML pages.  It writes an index page plus one page per vigilia
+# test module under $global_config->{html_output_directory}.
 
 
 our @ISA = ("Heterarch::Test::Output::Formatter");
 
-
-#
-# sub start
-#
-# Incomplete.
-#
 
 sub ex_cd_start
 {
@@ -9482,23 +9482,17 @@ sub _output_html_escape
 }
 
 
-sub _output_html
+sub _output_html_slug
 {
-    my $outputfile = shift;
+    my $contents = shift || 'unnamed';
 
-    my $contents = shift;
+    $contents =~ s(^\./)();
+    $contents =~ s([^A-Za-z0-9._-]+)(-)g;
+    $contents =~ s(-+)(-)g;
+    $contents =~ s(^[-.]+)();
+    $contents =~ s([-\.]+$)();
 
-    print $outputfile $contents if defined $contents;
-}
-
-
-sub _output_html_text
-{
-    my $outputfile = shift;
-
-    my $contents = shift;
-
-    print $outputfile _output_html_escape($contents);
+    return $contents || 'unnamed';
 }
 
 
@@ -9536,17 +9530,35 @@ sub _output_html_preamble_construct
 
     $html_introduction =~ s(<address>.*?</address>)()gis;
 
-    my $summary_html = $html_introduction;
-
     my $result
 	= {
 	   author => $author,
 	   original_contents => $html_introduction_original,
-	   summary_html => $summary_html,
+	   summary_html => $html_introduction,
 	   title => $title || 'Vigilia test specifications',
 	  };
 
     return $result;
+}
+
+
+sub _output_html
+{
+    my $outputfile = shift;
+
+    my $contents = shift;
+
+    print $outputfile $contents if defined $contents;
+}
+
+
+sub _output_html_text
+{
+    my $outputfile = shift;
+
+    my $contents = shift;
+
+    print $outputfile _output_html_escape($contents);
 }
 
 
@@ -9556,27 +9568,35 @@ sub _output_html_preamble
 
     my $html_introduction = shift;
 
-    use File::Basename qw( fileparse );
+    my $options = shift || {};
+
+    use File::Basename qw( dirname );
     use File::Copy;
     use File::Path qw( make_path );
     use IO::File;
     use POSIX qw(strftime);
 
-    my ( $filename_prefix, $directory ) = fileparse($output_pathname);
+    my $directory = dirname("$output_pathname.html");
 
     make_path($directory) if defined $directory and length $directory and !-d $directory;
 
-    my $figures_directory = 'figures';
-
-    make_path("$directory/$figures_directory") if defined $directory and length $directory and !-d "$directory/$figures_directory";
-
     my $logo_relative_pathname;
 
-    if (defined $option_output_logo and -r $option_output_logo)
+    if ($options->{logo_target_directory}
+	and defined $option_output_logo
+	and -r $option_output_logo)
     {
-	$logo_relative_pathname = "$figures_directory/main-page-logo.jpg";
+	my $logo_target_directory = $options->{logo_target_directory};
 
-	copy($option_output_logo, "$directory/$logo_relative_pathname");
+	make_path($logo_target_directory) if !-d $logo_target_directory;
+
+	my $logo_filename = 'main-page-logo.jpg';
+
+	my $logo_target_pathname = "$logo_target_directory/$logo_filename";
+
+	copy($option_output_logo, $logo_target_pathname);
+
+	$logo_relative_pathname = $options->{logo_relative_pathname} || "assets/$logo_filename";
     }
 
     $output_file = IO::File->new(">$output_pathname.html")
@@ -9584,7 +9604,7 @@ sub _output_html_preamble
 
     my $title_paragraphs = _output_html_preamble_construct($html_introduction);
 
-    my $title = _output_html_escape($title_paragraphs->{title});
+    my $title = _output_html_escape($options->{title} || $title_paragraphs->{title});
 
     my $author = _output_html_escape($title_paragraphs->{author});
 
@@ -9617,6 +9637,7 @@ sub _output_html_preamble
       max-width: 78rem;
       padding: 2rem;
     }
+    a { color: var(--accent); }
     header.document-header {
       border-bottom: 1px solid var(--border);
       margin-bottom: 2rem;
@@ -9635,12 +9656,14 @@ sub _output_html_preamble
       margin-top: 2.5rem;
       padding-bottom: 0.35rem;
     }
+    nav.module-index,
     article.module,
     article.command-definition,
     article.command-test,
     section.summary {
       margin-bottom: 1.5rem;
     }
+    nav.module-index,
     article.command-definition,
     article.command-test,
     div.note,
@@ -9718,7 +9741,7 @@ HTML
 
     print $output_file "</header>\n";
 
-    if ($title_paragraphs->{summary_html} =~ /\S/)
+    if ($options->{summary} and $title_paragraphs->{summary_html} =~ /\S/)
     {
 	print $output_file "<section class=\"summary\">\n<h2>Summary</h2>\n";
 
@@ -9844,18 +9867,13 @@ sub _output_html_module_filename_insert
 
     my $module_definition_documentation = shift;
 
+    my $ss = shift;
+
     return if $option_output_concise eq 'manual';
 
     my $module_name = $module_definition->{name};
 
-    my $test_count = 0;
-
-    foreach my $command_definition (@{ $module_definition->{command_definitions} || [] })
-    {
-	$test_count += scalar @{ $command_definition->{command_tests} || [] };
-    }
-
-    my $defines = $test_count == 1 ? 'test' : 'tests';
+    my $defines = $ss->{cd_1} ? 'test' : 'tests';
 
     print $output_file '<p class="metadata">File <code>'
 	. _output_html_escape($module_name)
@@ -9869,6 +9887,8 @@ sub _output_html_module_filename_insert
 sub _output_html_module_harnessing
 {
     my $module_definition = shift;
+
+    my $ss = shift;
 
     my $harnessing = $module_definition->{harnessing} || {};
 
@@ -9931,7 +9951,7 @@ sub _output_html_command_definition_command_arguments
 
     my $prompt
 	= $option_output_concise eq 'manual'
-	? ($ct_1 ? 'Executed system shell command:' : 'Executed system shell command:')
+	? 'Executed system shell command:'
 	: ($ct_1 ? 'The test is started with the system shell command:' : 'The tests are started with the system shell command:');
 
     print $output_file '<p>' . _output_html_escape($prompt) . ' <code>' . _output_html_escape($command_string) . '</code></p>' . "\n";
@@ -10026,6 +10046,8 @@ sub _output_html_command_test_comments
 {
     my $command_test = shift;
 
+    my $ss = shift;
+
     _output_html_note('NOTE:', $command_test->{comment} || $command_test->{comments});
 }
 
@@ -10110,10 +10132,10 @@ sub _output_html_figure_path_relative_to_document
     my $figure_filename = shift;
 
     use Cwd qw( abs_path );
-    use File::Basename qw( fileparse );
+    use File::Basename qw( dirname );
     use File::Spec;
 
-    my ( $html_filename, $html_directory ) = fileparse("$output_pathname.html");
+    my $html_directory = dirname("$output_pathname.html");
 
     my $html_directory_abs = abs_path($html_directory || '.') || ($html_directory || '.');
 
@@ -10159,7 +10181,7 @@ sub _output_html_figure_generate_insert
 
     if ($render_error)
     {
-	_output_html_note('ERROR:', "Please install the figure rendering dependencies to render figures");
+	_output_html_note('ERROR:', 'Please install the figure rendering dependencies to render figures');
 
 	return;
     }
@@ -10190,104 +10212,230 @@ sub _output_html_figure_generate_insert
 }
 
 
-sub _output_html_process
+sub _output_html_sorted_modules
 {
-    my $output_file = shift;
+    my $test_report = shift;
+
+    my $module_definitions = $test_report->{selected} || {};
+
+    my @sorted_modules
+	= map { $module_definitions->{$_} }
+	  sort
+	  {
+	      my $counter_a = $module_definitions->{$a}->{count} || 0;
+	      my $counter_b = $module_definitions->{$b}->{count} || 0;
+
+	      $counter_a <=> $counter_b;
+	  }
+	  keys %$module_definitions;
+
+    return \@sorted_modules;
+}
+
+
+sub _output_html_module_output_plan
+{
+    my $test_report = shift;
+
+    my $html_output_directory = shift;
+
+    use File::Path qw( make_path );
+
+    my $modules_directory = "$html_output_directory/modules";
+
+    make_path($modules_directory) if !-d $modules_directory;
+
+    my $sorted_modules = _output_html_sorted_modules($test_report);
+
+    my $used_slugs = {};
+
+    my $plan = [];
+
+    foreach my $module_definition (@$sorted_modules)
+    {
+	my $module_name = $module_definition->{name} || 'unnamed';
+
+	my $slug = _output_html_slug($module_name);
+
+	my $unique_slug = $slug;
+
+	my $suffix = 2;
+
+	while ($used_slugs->{$unique_slug})
+	{
+	    $unique_slug = "$slug-$suffix";
+
+	    $suffix++;
+	}
+
+	$used_slugs->{$unique_slug} = 1;
+
+	my $module_directory = "$modules_directory/$unique_slug";
+
+	make_path($module_directory) if !-d $module_directory;
+
+	push @$plan,
+	    {
+	     directory => $module_directory,
+	     href => "modules/$unique_slug/index.html",
+	     module => $module_definition,
+	     output_pathname => "$module_directory/index",
+	     slug => $unique_slug,
+	    };
+    }
+
+    return $plan;
+}
+
+
+sub _output_html_module_summary
+{
+    my $module_definition = shift;
+
+    my $command_definitions = $module_definition->{command_definitions} || [];
+
+    my $command_count = scalar @$command_definitions;
+
+    my $test_count = 0;
+
+    foreach my $command_definition (@$command_definitions)
+    {
+	$test_count += scalar @{ $command_definition->{command_tests} || [] };
+    }
+
+    return ($command_count, $test_count);
+}
+
+
+sub _output_html_main_page
+{
+    my $outputfile = shift;
+
+    my $plan = shift;
+
+    print $outputfile '<nav class="module-index">' . "\n";
+
+    print $outputfile '<h2>Test modules</h2>' . "\n";
+
+    if (!scalar @$plan)
+    {
+	print $outputfile '<p>No test modules were selected.</p>' . "\n";
+    }
+    else
+    {
+	print $outputfile '<ul>' . "\n";
+
+	foreach my $entry (@$plan)
+	{
+	    my $module_definition = $entry->{module};
+
+	    my ($command_count, $test_count) = _output_html_module_summary($module_definition);
+
+	    my $description = $module_definition->{description} || $module_definition->{name};
+
+	    print $outputfile '  <li><a href="'
+		. _output_html_escape($entry->{href})
+		. '">'
+		. _output_html_escape(ucfirst $description)
+		. '</a>'
+		. ' <span class="metadata">('
+		. _output_html_escape($command_count)
+		. ' command definition(s), '
+		. _output_html_escape($test_count)
+		. ' command test(s))</span></li>'
+		. "\n";
+	}
+
+	print $outputfile '</ul>' . "\n";
+    }
+
+    print $outputfile "</nav>\n";
+}
+
+
+sub _output_html_module_page
+{
+    my $entry = shift;
 
     my $output_pathname = shift;
 
-    my $test_report = shift;
+    my $module_definition = $entry->{module};
 
-    my $module_definitions = $test_report->{selected};
+    my $module_definition_description = $module_definition->{description} || $module_definition->{name};
+
+    my $module_definition_documentation = $module_definition->{documentation} || '';
+
+    my $command_definitions = $module_definition->{command_definitions} || [];
 
     my $ss = Heterarch::Test::Output::StructureSummary->new();
 
-    foreach my $module_definition_key (sort
-				       {
-					   my $selected_a = $a;
-					   my $selected_b = $b;
+    print $output_file '<p><a href="../../index.html">Back to test module index</a></p>' . "\n";
 
-					   my $counter_a = $module_definitions->{$selected_a}->{count};
-					   my $counter_b = $module_definitions->{$selected_b}->{count};
+    print $output_file '<article class="module" id="' . _output_html_escape($module_definition->{context_path} || $module_definition->{name}) . '">' . "\n";
 
-					   $counter_a <=> $counter_b;
-				       }
-				       keys %$module_definitions)
+    print $output_file '<h2>' . _output_html_escape(ucfirst $module_definition_description) . '</h2>' . "\n";
+
+    $ss->ss_command_definitions($command_definitions);
+
+    _output_html_module_filename_insert($module_definition, $module_definition_documentation, $ss);
+
+    _output_html_module_documentation($module_definition_documentation);
+
+    _output_html_module_harnessing($module_definition, $ss);
+
+    _output_html_module_comments($module_definition);
+
+    foreach my $command_definition (@$command_definitions)
     {
-	my $module_definition = $module_definitions->{$module_definition_key};
+	my $command_tests = $command_definition->{command_tests} || [];
 
-	my $module_definition_description = $module_definition->{description} || $module_definition->{name};
+	$ss->ss_command_tests($command_tests);
 
-	my $module_definition_documentation = $module_definition->{documentation} || '';
+	print $output_file '<article class="command-definition" id="' . _output_html_escape($command_definition->{context_path} || '') . '">' . "\n";
 
-	my $command_definitions = $module_definition->{command_definitions} || [];
+	_output_html_command_definition_disabled($command_definition, $ss);
 
-	print $output_file '<article class="module" id="' . _output_html_escape($module_definition->{context_path} || $module_definition->{name}) . '">' . "\n";
+	_output_html_command_definition_description($command_definition, $ss);
 
-	print $output_file '<h2>' . _output_html_escape(ucfirst $module_definition_description) . '</h2>' . "\n";
+	_output_html_command_definition_command_arguments($command_definition, $ss);
 
-	$ss->ss_command_definitions($command_definitions);
+	_output_html_command_definition_comments($command_definition, $ss);
 
-	_output_html_module_filename_insert($module_definition, $module_definition_documentation, $ss);
+	_output_html_command_definition_harnessing($command_definition, $ss);
 
-	_output_html_module_documentation($module_definition_documentation);
-
-	_output_html_module_harnessing($module_definition, $ss);
-
-	_output_html_module_comments($module_definition);
-
-	foreach my $command_definition (@$command_definitions)
+	foreach my $command_test (@$command_tests)
 	{
-	    my $command_tests = $command_definition->{command_tests} || [];
+	    print $output_file '<article class="command-test" id="' . _output_html_escape($command_test->{context_path} || '') . '">' . "\n";
 
-	    $ss->ss_command_tests($command_tests);
+	    _output_html_command_test_disabled($command_test, $ss);
 
-	    print $output_file '<article class="command-definition" id="' . _output_html_escape($command_definition->{context_path} || '') . '">' . "\n";
+	    _output_html_command_test_description($command_test, $ss);
 
-	    _output_html_command_definition_disabled($command_definition, $ss);
+	    _output_html_command_test_write($command_test, $ss);
 
-	    _output_html_command_definition_description($command_definition, $ss);
+	    _output_html_command_test_read($command_test, $ss);
 
-	    _output_html_command_definition_command_arguments($command_definition, $ss);
-
-	    _output_html_command_definition_comments($command_definition, $ss);
-
-	    _output_html_command_definition_harnessing($command_definition, $ss);
-
-	    foreach my $command_test (@$command_tests)
+	    if ($option_output_figures)
 	    {
-		print $output_file '<article class="command-test" id="' . _output_html_escape($command_test->{context_path} || '') . '">' . "\n";
+		my $figures = $command_test->{figures} || [];
 
-		_output_html_command_test_disabled($command_test, $ss);
+		my $read = $command_test->{read} || '';
 
-		_output_html_command_test_description($command_test, $ss);
-
-		_output_html_command_test_write($command_test, $ss);
-
-		_output_html_command_test_read($command_test, $ss);
-
-		if ($option_output_figures)
+		foreach my $figure (@$figures)
 		{
-		    my $figures = $command_test->{figures} || [];
-
-		    my $read = $command_test->{read} || '';
-
-		    foreach my $figure (@$figures)
-		    {
-			_output_html_figure_generate_insert($figure, $output_pathname, $command_test, $read);
-		    }
+		    _output_html_figure_generate_insert($figure, $output_pathname, $command_test, $read);
 		}
-
-		_output_html_command_test_comments($command_test, $ss);
-
-		print $output_file "</article>\n";
 	    }
+
+	    _output_html_command_test_comments($command_test, $ss);
 
 	    print $output_file "</article>\n";
 	}
 
 	print $output_file "</article>\n";
     }
+
+    print $output_file "</article>\n";
 }
 
 
@@ -10301,16 +10449,52 @@ sub process
 
     my $global_test_report = shift;
 
-    my $output_file
+    use File::Path qw( make_path );
+
+    my $html_output_directory = $global_config->{html_output_directory} || './vigilia/html';
+
+    make_path($html_output_directory) if !-d $html_output_directory;
+
+    my $module_plan = _output_html_module_output_plan($global_test_report, $html_output_directory);
+
+    my $index_output_pathname = "$html_output_directory/index";
+
+    my $index_file
 	= _output_html_preamble
 	  (
-	   $output_pathname,
+	   $index_output_pathname,
 	   $test_module_library_contents->{html_introduction},
+	   {
+	    logo_relative_pathname => 'assets/main-page-logo.jpg',
+	    logo_target_directory => "$html_output_directory/assets",
+	    summary => 1,
+	   },
 	  );
 
-    _output_html_process($output_file, $output_pathname, $global_test_report);
+    _output_html_main_page($index_file, $module_plan);
 
-    _output_html_postamble($output_file);
+    _output_html_postamble($index_file);
+
+    foreach my $entry (@$module_plan)
+    {
+	my $module_definition = $entry->{module};
+
+	my $module_title = $module_definition->{description} || $module_definition->{name};
+
+	my $module_file
+	    = _output_html_preamble
+	      (
+	       $entry->{output_pathname},
+	       $test_module_library_contents->{html_introduction},
+	       {
+		title => ucfirst($module_title),
+	       },
+	      );
+
+	_output_html_module_page($entry, $entry->{output_pathname});
+
+	_output_html_postamble($module_file);
+    }
 }
 
 
