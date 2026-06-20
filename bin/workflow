@@ -267,6 +267,8 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use File::Basename qw(basename);
+use File::Copy qw(copy);
 use JSON::PP qw(encode_json decode_json);
 use LWP::UserAgent;
 use HTTP::Request::Common qw(POST);
@@ -278,122 +280,86 @@ sub new
 
     my $api_key = $args{api_key} if exists $args{api_key};
 
-    $api_key = read_volatile_data("secret-tokens/openai.yml", 'key-value');
+    my $openai_data = Utilities::volatile_section_data_read("secret-tokens", "openai.yml");
+
+    $api_key = $openai_data->{'key-value'};
 
     $api_key = $ENV{OPENAI_API_KEY} if not $api_key;
 
     $api_key or croak "Missing api_key or OPENAI_API_KEY";
 
-    my $self = bless {
-        api_key  => $api_key,
-        model    => $args{model}    || 'gpt-5.5',
-        base_url => $args{base_url} || 'https://api.openai.com/v1',
-        ua       => $args{ua}       || LWP::UserAgent->new(timeout => 120),
-    }, $class;
+    my $self
+	= bless {
+		 api_key  => $api_key,
+		 model    => $args{model}    || 'gpt-5.4-nano', # 'gpt-5.5',
+		 base_url => $args{base_url} || 'https://api.openai.com/v1',
+		 ua       => $args{ua}       || LWP::UserAgent->new(timeout => 120),
+		}, $class;
 
     return $self;
 }
 
 
-sub read_volatile_data
-{
-    my ($pathname, $key) = @_;
-
-    my $volatile_data_directory = Utilities::volatile_data_directory();
-
-    my ($data, $error) = Utilities::yaml_file_load("$volatile_data_directory/$pathname");
-
-    if ($error)
-    {
-	# this is ok
-
-	return undef;
-    }
-
-    return $data->{$key};
-}
-
-
-sub upload_file
-{
-    my ($self, %args) = @_;
-
-    my $path = $args{path}
-        or croak "upload_file() requires path";
-
-    my $purpose = $args{purpose} || 'user_data';
-
-    -f $path
-        or croak "File does not exist: $path";
-
-    my $url = $self->{base_url} . '/files';
-
-    my $request = POST(
-        $url,
-        Authorization => 'Bearer ' . $self->{api_key},
-        Content_Type  => 'form-data',
-        Content       => [
-            purpose => $purpose,
-            file    => [$path],
-        ],
-    );
-
-    return $self->_perform_json_request($request);
-}
-
-
-sub ask_file
+sub file_ai_query
 {
     my ($self, %args) = @_;
 
     my $file_id = $args{file_id}
-        or croak "ask_file() requires file_id";
+        or croak "file_ai_query() requires file_id";
 
     my $question = $args{question}
-        or croak "ask_file() requires question";
+        or croak "file_ai_query() requires question";
 
     my $max_attempts = $args{max_attempts} || 4;
 
+    my $stream_callback = $args{stream_callback};
+
     my $last_error;
 
-    for my $attempt (1 .. $max_attempts) {
+    for my $attempt (1 .. $max_attempts)
+    {
         my $response;
 
         my $ok = eval {
-            $response = $self->create_response(
-                input => [
-                    {
-                        role    => 'user',
-                        content => [
-                            {
-                                type    => 'input_file',
-                                file_id => $file_id,
-                            },
-                            {
-                                type => 'input_text',
-                                text => $question,
-                            },
-                        ],
-                    },
-                ],
-            );
+
+            $response
+		= $self->response_create
+		  (
+		   input => [
+			     {
+			      role    => 'user',
+			      content => [
+					  {
+					   type    => 'input_file',
+					   file_id => $file_id,
+					  },
+					  {
+					   type => 'input_text',
+					   text => $question,
+					  },
+					 ],
+			     },
+			    ],
+			   (defined $stream_callback
+			    ? (stream_callback => $stream_callback)
+			    : ()),
+		  );
 
             1;
         };
 
-        return $self->extract_text($response)
+        return $self->response_extract_text($response)
             if $ok;
 
         $last_error = $@ || 'unknown OpenAI API error';
 
-        last
-            if $attempt >= $max_attempts;
+        last if $attempt >= $max_attempts;
 
         # OpenAI can briefly return a 5xx ownership-validation error when a
         # newly uploaded file is referenced immediately by the Responses API.
         # Retry only transient-looking failures; propagate ordinary 4xx errors.
-        last
-            if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
+
+        last if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
 
         sleep(2 ** ($attempt - 1));
     }
@@ -402,42 +368,211 @@ sub ask_file
 }
 
 
-sub create_response
+sub file_cache_or_upload
 {
     my ($self, %args) = @_;
 
-    my $input = $args{input}
-        or croak "create_response() requires input";
+    my $path = $args{path};
+    my $purpose = $args{purpose} || 'user_data';
 
-    my $payload = {
-        model => $args{model} || $self->{model},
-        input => $input,
-    };
+    -f $path
+        or croak "File does not exist: $path";
 
-    my $url = $self->{base_url} . '/responses';
+    my $sha256sum = Utilities::file_sha256sum($path);
 
-    my $request = HTTP::Request->new(POST => $url);
-    $request->header('Authorization' => 'Bearer ' . $self->{api_key});
-    $request->header('Content-Type'  => 'application/json');
-    $request->content(encode_json($payload));
+    my $cache_data
+	= Utilities::volatile_section_data_read
+	  (
+	   'AI-file-cache',
+	   "$sha256sum/openai.yml",
+	  );
+
+    return { id => $cache_data->{file_id} }
+        if defined $cache_data;
+
+    my $file
+	= $self->_file_upload_uncached
+	  (
+	   path    => $path,
+	   purpose => $purpose,
+	  );
+
+    $cache_data = _file_cache_write
+	(
+	 path      => $path,
+	 purpose   => $purpose,
+	 sha256sum => $sha256sum,
+	 file      => $file,
+	);
+
+    return { id => $cache_data->{file_id} };
+}
+
+
+sub _file_cache_store_file
+{
+    my (%args) = @_;
+
+    my $path = $args{path};
+    my $sha256sum = $args{sha256sum};
+
+    my $cache_directory
+	= Utilities::volatile_section_pathname
+	  (
+	   'AI-file-cache',
+	   $sha256sum,
+	  );
+
+    my $error = Utilities::create_directories($cache_directory);
+
+    croak $error
+        if defined $error;
+
+    my $cached_file_pathname
+	= Utilities::volatile_section_pathname
+	  (
+	   'AI-file-cache',
+	   "$sha256sum/file",
+	  );
+
+    return
+        if -f $cached_file_pathname;
+
+    copy($path, $cached_file_pathname)
+        or croak "Could not copy $path to $cached_file_pathname: $!";
+}
+
+
+sub _file_cache_write
+{
+    my (%args) = @_;
+
+    my $path = $args{path};
+    my $purpose = $args{purpose};
+    my $sha256sum = $args{sha256sum};
+    my $file = $args{file};
+
+    my $file_id = $file->{id};
+
+    return
+        if not defined $file_id
+	    or $file_id eq '';
+
+    _file_cache_store_file
+	(
+	 path      => $path,
+	 sha256sum => $sha256sum,
+	);
+
+    my $cache_data
+	= {
+	   cached_filename  => 'file',
+	   file_id          => $file_id,
+	   openai_file      => $file,
+	   original_filename => basename($path),
+	   purpose          => $purpose,
+	   sha256sum        => $sha256sum,
+	  };
+
+    my $error
+	= Utilities::volatile_section_data_write
+	  (
+	   'AI-file-cache',
+	   "$sha256sum/openai.yml",
+	   $cache_data,
+	  );
+
+    croak $error
+        if defined $error;
+
+    return $cache_data;
+}
+
+
+sub _file_upload_uncached
+{
+    my ($self, %args) = @_;
+
+    my $path = $args{path};
+    my $purpose = $args{purpose} || 'user_data';
+
+    my $url = $self->{base_url} . '/files';
+
+    my $request = POST(
+		       $url,
+		       Authorization => 'Bearer ' . $self->{api_key},
+		       Content_Type  => 'form-data',
+		       Content       => [
+					 purpose => $purpose,
+					 file    => [$path],
+					],
+		      );
 
     return $self->_perform_json_request($request);
 }
 
 
-sub extract_text
+sub response_create
+{
+    my ($self, %args) = @_;
+
+    my $input = $args{input}
+        or croak "response_create() requires input";
+
+    my $stream_callback = $args{stream_callback};
+
+    croak "response_create() stream_callback must be a CODE reference"
+        if defined $stream_callback
+	    and ref($stream_callback) ne 'CODE';
+
+    my $payload
+      = {
+	 instructions => "Answer concisely. Prefer at most 8 bullets unless the user asks for more detail.",
+	 reasoning => {
+		       effort => "none",
+		      },
+	 max_output_tokens => 400,
+	 model => $self->{model},
+	 input => $input,
+	 stream => JSON::PP::true,
+	};
+
+    my $url = $self->{base_url} . '/responses';
+
+    my $request = HTTP::Request->new(POST => $url);
+
+    $request->header('Authorization' => 'Bearer ' . $self->{api_key});
+    $request->header('Content-Type'  => 'application/json');
+    $request->header('Accept'        => 'text/event-stream');
+    $request->content(encode_json($payload));
+
+    return $self->_perform_json_request(
+	$request,
+	{
+	 (defined $stream_callback
+	  ? (stream_callback => $stream_callback)
+	  : ()),
+	},
+    );
+}
+
+
+sub response_extract_text
 {
     my ($self, $response) = @_;
 
     # Some SDKs expose output_text as a convenience field. Raw HTTP responses
     # normally need to be read from output[].content[].
+
     return $response->{output_text}
         if defined $response->{output_text} && length $response->{output_text};
 
     my @parts;
 
-    for my $item (@{ $response->{output} || [] }) {
-        for my $content (@{ $item->{content} || [] }) {
+    foreach my $item (@{ $response->{output} || [] })
+    {
+        for my $content (@{ $item->{content} || [] })
+	{
             push @parts, $content->{text}
                 if defined $content->{text};
         }
@@ -447,37 +582,346 @@ sub extract_text
 }
 
 
+sub _request_payload_requests_stream
+{
+    my ($request) = @_;
+
+    my $content_type = $request->header('Content-Type') || '';
+
+    return 0
+        if $content_type !~ m{application/json}i;
+
+    my $content = $request->content;
+
+    return 0
+        if not defined $content
+	    or $content eq '';
+
+    my $payload;
+
+    eval
+    {
+        $payload = decode_json($content);
+
+        1;
+    }
+    or return 0;
+
+    return $payload->{stream} ? 1 : 0;
+}
+
+
+sub _openai_error_object_message
+{
+    my ($error) = @_;
+
+    return $error->{message}
+        if ref($error) eq 'HASH'
+	    and defined $error->{message};
+
+    return $error
+        if defined $error
+	    and not ref($error);
+
+    return;
+}
+
+
+sub _openai_http_error_message
+{
+    my ($json, $body, $status_line) = @_;
+
+    if (ref($json) eq 'HASH')
+    {
+        my $message = _openai_error_object_message($json->{error});
+
+        return $message
+            if defined $message;
+    }
+
+    return $body
+        if defined $body
+	    and $body ne '';
+
+    return $status_line;
+}
+
+
+sub _openai_http_error_details
+{
+    my ($http_response) = @_;
+
+    my $request_id = $http_response->header('x-request-id');
+
+    my $details = $http_response->status_line;
+
+    $details .= "; request_id=$request_id"
+        if defined $request_id
+	    and length $request_id;
+
+    return $details;
+}
+
+
+sub _perform_streaming_json_request
+{
+    my ($self, $request, $options) = @_;
+
+    $options ||= {};
+
+    my $stream_callback = $options->{stream_callback};
+
+    my $raw_body = '';
+    my $sse_buffer = '';
+    my $output_text = '';
+    my $final_json;
+    my $stream_error;
+
+    my $handle_stream_event
+	= sub
+	{
+	    my ($block) = @_;
+
+	    return
+	        if $block =~ /\A\s*\z/;
+
+	    my $event_name = '';
+	    my @data_lines;
+
+	    foreach my $line (split /\n/, $block)
+	    {
+	        next
+	            if $line =~ /\A:/;
+
+	        if ($line =~ /\Aevent:\s?(.*)\z/)
+	        {
+	            $event_name = $1;
+
+	            next;
+	        }
+
+	        if ($line =~ /\Adata:\s?(.*)\z/)
+	        {
+	            push @data_lines, $1;
+
+	            next;
+	        }
+	    }
+
+	    return
+	        if not @data_lines;
+
+	    my $data = join "\n", @data_lines;
+
+	    return
+	        if $data eq '[DONE]';
+
+	    my $event_json;
+
+	    eval
+	    {
+	        $event_json = decode_json($data);
+
+	        1;
+	    }
+	    or do
+	    {
+	        $stream_error ||= "OpenAI API returned malformed stream event: $@";
+
+	        return;
+	    };
+
+	    return
+	        if ref($event_json) ne 'HASH';
+
+	    my $event_type = $event_json->{type} || $event_name || '';
+
+	    if ($event_type eq 'response.output_text.delta'
+		and defined $event_json->{delta})
+	    {
+	        $output_text .= $event_json->{delta};
+
+	        if (defined $stream_callback)
+	        {
+	            eval
+	            {
+	                $stream_callback->($event_json->{delta}, $event_json);
+
+	                1;
+	            }
+	            or do
+	            {
+	                $stream_error ||= "OpenAI API stream callback failed: $@";
+	            };
+	        }
+
+	        return;
+	    }
+
+	    if ($event_type eq 'response.output_text.done'
+		and $output_text eq ''
+		and defined $event_json->{text})
+	    {
+	        $output_text = $event_json->{text};
+
+	        return;
+	    }
+
+	    if ($event_type eq 'response.completed')
+	    {
+	        $final_json = $event_json->{response} || $event_json;
+
+	        return;
+	    }
+
+	    if ($event_type =~ /(?:error|failed)\z/)
+	    {
+	        my $message = _openai_error_object_message($event_json->{error});
+
+	        if (not defined $message
+		    and ref($event_json->{response}) eq 'HASH')
+	        {
+	            $message = _openai_error_object_message($event_json->{response}{error});
+	        }
+
+	        $stream_error ||= $message
+		    || $event_json->{message}
+		    || $data;
+
+	        return;
+	    }
+	};
+
+    my $process_stream_buffer
+	= sub
+	{
+	    while ($sse_buffer =~ s/\A(.*?)(?:\r\n\r\n|\n\n|\r\r)//s)
+	    {
+	        my $block = $1;
+
+	        $block =~ s/\r\n/\n/g;
+	        $block =~ s/\r/\n/g;
+
+	        $handle_stream_event->($block);
+	    }
+	};
+
+    my $http_response
+	= $self->{ua}->request
+	  (
+	   $request,
+	   sub
+	   {
+	       my ($chunk) = @_;
+
+	       $raw_body .= $chunk;
+	       $sse_buffer .= $chunk;
+
+	       $process_stream_buffer->();
+	   },
+	  );
+
+    if (!$http_response->is_success)
+    {
+        my $json;
+
+        eval
+        {
+            $json = decode_json($raw_body);
+
+            1;
+        };
+
+        my $message
+	    = _openai_http_error_message
+	      (
+	       $json,
+	       $raw_body,
+	       $http_response->status_line,
+	      );
+
+        croak "OpenAI API error: $message ["
+	    . _openai_http_error_details($http_response)
+	    . "]";
+    }
+
+    if (length $sse_buffer)
+    {
+        $sse_buffer =~ s/\r\n/\n/g;
+        $sse_buffer =~ s/\r/\n/g;
+
+        $handle_stream_event->($sse_buffer);
+    }
+
+    croak "OpenAI API streaming error: $stream_error"
+        if defined $stream_error
+	    and $stream_error ne '';
+
+    $final_json
+	= {
+	   output_text => $output_text,
+	   output => [
+		      {
+		       content => [
+				   {
+				    type => 'output_text',
+				    text => $output_text,
+				   },
+				  ],
+		      },
+		     ],
+	  }
+	    if ref($final_json) ne 'HASH';
+
+    $final_json->{output_text} = $output_text
+        if defined $output_text
+	    and $output_text ne ''
+	    and not defined $final_json->{output_text};
+
+    return $final_json;
+}
+
+
 sub _perform_json_request
 {
-    my ($self, $request) = @_;
+    my ($self, $request, $options) = @_;
+
+    $options ||= {};
+
+    return $self->_perform_streaming_json_request($request, $options)
+        if _request_payload_requests_stream($request);
 
     my $http_response = $self->{ua}->request($request);
 
     my $body = $http_response->decoded_content;
 
     my $json;
-    eval {
+
+    eval
+    {
         $json = decode_json($body);
+
         1;
-    } or do {
+    }
+    or do
+    {
         croak "OpenAI API returned non-JSON response: "
             . $http_response->status_line . "\n$body";
     };
 
-    if (!$http_response->is_success) {
-        my $message =
-            $json->{error}{message}
-            || $json->{error}
-            || $body
-            || $http_response->status_line;
+    if (!$http_response->is_success)
+    {
+        my $message
+	    = _openai_http_error_message
+	      (
+	       $json,
+	       $body,
+	       $http_response->status_line,
+	      );
 
-        my $request_id = $http_response->header('x-request-id');
-
-        my $details = $http_response->status_line;
-        $details .= "; request_id=$request_id"
-            if defined $request_id && length $request_id;
-
-        croak "OpenAI API error: $message [$details]";
+        croak "OpenAI API error: $message ["
+	    . _openai_http_error_details($http_response)
+	    . "]";
     }
 
     return $json;
@@ -3808,14 +4252,15 @@ sub _workflow_operations_load
 }
 
 
-sub builtin_ai_query
+sub builtin_ai_document_query
 {
     my $arguments = shift || [];
 
     my $option_api_key;
     my $option_base_url;
-    my $option_model = 'gpt-5.5';
+    my $option_model;
     my $option_purpose = 'user_data';
+    my $option_stream_live = 0;
 
     my $options
 	= {
@@ -3823,6 +4268,7 @@ sub builtin_ai_query
 	   "base-url=s" => \$option_base_url,
 	   "model=s" => \$option_model,
 	   "purpose=s" => \$option_purpose,
+	   "stream-live!" => \$option_stream_live,
 	  };
 
     use Getopt::Long qw(GetOptionsFromArray);;
@@ -3864,7 +4310,7 @@ sub builtin_ai_query
 
     my $client_options
 	= {
-	   model => $option_model,
+	   (defined $option_model ? (model => $option_model) : ()),
 	  };
 
     $client_options->{api_key} = $option_api_key
@@ -3878,14 +4324,14 @@ sub builtin_ai_query
     print STDERR "$global_program_name: uploading $pdf_manual_filename to OpenAI\n"
 	if defined $option_verbose and $option_verbose;
 
-    my $file
-	= $client->upload_file
+    my $cached_file
+	= $client->file_cache_or_upload
 	  (
 	   path    => $pdf_manual_filename,
 	   purpose => $option_purpose,
 	  );
 
-    my $file_id = $file->{id};
+    my $file_id = $cached_file->{id};
 
     if (not defined $file_id
 	or $file_id eq '')
@@ -3896,26 +4342,57 @@ sub builtin_ai_query
     print STDERR "$global_program_name: querying OpenAI with uploaded file $file_id\n"
 	if defined $option_verbose and $option_verbose;
 
+    my $stream_callback;
+
+    if ($option_stream_live)
+    {
+	# Print live deltas on STDERR so the command's STDOUT remains the
+	# existing YAML document and can still be consumed by scripts.
+	$stream_callback = sub
+	{
+	    my ($delta) = @_;
+
+	    my $selected = select STDERR;
+
+	    local $| = 1;
+
+	    select $selected;
+
+	    print STDERR $delta;
+	};
+    }
+
     my $answer
-	= $client->ask_file
+	= $client->file_ai_query
 	  (
 	   file_id  => $file_id,
 	   question => $ai_query,
+	   (defined $stream_callback
+	    ? (stream_callback => $stream_callback)
+	    : ()),
 	  );
 
-    $answer = "$answer\n" if defined $answer and $answer !~ /\n\z/;
+    if ($stream_callback)
+    {
+	print STDERR "\n";
+    }
+    else
+    {
+	$answer = "$answer\n"
+	    if defined $answer and $answer !~ /\n\z/;
 
-    print Dump(
-	       {
-		answer => $answer,
-	       }
-	      );
+	print YAML::PP::Dump(
+			     {
+			      answer => $answer,
+			     }
+			    );
+    }
 
     return '';
 }
 
 
-sub builtin_ai_query_completions
+sub builtin_ai_document_query_completions
 {
     my $operation_name = shift;
 
@@ -4052,6 +4529,15 @@ sub builtin_ai_query_completions
 		$remaining_depth - 1,
 	    );
 
+	my $next_after_stream_live
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--stream-live' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
 	if (not $used_options->{'--api-key'})
 	{
 	    $node->{'--api-key'} = {
@@ -4092,10 +4578,16 @@ sub builtin_ai_query_completions
 	    $node->{'--purpose=user_data'} = $next_after_purpose;
 	}
 
+	if (not $used_options->{'--stream-live'})
+	{
+	    $node->{'--stream-live'} = $next_after_stream_live;
+	    $node->{'--no-stream-live'} = $next_after_stream_live;
+	}
+
 	return $node;
     };
 
-    my $option_completions = $build_option_completions->({}, 4);
+    my $option_completions = $build_option_completions->({}, 5);
 
     my $completions_hash
 	= {
@@ -4107,7 +4599,7 @@ sub builtin_ai_query_completions
 }
 
 
-sub builtin_ai_query_help
+sub builtin_ai_document_query_help
 {
     my $command = shift;
 
@@ -4118,7 +4610,15 @@ synopsis:
 
 .. code-block:: bash
 
-$command <pdf-file> <query-string>
+$command [options] <pdf-file> <query-string>
+
+options:
+~~~~~~~~
+
+    ``--stream-live``: print streamed answer tokens live on STDERR while
+    keeping the final YAML result on STDOUT.
+
+    ``--no-stream-live``: disable live token printing. This is the default.
 
 arguments:
 ~~~~~~~~~~
@@ -12910,6 +13410,28 @@ sub create_directories
 }
 
 
+sub file_sha256sum
+{
+    my $path = shift;
+
+    use Carp qw(croak);
+
+    open my $fh, '<:raw', $path
+        or croak "Could not open $path for SHA256 calculation: $!";
+
+    use Digest::SHA;
+
+    my $sha = Digest::SHA->new(256);
+
+    $sha->addfile($fh);
+
+    close $fh
+        or croak "Could not close $path after SHA256 calculation: $!";
+
+    return $sha->hexdigest();
+}
+
+
 sub read_directory
 {
     my $directory = shift;
@@ -12940,6 +13462,8 @@ sub read_directory
 }
 
 
+our $debug_volatile_access = 1;
+
 sub volatile_data_directory
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
@@ -12949,6 +13473,78 @@ sub volatile_data_directory
     my $volatile_data_directory = "$sources_configuration_directory/$field_project_name-volatile-data";
 
     return $volatile_data_directory;
+}
+
+
+sub volatile_section_data_read
+{
+    my ($section, $pathname) = @_;
+
+    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
+
+    if (defined $option_verbose
+	and ($option_verbose > 1
+	     and $debug_volatile_access))
+    {
+	print STDERR "volatile_section_data_read(): '$pathname_full'\n";
+    }
+
+    return undef if !-f $pathname_full;
+
+    my ($data, $error) = Utilities::yaml_file_load($pathname_full);
+
+    if ($error)
+    {
+	# this is ok
+
+	return undef;
+    }
+
+    return $data;
+}
+
+
+sub volatile_section_data_write
+{
+    my ($section, $pathname, $data) = @_;
+
+    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
+
+    if (defined $option_verbose
+	and ($option_verbose > 1
+	     and $debug_volatile_access))
+    {
+	print STDERR "volatile_section_data_write(): '$pathname_full'\n";
+    }
+
+    my $directory = $pathname_full;
+
+    $directory =~ s{/[^/]+\z}{};
+
+    my $error = Utilities::create_directories($directory);
+
+    return $error
+        if defined $error;
+
+    use YAML::PP;
+
+    YAML::PP::DumpFile($pathname_full, $data);
+
+    return undef;
+}
+
+
+sub volatile_section_pathname
+{
+    my ($section, $pathname) = @_;
+
+    my $volatile_data_directory = Utilities::volatile_data_directory();
+
+    return "$volatile_data_directory/$section"
+        if not defined $pathname
+	    or $pathname eq '';
+
+    return "$volatile_data_directory/$section/$pathname";
 }
 
 
