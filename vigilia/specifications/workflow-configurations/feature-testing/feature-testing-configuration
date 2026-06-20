@@ -4,15 +4,15 @@ use strict;
 
 use warnings;
 
-require YAML;
+require YAML::PP;
 
-my $workflow_filenames = eval { YAML::LoadFile('feature-testing-configuration-data/workflow_filenames.yml'); };
+my $workflow_filenames = eval { YAML::PP::LoadFile('feature-testing-configuration-data/workflow_filenames.yml'); };
 
-my $node_configuration = eval { YAML::LoadFile('feature-testing-configuration-data/node_configuration.yml'); };
+my $node_configuration = eval { YAML::PP::LoadFile('feature-testing-configuration-data/node_configuration.yml'); };
 
-my $roles = eval { YAML::LoadFile('feature-testing-configuration-data/roles.yml'); };
+my $roles = eval { YAML::PP::LoadFile('feature-testing-configuration-data/roles.yml'); };
 
-my $targets = eval { YAML::LoadFile('feature-testing-configuration-data/targets.yml'); };
+my $targets = eval { YAML::PP::LoadFile('feature-testing-configuration-data/targets.yml'); };
 
 my $configuration = {
 		      %{ ref $workflow_filenames eq 'HASH' ? $workflow_filenames : {}; },
@@ -280,9 +280,7 @@ if ($program_name =~ m(configuration$))
 
     if ($output_format eq "yaml")
     {
-	require YAML;
-
-	print YAML::Dump($configuration);
+	print YAML::PP::Dump($configuration);
     }
     elsif ($output_format eq "json")
     {
