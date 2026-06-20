@@ -3748,6 +3748,41 @@ sub _workflow_operations_load
 }
 
 
+sub builtin_ai_query
+{
+    my $arguments = shift || [];
+
+    my $pdf_manual_filename = $arguments->[0];
+
+    my $ai_query = $arguments->[1];
+
+    
+}
+
+
+sub builtin_ai_query_help
+{
+    my $command = shift;
+
+    return "$command: Use OpenAI to explain this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <pdf-file> <query-string>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of the PDF manual of this project.
+
+    ``ARGV[1]``: The query string with your question.
+";
+}
+
+
 sub builtin_configuration_archive
 {
     my $arguments = shift || [];
