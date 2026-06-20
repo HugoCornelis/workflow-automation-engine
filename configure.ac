@@ -81,32 +81,6 @@ dnl ]])
 dnl AC_SUBST([PMDIR])
 
 
-
-AC_MSG_CHECKING(whether we build universal binaries.)
-AC_ARG_WITH(universal,
-[AS_HELP_STRING([--with-universal],
-              [Build universal binaries on Mac OS X.])],
-[ case "$withval" in
-  no)
-
-    AC_MSG_RESULT(no)
-    OSX_UNIVERSAL="no"
-
-    ;;
-  *)
-
-    AC_MSG_RESULT(yes)
-    OSX_UNIVERSAL="yes"
-
-    ;;
-  esac ],
-  AC_MSG_RESULT(no)
-  OSX_UNIVERSAL="no"
-)
-AC_SUBST(OSX_UNIVERSAL)
-
-
-
 AC_MSG_CHECKING([OS specifics...])
 AC_MSG_RESULT([Host is running $host_os.])
 dnl Here we'll select which version of perl to set up for

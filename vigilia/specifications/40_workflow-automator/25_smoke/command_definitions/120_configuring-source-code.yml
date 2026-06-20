@@ -9,7 +9,6 @@ command_tests:
       checking for gawk... gawk
       checking whether make sets $(MAKE)... yes
       checking whether make supports nested variables... yes
-      checking whether we build universal binaries.... no
       checking OS specifics...... Host is running .
       checking for perl5... no
       checking for perl... perl

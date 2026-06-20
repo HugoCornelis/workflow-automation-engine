@@ -17,6 +17,7 @@
 SUBDIRS = perl
 
 HTML_UPLOAD_DIR = html/htdocs/neurospaces_project/$(PACKAGE)
+HTML_SOURCE_DIR = vigilia/html
 
 dist_bin_SCRIPTS = \
 	bin/vigilia \
@@ -50,6 +51,10 @@ EXTRA_DIST = \
 am__tar = ${AMTAR} chf - --format=posix "$$tardir"
 
 
+maintainer-clean-local:
+	$(RM) -r $(top_srcdir)/$(PACKAGE)-$(VERSION)
+	$(RM) -f $(top_srcdir)/$(PACKAGE)-$(VERSION).tar.gz
+
 clean-local:
 	rm -rf $(top_srcdir)/neurospaces_cpan_modules
 	rm -rf $(TMP_DIR)
@@ -58,18 +63,16 @@ clean-local:
 	$(RM) -f $(top_srcdir)/*.dsc
 	$(RM) -f $(top_srcdir)/build_*.log
 	$(RM) -rf $(top_srcdir)/*_BUILD/
-	$(RM) $(top_srcdir)/workflow-automation-*.tar.gz
-	$(RM) -rf $(top_srcdir)/workflow-automation-*
 
 dist-hook:
 	test -n "$(HTML_UPLOAD_DIR)"
-	$(srcdir)/install-sh -d $(distdir)/vigilia
-	$(srcdir)/install-sh -d $(distdir)/vigilia/html
+	case "$(HTML_UPLOAD_DIR)" in /*|*..*) false ;; *) true ;; esac
+	$(srcdir)/install-sh -d $(distdir)/$(HTML_SOURCE_DIR)
 	( cd $(distdir) && chmod -R u+w vigilia && bin/vigilia --output-html )
 	rm -fr $(distdir)/$(HTML_UPLOAD_DIR)
 	$(srcdir)/install-sh -d $(distdir)/$(HTML_UPLOAD_DIR)
-	cp -R $(distdir)/vigilia/html/. $(distdir)/$(HTML_UPLOAD_DIR)/
-	rm -rf $(distdir)/vigilia/html
+	cp -R $(distdir)/$(HTML_SOURCE_DIR)/. $(distdir)/$(HTML_UPLOAD_DIR)/
+	rm -rf $(distdir)/$(HTML_SOURCE_DIR)
 
 install-data-local: neurospaces_cpan_modules
 
@@ -91,7 +94,7 @@ vigilia-html:
 html-upload-prepare: vigilia-html
 	rm -fr $(HTML_UPLOAD_DIR)
 	mkdir -p $(HTML_UPLOAD_DIR)
-	cp -R $(top_srcdir)/vigilia/html/. $(HTML_UPLOAD_DIR)/
+	cp -R $(top_srcdir)/$(HTML_SOURCE_DIR)/. $(HTML_UPLOAD_DIR)/
 
 #t perhaps also add a target to check the syntax of all the html ?
 
