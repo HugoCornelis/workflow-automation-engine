@@ -278,48 +278,93 @@ sub new
 
     my $api_key = $args{api_key} if exists $args{api_key};
 
-    $api_key = read_volatile_data("secret-tokens/openai.yml", 'key-value');
+    $api_key = Utilities::volatile_section_data_read("secret-tokens", "openai.yml", 'key-value');
 
     $api_key = $ENV{OPENAI_API_KEY} if not $api_key;
 
     $api_key or croak "Missing api_key or OPENAI_API_KEY";
 
-    my $self = bless {
-        api_key  => $api_key,
-        model    => $args{model}    || 'gpt-5.5',
-        base_url => $args{base_url} || 'https://api.openai.com/v1',
-        ua       => $args{ua}       || LWP::UserAgent->new(timeout => 120),
-    }, $class;
+    my $self
+	= bless {
+		 api_key  => $api_key,
+		 model    => $args{model}    || 'gpt-5.5',
+		 base_url => $args{base_url} || 'https://api.openai.com/v1',
+		 ua       => $args{ua}       || LWP::UserAgent->new(timeout => 120),
+		}, $class;
 
     return $self;
 }
 
 
-sub read_volatile_data
+sub file_ask
 {
-    my ($pathname, $key) = @_;
+    my ($self, %args) = @_;
 
-    my $volatile_data_directory = Utilities::volatile_data_directory();
+    my $file_id = $args{file_id}
+        or croak "file_ask() requires file_id";
 
-    my ($data, $error) = Utilities::yaml_file_load("$volatile_data_directory/$pathname");
+    my $question = $args{question}
+        or croak "file_ask() requires question";
 
-    if ($error)
+    my $max_attempts = $args{max_attempts} || 4;
+
+    my $last_error;
+
+    for my $attempt (1 .. $max_attempts)
     {
-	# this is ok
+        my $response;
 
-	return undef;
+        my $ok = eval {
+
+            $response
+		= $self->response_create
+		  (
+		   input => [
+			     {
+			      role    => 'user',
+			      content => [
+					  {
+					   type    => 'input_file',
+					   file_id => $file_id,
+					  },
+					  {
+					   type => 'input_text',
+					   text => $question,
+					  },
+					 ],
+			     },
+			    ],
+		  );
+
+            1;
+        };
+
+        return $self->response_extract_text($response)
+            if $ok;
+
+        $last_error = $@ || 'unknown OpenAI API error';
+
+        last if $attempt >= $max_attempts;
+
+        # OpenAI can briefly return a 5xx ownership-validation error when a
+        # newly uploaded file is referenced immediately by the Responses API.
+        # Retry only transient-looking failures; propagate ordinary 4xx errors.
+
+        last if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
+
+        sleep(2 ** ($attempt - 1));
     }
 
-    return $data->{$key};
+    croak $last_error;
 }
 
 
-sub upload_file
+sub file_upload
 {
     my ($self, %args) = @_;
 
     my $path = $args{path}
-        or croak "upload_file() requires path";
+        or croak "file_upload() requires path";
 
     my $purpose = $args{purpose} || 'user_data';
 
@@ -329,94 +374,36 @@ sub upload_file
     my $url = $self->{base_url} . '/files';
 
     my $request = POST(
-        $url,
-        Authorization => 'Bearer ' . $self->{api_key},
-        Content_Type  => 'form-data',
-        Content       => [
-            purpose => $purpose,
-            file    => [$path],
-        ],
-    );
+		       $url,
+		       Authorization => 'Bearer ' . $self->{api_key},
+		       Content_Type  => 'form-data',
+		       Content       => [
+					 purpose => $purpose,
+					 file    => [$path],
+					],
+		      );
 
     return $self->_perform_json_request($request);
 }
 
 
-sub ask_file
-{
-    my ($self, %args) = @_;
-
-    my $file_id = $args{file_id}
-        or croak "ask_file() requires file_id";
-
-    my $question = $args{question}
-        or croak "ask_file() requires question";
-
-    my $max_attempts = $args{max_attempts} || 4;
-
-    my $last_error;
-
-    for my $attempt (1 .. $max_attempts) {
-        my $response;
-
-        my $ok = eval {
-            $response = $self->create_response(
-                input => [
-                    {
-                        role    => 'user',
-                        content => [
-                            {
-                                type    => 'input_file',
-                                file_id => $file_id,
-                            },
-                            {
-                                type => 'input_text',
-                                text => $question,
-                            },
-                        ],
-                    },
-                ],
-            );
-
-            1;
-        };
-
-        return $self->extract_text($response)
-            if $ok;
-
-        $last_error = $@ || 'unknown OpenAI API error';
-
-        last
-            if $attempt >= $max_attempts;
-
-        # OpenAI can briefly return a 5xx ownership-validation error when a
-        # newly uploaded file is referenced immediately by the Responses API.
-        # Retry only transient-looking failures; propagate ordinary 4xx errors.
-        last
-            if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
-
-        sleep(2 ** ($attempt - 1));
-    }
-
-    croak $last_error;
-}
-
-
-sub create_response
+sub response_create
 {
     my ($self, %args) = @_;
 
     my $input = $args{input}
-        or croak "create_response() requires input";
+        or croak "response_create() requires input";
 
-    my $payload = {
-        model => $args{model} || $self->{model},
-        input => $input,
-    };
+    my $payload
+      = {
+	 model => $args{model} || $self->{model},
+	 input => $input,
+	};
 
     my $url = $self->{base_url} . '/responses';
 
     my $request = HTTP::Request->new(POST => $url);
+
     $request->header('Authorization' => 'Bearer ' . $self->{api_key});
     $request->header('Content-Type'  => 'application/json');
     $request->content(encode_json($payload));
@@ -425,19 +412,22 @@ sub create_response
 }
 
 
-sub extract_text
+sub response_extract_text
 {
     my ($self, $response) = @_;
 
     # Some SDKs expose output_text as a convenience field. Raw HTTP responses
     # normally need to be read from output[].content[].
+
     return $response->{output_text}
         if defined $response->{output_text} && length $response->{output_text};
 
     my @parts;
 
-    for my $item (@{ $response->{output} || [] }) {
-        for my $content (@{ $item->{content} || [] }) {
+    foreach my $item (@{ $response->{output} || [] })
+    {
+        for my $content (@{ $item->{content} || [] })
+	{
             push @parts, $content->{text}
                 if defined $content->{text};
         }
@@ -456,24 +446,31 @@ sub _perform_json_request
     my $body = $http_response->decoded_content;
 
     my $json;
-    eval {
+
+    eval
+    {
         $json = decode_json($body);
+
         1;
-    } or do {
+    }
+    or do
+    {
         croak "OpenAI API returned non-JSON response: "
             . $http_response->status_line . "\n$body";
     };
 
-    if (!$http_response->is_success) {
-        my $message =
-            $json->{error}{message}
-            || $json->{error}
-            || $body
-            || $http_response->status_line;
+    if (!$http_response->is_success)
+    {
+        my $message
+	    = $json->{error}{message}
+              || $json->{error}
+	      || $body
+	      || $http_response->status_line;
 
         my $request_id = $http_response->header('x-request-id');
 
         my $details = $http_response->status_line;
+
         $details .= "; request_id=$request_id"
             if defined $request_id && length $request_id;
 
@@ -3879,7 +3876,7 @@ sub builtin_ai_document_query
 	if defined $option_verbose and $option_verbose;
 
     my $file
-	= $client->upload_file
+	= $client->file_upload
 	  (
 	   path    => $pdf_manual_filename,
 	   purpose => $option_purpose,
@@ -3897,7 +3894,7 @@ sub builtin_ai_document_query
 	if defined $option_verbose and $option_verbose;
 
     my $answer
-	= $client->ask_file
+	= $client->file_ask
 	  (
 	   file_id  => $file_id,
 	   question => $ai_query,
@@ -3905,11 +3902,11 @@ sub builtin_ai_document_query
 
     $answer = "$answer\n" if defined $answer and $answer !~ /\n\z/;
 
-    print Dump(
-	       {
-		answer => $answer,
-	       }
-	      );
+    print YAML::PP::Dump(
+			 {
+			  answer => $answer,
+			 }
+			);
 
     return '';
 }
@@ -12967,6 +12964,27 @@ sub yaml_file_load
     my $data = eval { $yp->load_file($filename) };
 
     return ($data, $@);
+}
+
+
+sub volatile_section_data_read
+{
+    my ($section, $pathname, $key) = @_;
+
+    my $full_pathname = "$section/$pathname";
+
+    my $volatile_data_directory = Utilities::volatile_data_directory();
+
+    my ($data, $error) = Utilities::yaml_file_load("$volatile_data_directory/$full_pathname");
+
+    if ($error)
+    {
+	# this is ok
+
+	return undef;
+    }
+
+    return $data->{$key};
 }
 
 
