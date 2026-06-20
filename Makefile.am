@@ -18,7 +18,6 @@ SUBDIRS = perl
 
 dist_bin_SCRIPTS = \
 	bin/vigilia \
-	bin/vigilia_2_html \
 	bin/workflow
 
 workflowautomationtestdir=$(prefix)/neurospaces/workflow-automation
