@@ -1,76 +1,31 @@
 $files = {
            '_<./bin/vigilia' => [
                                   {
+                                    'fname' => './bin/vigilia',
                                     'value' => '1',
-                                    'line' => 1771,
-                                    'type' => 'user',
-                                    'text' => '    $test_library->tl_construct($arguments);
+                                    'text' => '    if (! defined $error_report_directory)
 ',
+                                    'type' => 'user',
                                     'expr' => undef,
-                                    'fname' => './bin/vigilia'
+                                    'line' => 1221
                                   },
                                   {
-                                    'text' => '    return $module_definitions;
+                                    'text' => '    if ($harness_command eq \'run-tests\')
 ',
                                     'type' => 'user',
                                     'fname' => './bin/vigilia',
-                                    'expr' => undef,
                                     'value' => '1',
-                                    'line' => 7736
+                                    'expr' => undef,
+                                    'line' => 405
                                   },
                                   {
-                                    'line' => 5959,
                                     'value' => '1',
-                                    'expr' => undef,
                                     'fname' => './bin/vigilia',
                                     'type' => 'user',
-                                    'text' => '    my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
-'
-                                  },
-                                  {
-                                    'line' => '7715',
-                                    'value' => '1',
-                                    'fname' => './bin/vigilia',
-                                    'expr' => undef,
-                                    'text' => '    my $tests_directory = $self->{tests_directory};
+                                    'text' => '    my $command_tests = $command_definition->{command_tests};
 ',
-                                    'type' => 'user'
-                                  },
-                                  {
-                                    'value' => '1',
-                                    'line' => 3069,
-                                    'type' => 'user',
-                                    'text' => '		if ($reporter->{capture_stdout}
-',
-                                    'expr' => undef,
-                                    'fname' => './bin/vigilia'
-                                  },
-                                  {
-                                    'fname' => './bin/vigilia',
-                                    'expr' => undef,
-                                    'text' => '    foreach my $reporter (@$reporters)
-',
-                                    'type' => 'user',
-                                    'line' => 13271,
-                                    'value' => '1'
-                                  },
-                                  {
-                                    'text' => '    foreach my $reporter (@$reporters)
-',
-                                    'type' => 'user',
-                                    'fname' => './bin/vigilia',
-                                    'expr' => undef,
-                                    'value' => '1',
-                                    'line' => 13292
-                                  },
-                                  {
-                                    'type' => 'user',
-                                    'text' => '    foreach my $reporter (@$reporters)
-',
-                                    'expr' => undef,
-                                    'fname' => './bin/vigilia',
-                                    'value' => '1',
-                                    'line' => 13311
+                                    'line' => '1325',
+                                    'expr' => undef
                                   }
                                 ]
          };
@@ -80,8 +35,8 @@ $expr_list = [
                  'expr' => '$error'
                },
                {
-                 'expr' => '$test_result',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$test_result'
                },
                {
                  'expr' => '$reporter',
