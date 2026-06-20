@@ -13501,6 +13501,8 @@ sub report_error_add
 
     my $arguments = shift;
 
+    $self->{error_count}++;
+
     my $error_report;
 
     my $reporters = $self->{reporters};
