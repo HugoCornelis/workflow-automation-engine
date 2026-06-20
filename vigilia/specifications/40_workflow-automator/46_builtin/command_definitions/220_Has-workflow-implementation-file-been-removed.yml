@@ -1,15 +1,15 @@
 ---
 command: feature-testing-workflow builtin workflow_filenames_known
 command_tests:
-  - description: Has the workflow implementation file been removed?
-    read: |2
-      
-      workflow_filenames_known:
-        - feature-testing-commands-build
-        - feature-testing-commands-docker_testing.py
-        - feature-testing-commands-features
-        - feature-testing-commands-features-background.py
-        - feature-testing-commands-more_python.py
-        - feature-testing-commands-perl_examples
-    white_space: convert seen 0a to 0d 0a newlines
+- description: Has the workflow implementation file been removed?
+  read: |
+
+    workflow_filenames_known:
+    - feature-testing-commands-build
+    - feature-testing-commands-docker_testing.py
+    - feature-testing-commands-features
+    - feature-testing-commands-features-background.py
+    - feature-testing-commands-more_python.py
+    - feature-testing-commands-perl_examples
+  white_space: convert seen 0a to 0d 0a newlines
 description: Has the workflow implementation file been removed?
