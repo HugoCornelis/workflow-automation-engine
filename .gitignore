@@ -26,6 +26,7 @@ configured-workflows/automation-commands-data/cache/
 configured-workflows/automation-configuration-data/cache/
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-data/cache/
 vigilia/specifications/workflow-configurations/feature-testing/feature-testing-configuration-data/cache/
+vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/
 
 
 # http://www.gnu.org/software/automake
