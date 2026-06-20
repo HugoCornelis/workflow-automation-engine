@@ -4372,16 +4372,21 @@ sub builtin_ai_document_query
 	    : ()),
 	  );
 
-    print STDERR "\n"
-	if $option_stream_live;
+    if ($stream_callback)
+    {
+	print STDERR "\n";
+    }
+    else
+    {
+	$answer = "$answer\n"
+	    if defined $answer and $answer !~ /\n\z/;
 
-    $answer = "$answer\n" if defined $answer and $answer !~ /\n\z/;
-
-    print YAML::PP::Dump(
-			 {
-			  answer => $answer,
-			 }
-			);
+	print YAML::PP::Dump(
+			     {
+			      answer => $answer,
+			     }
+			    );
+    }
 
     return '';
 }
