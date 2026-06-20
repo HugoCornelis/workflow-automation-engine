@@ -11,7 +11,7 @@ def git_rewrite(argv):
     commands = []
     if arguments[0] == '' or arguments[1] == '' or arguments[2] == '':
         commands = [
-            'echo "This command requires the new and the old branch names as arguments',
+            'echo "This command requires the new and the old branch names as arguments"',
         ]
     else:
         base_branch = arguments[0]
