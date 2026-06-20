@@ -6957,9 +6957,42 @@ sub builtin_project_start
 	return '';
     }
 
+    my $option_minimal;
+    my $option_perl;
+    my $option_python;
+    my $option_shell;
+
+    our $options
+      = {
+	 "minimal!" => \$option_minimal,
+	 "perl!" => \$option_perl,
+	 "python!" => \$option_python,
+	 "shell!" => \$option_shell,
+	};
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $option_processing_result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$option_processing_result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
     if (scalar @$non_empty_directory)
     {
 	die "$global_program_name: *** Error: Please empty this directory before starting a new project.";
+    }
+
+    my $create_perl_examples = 1;
+    my $create_python_examples = 1;
+    my $create_shell_examples = 1;
+
+    if ($option_minimal || $option_perl || $option_python || $option_shell)
+    {
+	$create_perl_examples = $option_perl ? 1 : 0;
+	$create_python_examples = $option_python ? 1 : 0;
+	$create_shell_examples = $option_shell ? 1 : 0;
     }
 
     my $result;
@@ -7013,7 +7046,7 @@ sub builtin_project_start
 	    $error = _builtin_project_configuration_create($field_project_configuration, $project_name);
 	}
 
-	if (not $error)
+	if ((not $error) && $create_perl_examples)
 	{
 	    my $target_name = "perl_examples";
 
@@ -7029,7 +7062,7 @@ sub builtin_project_start
 	    }
 	}
 
-	if (not $error)
+	if ((not $error) && $create_python_examples)
 	{
 	    my $target_name = "python_examples";
 
@@ -7043,7 +7076,7 @@ sub builtin_project_start
 	    }
 	}
 
-	if (not $error)
+	if ((not $error) && $create_shell_examples)
 	{
 	    $error = _builtin_project_commands_sh_template_create($field_project_configuration, $project_name, "examples_sh");
 	}
@@ -7115,24 +7148,144 @@ sub builtin_project_start_completor
 {
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $completions_hash
+    my $analysis = shift || {};
+
+    my $bash_variables = $analysis->{bash} || {};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    if (not defined $string_before_point)
+    {
+	my $command_line = $bash_variables->{command_line} || '';
+
+	my $comp_point = $bash_variables->{comp_point};
+
+	$comp_point = length($command_line)
+	    if not defined $comp_point;
+
+	$string_before_point = substr $command_line, 0, $comp_point;
+    }
+
+    my $current_word_is_complete
+	= $string_before_point =~ /\s\z/;
+
+    my $operation_arguments = [ @$complete_arguments_array ];
+
+    # The dispatcher passes the workflow arguments without the shell command,
+    # but including the target and operation.  Keep only the arguments that
+    # belong to `workflow builtin project_start ...`.
+
+    if (@$operation_arguments >= 2
+	and $operation_arguments->[0] eq 'builtin'
+	and $operation_arguments->[1] eq 'project_start')
+    {
+	splice @$operation_arguments, 0, 2;
+    }
+
+    # When the cursor is inside a word, bash_completion_generate() will filter
+    # the returned candidates with that current word.  Therefore the dynamic
+    # tree below must only contain the arguments that are complete and located
+    # before the current word.
+
+    my $completed_operation_arguments = [ @$operation_arguments ];
+
+    if (not $current_word_is_complete
+	and scalar @$completed_operation_arguments)
+    {
+	pop @$completed_operation_arguments;
+    }
+
+    my $option_descriptions
 	= {
-	   '0.Necessary_argument:' => 'help message',
-	   '<project_name>' => 'name of the new project',
+	   '--minimal' => "create a minimal configuration without the examples",
+	   '--perl' => "add the perl examples to the configuration",
+	   '--python' => "add the python examples to the configuration",
+	   '--shell' => "add the shell examples to the configuration",
 	  };
 
-    if (scalar @$complete_arguments_array > 2)
+    my $option_names = [ sort keys %$option_descriptions ];
+
+    my $used_options
+	= {
+	   map
+	   {
+	       $_ => 1;
+	   }
+	   grep
+	   {
+	       exists $option_descriptions->{$_};
+	   }
+	   @$operation_arguments,
+	  };
+
+    my $available_options
+	= {
+	   map
+	   {
+	       $_ => $option_descriptions->{$_};
+	   }
+	   grep
+	   {
+	       not $used_options->{$_};
+	   }
+	   @$option_names,
+	  };
+
+    my $completed_separator_seen
+	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
+
+    my $completed_project_name_seen
+	= scalar grep { $_ ne '--' and not exists $option_descriptions->{$_}; } @$completed_operation_arguments;
+
+    my $leaf_completions;
+
+    if ($completed_separator_seen)
     {
-	return {};
+	# A command-specific option separator is already present before the
+	# current word.  Therefore a second `--` being typed is the prefix of
+	# the actual project_start options, so return the available options.
+
+	$leaf_completions = $available_options;
+    }
+    elsif ($completed_project_name_seen)
+    {
+	# The single required argument is present.  The next useful completion is
+	# the separator that lets command-specific options pass through the
+	# workflow-global option parser.
+
+	$leaf_completions
+	    = {
+	       '0.Type_--_then_--minimal_--perl_--python_--shell_for_options' => '',
+	       '--' => '',
+	      };
     }
     else
     {
-	return $completions_hash;
-    }
-}
+	# No completed project name has been given yet.  Keep this close to the
+	# original help-style completions: show the required argument and make the
+	# option names visible without pretending they are valid before the project
+	# name.
 
+	$leaf_completions
+	    = {
+	       '0.Necessary_argument:' => 'help message',
+	       '<project_name>' => 'name of the new project',
+	       '1.Available_options_after_project_name:_--minimal_--perl_--python_--shell' => '',
+	       '--' => $available_options,
+	      };
+    }
+
+    my $completions = $leaf_completions;
+
+    foreach my $argument (reverse @$completed_operation_arguments)
+    {
+	$completions = { $argument => $completions };
+    }
+
+    return $completions;
+}
 
 sub builtin_project_start_help
 {
@@ -7147,6 +7300,19 @@ arguments:
 ~~~~~~~~~~
 
     ``ARGV[0]``: name of the new project.
+
+options:
+~~~~~~~~
+
+    ``--minimal``: create only the project descriptor and configuration, without example command files.
+
+    ``--perl``: create the Perl example command file.
+
+    ``--python``: create the Python example command file.
+
+    ``--shell``: create the shell example command file.
+
+When none of ``--minimal``, ``--perl``, ``--python`` or ``--shell`` is given, all example command files are created.
 ";
 }
 

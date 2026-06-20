@@ -13,4 +13,16 @@ command_tests:
       
           ``ARGV[0]``: name of the new project.
       
+      options:
+      ~~~~~~~~
+      
+          ``--minimal``: create only the project descriptor and configuration, without example command files.
+      
+          ``--perl``: create the Perl example command file.
+      
+          ``--python``: create the Python example command file.
+      
+          ``--shell``: create the shell example command file.
+      
+      When none of ``--minimal``, ``--perl``, ``--python`` or ``--shell`` is given, all example command files are created.
 description: 'default builtin targets: starting a new project'
