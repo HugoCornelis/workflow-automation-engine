@@ -267,7 +267,6 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
-use Digest::SHA;
 use File::Basename qw(basename);
 use File::Copy qw(copy);
 use JSON::PP qw(encode_json decode_json);
@@ -281,7 +280,9 @@ sub new
 
     my $api_key = $args{api_key} if exists $args{api_key};
 
-    $api_key = Utilities::volatile_section_data_read("secret-tokens", "openai.yml", 'key-value');
+    my $openai_data = Utilities::volatile_section_data_read("secret-tokens", "openai.yml");
+
+    $api_key = $openai_data->{'key-value'};
 
     $api_key = $ENV{OPENAI_API_KEY} if not $api_key;
 
@@ -299,15 +300,15 @@ sub new
 }
 
 
-sub file_ask
+sub file_ai_query
 {
     my ($self, %args) = @_;
 
     my $file_id = $args{file_id}
-        or croak "file_ask() requires file_id";
+        or croak "file_ai_query() requires file_id";
 
     my $question = $args{question}
-        or croak "file_ask() requires question";
+        or croak "file_ai_query() requires question";
 
     my $max_attempts = $args{max_attempts} || 4;
 
@@ -362,59 +363,17 @@ sub file_ask
 }
 
 
-sub file_upload
+sub file_cache_or_upload
 {
     my ($self, %args) = @_;
 
-    my $path = $args{path}
-        or croak "file_upload() requires path";
-
+    my $path = $args{path};
     my $purpose = $args{purpose} || 'user_data';
 
     -f $path
         or croak "File does not exist: $path";
 
-    my $sha256sum = $self->_file_sha256sum($path);
-
-    $self->_file_cache_store_file
-    (
-     path      => $path,
-     sha256sum => $sha256sum,
-    );
-
-    my $cached_file = $self->_file_cache_read
-    (
-     sha256sum => $sha256sum,
-    );
-
-    return $cached_file
-        if defined $cached_file;
-
-    my $file
-	= $self->_file_upload_uncached
-	  (
-	   path    => $path,
-	   purpose => $purpose,
-	  );
-
-    $self->_file_cache_write
-    (
-     path      => $path,
-     purpose   => $purpose,
-     sha256sum => $sha256sum,
-     file      => $file,
-    );
-
-    return $file;
-}
-
-
-sub _file_cache_read
-{
-    my ($self, %args) = @_;
-
-    my $sha256sum = $args{sha256sum}
-        or croak "_file_cache_read() requires sha256sum";
+    my $sha256sum = Utilities::file_sha256sum($path);
 
     my $cache_data
 	= Utilities::volatile_section_data_read
@@ -423,20 +382,23 @@ sub _file_cache_read
 	   "$sha256sum/openai.yml",
 	  );
 
-    return undef
-        if not defined $cache_data;
+    return { id => $cache_data->{file_id} }
+        if defined $cache_data;
 
-    return undef
-        if ref $cache_data ne 'HASH';
+    my $file
+	= $self->_file_upload_uncached
+	  (
+	   path    => $path,
+	   purpose => $purpose,
+	  );
 
-    return undef
-        if not defined $cache_data->{file_id}
-	    or $cache_data->{file_id} eq '';
-
-    return $cache_data->{openai_file}
-        if ref $cache_data->{openai_file} eq 'HASH'
-	    and defined $cache_data->{openai_file}{id}
-	    and $cache_data->{openai_file}{id} ne '';
+    $cache_data = _file_cache_write
+	(
+	 path      => $path,
+	 purpose   => $purpose,
+	 sha256sum => $sha256sum,
+	 file      => $file,
+	);
 
     return { id => $cache_data->{file_id} };
 }
@@ -444,13 +406,10 @@ sub _file_cache_read
 
 sub _file_cache_store_file
 {
-    my ($self, %args) = @_;
+    my (%args) = @_;
 
-    my $path = $args{path}
-        or croak "_file_cache_store_file() requires path";
-
-    my $sha256sum = $args{sha256sum}
-        or croak "_file_cache_store_file() requires sha256sum";
+    my $path = $args{path};
+    my $sha256sum = $args{sha256sum};
 
     my $cache_directory
 	= Utilities::volatile_section_pathname
@@ -481,25 +440,24 @@ sub _file_cache_store_file
 
 sub _file_cache_write
 {
-    my ($self, %args) = @_;
+    my (%args) = @_;
 
-    my $path = $args{path}
-        or croak "_file_cache_write() requires path";
-
-    my $purpose = $args{purpose}
-        or croak "_file_cache_write() requires purpose";
-
-    my $sha256sum = $args{sha256sum}
-        or croak "_file_cache_write() requires sha256sum";
-
-    my $file = $args{file}
-        or croak "_file_cache_write() requires file";
+    my $path = $args{path};
+    my $purpose = $args{purpose};
+    my $sha256sum = $args{sha256sum};
+    my $file = $args{file};
 
     my $file_id = $file->{id};
 
     return
         if not defined $file_id
 	    or $file_id eq '';
+
+    _file_cache_store_file
+	(
+	 path      => $path,
+	 sha256sum => $sha256sum,
+	);
 
     my $cache_data
 	= {
@@ -521,24 +479,8 @@ sub _file_cache_write
 
     croak $error
         if defined $error;
-}
 
-
-sub _file_sha256sum
-{
-    my ($self, $path) = @_;
-
-    open my $fh, '<:raw', $path
-        or croak "Could not open $path for SHA256 calculation: $!";
-
-    my $sha = Digest::SHA->new(256);
-
-    $sha->addfile($fh);
-
-    close $fh
-        or croak "Could not close $path after SHA256 calculation: $!";
-
-    return $sha->hexdigest;
+    return $cache_data;
 }
 
 
@@ -546,9 +488,7 @@ sub _file_upload_uncached
 {
     my ($self, %args) = @_;
 
-    my $path = $args{path}
-        or croak "_file_upload_uncached() requires path";
-
+    my $path = $args{path};
     my $purpose = $args{purpose} || 'user_data';
 
     my $url = $self->{base_url} . '/files';
@@ -4055,14 +3995,14 @@ sub builtin_ai_document_query
     print STDERR "$global_program_name: uploading $pdf_manual_filename to OpenAI\n"
 	if defined $option_verbose and $option_verbose;
 
-    my $file
-	= $client->file_upload
+    my $cached_file
+	= $client->file_cache_or_upload
 	  (
 	   path    => $pdf_manual_filename,
 	   purpose => $option_purpose,
 	  );
 
-    my $file_id = $file->{id};
+    my $file_id = $cached_file->{id};
 
     if (not defined $file_id
 	or $file_id eq '')
@@ -4074,7 +4014,7 @@ sub builtin_ai_document_query
 	if defined $option_verbose and $option_verbose;
 
     my $answer
-	= $client->file_ask
+	= $client->file_ai_query
 	  (
 	   file_id  => $file_id,
 	   question => $ai_query,
@@ -13087,6 +13027,28 @@ sub create_directories
 }
 
 
+sub file_sha256sum
+{
+    my $path = shift;
+
+    use Carp qw(croak);
+
+    open my $fh, '<:raw', $path
+        or croak "Could not open $path for SHA256 calculation: $!";
+
+    use Digest::SHA;
+
+    my $sha = Digest::SHA->new(256);
+
+    $sha->addfile($fh);
+
+    close $fh
+        or croak "Could not close $path after SHA256 calculation: $!";
+
+    return $sha->hexdigest();
+}
+
+
 sub read_directory
 {
     my $directory = shift;
@@ -13117,6 +13079,8 @@ sub read_directory
 }
 
 
+our $debug_volatile_access = 1;
+
 sub volatile_data_directory
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
@@ -13126,6 +13090,78 @@ sub volatile_data_directory
     my $volatile_data_directory = "$sources_configuration_directory/$field_project_name-volatile-data";
 
     return $volatile_data_directory;
+}
+
+
+sub volatile_section_data_read
+{
+    my ($section, $pathname) = @_;
+
+    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
+
+    if (defined $option_verbose
+	and ($option_verbose > 1
+	     and $debug_volatile_access))
+    {
+	print STDERR "volatile_section_data_read(): '$pathname_full'\n";
+    }
+
+    return undef if !-f $pathname_full;
+
+    my ($data, $error) = Utilities::yaml_file_load($pathname_full);
+
+    if ($error)
+    {
+	# this is ok
+
+	return undef;
+    }
+
+    return $data;
+}
+
+
+sub volatile_section_data_write
+{
+    my ($section, $pathname, $data) = @_;
+
+    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
+
+    if (defined $option_verbose
+	and ($option_verbose > 1
+	     and $debug_volatile_access))
+    {
+	print STDERR "volatile_section_data_write(): '$pathname_full'\n";
+    }
+
+    my $directory = $pathname_full;
+
+    $directory =~ s{/[^/]+\z}{};
+
+    my $error = Utilities::create_directories($directory);
+
+    return $error
+        if defined $error;
+
+    use YAML::PP;
+
+    YAML::PP::DumpFile($pathname_full, $data);
+
+    return undef;
+}
+
+
+sub volatile_section_pathname
+{
+    my ($section, $pathname) = @_;
+
+    my $volatile_data_directory = Utilities::volatile_data_directory();
+
+    return "$volatile_data_directory/$section"
+        if not defined $pathname
+	    or $pathname eq '';
+
+    return "$volatile_data_directory/$section/$pathname";
 }
 
 
@@ -13144,65 +13180,6 @@ sub yaml_file_load
     my $data = eval { $yp->load_file($filename) };
 
     return ($data, $@);
-}
-
-
-sub volatile_section_pathname
-{
-    my ($section, $pathname) = @_;
-
-    my $volatile_data_directory = Utilities::volatile_data_directory();
-
-    return "$volatile_data_directory/$section"
-        if not defined $pathname
-	    or $pathname eq '';
-
-    return "$volatile_data_directory/$section/$pathname";
-}
-
-
-sub volatile_section_data_read
-{
-    my ($section, $pathname, $key) = @_;
-
-    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
-
-    my ($data, $error) = Utilities::yaml_file_load($pathname_full);
-
-    if ($error)
-    {
-	# this is ok
-
-	return undef;
-    }
-
-    return $data
-        if not defined $key;
-
-    return $data->{$key};
-}
-
-
-sub volatile_section_data_write
-{
-    my ($section, $pathname, $data) = @_;
-
-    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
-
-    my $directory = $pathname_full;
-
-    $directory =~ s{/[^/]+\z}{};
-
-    my $error = Utilities::create_directories($directory);
-
-    return $error
-        if defined $error;
-
-    use YAML::PP;
-
-    YAML::PP::DumpFile($pathname_full, $data);
-
-    return undef;
 }
 
 
