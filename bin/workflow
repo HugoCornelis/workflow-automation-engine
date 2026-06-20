@@ -3844,9 +3844,13 @@ sub builtin_ai_query
 	   question => $ai_query,
 	  );
 
-    print $answer;
+    $answer = "$answer\n" if defined $answer and $answer !~ /\n\z/;
 
-    print "\n" if defined $answer and $answer !~ /\n\z/;
+    print Dump(
+	       {
+		answer => $answer,
+	       }
+	      );
 
     return '';
 }
