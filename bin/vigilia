@@ -400,6 +400,20 @@ sub command_line_dispatch
 
     my $capture_stdout = 0;
 
+    my $reporting_directory = $global_config->{reporting_directory};
+
+    if ($harness_command eq 'run-tests')
+    {
+	`rm -fr '$reporting_directory'`;
+    }
+
+    my $error = Heterarch::Test::Reporting::_reporting_directory_create($reporting_directory);
+
+    if ($error)
+    {
+	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+    }
+
     # instantiate the reporter
 
     my $reporter_class = $global_reporter_classes->{$option_console_type}->{class};
@@ -13439,22 +13453,13 @@ sub new
 
     my $reporting_directory = $global_config->{reporting_directory};
 
-    `rm -fr '$reporting_directory'`;
-
-    my $error = Heterarch::Test::Reporting::_reporting_directory_create($reporting_directory);
-
-    if ($error)
-    {
-	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
-    }
-
     my $output_linear_path = "$reporting_directory/linear_log.txt";
 
     my $fd_output_linear = IO::File->new();
 
     if (! $fd_output_linear->open(">$output_linear_path"))
     {
-	die "*** Error: cannot create directory $reporting_directory for error reporting ($error).\n";
+	die "*** Error: cannot create directory $reporting_directory for error reporting.\n";
     }
 
     my $reporter1
