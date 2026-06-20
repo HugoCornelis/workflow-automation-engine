@@ -890,7 +890,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
     --command-comment  A comment to insert at the command definition level, '0' to insert a comment with instructions.
     --command-output   The correct output, if no command-output is given the tested command is used to produce it.
     --command-prefix   Use this prefix to the execute the command, eg. for a Docker container with name FOO, you may need a prefix of 'docker exec -it FOO bash -ic', please observe quoting in this case.
-    --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.
+    --comment          The comment to insert.  The comment is inserted both at command definition level and at command test level.  If this is '0', a default explanatory comment is used.
     --description      The description to insert.  The description is inserted both at command definition level and at command test level.
     --help             Show this help message.
     --output-json      Output in json format.
