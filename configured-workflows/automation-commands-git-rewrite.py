@@ -21,7 +21,7 @@ def git_rewrite(argv):
         commands = [
             f"echo This has not been tested yet, run it with --dry-run to see the commented commands",
             f"echo Merge base is: \"$(git merge-base HEAD {base_branch})\"",
-            f"# git switch -c {new_branch} {old_branch} && git rebase --exec 'git commit --amend --no-edit --date=now' \"$(git merge-base HEAD {base_branch})\""
+            f"git switch -c {new_branch} {old_branch} && git rebase --exec 'git commit --amend --no-edit --date=now' \"$(git merge-base HEAD {base_branch})\""
         ]
 
     execute_command_array(commands)
@@ -44,7 +44,7 @@ def git_rewrite(argv):
     #
     # These options can given to any of the functions that execute commands.
 
-def git_rewrite_completions(command, argv):
+def git_rewrite_completions(command, argv, status):
 
 #     print_to_stderr(f"command: {command}\n  argv: {argv}")
 
