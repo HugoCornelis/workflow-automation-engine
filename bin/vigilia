@@ -14,7 +14,7 @@ use Neurospaces::Tester;
 
 use POSIX qw( strftime );
 use Symbol qw(gensym);
-use YAML;
+use YAML::PP;
 
 
 my $config_filename_default = './vigilia.config';
@@ -1140,9 +1140,7 @@ sub harness_command_module_command_add
 		   output => $output,
 		  };
 
-	    use YAML;
-
-	    print Dump($output_yaml);
+	    print YAML::PP::Dump($output_yaml);
 	}
 	else
 	{
@@ -2026,9 +2024,7 @@ sub harness_command_report_summaries
 
 	my $yaml = eval
 	{
-	    use YAML;
-
-	    YAML::LoadFile($filename);
+	    YAML::PP::LoadFile($filename);
 	};
 
 	if ($@)
@@ -2565,7 +2561,7 @@ sub report_file_dump
 
     eval
     {
-	YAML::DumpFile(">$report_filename", $global_test_report);
+	YAML::PP::DumpFile(">$report_filename", $global_test_report);
     };
 
     if ($@)
@@ -3006,15 +3002,13 @@ sub spawn_new
     if (defined $option_debugging
 	and $option_debugging eq 'spawn_new')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 command_line => $command_line,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   command_line => $command_line,
+						  },
+			     },
+			    );
     }
 
     my $test_startup = "yes, do the startup testing";
@@ -4820,15 +4814,13 @@ sub is_selected_by_tag
     if (defined $option_debugging
 	and $option_debugging eq 'tags')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 selected_by_tag_element_name => $element_name,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   selected_by_tag_element_name => $element_name,
+						  },
+			     },
+			    );
     }
 
     if (not scalar @$option_tags)
@@ -5124,20 +5116,18 @@ sub ec_construct_command_line
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	use YAML;
-
 	my $current = $self->_path_get_current();
 
 	my $harness_list = $current->{current_harness_list};
 
-	print Dump(
-		   {
-		    option_debugging => {
-					 harness_current => $harness,
-					 harness_list => $harness_list,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   harness_current => $harness,
+						   harness_list => $harness_list,
+						  },
+			     },
+			    );
     }
 
     my $command_line;
@@ -5517,16 +5507,14 @@ sub harness_current
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 global_active_harness_identifiers => $global_active_harness_identifiers,
-					 global_harnessing_identifiers => $global_harnessing_identifiers,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   global_active_harness_identifiers => $global_active_harness_identifiers,
+						   global_harnessing_identifiers => $global_harnessing_identifiers,
+						  },
+			     },
+			    );
     }
 
     my $active_harness_identifier = $self->harness_identifier_current();
@@ -5716,15 +5704,13 @@ sub ec_is_selected_by_context_path
     if (defined $option_debugging
 	and $option_debugging eq 'context_path')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 selected_by_context_path => $element_name,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   selected_by_context_path => $element_name,
+						  },
+			     },
+			    );
     }
 
     my $selected = 'by default';
@@ -6296,17 +6282,15 @@ sub create_or_fetch
     if (defined $option_debugging
 	and $option_debugging eq 'harnessing')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    create_or_fetch => {
-					global_active_harness_identifiers => $global_active_harness_identifiers,
-					global_harnessing_identifiers => $global_harnessing_identifiers,
-					harnessing_identifier => $harnessing_identifier,
-				       },
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      create_or_fetch => {
+						  global_active_harness_identifiers => $global_active_harness_identifiers,
+						  global_harnessing_identifiers => $global_harnessing_identifiers,
+						  harnessing_identifier => $harnessing_identifier,
+						 },
+			     },
+			    );
     }
 
     # if this harnessing_identifier was not yet created
@@ -6890,15 +6874,13 @@ sub _generate_command_prefix
     if (defined $option_debugging
 	and $option_debugging eq 'generate_command_prefix')
     {
-	use YAML;
-
-	print Dump(
-		   {
-		    option_debugging => {
-					 harness => $self,
-					},
-		   },
-		  );
+	print YAML::PP::Dump(
+			     {
+			      option_debugging => {
+						   harness => $self,
+						  },
+			     },
+			    );
     }
 
     my $prefix_docker
@@ -7528,9 +7510,7 @@ sub ex_terminate
     # $report_yaml->{errors} = $global_test_report->{errors};
     # $report_yaml->{global} = $global_test_report->{global};
 
-    # use YAML;
-
-    # my $report_text = "\n" . Dump($report_yaml);
+    # my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -8093,13 +8073,9 @@ sub _module_read_perl
 
     if (is_yaml($pathname))
     {
-	use YAML;
-
 	$result = eval
 	{
-	    use YAML;
-
-	    YAML::LoadFile($pathname);
+	    YAML::PP::LoadFile($pathname);
 	};
 
 	if ($@)
@@ -8218,7 +8194,7 @@ sub _module_read_process_options
 
     if ($option_dump_yaml)
     {
-	YAML::DumpFile("$specification_dump_directory/$filename.yml", $module_definition);
+	YAML::PP::DumpFile("$specification_dump_directory/$filename.yml", $module_definition);
     }
 
     if ($option_dump_file_structured_json)
@@ -8514,7 +8490,7 @@ sub command_definition_dump_file_structured_yaml_or_json
     {
 	if ($file_type eq 'yaml')
 	{
-	    YAML::DumpFile($command_definition_pathname, $unblessed_command_definition);
+	    YAML::PP::DumpFile($command_definition_pathname, $unblessed_command_definition);
 	}
 	else
 	{
@@ -8548,7 +8524,7 @@ sub module_definition_summary_dump_file_structured_yaml
 
     if ($file_type eq 'yaml')
     {
-	YAML::DumpFile($module_summary_filename, $unblessed_module_definition);
+	YAML::PP::DumpFile($module_summary_filename, $unblessed_module_definition);
     }
     else
     {
@@ -8671,13 +8647,11 @@ sub _module_read_yml
 
     # read the meta information of the module definition
 
-    use YAML;
-
     eval
     {
 	# local $SIG{'__DIE__'};
 
-	$result = YAML::LoadFile($summary_pathname);
+	$result = YAML::PP::LoadFile($summary_pathname);
     };
 
     if ($@)
@@ -8708,7 +8682,7 @@ sub _module_read_yml
 		      {
 			  # local $SIG{'__DIE__'};
 
-			  YAML::LoadFile($command_definition_filename);
+			  YAML::PP::LoadFile($command_definition_filename);
 		      };
 
 		if ($@)
@@ -10834,7 +10808,7 @@ sub render_raw_data
 
     my $figure_definition_filename = $pathname_prefix . "_output_graph_render_figure_definition.yml";
 
-    YAML::DumpFile($figure_definition_filename, $figure_definition);
+    YAML::PP::DumpFile($figure_definition_filename, $figure_definition);
 
     # create the figure graph
 
@@ -11028,8 +11002,6 @@ sub render
 
     # convert the data string to a data structure
 
-    use YAML;
-
     my $data_string = $self->{data_string};
 
     # remove object class references
@@ -11038,7 +11010,7 @@ sub render
 
     # load all documents
 
-    my $data_structured = [ Load($data_string), ];
+    my $data_structured = [ YAML::PP::Load($data_string), ];
 
     # split the data into its two components
 
@@ -11252,8 +11224,6 @@ sub render
 
     # convert the data string to a data structure
 
-    use YAML;
-
     my $data_string = "---
 $self->{data_string}";
 
@@ -11261,7 +11231,7 @@ $self->{data_string}";
 
     $data_string =~ s(!!.*?\n)();
 
-    my $data_structured = Load($data_string);
+    my $data_structured = YAML::PP::Load($data_string);
 
     # split the data into its two components
 
@@ -11544,9 +11514,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -11706,9 +11674,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -11895,9 +11861,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -12095,9 +12059,7 @@ sub ex_terminate
 
     $report_yaml->{selected} = $global_test_report->{selected};
 
-    use YAML;
-
-    my $report_text = "\n" . Dump($report_yaml);
+    my $report_text = "\n" . YAML::PP::Dump($report_yaml);
 
     my $execution_context = $self->{execution_context};
 
@@ -12639,9 +12601,7 @@ sub _report_error_summary
 
     eval
     {
-	use YAML;
-
-	YAML::DumpFile($summary_filename, $summary_report);
+	YAML::PP::DumpFile($summary_filename, $summary_report);
     };
 
     if ($@)
