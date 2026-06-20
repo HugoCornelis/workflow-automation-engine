@@ -26,6 +26,14 @@ use utf8;
 
 use warnings;
 
+# Record file and line-range metadata for subsequently compiled subroutines.
+# This populates %DB::sub, which is used by builtin_workflow_report.
+
+BEGIN
+{
+    $^P |= 0x10;
+}
+
 use Data::Dumper;
 
 $Data::Dumper::Sortkeys = 'always';
@@ -195,6 +203,7 @@ my $global_builtin_operations
        tmux_sessions_create => 1,
        tmux_sessions_kill => 1,
        workflow_filenames_known => 1,
+       workflow_report => 1,
       };
 
 my $global_known_operation_packages_builtin
@@ -3027,6 +3036,80 @@ sub _strings_remove
 }
 
 
+sub _subroutine_name_2_implementation_location
+{
+    my $subroutine_name = shift;
+
+    my $result = { found => '' };
+
+    {
+        no strict 'refs';
+
+        if (!defined &{$subroutine_name})
+        {
+            $result->{error} = "subroutine is not defined";
+	    $result->{subroutine_name} = $subroutine_name;
+
+            return $result;
+        }
+    }
+
+    my $location = $DB::sub{$subroutine_name};
+
+    if (defined $location)
+    {
+        $result
+	    = {
+	       found => 'yes',
+	       location => $location,
+	       subroutine_name => $subroutine_name,
+	      };
+
+        if ($location =~ m/^(.*):(\d+)-(\d+)$/)
+        {
+            $result->{file} = $1;
+            $result->{line_start} = $2;
+            $result->{line_end} = $3;
+        }
+        elsif ($location =~ m/^(.*):(\d+)$/)
+        {
+            $result->{file} = $1;
+            $result->{line_start} = $2;
+        }
+
+        return $result;
+    }
+
+    # Fallback for cases where %DB::sub is not populated, or for some
+    # generated/XS-backed code.  This normally gives only a start line.
+
+    eval
+    {
+        require B;
+
+        no strict 'refs';
+
+        my $cv = B::svref_2object(\&{$subroutine_name});
+
+	$result
+	    = {
+	       found => 'yes',
+	       file => $cv->FILE,
+	       line_start => $cv->START->line,
+	       location => "$result->{file}:$result->{line_start}",
+	       subroutine_name => $subroutine_name,
+	      };
+    };
+
+    if ($@)
+    {
+        $result->{error} = "subroutine is defined, but no source location could be determined: $@";
+    }
+
+    return $result;
+}
+
+
 sub _workflow_commands_2_implementation
 {
     my $file_type = shift;
@@ -3335,6 +3418,46 @@ sub ${target}_${operation}_help
     {
 	return $implementation;
     }
+}
+
+
+# given a workflow name in one word or as a target / operation pair,
+# convert it to its implementation name.
+
+sub _workflow_name_2_subroutine_name
+{
+    my $arguments = shift || [];
+
+    my @arguments = @$arguments;
+
+    my $first = shift @arguments;
+
+    if (@arguments)
+    {
+        my $target = $first;
+
+        my $operation = shift @arguments;
+
+        $target =~ s/-/_/g;
+        $operation =~ s/-/_/g;
+
+        return "Command::${target}_${operation}";
+    }
+
+    my $name = $first;
+
+    $name =~ s/-/_/g;
+
+    return $name if $name =~ m/::/;
+
+    {
+        no strict 'refs';
+
+        return "Command::$name" if defined &{"Command::$name"};
+        return "Command::builtin_$name" if defined &{"Command::builtin_$name"};
+    }
+
+    return "Command::$name";
 }
 
 
@@ -4734,6 +4857,186 @@ sub builtin_help
 }
 
 
+sub builtin_lint
+{
+    my $arguments = shift || [];
+
+    my $option_bash_completors = 1;
+    my $option_help_pagers = 1;;
+
+    our $options
+	= {
+	   'bash-completors' => \$option_bash_completors,
+	   'help-pages' => \$option_help_pagers,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+        die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
+
+    my $operations_with_help = main::operation_hash_typed_generate('with help subs');
+
+    my $operations_with_completors = main::operation_hash_typed_generate('with completion subs');
+
+    my $operations = main::operation_hash_typed_generate();
+
+    my $target_regex = $arguments->[0] || ':all';
+
+    if ($target_regex eq ':all')
+    {
+	$target_regex = '.*';
+    }
+
+    my $operations_target
+	= [
+	   grep
+	   {
+	       /$target_regex/;
+	   }
+	   sort keys %$operations,
+	  ];
+
+    my $missing_bash_completors = [];
+
+    my $missing_help_pagers = [];
+
+    foreach my $operation_target (@$operations_target)
+    {
+	if (not exists $operations_with_completors->{"${operation_target}_completions"})
+	{
+	    push @$missing_bash_completors, $operation_target;
+	}
+
+	if (not exists $operations_with_help->{"${operation_target}_help"})
+	{
+	    push @$missing_help_pagers, $operation_target;
+	}
+    }
+
+    if ($option_bash_completors)
+    {
+	use YAML;
+
+	print Dump( { missing_bash_completors => $missing_bash_completors, } );
+    }
+
+    if ($option_help_pagers)
+    {
+	use YAML;
+
+	print Dump( { missing_help_pagers => $missing_help_pagers, } );
+    }
+
+    return '';
+}
+
+
+sub builtin_lint_completions
+{
+    # ($operation_name,
+    #  $arguments,
+    #  {
+    #   bash => {
+    # 	   command_line => $command_line,
+    # 	   comp_cword => $comp_cword,
+    # 	   comp_point => $comp_point,
+    # 	  },
+    #   status => {
+    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
+    # 	     perform_option_completion => $perform_option_completion,
+    # 	    },
+    #   string_after_point => $string_after_point,
+    #   string_before_point => $string_before_point,
+    #  },
+
+    my $debug_builtin_lint_completions = 0;
+
+    if ($debug_builtin_lint_completions)
+    {
+	use Data::Dumper;
+
+	print STDERR Dumper(\@_);
+    }
+
+    my $operation_name = shift;
+
+    my $arguments = shift;
+
+    my $analysis = shift;
+
+    my $bash_variables = $analysis->{bash};
+
+    my $status = $analysis->{status};
+
+    my $perform_option_completion = $status->{perform_option_completion};
+
+    my $string_after_point = $analysis->{string_after_point};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    my $all_targets = $global_technical_project_configuration->{targets};
+
+    my $target_completions
+	= {
+	   map
+	   {
+	       $_ => '';
+	   }
+	   keys %$all_targets, ':all',
+	  };
+
+    my $option_completions
+	= {
+	   '--bash-completors' => '',
+	   '--help-pages' => '',
+	  };
+
+    my $completions = $target_completions;
+
+    if ($perform_option_completion)
+    {
+	$completions = $option_completions;
+    }
+
+    return $completions;
+}
+
+
+sub builtin_lint_help
+{
+    my $command = shift;
+
+    return "$command: Generate a report about missing functions for one or more targets.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command \[ <target-regex> ... ] \[ -- <--options> \]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: One or more regular expressions to match the target against, ':all' for all targets.
+
+options:
+~~~~~~~~
+
+    ``--bash-completors``: Check if the bash completion functions are implemented.
+
+    ``--help-pagers``: Check if the help pages are implemented.
+";
+}
+
+
 sub builtin_manual
 {
     my $arguments = shift || [];
@@ -5571,7 +5874,7 @@ arguments:
 
     ``ARGV[1]``: the string 'also-bashrc' if you want your ~/.bashrc to be updated automatically.
 
-Note that carelessly updating your ``~/.bashrc`` is is risky.
+Note that carelessly updating your ``~/.bashrc`` is risky.
 
 ";
 }
@@ -6462,9 +6765,37 @@ sub builtin_tmux_sessions_create
 
 sub builtin_tmux_sessions_create_completions
 {
+    # ($operation_name,
+    #  $arguments,
+    #  {
+    #   bash => {
+    # 	   command_line => $command_line,
+    # 	   comp_cword => $comp_cword,
+    # 	   comp_point => $comp_point,
+    # 	  },
+    #   status => {
+    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
+    # 	     perform_option_completion => $perform_option_completion,
+    # 	    },
+    #   string_after_point => $string_after_point,
+    #   string_before_point => $string_before_point,
+    #  },
+
     my $complete_command_string = shift;
 
     my $complete_arguments_array = shift;
+
+    my $analysis = shift;
+
+    my $bash_variables = $analysis->{bash};
+
+    my $status = $analysis->{status};
+
+    my $perform_option_completion = $status->{perform_option_completion};
+
+    my $string_after_point = $analysis->{string_after_point};
+
+    my $string_before_point = $analysis->{string_before_point};
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
@@ -6524,6 +6855,58 @@ sub builtin_tmux_sessions_kill
 	     },
 	    );
     }
+}
+
+
+sub builtin_tmux_sessions_kill_completions
+{
+    # ($operation_name,
+    #  $arguments,
+    #  {
+    #   bash => {
+    # 	   command_line => $command_line,
+    # 	   comp_cword => $comp_cword,
+    # 	   comp_point => $comp_point,
+    # 	  },
+    #   status => {
+    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
+    # 	     perform_option_completion => $perform_option_completion,
+    # 	    },
+    #   string_after_point => $string_after_point,
+    #   string_before_point => $string_before_point,
+    #  },
+
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $analysis = shift;
+
+    my $bash_variables = $analysis->{bash};
+
+    my $status = $analysis->{status};
+
+    my $perform_option_completion = $status->{perform_option_completion};
+
+    my $string_after_point = $analysis->{string_after_point};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    my $completions
+	= {
+	   ((scalar @$complete_arguments_array == 2) ? ("1.Type-the-name-of-a-known-tmux-session:" => '') : ()),
+	   "_all" => '',
+	   # '--force' => '',
+	   map
+	   {
+	       $_ => ''
+	   }
+	   @$tmux_sessions,
+	  };
+
+    return $completions;
 }
 
 
@@ -7243,6 +7626,95 @@ arguments:
 
     ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
 
+";
+}
+
+
+sub builtin_workflow_locate
+{
+    my $arguments = shift || [];
+
+    my $workflow_name = join ' ', @$arguments;
+
+    if (! scalar @$arguments)
+    {
+        die "$global_program_name: *** Error: expected a workflow name, for example: builtin lint, builtin_lint, or Command::builtin_lint\n";
+    }
+
+    my $subroutine_name = _workflow_name_2_subroutine_name($arguments);
+
+    my $location = _subroutine_name_2_implementation_location($subroutine_name);
+
+    use YAML;
+
+    print Dump( { location => { workflow_name => $workflow_name, %$location, } } );
+
+    return '';
+}
+
+
+sub builtin_workflow_locate_completions
+{
+    my $operation_name = shift;
+
+    my $arguments = shift;
+
+    my $analysis = shift;
+
+    my $operations = main::operation_hash_typed_generate('with help subs');
+
+    my $completions
+        = {
+           map
+           {
+               my $operation = $_;
+
+               $operation =~ s/ /_/g;
+
+               $operation => '';
+           }
+           sort keys %$operations,
+          };
+
+    return $completions;
+}
+
+
+sub builtin_workflow_locate_help
+{
+    my $command = shift;
+
+    return "$command: Report where a Perl workflow function is implemented.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <target> <operation>
+$command <target>_<operation>
+$command Command::<target>_<operation>
+
+examples:
+~~~~~~~~~
+
+.. code-block:: bash
+
+workflow builtin workflow_report builtin lint
+workflow builtin workflow_report builtin_lint
+workflow builtin workflow_report Command::builtin_lint
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]`` and optionally ``ARGV[1]``: The workflow function to inspect.
+
+notes:
+~~~~~~
+
+    The report is most precise for Perl subs compiled after the program starts.
+    Shell and YAML workflows are not Perl subroutines.  Python/Inline workflows
+    may report the generated Perl wrapper rather than the original Python line.
 ";
 }
 
@@ -11996,7 +12468,7 @@ sub bash_completion
 
 	my $target_operation = [];
 
-	my $perform_internal_option_completion = 'by default';
+	my $perform_workflow_option_completion = 'by default';
 
 	if ($comp_cword > 0)
 	{
@@ -12030,7 +12502,7 @@ sub bash_completion
 		    {
 			# two hyphens switch to external option completion, but this can still be overriden below
 
-			$perform_internal_option_completion = 0;
+			$perform_workflow_option_completion = 0;
 		    }
 		}
 	    }
@@ -12051,14 +12523,14 @@ sub bash_completion
 	    print STDERR Dumper(
 				{
 				 perform_internal_argument_completion => $perform_internal_argument_completion,
-				 perform_internal_option_completion => $perform_internal_option_completion,
 				 perform_option_completion => $perform_option_completion,
+				 perform_workflow_option_completion => $perform_workflow_option_completion,
 				 position => $position,
 				} );
 	}
 
 	if ($perform_option_completion
-	   and $perform_internal_option_completion)
+	   and $perform_workflow_option_completion)
 	{
 	    $result = bash_completion_generate_options();
 	}
@@ -12118,8 +12590,8 @@ sub bash_completion
 
 	    my $external_completions
 		= {
-		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => 1,
-		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => 1,
+		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => '',
+		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => '',
 		  };
 
 	    if (exists $operation_hash->{"$target ${operation}_completions"})
@@ -12132,7 +12604,24 @@ sub bash_completion
 		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
 		$operation_name =~ s(_completions$)();
 
-		$external_completions = &$completion_sub($operation_name, $arguments);
+		$external_completions
+		    = &$completion_sub
+		        ($operation_name,
+		         $arguments,
+			 {
+			  bash => {
+				   command_line => $command_line,
+				   comp_cword => $comp_cword,
+				   comp_point => $comp_point,
+				  },
+			  status => {
+				     perform_internal_argument_completion => $perform_internal_argument_completion,
+				     perform_option_completion => $perform_option_completion,
+				    },
+			  string_after_point => $string_after_point,
+			  string_before_point => $string_before_point,
+			 },
+			);
 	    }
 
 	    $result = bash_completion_generate($target_operation, $external_completions, $comp_cword - 2, $debug_completion);

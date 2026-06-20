@@ -20,6 +20,7 @@ command_tests:
         - workflow-tests-workflow builtin docker_images_build
         - workflow-tests-workflow builtin grep_code
         - workflow-tests-workflow builtin grep_commands
+        - workflow-tests-workflow builtin lint
         - workflow-tests-workflow builtin manual
         - workflow-tests-workflow builtin project_rename
         - workflow-tests-workflow builtin project_start
@@ -32,6 +33,7 @@ command_tests:
         - workflow-tests-workflow builtin workflow_file_remove
         - workflow-tests-workflow builtin workflow_file_rename
         - workflow-tests-workflow builtin workflow_filenames_known
+        - workflow-tests-workflow builtin workflow_locate
         - workflow-tests-workflow examples_sh sh_array_of_commands
         - workflow-tests-workflow examples_sh sh_remote_execution
         - workflow-tests-workflow examples_sh sh_single_command

@@ -1,0 +1,26 @@
+---
+command: bin/workflow builtin lint --help
+command_tests:
+  - description: Do we see the help page of the builtin lint command?
+    read: |+2
+      workflow builtin lint: Generate a report about missing functions for one or more targets.
+      
+      synopsis:
+      ~~~~~~~~~
+      
+      .. code-block:: bash
+      
+      builtin lint [ <target-regex> ... ] [ -- <--options> ]
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: One or more regular expressions to match the target against, ':all' for all targets.
+      
+      options:
+      ~~~~~~~~
+      
+          ``--bash-completors``: Check if the bash completion functions are implemented.
+      
+          ``--help-pagers``: Check if the help pages are implemented.
+description: Do we see the help page of the builtin lint command?
