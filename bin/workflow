@@ -7121,16 +7121,16 @@ sub builtin_project_start_completor
 	= {
 	   '0.Necessary_argument:' => 'help message',
 	   '<project_name>' => 'name of the new project',
+	   '--' => {
+		    '0.Available_options:' => '',
+		    '--minimal' => "create a minimal configuration without the examples",
+		    '--perl' => "add the perl examples to the configuration",
+		    '--python' => "add the python examples to the configuration",
+		    '--shell' => "add the shell examples to the configuration",
+		   },
 	  };
 
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
+    return $completions_hash;
 }
 
 
