@@ -312,6 +312,8 @@ sub file_ai_query
 
     my $max_attempts = $args{max_attempts} || 4;
 
+    my $stream_callback = $args{stream_callback};
+
     my $last_error;
 
     for my $attempt (1 .. $max_attempts)
@@ -338,6 +340,9 @@ sub file_ai_query
 					 ],
 			     },
 			    ],
+			   (defined $stream_callback
+			    ? (stream_callback => $stream_callback)
+			    : ()),
 		  );
 
             1;
@@ -514,6 +519,12 @@ sub response_create
     my $input = $args{input}
         or croak "response_create() requires input";
 
+    my $stream_callback = $args{stream_callback};
+
+    croak "response_create() stream_callback must be a CODE reference"
+        if defined $stream_callback
+	    and ref($stream_callback) ne 'CODE';
+
     my $payload
       = {
 	 instructions => "Answer concisely. Prefer at most 8 bullets unless the user asks for more detail.",
@@ -535,7 +546,14 @@ sub response_create
     $request->header('Accept'        => 'text/event-stream');
     $request->content(encode_json($payload));
 
-    return $self->_perform_json_request($request);
+    return $self->_perform_json_request(
+	$request,
+	{
+	 (defined $stream_callback
+	  ? (stream_callback => $stream_callback)
+	  : ()),
+	},
+    );
 }
 
 
@@ -647,7 +665,11 @@ sub _openai_http_error_details
 
 sub _perform_streaming_json_request
 {
-    my ($self, $request) = @_;
+    my ($self, $request, $options) = @_;
+
+    $options ||= {};
+
+    my $stream_callback = $options->{stream_callback};
 
     my $raw_body = '';
     my $sse_buffer = '';
@@ -718,6 +740,20 @@ sub _perform_streaming_json_request
 		and defined $event_json->{delta})
 	    {
 	        $output_text .= $event_json->{delta};
+
+	        if (defined $stream_callback)
+	        {
+	            eval
+	            {
+	                $stream_callback->($event_json->{delta}, $event_json);
+
+	                1;
+	            }
+	            or do
+	            {
+	                $stream_error ||= "OpenAI API stream callback failed: $@";
+	            };
+	        }
 
 	        return;
 	    }
@@ -848,9 +884,11 @@ sub _perform_streaming_json_request
 
 sub _perform_json_request
 {
-    my ($self, $request) = @_;
+    my ($self, $request, $options) = @_;
 
-    return $self->_perform_streaming_json_request($request)
+    $options ||= {};
+
+    return $self->_perform_streaming_json_request($request, $options)
         if _request_payload_requests_stream($request);
 
     my $http_response = $self->{ua}->request($request);
@@ -4222,6 +4260,7 @@ sub builtin_ai_document_query
     my $option_base_url;
     my $option_model;
     my $option_purpose = 'user_data';
+    my $option_stream_live = 0;
 
     my $options
 	= {
@@ -4229,6 +4268,7 @@ sub builtin_ai_document_query
 	   "base-url=s" => \$option_base_url,
 	   "model=s" => \$option_model,
 	   "purpose=s" => \$option_purpose,
+	   "stream-live!" => \$option_stream_live,
 	  };
 
     use Getopt::Long qw(GetOptionsFromArray);;
@@ -4302,12 +4342,38 @@ sub builtin_ai_document_query
     print STDERR "$global_program_name: querying OpenAI with uploaded file $file_id\n"
 	if defined $option_verbose and $option_verbose;
 
+    my $stream_callback;
+
+    if ($option_stream_live)
+    {
+	# Print live deltas on STDERR so the command's STDOUT remains the
+	# existing YAML document and can still be consumed by scripts.
+	$stream_callback = sub
+	{
+	    my ($delta) = @_;
+
+	    my $selected = select STDERR;
+
+	    local $| = 1;
+
+	    select $selected;
+
+	    print STDERR $delta;
+	};
+    }
+
     my $answer
 	= $client->file_ai_query
 	  (
 	   file_id  => $file_id,
 	   question => $ai_query,
+	   (defined $stream_callback
+	    ? (stream_callback => $stream_callback)
+	    : ()),
 	  );
+
+    print STDERR "\n"
+	if $option_stream_live;
 
     $answer = "$answer\n" if defined $answer and $answer !~ /\n\z/;
 
@@ -4458,6 +4524,15 @@ sub builtin_ai_document_query_completions
 		$remaining_depth - 1,
 	    );
 
+	my $next_after_stream_live
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--stream-live' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
 	if (not $used_options->{'--api-key'})
 	{
 	    $node->{'--api-key'} = {
@@ -4498,10 +4573,16 @@ sub builtin_ai_document_query_completions
 	    $node->{'--purpose=user_data'} = $next_after_purpose;
 	}
 
+	if (not $used_options->{'--stream-live'})
+	{
+	    $node->{'--stream-live'} = $next_after_stream_live;
+	    $node->{'--no-stream-live'} = $next_after_stream_live;
+	}
+
 	return $node;
     };
 
-    my $option_completions = $build_option_completions->({}, 4);
+    my $option_completions = $build_option_completions->({}, 5);
 
     my $completions_hash
 	= {
@@ -4524,7 +4605,15 @@ synopsis:
 
 .. code-block:: bash
 
-$command <pdf-file> <query-string>
+$command [options] <pdf-file> <query-string>
+
+options:
+~~~~~~~~
+
+    ``--stream-live``: print streamed answer tokens live on STDERR while
+    keeping the final YAML result on STDOUT.
+
+    ``--no-stream-live``: disable live token printing. This is the default.
 
 arguments:
 ~~~~~~~~~~
