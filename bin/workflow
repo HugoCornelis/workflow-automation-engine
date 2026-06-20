@@ -327,25 +327,53 @@ sub ask_file
     my $question = $args{question}
         or croak "ask_file() requires question";
 
-    my $response = $self->create_response(
-        input => [
-            {
-                role    => 'user',
-                content => [
+    my $max_attempts = $args{max_attempts} || 4;
+
+    my $last_error;
+
+    for my $attempt (1 .. $max_attempts) {
+        my $response;
+
+        my $ok = eval {
+            $response = $self->create_response(
+                input => [
                     {
-                        type    => 'input_file',
-                        file_id => $file_id,
-                    },
-                    {
-                        type => 'input_text',
-                        text => $question,
+                        role    => 'user',
+                        content => [
+                            {
+                                type    => 'input_file',
+                                file_id => $file_id,
+                            },
+                            {
+                                type => 'input_text',
+                                text => $question,
+                            },
+                        ],
                     },
                 ],
-            },
-        ],
-    );
+            );
 
-    return $self->extract_text($response);
+            1;
+        };
+
+        return $self->extract_text($response)
+            if $ok;
+
+        $last_error = $@ || 'unknown OpenAI API error';
+
+        last
+            if $attempt >= $max_attempts;
+
+        # OpenAI can briefly return a 5xx ownership-validation error when a
+        # newly uploaded file is referenced immediately by the Responses API.
+        # Retry only transient-looking failures; propagate ordinary 4xx errors.
+        last
+            if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
+
+        sleep(2 ** ($attempt - 1));
+    }
+
+    croak $last_error;
 }
 
 
@@ -418,7 +446,13 @@ sub _perform_json_request
             || $body
             || $http_response->status_line;
 
-        croak "OpenAI API error: $message";
+        my $request_id = $http_response->header('x-request-id');
+
+        my $details = $http_response->status_line;
+        $details .= "; request_id=$request_id"
+            if defined $request_id && length $request_id;
+
+        croak "OpenAI API error: $message [$details]";
     }
 
     return $json;
