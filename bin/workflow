@@ -3808,7 +3808,7 @@ sub _workflow_operations_load
 }
 
 
-sub builtin_ai_query
+sub builtin_ai_document_query
 {
     my $arguments = shift || [];
 
@@ -3915,7 +3915,7 @@ sub builtin_ai_query
 }
 
 
-sub builtin_ai_query_completions
+sub builtin_ai_document_query_completions
 {
     my $operation_name = shift;
 
@@ -4107,7 +4107,7 @@ sub builtin_ai_query_completions
 }
 
 
-sub builtin_ai_query_help
+sub builtin_ai_document_query_help
 {
     my $command = shift;
 
