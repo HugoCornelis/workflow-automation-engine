@@ -27,6 +27,8 @@ RUN dnf -y update && \
         perl-Net-IP \
         perl-App-cpanminus \
         perl-YAML \
+        perl-libwww-perl \
+        perl-LWP-Protocol-https \
         grc \
         openssh-server \
         sshpass \

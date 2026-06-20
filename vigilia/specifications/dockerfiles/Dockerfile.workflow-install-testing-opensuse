@@ -35,6 +35,7 @@ RUN zypper --non-interactive refresh && \
         perl-JSON \
         perl-Net-IP \
         perl-YAML \
+        perl-libwww-perl \
         grc \
         openssh \
         sshpass \
