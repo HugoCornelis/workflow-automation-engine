@@ -33,6 +33,7 @@ command_tests:
         - workflow-tests-workflow builtin workflow_file_remove
         - workflow-tests-workflow builtin workflow_file_rename
         - workflow-tests-workflow builtin workflow_filenames_known
+        - workflow-tests-workflow builtin workflow_locate
         - workflow-tests-workflow examples_sh sh_array_of_commands
         - workflow-tests-workflow examples_sh sh_remote_execution
         - workflow-tests-workflow examples_sh sh_single_command

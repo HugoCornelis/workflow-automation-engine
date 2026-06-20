@@ -36,6 +36,7 @@ command_tests:
         - feature-testing-workflow builtin workflow_file_remove
         - feature-testing-workflow builtin workflow_file_rename
         - feature-testing-workflow builtin workflow_filenames_known
+        - feature-testing-workflow builtin workflow_locate
         - feature-testing-workflow docker_testing where_am_i
         - feature-testing-workflow examples_sh sh_array_of_commands
         - feature-testing-workflow examples_sh sh_remote_execution

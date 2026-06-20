@@ -26,6 +26,14 @@ use utf8;
 
 use warnings;
 
+# Record file and line-range metadata for subsequently compiled subroutines.
+# This populates %DB::sub, which is used by builtin_workflow_report.
+
+BEGIN
+{
+    $^P |= 0x10;
+}
+
 use Data::Dumper;
 
 $Data::Dumper::Sortkeys = 'always';
@@ -195,6 +203,7 @@ my $global_builtin_operations
        tmux_sessions_create => 1,
        tmux_sessions_kill => 1,
        workflow_filenames_known => 1,
+       workflow_report => 1,
       };
 
 my $global_known_operation_packages_builtin
@@ -3027,6 +3036,80 @@ sub _strings_remove
 }
 
 
+sub _subroutine_name_2_implementation_location
+{
+    my $subroutine_name = shift;
+
+    my $result = { found => '' };
+
+    {
+        no strict 'refs';
+
+        if (!defined &{$subroutine_name})
+        {
+            $result->{error} = "subroutine is not defined";
+	    $result->{subroutine_name} = $subroutine_name;
+
+            return $result;
+        }
+    }
+
+    my $location = $DB::sub{$subroutine_name};
+
+    if (defined $location)
+    {
+        $result
+	    = {
+	       found => 'yes',
+	       location => $location,
+	       subroutine_name => $subroutine_name,
+	      };
+
+        if ($location =~ m/^(.*):(\d+)-(\d+)$/)
+        {
+            $result->{file} = $1;
+            $result->{line_start} = $2;
+            $result->{line_end} = $3;
+        }
+        elsif ($location =~ m/^(.*):(\d+)$/)
+        {
+            $result->{file} = $1;
+            $result->{line_start} = $2;
+        }
+
+        return $result;
+    }
+
+    # Fallback for cases where %DB::sub is not populated, or for some
+    # generated/XS-backed code.  This normally gives only a start line.
+
+    eval
+    {
+        require B;
+
+        no strict 'refs';
+
+        my $cv = B::svref_2object(\&{$subroutine_name});
+
+	$result
+	    = {
+	       found => 'yes',
+	       file => $cv->FILE,
+	       line_start => $cv->START->line,
+	       location => "$result->{file}:$result->{line_start}",
+	       subroutine_name => $subroutine_name,
+	      };
+    };
+
+    if ($@)
+    {
+        $result->{error} = "subroutine is defined, but no source location could be determined: $@";
+    }
+
+    return $result;
+}
+
+
 sub _workflow_commands_2_implementation
 {
     my $file_type = shift;
@@ -3335,6 +3418,46 @@ sub ${target}_${operation}_help
     {
 	return $implementation;
     }
+}
+
+
+# given a workflow name in one word or as a target / operation pair,
+# convert it to its implementation name.
+
+sub _workflow_name_2_subroutine_name
+{
+    my $arguments = shift || [];
+
+    my @arguments = @$arguments;
+
+    my $first = shift @arguments;
+
+    if (@arguments)
+    {
+        my $target = $first;
+
+        my $operation = shift @arguments;
+
+        $target =~ s/-/_/g;
+        $operation =~ s/-/_/g;
+
+        return "Command::${target}_${operation}";
+    }
+
+    my $name = $first;
+
+    $name =~ s/-/_/g;
+
+    return $name if $name =~ m/::/;
+
+    {
+        no strict 'refs';
+
+        return "Command::$name" if defined &{"Command::$name"};
+        return "Command::builtin_$name" if defined &{"Command::builtin_$name"};
+    }
+
+    return "Command::$name";
 }
 
 
@@ -7503,6 +7626,95 @@ arguments:
 
     ``ARGV[0]``: '``full-paths``' or '``relative-paths``'.
 
+";
+}
+
+
+sub builtin_workflow_locate
+{
+    my $arguments = shift || [];
+
+    my $workflow_name = join ' ', @$arguments;
+
+    if (! scalar @$arguments)
+    {
+        die "$global_program_name: *** Error: expected a workflow name, for example: builtin lint, builtin_lint, or Command::builtin_lint\n";
+    }
+
+    my $subroutine_name = _workflow_name_2_subroutine_name($arguments);
+
+    my $location = _subroutine_name_2_implementation_location($subroutine_name);
+
+    use YAML;
+
+    print Dump( { location => { workflow_name => $workflow_name, %$location, } } );
+
+    return '';
+}
+
+
+sub builtin_workflow_locate_completions
+{
+    my $operation_name = shift;
+
+    my $arguments = shift;
+
+    my $analysis = shift;
+
+    my $operations = main::operation_hash_typed_generate('with help subs');
+
+    my $completions
+        = {
+           map
+           {
+               my $operation = $_;
+
+               $operation =~ s/ /_/g;
+
+               $operation => '';
+           }
+           sort keys %$operations,
+          };
+
+    return $completions;
+}
+
+
+sub builtin_workflow_locate_help
+{
+    my $command = shift;
+
+    return "$command: Report where a Perl workflow function is implemented.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <target> <operation>
+$command <target>_<operation>
+$command Command::<target>_<operation>
+
+examples:
+~~~~~~~~~
+
+.. code-block:: bash
+
+workflow builtin workflow_report builtin lint
+workflow builtin workflow_report builtin_lint
+workflow builtin workflow_report Command::builtin_lint
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]`` and optionally ``ARGV[1]``: The workflow function to inspect.
+
+notes:
+~~~~~~
+
+    The report is most precise for Perl subs compiled after the program starts.
+    Shell and YAML workflows are not Perl subroutines.  Python/Inline workflows
+    may report the generated Perl wrapper rather than the original Python line.
 ";
 }
 

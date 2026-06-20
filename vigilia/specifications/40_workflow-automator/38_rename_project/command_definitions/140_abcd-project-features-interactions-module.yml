@@ -3,7 +3,7 @@ command: abcd-workflow features --interactions-target
 command_tests:
   - description: abcd project interactions of the features commands
     read: |+2
-      	main::main() called at /home/neurospaces/bin/abcd-workflow line 14162
+      	main::main() called at /home/neurospaces/bin/abcd-workflow line 14378
       ---
       WORKFLOW: features_annotations
           ROLE: 'localuser@localhost'
