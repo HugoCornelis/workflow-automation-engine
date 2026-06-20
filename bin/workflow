@@ -7192,7 +7192,7 @@ options:
 
     ``--shell``: create the shell example command file.
 
-When none of ``--minimal``, ``--perl``, ``--python`` or ``--shell`` is given, all example command files are created, preserving the historical default behavior.
+When none of ``--minimal``, ``--perl``, ``--python`` or ``--shell`` is given, all example command files are created.
 ";
 }
 
