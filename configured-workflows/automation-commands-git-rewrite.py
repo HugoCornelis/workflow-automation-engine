@@ -44,7 +44,7 @@ def git_rewrite(argv):
     #
     # These options can given to any of the functions that execute commands.
 
-def git_rewrite_completions(command, argv, status):
+def git_rewrite_completor(command, argv, status):
 
 #     print_to_stderr(f"command: {command}\n  argv: {argv}")
 
