@@ -189,6 +189,7 @@ our $global_execute_scheduled_commands = 'yes';
 
 my $global_builtin_operations
     = {
+       ai_query => 1,
        configuration_archive => 1,
        configuration_directory_print => 1,
        configuration_fetch => 1,
@@ -258,6 +259,233 @@ our $global_technical_project_configuration;
 our $global_target;
 
 our $global_operation;
+
+
+package AI::OpenAI;
+
+use strict;
+use warnings;
+
+use Carp qw(croak);
+use JSON::PP qw(encode_json decode_json);
+use LWP::UserAgent;
+use HTTP::Request::Common qw(POST);
+
+
+sub new
+{
+    my ($class, %args) = @_;
+
+    my $api_key = $args{api_key} if exists $args{api_key};
+
+    $api_key = read_volatile_data("secret-tokens/openai.yml", 'key-value');
+
+    $api_key = $ENV{OPENAI_API_KEY} if not $api_key;
+
+    $api_key or croak "Missing api_key or OPENAI_API_KEY";
+
+    my $self = bless {
+        api_key  => $api_key,
+        model    => $args{model}    || 'gpt-5.5',
+        base_url => $args{base_url} || 'https://api.openai.com/v1',
+        ua       => $args{ua}       || LWP::UserAgent->new(timeout => 120),
+    }, $class;
+
+    return $self;
+}
+
+
+sub read_volatile_data
+{
+    my ($pathname, $key) = @_;
+
+    my $volatile_data_directory = Utilities::volatile_data_directory();
+
+    use YAML;
+
+    my $data = eval {
+	YAML::LoadFile("$volatile_data_directory/$pathname");
+    };
+
+    if ($@)
+    {
+	# this is ok
+
+	return undef;
+    }
+
+    return $data->{$key};
+}
+
+
+sub upload_file
+{
+    my ($self, %args) = @_;
+
+    my $path = $args{path}
+        or croak "upload_file() requires path";
+
+    my $purpose = $args{purpose} || 'user_data';
+
+    -f $path
+        or croak "File does not exist: $path";
+
+    my $url = $self->{base_url} . '/files';
+
+    my $request = POST(
+        $url,
+        Authorization => 'Bearer ' . $self->{api_key},
+        Content_Type  => 'form-data',
+        Content       => [
+            purpose => $purpose,
+            file    => [$path],
+        ],
+    );
+
+    return $self->_perform_json_request($request);
+}
+
+
+sub ask_file
+{
+    my ($self, %args) = @_;
+
+    my $file_id = $args{file_id}
+        or croak "ask_file() requires file_id";
+
+    my $question = $args{question}
+        or croak "ask_file() requires question";
+
+    my $max_attempts = $args{max_attempts} || 4;
+
+    my $last_error;
+
+    for my $attempt (1 .. $max_attempts) {
+        my $response;
+
+        my $ok = eval {
+            $response = $self->create_response(
+                input => [
+                    {
+                        role    => 'user',
+                        content => [
+                            {
+                                type    => 'input_file',
+                                file_id => $file_id,
+                            },
+                            {
+                                type => 'input_text',
+                                text => $question,
+                            },
+                        ],
+                    },
+                ],
+            );
+
+            1;
+        };
+
+        return $self->extract_text($response)
+            if $ok;
+
+        $last_error = $@ || 'unknown OpenAI API error';
+
+        last
+            if $attempt >= $max_attempts;
+
+        # OpenAI can briefly return a 5xx ownership-validation error when a
+        # newly uploaded file is referenced immediately by the Responses API.
+        # Retry only transient-looking failures; propagate ordinary 4xx errors.
+        last
+            if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
+
+        sleep(2 ** ($attempt - 1));
+    }
+
+    croak $last_error;
+}
+
+
+sub create_response
+{
+    my ($self, %args) = @_;
+
+    my $input = $args{input}
+        or croak "create_response() requires input";
+
+    my $payload = {
+        model => $args{model} || $self->{model},
+        input => $input,
+    };
+
+    my $url = $self->{base_url} . '/responses';
+
+    my $request = HTTP::Request->new(POST => $url);
+    $request->header('Authorization' => 'Bearer ' . $self->{api_key});
+    $request->header('Content-Type'  => 'application/json');
+    $request->content(encode_json($payload));
+
+    return $self->_perform_json_request($request);
+}
+
+
+sub extract_text
+{
+    my ($self, $response) = @_;
+
+    # Some SDKs expose output_text as a convenience field. Raw HTTP responses
+    # normally need to be read from output[].content[].
+    return $response->{output_text}
+        if defined $response->{output_text} && length $response->{output_text};
+
+    my @parts;
+
+    for my $item (@{ $response->{output} || [] }) {
+        for my $content (@{ $item->{content} || [] }) {
+            push @parts, $content->{text}
+                if defined $content->{text};
+        }
+    }
+
+    return join "\n", @parts;
+}
+
+
+sub _perform_json_request
+{
+    my ($self, $request) = @_;
+
+    my $http_response = $self->{ua}->request($request);
+
+    my $body = $http_response->decoded_content;
+
+    my $json;
+    eval {
+        $json = decode_json($body);
+        1;
+    } or do {
+        croak "OpenAI API returned non-JSON response: "
+            . $http_response->status_line . "\n$body";
+    };
+
+    if (!$http_response->is_success) {
+        my $message =
+            $json->{error}{message}
+            || $json->{error}
+            || $body
+            || $http_response->status_line;
+
+        my $request_id = $http_response->header('x-request-id');
+
+        my $details = $http_response->status_line;
+        $details .= "; request_id=$request_id"
+            if defined $request_id && length $request_id;
+
+        croak "OpenAI API error: $message [$details]";
+    }
+
+    return $json;
+}
 
 
 package Command;
@@ -3581,6 +3809,328 @@ sub _workflow_operations_load
 	    die "$global_program_name: *** Error: invalid file type $file_type for commands file '$command_filename'\n";
 	}
     }
+}
+
+
+sub builtin_ai_query
+{
+    my $arguments = shift || [];
+
+    my $option_api_key;
+    my $option_base_url;
+    my $option_model = 'gpt-5.5';
+    my $option_purpose = 'user_data';
+
+    my $options
+	= {
+	   "api-key=s" => \$option_api_key,
+	   "base-url=s" => \$option_base_url,
+	   "model=s" => \$option_model,
+	   "purpose=s" => \$option_purpose,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+	die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    # Do not upload the file or spend API tokens when --dry-run, --help,
+    # --interactions, --export-sh, etc. have disabled execution.
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $pdf_manual_filename = shift @$arguments;
+
+    if (not defined $pdf_manual_filename)
+    {
+	die "$global_program_name: *** Error: builtin ai_query expects the PDF filename as its first argument";
+    }
+
+    if (not -f $pdf_manual_filename)
+    {
+	die "$global_program_name: *** Error: PDF file does not exist: $pdf_manual_filename";
+    }
+
+    my $ai_query = join ' ', @$arguments;
+
+    if (not defined $ai_query
+	or $ai_query eq '')
+    {
+	die "$global_program_name: *** Error: builtin ai_query expects a query string after the PDF filename";
+    }
+
+    my $client_options
+	= {
+	   model => $option_model,
+	  };
+
+    $client_options->{api_key} = $option_api_key
+	if defined $option_api_key;
+
+    $client_options->{base_url} = $option_base_url
+	if defined $option_base_url;
+
+    my $client = AI::OpenAI->new(%$client_options);
+
+    print STDERR "$global_program_name: uploading $pdf_manual_filename to OpenAI\n"
+	if defined $option_verbose and $option_verbose;
+
+    my $file
+	= $client->upload_file
+	  (
+	   path    => $pdf_manual_filename,
+	   purpose => $option_purpose,
+	  );
+
+    my $file_id = $file->{id};
+
+    if (not defined $file_id
+	or $file_id eq '')
+    {
+	die "$global_program_name: *** Error: OpenAI file upload did not return a file id";
+    }
+
+    print STDERR "$global_program_name: querying OpenAI with uploaded file $file_id\n"
+	if defined $option_verbose and $option_verbose;
+
+    my $answer
+	= $client->ask_file
+	  (
+	   file_id  => $file_id,
+	   question => $ai_query,
+	  );
+
+    $answer = "$answer\n" if defined $answer and $answer !~ /\n\z/;
+
+    print Dump(
+	       {
+		answer => $answer,
+	       }
+	      );
+
+    return '';
+}
+
+
+sub builtin_ai_query_completions
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    # Completion style in this script is dictionary based: each key is a
+    # completion candidate, and the value is the subtree to use after that
+    # candidate has been accepted.  The literal '--' is used by the workflow
+    # command line parser to separate workflow-global options from
+    # command-specific options.
+
+    my $pdf_filenames
+	= [
+	   map
+	   {
+	       my $filename = $_;
+
+	       # The generated bash completion script feeds candidates through
+	       # compgen -W.  Escaping whitespace keeps common file names with spaces
+	       # usable without changing the completion protocol used elsewhere.
+
+	       $filename =~ s/(\s)/\\$1/g;
+
+	       $filename;
+	   }
+	   sort
+	   grep
+	   {
+	       -f $_ and /\.pdf\z/i;
+	   }
+	   glob('*'),
+	  ];
+
+    my $last_argument;
+
+    if (ref $analysis->{arguments} eq 'ARRAY'
+	and scalar @{ $analysis->{arguments} })
+    {
+	$last_argument = $analysis->{arguments}->[-1];
+    }
+    elsif (ref $analysis->{target_operation} eq 'ARRAY'
+	   and scalar @{ $analysis->{target_operation} })
+    {
+	$last_argument = $analysis->{target_operation}->[-1];
+    }
+    elsif (ref $complete_arguments_array eq 'ARRAY'
+	   and scalar @$complete_arguments_array)
+    {
+	$last_argument = $complete_arguments_array->[-1];
+    }
+
+    my $pdf_file_has_already_been_given
+	= defined $last_argument
+	  && $last_argument =~ /\.pdf\z/i;
+
+    # The query argument is intentionally not completed: it is free-form
+    # text.  Do not offer a placeholder such as 2.<query-string> after
+    # the PDF argument, because Bash inserts a sole completion candidate.
+
+    my $query_completions
+	= $pdf_file_has_already_been_given
+	  ? {}
+	  : {
+	     '2.<query-string>' => '',
+	    };
+
+    my $pdf_argument_completions
+	= {
+	   '1.<pdf-file>' => $query_completions,
+	   %$query_completions,
+	   map
+	   {
+	       $_ => $query_completions;
+	   }
+	   @$pdf_filenames,
+	  };
+
+    # Recursively build the completion tree for ai_query options,
+    # starting from the PDF/query argument completions and adding only
+    # options not yet used.  The depth limit prevents unbounded
+    # recursion while still allowing option chains.
+
+    my $build_option_completions;
+
+    $build_option_completions = sub
+    {
+	my $used_options = shift || {};
+
+	my $remaining_depth = shift;
+
+	my $node
+	    = {
+	       %$pdf_argument_completions,
+	      };
+
+	return $node
+	    if $remaining_depth <= 0;
+
+	my $next_after_api_key
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--api-key' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	my $next_after_base_url
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--base-url' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	my $next_after_model
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--model' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	my $next_after_purpose
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--purpose' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	if (not $used_options->{'--api-key'})
+	{
+	    $node->{'--api-key'} = {
+		'1.<api-key>' => $next_after_api_key,
+	    };
+
+	    $node->{'--api-key=<api-key>'} = $next_after_api_key;
+	}
+
+	if (not $used_options->{'--base-url'})
+	{
+	    $node->{'--base-url'} = {
+		'https://api.openai.com/v1' => $next_after_base_url,
+		'1.<base-url>' => $next_after_base_url,
+	    };
+
+	    $node->{'--base-url=https://api.openai.com/v1'} = $next_after_base_url;
+	}
+
+	if (not $used_options->{'--model'})
+	{
+	    $node->{'--model'} = {
+		'gpt-5.5' => $next_after_model,
+		'1.<model-name>' => $next_after_model,
+	    };
+
+	    $node->{'--model=gpt-5.5'} = $next_after_model;
+	    $node->{'--model=<model-name>'} = $next_after_model;
+	}
+
+	if (not $used_options->{'--purpose'})
+	{
+	    $node->{'--purpose'} = {
+		'user_data' => $next_after_purpose,
+		'1.<file-purpose>' => $next_after_purpose,
+	    };
+
+	    $node->{'--purpose=user_data'} = $next_after_purpose;
+	}
+
+	return $node;
+    };
+
+    my $option_completions = $build_option_completions->({}, 4);
+
+    my $completions_hash
+	= {
+	   %$pdf_argument_completions,
+	   '--' => $option_completions,
+	  };
+
+    return $completions_hash;
+}
+
+
+sub builtin_ai_query_help
+{
+    my $command = shift;
+
+    return "$command: Use OpenAI to explain this project.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <pdf-file> <query-string>
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The name of the PDF manual of this project.
+
+    ``ARGV[1]``: The query string with your question.
+";
 }
 
 
@@ -12241,6 +12791,21 @@ sub interaction_roles_identify
 package Utilities;
 
 
+sub bin_path_choice
+{
+    # should we install to ~/bin or to ~/.local/bin?
+
+    my $use_dot_local = 1;
+
+    if (!-d "$ENV{HOME}/.local/bin")
+    {
+	$use_dot_local = 0;
+    }
+
+    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+}
+
+
 #
 # The commands_cache_directory is a directory where the workflow
 # engine caches dynamically generated scripts before their execution.
@@ -12369,18 +12934,15 @@ sub read_directory
 }
 
 
-sub bin_path_choice
+sub volatile_data_directory
 {
-    # should we install to ~/bin or to ~/.local/bin?
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
-    my $use_dot_local = 1;
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
 
-    if (!-d "$ENV{HOME}/.local/bin")
-    {
-	$use_dot_local = 0;
-    }
+    my $volatile_data_directory = "$sources_configuration_directory/$field_project_name-volatile-data";
 
-    my $bin_path_choice = $use_dot_local ? '.local/bin' : 'bin';
+    return $volatile_data_directory;
 }
 
 
