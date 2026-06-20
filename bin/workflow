@@ -6642,9 +6642,37 @@ sub builtin_tmux_sessions_create
 
 sub builtin_tmux_sessions_create_completions
 {
+    # ($operation_name,
+    #  $arguments,
+    #  {
+    #   bash => {
+    # 	   command_line => $command_line,
+    # 	   comp_cword => $comp_cword,
+    # 	   comp_point => $comp_point,
+    # 	  },
+    #   status => {
+    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
+    # 	     perform_option_completion => $perform_option_completion,
+    # 	    },
+    #   string_after_point => $string_after_point,
+    #   string_before_point => $string_before_point,
+    #  },
+
     my $complete_command_string = shift;
 
     my $complete_arguments_array = shift;
+
+    my $analysis = shift;
+
+    my $bash_variables = $analysis->{bash};
+
+    my $status = $analysis->{status};
+
+    my $perform_option_completion = $status->{perform_option_completion};
+
+    my $string_after_point = $analysis->{string_after_point};
+
+    my $string_before_point = $analysis->{string_before_point};
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
@@ -6704,6 +6732,58 @@ sub builtin_tmux_sessions_kill
 	     },
 	    );
     }
+}
+
+
+sub builtin_tmux_sessions_kill_completions
+{
+    # ($operation_name,
+    #  $arguments,
+    #  {
+    #   bash => {
+    # 	   command_line => $command_line,
+    # 	   comp_cword => $comp_cword,
+    # 	   comp_point => $comp_point,
+    # 	  },
+    #   status => {
+    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
+    # 	     perform_option_completion => $perform_option_completion,
+    # 	    },
+    #   string_after_point => $string_after_point,
+    #   string_before_point => $string_before_point,
+    #  },
+
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift;
+
+    my $analysis = shift;
+
+    my $bash_variables = $analysis->{bash};
+
+    my $status = $analysis->{status};
+
+    my $perform_option_completion = $status->{perform_option_completion};
+
+    my $string_after_point = $analysis->{string_after_point};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    my $tmux_sessions = _builtin_tmux_sessions();
+
+    my $completions
+	= {
+	   ((scalar @$complete_arguments_array == 2) ? ("1.Type-the-name-of-a-known-tmux-session:" => '') : ()),
+	   "_all" => '',
+	   # '--force' => '',
+	   map
+	   {
+	       $_ => ''
+	   }
+	   @$tmux_sessions,
+	  };
+
+    return $completions;
 }
 
 
