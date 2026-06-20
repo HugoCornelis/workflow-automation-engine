@@ -11996,7 +11996,7 @@ sub bash_completion
 
 	my $target_operation = [];
 
-	my $perform_internal_option_completion = 'by default';
+	my $perform_workflow_option_completion = 'by default';
 
 	if ($comp_cword > 0)
 	{
@@ -12030,7 +12030,7 @@ sub bash_completion
 		    {
 			# two hyphens switch to external option completion, but this can still be overriden below
 
-			$perform_internal_option_completion = 0;
+			$perform_workflow_option_completion = 0;
 		    }
 		}
 	    }
@@ -12051,14 +12051,14 @@ sub bash_completion
 	    print STDERR Dumper(
 				{
 				 perform_internal_argument_completion => $perform_internal_argument_completion,
-				 perform_internal_option_completion => $perform_internal_option_completion,
 				 perform_option_completion => $perform_option_completion,
+				 perform_workflow_option_completion => $perform_workflow_option_completion,
 				 position => $position,
 				} );
 	}
 
 	if ($perform_option_completion
-	   and $perform_internal_option_completion)
+	   and $perform_workflow_option_completion)
 	{
 	    $result = bash_completion_generate_options();
 	}
@@ -12118,8 +12118,8 @@ sub bash_completion
 
 	    my $external_completions
 		= {
-		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => 1,
-		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => 1,
+		   "<_please_implement_the_function_with_name_\"$completion_sub\">" => '',
+		   "__please_implement_the_function_with_name_\"$completion_sub\"_" => '',
 		  };
 
 	    if (exists $operation_hash->{"$target ${operation}_completions"})
@@ -12132,7 +12132,24 @@ sub bash_completion
 		$operation_name =~ s(^([a-z0-9]+?)_)($1 );
 		$operation_name =~ s(_completions$)();
 
-		$external_completions = &$completion_sub($operation_name, $arguments);
+		$external_completions
+		    = &$completion_sub
+		        ($operation_name,
+		         $arguments,
+			 {
+			  bash => {
+				   command_line => $command_line,
+				   comp_cword => $comp_cword,
+				   comp_point => $comp_point,
+				  },
+			  status => {
+				     perform_internal_argument_completion => $perform_internal_argument_completion,
+				     perform_option_completion => $perform_option_completion,
+				    },
+			  string_after_point => $string_after_point,
+			  string_before_point => $string_before_point,
+			 },
+			);
 	    }
 
 	    $result = bash_completion_generate($target_operation, $external_completions, $comp_cword - 2, $debug_completion);
