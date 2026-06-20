@@ -2806,7 +2806,7 @@ sub report_file_dump
 
     eval
     {
-	YAML::PP::DumpFile(">$report_filename", $global_test_report);
+	YAML::PP::DumpFile($report_filename, $global_test_report);
     };
 
     if ($@)
