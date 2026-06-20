@@ -3856,6 +3856,198 @@ sub builtin_ai_query
 }
 
 
+sub builtin_ai_query_completions
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    # Completion style in this script is dictionary based: each key is a
+    # completion candidate, and the value is the subtree to use after that
+    # candidate has been accepted.  The literal '--' is used by the workflow
+    # command line parser to separate workflow-global options from
+    # command-specific options.
+
+    my $pdf_filenames
+	= [
+	   map
+	   {
+	       my $filename = $_;
+
+	       # The generated bash completion script feeds candidates through
+	       # compgen -W.  Escaping whitespace keeps common file names with spaces
+	       # usable without changing the completion protocol used elsewhere.
+
+	       $filename =~ s/(\s)/\\$1/g;
+
+	       $filename;
+	   }
+	   sort
+	   grep
+	   {
+	       -f $_ and /\.pdf\z/i;
+	   }
+	   glob('*'),
+	  ];
+
+    my $last_argument;
+
+    if (ref $analysis->{arguments} eq 'ARRAY'
+	and scalar @{ $analysis->{arguments} })
+    {
+	$last_argument = $analysis->{arguments}->[-1];
+    }
+    elsif (ref $analysis->{target_operation} eq 'ARRAY'
+	   and scalar @{ $analysis->{target_operation} })
+    {
+	$last_argument = $analysis->{target_operation}->[-1];
+    }
+    elsif (ref $complete_arguments_array eq 'ARRAY'
+	   and scalar @$complete_arguments_array)
+    {
+	$last_argument = $complete_arguments_array->[-1];
+    }
+
+    my $pdf_file_has_already_been_given
+	= defined $last_argument
+	  && $last_argument =~ /\.pdf\z/i;
+
+    # The query argument is intentionally not completed: it is free-form
+    # text.  Do not offer a placeholder such as 2.<query-string> after
+    # the PDF argument, because Bash inserts a sole completion candidate.
+
+    my $query_completions
+	= $pdf_file_has_already_been_given
+	  ? {}
+	  : {
+	     '2.<query-string>' => '',
+	    };
+
+    my $pdf_argument_completions
+	= {
+	   '1.<pdf-file>' => $query_completions,
+	   %$query_completions,
+	   map
+	   {
+	       $_ => $query_completions;
+	   }
+	   @$pdf_filenames,
+	  };
+
+    # Recursively build the completion tree for ai_query options,
+    # starting from the PDF/query argument completions and adding only
+    # options not yet used.  The depth limit prevents unbounded
+    # recursion while still allowing option chains.
+
+    my $build_option_completions;
+
+    $build_option_completions = sub
+    {
+	my $used_options = shift || {};
+
+	my $remaining_depth = shift;
+
+	my $node
+	    = {
+	       %$pdf_argument_completions,
+	      };
+
+	return $node
+	    if $remaining_depth <= 0;
+
+	my $next_after_api_key
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--api-key' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	my $next_after_base_url
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--base-url' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	my $next_after_model
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--model' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	my $next_after_purpose
+	    = $build_option_completions->(
+		{
+		 %$used_options,
+		 '--purpose' => 1,
+		},
+		$remaining_depth - 1,
+	    );
+
+	if (not $used_options->{'--api-key'})
+	{
+	    $node->{'--api-key'} = {
+		'1.<api-key>' => $next_after_api_key,
+	    };
+
+	    $node->{'--api-key=<api-key>'} = $next_after_api_key;
+	}
+
+	if (not $used_options->{'--base-url'})
+	{
+	    $node->{'--base-url'} = {
+		'https://api.openai.com/v1' => $next_after_base_url,
+		'1.<base-url>' => $next_after_base_url,
+	    };
+
+	    $node->{'--base-url=https://api.openai.com/v1'} = $next_after_base_url;
+	}
+
+	if (not $used_options->{'--model'})
+	{
+	    $node->{'--model'} = {
+		'gpt-5.5' => $next_after_model,
+		'1.<model-name>' => $next_after_model,
+	    };
+
+	    $node->{'--model=gpt-5.5'} = $next_after_model;
+	    $node->{'--model=<model-name>'} = $next_after_model;
+	}
+
+	if (not $used_options->{'--purpose'})
+	{
+	    $node->{'--purpose'} = {
+		'user_data' => $next_after_purpose,
+		'1.<file-purpose>' => $next_after_purpose,
+	    };
+
+	    $node->{'--purpose=user_data'} = $next_after_purpose;
+	}
+
+	return $node;
+    };
+
+    my $option_completions = $build_option_completions->({}, 4);
+
+    my $completions_hash
+	= {
+	   %$pdf_argument_completions,
+	   '--' => $option_completions,
+	  };
+
+    return $completions_hash;
+}
+
+
 sub builtin_ai_query_help
 {
     my $command = shift;
