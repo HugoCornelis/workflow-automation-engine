@@ -6446,20 +6446,24 @@ $global_command_line
 
     my $manual_file;
 
-    my $ok = 'by default';
+    # use a long name for this to avoid name clashes
+
+    my $section_name = "dynamically-generated-manuals";
+
+    my $pathname_full = Utilities::volatile_section_pathname($section_name, $manual_filename);
+
+    # write the generated manual to volatile storage
 
     if ($global_execute_scheduled_commands)
     {
-	$ok = open($manual_file, ">", $manual_filename);
+	Utilities::volatile_section_file_write($section_name, $manual_filename, $manual_string);
 
-	if (not $ok)
-	{
-	    die "*** Error: $global_program_name: cannot open $manual_filename for writing ($!)";
-	}
+	my $commands
+	    = [
+	       "echo '$manual_filename' stored into volatile project storage $pathname_full",
+	      ];
 
-	print $manual_file $manual_string;
-
-	$ok = close($manual_file);
+	execute_shell_command_array($commands);
     }
     else
     {
@@ -6471,34 +6475,37 @@ $global_command_line
 	execute_shell_command_array($commands);
     }
 
-    if ($ok)
+    my $directory = $pathname_full;
+
+    $directory =~ s{/[^/]+\z}{};
+
+    my $commands = [];
+
+    if ($option_output_pdf
+	and $option_input_rst)
     {
-	my $commands = [];
-
-	if ($option_output_pdf
-	    and $option_input_rst)
-	{
-	    $commands
-		= [
-		   "pandoc '$manual_filename' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
-		   ($option_remove_intermediate_files ? "rm '$manual_filename'" : ()),,
-		   ($option_view ? "okular '$manual_basename.pdf'" : ()),
-		  ];
-	}
-	elsif ($option_output_pdf)
-	{
-	    $commands
-		= [
-		   ($option_view ? "okular '$manual_basename.pdf'" : ()),
-		  ];
-	}
-
-	execute_shell_command_array($commands);
+	$commands
+	    = [
+	       "cd '$directory'",
+	       "pandoc '$manual_filename' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
+	       ($option_remove_intermediate_files ? "rm '$manual_filename'" : ()),,
+	       ($option_view ? "okular '$manual_basename.pdf'" : ()),
+	      ];
     }
+    elsif ($option_output_pdf)
+    {
+	$commands
+	    = [
+	       "cd '$directory'",
+	       ($option_view ? "okular '$manual_basename.pdf'" : ()),
+	      ];
+    }
+
+    execute_shell_command_array($commands);
 
     # return the error (code)
 
-    return not $ok;
+    return '';
 }
 
 
@@ -13873,6 +13880,45 @@ sub volatile_section_data_write
     YAML::PP::DumpFile($pathname_full, $data);
 
     return undef;
+}
+
+
+sub volatile_section_file_write
+{
+    my ($section, $pathname, $data) = @_;
+
+    my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
+
+    if (defined $option_verbose
+	and ($option_verbose > 1
+	     and $debug_volatile_access))
+    {
+	print STDERR "volatile_section_file_write(): '$pathname_full'\n";
+    }
+
+    my $directory = $pathname_full;
+
+    $directory =~ s{/[^/]+\z}{};
+
+    my $error = Utilities::create_directories($directory);
+
+    return $error
+        if defined $error;
+
+    my $file;
+
+    my $ok = open($file, ">", $pathname_full);
+
+    if (not $ok)
+    {
+	return "cannot open $pathname_full for writing ($!)";
+    }
+
+    print $file $data;
+
+    $ok = close($file);
+
+    return $ok;
 }
 
 
