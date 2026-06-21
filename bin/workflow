@@ -5162,7 +5162,7 @@ sub builtin_docker_containers_start
 	    execute_shell_command_array($commands, { allow_fail => 'if the container does not exist' } );
 	}
 
-	my $options_run = $docker_container->{options_run} || "--rm";
+	my $options_run = $docker_container->{options_run} || ''; # || "--rm";
 
 	my $shared_volumes_option = '';
 
@@ -5406,7 +5406,7 @@ sub builtin_docker_images_build
 	    = [
 	       "cd $dockerfile_directory",
 	       # "$docker_command buildx build --load --tag $name_image --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $dockerfile .",
-	       "$docker_command build --tag $name_image --build-arg USERNAME=$USER_NAME --build-arg USERID=$USER_ID --build-arg GID=$GROUP_ID --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $dockerfile .",
+	       "$docker_command build --tag $name_image --build-arg CACHEBUSTER=\"\$(date +%s)\" --build-arg USERNAME=$USER_NAME --build-arg USERID=$USER_ID --build-arg GID=$GROUP_ID --build-arg USER_NAME=$USER_NAME --build-arg USER_ID=$USER_ID --build-arg GROUP_ID=$GROUP_ID $build_args_option --file $project_name-configuration-data/dockerfiles/$dockerfile .",
 	      ];
 
 	execute_shell_command_array($commands);
@@ -10142,7 +10142,7 @@ sub working_directory_for_interaction_role_apply
     # elsif ($interaction_role =~ m(^docker_script_))
     elsif ($interaction_role =~ m(^docker_))
     {
-       $result = "\"bash -ic '$shell_command'\" /dev/null";
+       $result = "bash -ic '$shell_command' /dev/null";
     }
     elsif ($interaction_role =~ m(^docker_))
     {

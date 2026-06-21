@@ -3,7 +3,7 @@ command: 'feature-testing-workflow builtin docker_containers_start docker_source
 command_tests:
   - description: Can we start role based Docker containers?
     read: |2
-      # docker run --rm -d -t  --name docker_source_code_container docker_source_code_image 
+      # docker run  -d -t  --name docker_source_code_container docker_source_code_image 
       #
     timeout: 10
     white_space: convert seen 0a to 0d 0a newlines

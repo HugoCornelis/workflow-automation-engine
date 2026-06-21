@@ -13,7 +13,6 @@ my $test
 						  {
 						   description => "Can we merge several partial test specifications and then run these merged tests?",
 						   read => "*** 
----
 description:
   command: /usr/local/bin/vigilia
   name: Test report
