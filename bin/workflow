@@ -6504,16 +6504,182 @@ $global_command_line
 
 sub builtin_manual_completor
 {
-    my $options_completions
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    my $bash_variables = $analysis->{bash} || {};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    if (not defined $string_before_point)
+    {
+	my $command_line = $bash_variables->{command_line} || '';
+
+	my $comp_point = $bash_variables->{comp_point};
+
+	$comp_point = length($command_line)
+	    if not defined $comp_point;
+
+	$string_before_point = substr $command_line, 0, $comp_point;
+    }
+
+    my $current_word_is_complete
+	= $string_before_point =~ /\s\z/;
+
+    my $operation_arguments = [ @$complete_arguments_array ];
+
+    # The dispatcher passes the workflow arguments without the shell command,
+    # but including the target and operation.  Keep only the arguments that
+    # belong to `workflow builtin manual ...`.
+
+    if (@$operation_arguments >= 2
+	and $operation_arguments->[0] eq 'builtin'
+	and $operation_arguments->[1] eq 'manual')
+    {
+	splice @$operation_arguments, 0, 2;
+    }
+
+    # Only complete against words that are already finished.  When the cursor
+    # is still inside a word, bash_completion_generate() receives the same
+    # dynamic tree and bash filters it with the current word prefix.
+
+    my $completed_operation_arguments = [ @$operation_arguments ];
+
+    if (not $current_word_is_complete
+	and scalar @$completed_operation_arguments)
+    {
+	pop @$completed_operation_arguments;
+    }
+
+    my $option_descriptions
 	= {
-	   '--' => {
-		    '--input-md' => '',
-		    '--input-rst' => '',
-		    '--output-pdf' => '',
-		    '--remove-intermediate-files' => '',
-		    '--view' => '',
-		   },
+	   '--input-md' => 'assume an input format of Markdown',
+	   '--input-rst' => 'assume an input format of ReStructuredText',
+	   '--no-input-md' => 'do not assume an input format of Markdown',
+	   '--no-input-rst' => 'do not assume an input format of ReStructuredText',
+	   '--output-pdf' => 'generate a PDF document',
+	   '--no-output-pdf' => 'do not generate a PDF document',
+	   '--remove-intermediate-files' => 'remove intermediate files',
+	   '--no-remove-intermediate-files' => 'keep intermediate files',
+	   '--view' => 'start okular on the generated PDF document',
+	   '--no-view' => 'do not start okular on the generated PDF document',
 	  };
+
+    my $option_names = [ sort keys %$option_descriptions ];
+
+    my $used_options
+	= {
+	   map
+	   {
+	       $_ => 1;
+	   }
+	   grep
+	   {
+	       exists $option_descriptions->{$_};
+	   }
+	   @$operation_arguments,
+	  };
+
+    my $available_options
+	= {
+	   map
+	   {
+	       $_ => $option_descriptions->{$_};
+	   }
+	   grep
+	   {
+	       not $used_options->{$_};
+	   }
+	   @$option_names,
+	  };
+
+    my $option_separator_seen
+	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
+
+    my $arguments_before_options
+	= [ grep { $_ ne '--' and not exists $option_descriptions->{$_}; } @$completed_operation_arguments ];
+
+    my $target_argument_seen = scalar @$arguments_before_options >= 1;
+
+    my $manual_type_seen = scalar @$arguments_before_options >= 2;
+
+    my $all_targets = {};
+
+    if (ref $global_technical_project_configuration eq 'HASH'
+	and ref $global_technical_project_configuration->{targets} eq 'HASH')
+    {
+	$all_targets = $global_technical_project_configuration->{targets};
+    }
+
+    my $target_completions
+	= {
+	   '0.Optional_argument:<target-regex>' => '',
+	   'builtin' => '',
+	   map
+	   {
+	       $_ => '';
+	   }
+	   sort keys %$all_targets,
+	  };
+
+    my $manual_type_completions
+	= {
+	   '1.Optional_argument:<manual-type>' => '',
+	   'specification' => '',
+	  };
+
+    my $leaf_completions;
+
+    if ($option_separator_seen)
+    {
+	# A command-specific option separator is already present before the
+	# current word.  Complete the options accepted by Getopt::Long.  Because
+	# builtin_manual uses bang options, also expose the corresponding
+	# --no-* forms.
+
+	$leaf_completions = $available_options;
+    }
+    elsif ($manual_type_seen)
+    {
+	$leaf_completions
+	    = {
+	       '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options' => '',
+	       '--' => $available_options,
+	      };
+    }
+    elsif ($target_argument_seen)
+    {
+	$leaf_completions
+	    = {
+	       %$manual_type_completions,
+	       '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options' => '',
+	       '--' => $available_options,
+	      };
+    }
+    else
+    {
+	$leaf_completions
+	    = {
+	       %$target_completions,
+	       '1.Default_target_without_project:_builtin' => '',
+	       '1.Default_target_with_project:_everything_except_builtin' => '',
+	       '2.Optional_manual_type:_specification' => '',
+	       '3.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options' => '',
+	       '--' => $available_options,
+	      };
+    }
+
+    my $completions = $leaf_completions;
+
+    foreach my $argument (reverse @$completed_operation_arguments)
+    {
+	$completions = { $argument => $completions };
+    }
+
+    return $completions;
 }
 
 
