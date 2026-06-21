@@ -74,7 +74,6 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 						       {
 							description => "Can we inspect the commands that will be run during the tests ?",
 							read => "*** 
----
 description:
   command: /usr/local/bin/vigilia
   name: Test report
@@ -110,7 +109,6 @@ No email sent.
 						       {
 							description => "Can we inspect the command tests that will be run using the regular options ?",
 							read => "*** 
----
 description:
   command: /usr/local/bin/vigilia
   name: Test report
@@ -140,7 +138,6 @@ No email sent.
 						       {
 							description => "Can we inspect the command tests that will be run using the YAML output formatter ?",
 							read => "*** 
----
 description:
   command: /usr/local/bin/vigilia
   name: Test report
@@ -169,7 +166,6 @@ No email sent.
 						       {
 							description => "Can we convert the test specifications to a YAML formatted summary ?",
 							read => "*** 
----
 description:
   command: /usr/local/bin/vigilia
   name: Test report
@@ -205,7 +201,6 @@ No email sent.
 							comment => "It is not entirely clear what exactly Heterarch::Test::Output::List should do and how it can be useful.",
 							description => "Can we list the constructs used in the test specifications ?",
 							read => "*** 
----
 description:
   command: /usr/local/bin/vigilia
   name: Test report
