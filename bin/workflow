@@ -5162,7 +5162,7 @@ sub builtin_docker_containers_start
 	    execute_shell_command_array($commands, { allow_fail => 'if the container does not exist' } );
 	}
 
-	my $options_run = $docker_container->{options_run} || "--rm";
+	my $options_run = $docker_container->{options_run} || ''; # || "--rm";
 
 	my $shared_volumes_option = '';
 

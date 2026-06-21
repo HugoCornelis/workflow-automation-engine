@@ -15,7 +15,7 @@ command_tests:
       
       
       WORKFLOW: builtin_docker_containers_start (use --help to see the help page)
-          'docker run --rm -d -t  --name docker_source_code_container docker_source_code_image '
+          'docker run  -d -t  --name docker_source_code_container docker_source_code_image '
       ---
       END WORKFLOW: builtin_docker_containers_start
       
