@@ -10142,7 +10142,7 @@ sub working_directory_for_interaction_role_apply
     # elsif ($interaction_role =~ m(^docker_script_))
     elsif ($interaction_role =~ m(^docker_))
     {
-       $result = "\"bash -ic '$shell_command'\" /dev/null";
+       $result = "bash -ic '$shell_command' /dev/null";
     }
     elsif ($interaction_role =~ m(^docker_))
     {
