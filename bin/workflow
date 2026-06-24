@@ -1109,6 +1109,164 @@ sub _builtin_add_workflow_filename
 }
 
 
+sub _builtin_completor_expander
+{
+    my %parameters = @_;
+
+    my $after_positional_completions = $parameters{after_positional_completions} || {};
+    my $analysis = $parameters{analysis} || {};
+    my $complete_arguments_array = $parameters{complete_arguments_array} || [];
+    my $operation_path = $parameters{operation_path} || [];
+    my $option_descriptions = $parameters{option_descriptions} || {};
+    my $positional_arguments = $parameters{positional_arguments} || [];
+
+    my $bash_variables = $analysis->{bash} || {};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    my $current_word_is_complete = $string_before_point =~ /\s\z/;
+
+    # figure out the operation path
+
+    my $operation_arguments = [ @$complete_arguments_array ];
+
+    if (scalar @$operation_arguments >= scalar @$operation_path)
+    {
+	my $operation_path_matches = 1;
+
+	foreach my $index (0 .. scalar(@$operation_path) - 1)
+	{
+	    if ($operation_arguments->[$index] ne $operation_path->[$index])
+	    {
+		$operation_path_matches = 0;
+
+		last;
+	    }
+	}
+
+	if ($operation_path_matches)
+	{
+	    splice @$operation_arguments, 0, scalar @$operation_path;
+	}
+    }
+
+    # When the cursor is inside a word, bash_completion_generate() will filter
+    # the returned candidates with that current word.  Therefore the dynamic
+    # tree below must only contain the arguments that are complete and located
+    # before the current word.
+
+    my $completed_operation_arguments = [ @$operation_arguments ];
+
+    if (not $current_word_is_complete
+	and scalar @$completed_operation_arguments)
+    {
+	pop @$completed_operation_arguments;
+    }
+
+    my $option_names = [ sort keys %$option_descriptions ];
+
+    my $used_options
+	= {
+	   map
+	   {
+	       $_ => 1;
+	   }
+	   grep
+	   {
+	       exists $option_descriptions->{$_};
+	   }
+	   @$completed_operation_arguments,
+	  };
+
+    # available options are those that are not used yet
+
+    my $available_options
+	= {
+	   map
+	   {
+	       $_ => $option_descriptions->{$_};
+	   }
+	   grep
+	   {
+	       not $used_options->{$_};
+	   }
+	   @$option_names,
+	  };
+
+    # has the option separator been seen?
+
+    my $completed_separator_seen
+	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
+
+    # what are the already seen arguments / non-options?
+
+    my $completed_positional_arguments
+	= [
+	   grep
+	   {
+	       $_ ne '--'
+		   and not exists $option_descriptions->{$_};
+	   }
+	   @$completed_operation_arguments,
+	  ];
+
+    my $completed_positional_argument_count = scalar @$completed_positional_arguments;
+
+    my $leaf_completions;
+
+    if ($completed_separator_seen)
+    {
+	# A command-specific option separator is already present before the
+	# current word.  Therefore a second `--` being typed is the prefix of
+	# the actual command-specific options, so return the available options.
+
+	$leaf_completions = $available_options;
+    }
+    elsif ($completed_positional_argument_count < scalar @$positional_arguments)
+    {
+	my $positional_argument = $positional_arguments->[$completed_positional_argument_count] || {};
+
+	my $positional_completions = $positional_argument->{completions} || {};
+
+	#! for future expansion only
+
+	# if (ref $positional_completions eq 'CODE')
+	# {
+	#     $positional_completions = &$positional_completions();
+	# }
+
+	my $option_separator_hint = $positional_argument->{option_separator_hint};
+
+	$leaf_completions
+	    = {
+	       %$positional_completions,
+	       (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
+	       (scalar keys %$available_options ? ('--' => '') : ()),
+	      };
+    }
+    else
+    {
+	my $option_separator_hint = $parameters{after_positional_option_separator_hint};
+
+	$leaf_completions
+	    = {
+	       %$after_positional_completions,
+	       (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
+	       (scalar keys %$available_options ? ('--' => '') : ()),
+	      };
+    }
+
+    my $completions = $leaf_completions;
+
+    foreach my $argument (reverse @$completed_operation_arguments)
+    {
+	$completions = { $argument => $completions };
+    }
+
+    return $completions;
+}
+
+
 sub _builtin_configuration_browser_code
 {
     my $code = '($0 =~ m(.*/(\S+)));
@@ -6517,102 +6675,6 @@ sub builtin_manual_completor
 
     my $analysis = shift || {};
 
-    my $bash_variables = $analysis->{bash} || {};
-
-    my $string_before_point = $analysis->{string_before_point};
-
-    if (not defined $string_before_point)
-    {
-	my $command_line = $bash_variables->{command_line} || '';
-
-	my $comp_point = $bash_variables->{comp_point};
-
-	$comp_point = length($command_line)
-	    if not defined $comp_point;
-
-	$string_before_point = substr $command_line, 0, $comp_point;
-    }
-
-    my $current_word_is_complete
-	= $string_before_point =~ /\s\z/;
-
-    my $operation_arguments = [ @$complete_arguments_array ];
-
-    # The dispatcher passes the workflow arguments without the shell command,
-    # but including the target and operation.  Keep only the arguments that
-    # belong to `workflow builtin manual ...`.
-
-    if (@$operation_arguments >= 2
-	and $operation_arguments->[0] eq 'builtin'
-	and $operation_arguments->[1] eq 'manual')
-    {
-	splice @$operation_arguments, 0, 2;
-    }
-
-    # Only complete against words that are already finished.  When the cursor
-    # is still inside a word, bash_completion_generate() receives the same
-    # dynamic tree and bash filters it with the current word prefix.
-
-    my $completed_operation_arguments = [ @$operation_arguments ];
-
-    if (not $current_word_is_complete
-	and scalar @$completed_operation_arguments)
-    {
-	pop @$completed_operation_arguments;
-    }
-
-    my $option_descriptions
-	= {
-	   '--input-md' => 'assume an input format of Markdown',
-	   '--input-rst' => 'assume an input format of ReStructuredText',
-	   '--no-input-md' => 'do not assume an input format of Markdown',
-	   '--no-input-rst' => 'do not assume an input format of ReStructuredText',
-	   '--output-pdf' => 'generate a PDF document',
-	   '--no-output-pdf' => 'do not generate a PDF document',
-	   '--remove-intermediate-files' => 'remove intermediate files',
-	   '--no-remove-intermediate-files' => 'keep intermediate files',
-	   '--view' => 'start okular on the generated PDF document',
-	   '--no-view' => 'do not start okular on the generated PDF document',
-	  };
-
-    my $option_names = [ sort keys %$option_descriptions ];
-
-    my $used_options
-	= {
-	   map
-	   {
-	       $_ => 1;
-	   }
-	   grep
-	   {
-	       exists $option_descriptions->{$_};
-	   }
-	   @$operation_arguments,
-	  };
-
-    my $available_options
-	= {
-	   map
-	   {
-	       $_ => $option_descriptions->{$_};
-	   }
-	   grep
-	   {
-	       not $used_options->{$_};
-	   }
-	   @$option_names,
-	  };
-
-    my $option_separator_seen
-	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
-
-    my $arguments_before_options
-	= [ grep { $_ ne '--' and not exists $option_descriptions->{$_}; } @$completed_operation_arguments ];
-
-    my $target_argument_seen = scalar @$arguments_before_options >= 1;
-
-    my $manual_type_seen = scalar @$arguments_before_options >= 2;
-
     my $all_targets = {};
 
     if (ref $global_technical_project_configuration eq 'HASH'
@@ -6621,72 +6683,50 @@ sub builtin_manual_completor
 	$all_targets = $global_technical_project_configuration->{targets};
     }
 
-    my $target_completions
-	= {
-	   '0.Optional_argument:<target-regex>' => '',
-	   'builtin' => '',
-	   map
-	   {
-	       $_ => '';
-	   }
-	   sort keys %$all_targets,
-	  };
-
-    my $manual_type_completions
-	= {
-	   '1.Optional_argument:<manual-type>' => '',
-	   'specification' => '',
-	  };
-
-    my $leaf_completions;
-
-    if ($option_separator_seen)
-    {
-	# A command-specific option separator is already present before the
-	# current word.  Complete the options accepted by Getopt::Long.  Because
-	# builtin_manual uses bang options, also expose the corresponding
-	# --no-* forms.
-
-	$leaf_completions = $available_options;
-    }
-    elsif ($manual_type_seen)
-    {
-	$leaf_completions
-	    = {
-	       '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options' => '',
-	       '--' => $available_options,
-	      };
-    }
-    elsif ($target_argument_seen)
-    {
-	$leaf_completions
-	    = {
-	       %$manual_type_completions,
-	       '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options' => '',
-	       '--' => $available_options,
-	      };
-    }
-    else
-    {
-	$leaf_completions
-	    = {
-	       %$target_completions,
-	       '1.Default_target_without_project:_builtin' => '',
-	       '1.Default_target_with_project:_everything_except_builtin' => '',
-	       '2.Optional_manual_type:_specification' => '',
-	       '3.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options' => '',
-	       '--' => $available_options,
-	      };
-    }
-
-    my $completions = $leaf_completions;
-
-    foreach my $argument (reverse @$completed_operation_arguments)
-    {
-	$completions = { $argument => $completions };
-    }
-
-    return $completions;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin manual) ],
+	 option_descriptions => {
+				 '--input-md' => 'assume an input format of Markdown',
+				 '--input-rst' => 'assume an input format of ReStructuredText',
+				 '--no-input-md' => 'do not assume an input format of Markdown',
+				 '--no-input-rst' => 'do not assume an input format of ReStructuredText',
+				 '--output-pdf' => 'generate a PDF document',
+				 '--no-output-pdf' => 'do not generate a PDF document',
+				 '--remove-intermediate-files' => 'remove intermediate files',
+				 '--no-remove-intermediate-files' => 'keep intermediate files',
+				 '--view' => 'start okular on the generated PDF document',
+				 '--no-view' => 'do not start okular on the generated PDF document',
+				},
+	 positional_arguments => [
+				  {
+				   completions => {
+						   '0.Optional_argument:<target-regex>' => '',
+						   '1.Default_target_without_project:_builtin' => '',
+						   '1.Default_target_with_project:_everything_except_builtin' => '',
+						   '2.Optional_manual_type:_specification' => '',
+						   'builtin' => '',
+						   (map
+						    {
+							$_ => '';
+						    }
+						    sort
+						    keys %$all_targets),
+						  },
+				   option_separator_hint => '3.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options',
+				  },
+				  {
+				   completions => {
+						   '1.Optional_argument:<manual-type>' => '',
+						   'specification' => '',
+						  },
+				   option_separator_hint => '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options',
+				  },
+				 ],
+	 after_positional_option_separator_hint => '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options',
+	);
 }
 
 
@@ -7325,140 +7365,30 @@ sub builtin_project_start_completor
 
     my $analysis = shift || {};
 
-    my $bash_variables = $analysis->{bash} || {};
-
-    my $string_before_point = $analysis->{string_before_point};
-
-    if (not defined $string_before_point)
-    {
-	my $command_line = $bash_variables->{command_line} || '';
-
-	my $comp_point = $bash_variables->{comp_point};
-
-	$comp_point = length($command_line)
-	    if not defined $comp_point;
-
-	$string_before_point = substr $command_line, 0, $comp_point;
-    }
-
-    my $current_word_is_complete
-	= $string_before_point =~ /\s\z/;
-
-    my $operation_arguments = [ @$complete_arguments_array ];
-
-    # The dispatcher passes the workflow arguments without the shell command,
-    # but including the target and operation.  Keep only the arguments that
-    # belong to `workflow builtin project_start ...`.
-
-    if (@$operation_arguments >= 2
-	and $operation_arguments->[0] eq 'builtin'
-	and $operation_arguments->[1] eq 'project_start')
-    {
-	splice @$operation_arguments, 0, 2;
-    }
-
-    # When the cursor is inside a word, bash_completion_generate() will filter
-    # the returned candidates with that current word.  Therefore the dynamic
-    # tree below must only contain the arguments that are complete and located
-    # before the current word.
-
-    my $completed_operation_arguments = [ @$operation_arguments ];
-
-    if (not $current_word_is_complete
-	and scalar @$completed_operation_arguments)
-    {
-	pop @$completed_operation_arguments;
-    }
-
-    my $option_descriptions
-	= {
-	   '--minimal' => "create a minimal configuration without the examples",
-	   '--perl' => "add the perl examples to the configuration",
-	   '--python' => "add the python examples to the configuration",
-	   '--shell' => "add the shell examples to the configuration",
-	  };
-
-    my $option_names = [ sort keys %$option_descriptions ];
-
-    my $used_options
-	= {
-	   map
-	   {
-	       $_ => 1;
-	   }
-	   grep
-	   {
-	       exists $option_descriptions->{$_};
-	   }
-	   @$operation_arguments,
-	  };
-
-    my $available_options
-	= {
-	   map
-	   {
-	       $_ => $option_descriptions->{$_};
-	   }
-	   grep
-	   {
-	       not $used_options->{$_};
-	   }
-	   @$option_names,
-	  };
-
-    my $completed_separator_seen
-	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
-
-    my $completed_project_name_seen
-	= scalar grep { $_ ne '--' and not exists $option_descriptions->{$_}; } @$completed_operation_arguments;
-
-    my $leaf_completions;
-
-    if ($completed_separator_seen)
-    {
-	# A command-specific option separator is already present before the
-	# current word.  Therefore a second `--` being typed is the prefix of
-	# the actual project_start options, so return the available options.
-
-	$leaf_completions = $available_options;
-    }
-    elsif ($completed_project_name_seen)
-    {
-	# The single required argument is present.  The next useful completion is
-	# the separator that lets command-specific options pass through the
-	# workflow-global option parser.
-
-	$leaf_completions
-	    = {
-	       '0.Type_--_then_--minimal_--perl_--python_--shell_for_options' => '',
-	       '--' => '',
-	      };
-    }
-    else
-    {
-	# No completed project name has been given yet.  Keep this close to the
-	# original help-style completions: show the required argument and make the
-	# option names visible without pretending they are valid before the project
-	# name.
-
-	$leaf_completions
-	    = {
-	       '0.Necessary_argument:' => 'help message',
-	       '<project_name>' => 'name of the new project',
-	       '1.Available_options_after_project_name:_--minimal_--perl_--python_--shell' => '',
-	       '--' => $available_options,
-	      };
-    }
-
-    my $completions = $leaf_completions;
-
-    foreach my $argument (reverse @$completed_operation_arguments)
-    {
-	$completions = { $argument => $completions };
-    }
-
-    return $completions;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin project_start) ],
+	 option_descriptions => {
+				 '--minimal' => "create a minimal configuration without the examples",
+				 '--perl' => "add the perl examples to the configuration",
+				 '--python' => "add the python examples to the configuration",
+				 '--shell' => "add the shell examples to the configuration",
+				},
+	 positional_arguments => [
+				{
+				 completions => {
+						 '0.Necessary_argument:' => 'help message',
+						 '<project_name>' => 'name of the new project',
+					       },
+				 option_separator_hint => '1.Available_options_after_project_name:_--minimal_--perl_--python_--shell',
+				},
+			       ],
+	 after_positional_option_separator_hint => '0.Type_--_then_--minimal_--perl_--python_--shell_for_options',
+	);
 }
+
 
 sub builtin_project_start_help
 {
