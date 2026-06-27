@@ -1222,38 +1222,54 @@ sub _builtin_completor_expander
 
 	$leaf_completions = $available_options;
     }
-    elsif ($completed_positional_argument_count < scalar @$positional_arguments)
-    {
-	my $positional_argument = $positional_arguments->[$completed_positional_argument_count] || {};
-
-	my $positional_completions = $positional_argument->{completions} || {};
-
-	#! for future expansion only
-
-	# if (ref $positional_completions eq 'CODE')
-	# {
-	#     $positional_completions = &$positional_completions();
-	# }
-
-	my $option_separator_hint = $positional_argument->{option_separator_hint};
-
-	$leaf_completions
-	    = {
-	       %$positional_completions,
-	       (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
-	       (scalar keys %$available_options ? ('--' => '') : ()),
-	      };
-    }
     else
     {
-	my $option_separator_hint = $parameters{after_positional_option_separator_hint};
+	my $positional_argument_index = $completed_positional_argument_count;
 
-	$leaf_completions
-	    = {
-	       %$after_positional_completions,
-	       (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
-	       (scalar keys %$available_options ? ('--' => '') : ()),
-	      };
+	if ($positional_argument_index >= scalar @$positional_arguments
+	    and scalar @$positional_arguments)
+	{
+	    my $last_positional_argument = $positional_arguments->[-1] || {};
+
+	    if ($last_positional_argument->{repeatable})
+	    {
+		$positional_argument_index = scalar(@$positional_arguments) - 1;
+	    }
+	}
+
+	if ($positional_argument_index < scalar @$positional_arguments)
+	{
+	    my $positional_argument = $positional_arguments->[$positional_argument_index] || {};
+
+	    my $positional_completions = $positional_argument->{completions} || {};
+
+	    #! for future expansion only
+
+	    # if (ref $positional_completions eq 'CODE')
+	    # {
+	    #     $positional_completions = &$positional_completions();
+	    # }
+
+	    my $option_separator_hint = $positional_argument->{option_separator_hint};
+
+	    $leaf_completions
+		= {
+		   %$positional_completions,
+		   (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
+		   (scalar keys %$available_options ? ('--' => '') : ()),
+		  };
+	}
+	else
+	{
+	    my $option_separator_hint = $parameters{after_positional_option_separator_hint};
+
+	    $leaf_completions
+		= {
+		   %$after_positional_completions,
+		   (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
+		   (scalar keys %$available_options ? ('--' => '') : ()),
+		  };
+	}
     }
 
     my $completions = $leaf_completions;
