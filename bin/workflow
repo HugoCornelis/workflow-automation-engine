@@ -12883,6 +12883,14 @@ sub _python_print_to_stderr
 }
 
 
+sub _python_builtin_completor_expander
+{
+    my $parameters = shift || {};
+
+    return Command::_builtin_completor_expander(%$parameters);
+}
+
+
 package FieldProject;
 
 sub _init_do_eval_python_file
@@ -12979,8 +12987,9 @@ execute_command_schedule_array = None
 execute_shell_script_remote = None
 print_to_stdout = None
 print_to_stderr = None
+_builtin_completor_expander = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_builtin_completor_expander):
     global execute_command
     global execute_command_array
     global execute_command_schedule
@@ -12988,6 +12997,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     global execute_shell_script_remote
     global print_to_stdout
     global print_to_stderr
+    global _builtin_completor_expander
     execute_command = exe_command
     execute_command_array = exe_command_array
     execute_command_schedule = exe_command_schedule
@@ -12995,11 +13005,12 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     execute_shell_script_remote = exe_shell_script_remote
     print_to_stdout = ref_print_to_stdout
     print_to_stderr = ref_print_to_stderr
+    _builtin_completor_expander = ref_builtin_completor_expander
 
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_builtin_completor_expander);
 
 ";
 	my $commands_template_code
