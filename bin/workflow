@@ -1283,6 +1283,117 @@ sub _builtin_completor_expander
 }
 
 
+sub _builtin_completor_pdf_filename_completions
+{
+    return
+    {
+     '1.<pdf-file>' => '',
+     map
+     {
+	 my $filename = $_;
+
+	 # The generated bash completion script feeds candidates through
+	 # compgen -W.  Escaping whitespace keeps common file names with spaces
+	 # usable without changing the completion protocol used elsewhere.
+
+	 $filename =~ s/(\s)/\\$1/g;
+
+	 $filename => '';
+     }
+     sort
+     grep
+     {
+	 -f $_ and /\.pdf\z/i;
+     }
+     glob('*'),
+    };
+}
+
+
+sub _builtin_completor_role_name_completions
+{
+    my $matcher = shift || '.*';
+
+    my $hint = shift;
+
+    my $matching_roles = _roles_select($matcher);
+
+    return
+    {
+     (defined $hint ? ($hint => '') : ()),
+     map
+     {
+	 $_ => '';
+     }
+     sort keys %$matching_roles,
+    };
+}
+
+
+sub _builtin_completor_target_name_completions
+{
+    my $hint = shift;
+
+    my $all_targets = $global_technical_project_configuration->{targets} || {};
+
+    return
+    {
+     (defined $hint ? ($hint => '') : ()),
+     map
+     {
+	 $_ => '';
+     }
+     sort keys %$all_targets,
+    };
+}
+
+
+sub _builtin_completor_workflow_filename_completions
+{
+    my $value = shift || '';
+
+    my $hint = shift;
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames} || [];
+
+    return
+    {
+     (defined $hint ? ($hint => '') : ()),
+     map
+     {
+	 $_ => $value;
+     }
+     @$workflow_filenames,
+    };
+}
+
+
+sub _builtin_completor_workflow_operation_completions
+{
+    my $operations = main::operation_hash_typed_generate();
+
+    my $completions = {};
+
+    foreach my $operation (sort keys %$operations)
+    {
+	my $operation_with_underscore = $operation;
+
+	$operation_with_underscore =~ s/ /_/g;
+
+	$completions->{$operation_with_underscore} = '';
+	$completions->{"Command::$operation_with_underscore"} = '';
+    }
+
+    return $completions;
+}
+
+
 sub _builtin_configuration_browser_code
 {
     my $code = '($0 =~ m(.*/(\S+)));
