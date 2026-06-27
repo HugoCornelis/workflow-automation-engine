@@ -4871,14 +4871,27 @@ sub builtin_configuration_archive_completor
 {
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $completions_hash
-	= {
-	   ".tar.gz" => '',
-	  };
+    my $analysis = shift || {};
 
-    return $completions_hash;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin configuration_archive) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<tarball-name>' => '',
+						 '.tar.gz' => '',
+						 '.tar.bz2' => '',
+						 '.tgz' => '',
+						 '.tbz' => '',
+					       },
+				},
+			       ],
+	);
 }
 
 
@@ -5126,42 +5139,28 @@ sub builtin_configuration_install_completor
 {
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $option_descriptions
-	= {
-	   '--aliasses' => "configure the grc aliases in .bashrc if they are not there yet.",
-	   '--bash-completion' => "configure bash completion in .bashrc if they are not there yet.",
-	   '--commands' => "install or upgrade the command configuration to ~/bin or ~/.local/bin.",
-	   '--engine' => "create a symbolic link to the workflow engine in ~/bin or ~/.local/bin.",
-	   '--force' => "don't use this.",
-	   '--git' => "create a git repository for the workflow configuration.",
-	   '--grc-configuration' => "install symbolic links for grc configuration to color code the workflow output (requires sudo access).",
-	   '--path-in-bashrc' => "update .bashrc to include ~/bin or ~/.local/bin in PATH.",
-	   '--report' => "report on what is being done.",
-	  };
+    my $analysis = shift || {};
 
-    my $option_keys = [ keys %$option_descriptions ];
-
-    my $depth = scalar @$option_keys;
-
-    my $options_completions_hash
-	= {
-	   '--' => {
-		    map
-		    {
-			$_ => _build_completion_tree(
-						     $option_keys,
-						     $depth - 1,
-						     { $_ => 1 },
-						     'yes',
-						    )
-		    }
-		    @$option_keys
-		   },
-	  };
-
-    return $options_completions_hash;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin configuration_install) ],
+	 option_descriptions => {
+				 '--aliasses' => 'configure the grc aliases in .bashrc if they are not there yet',
+				 '--bash-completion' => 'configure bash completion in .bashrc if they are not there yet',
+				 '--commands' => 'install or upgrade the command configuration to ~/bin or ~/.local/bin',
+				 '--engine' => 'create a symbolic link to the workflow engine in ~/bin or ~/.local/bin',
+				 '--force' => "don't use this",
+				 '--git' => 'create a git repository for the workflow configuration',
+				 '--grc-configuration' => 'install grc configuration links for color-coded workflow output',
+				 '--path-in-bashrc' => 'update .bashrc to include ~/bin or ~/.local/bin in PATH',
+				 '--report' => 'report on what is being done',
+				},
+	 after_positional_option_separator_hint => '0.Type_--_then_installation_options',
+	);
 }
 
 
@@ -5305,27 +5304,30 @@ sub builtin_docker_containers_start
 
 sub builtin_docker_containers_start_completor
 {
-    my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
+    my $complete_command_string = shift;
 
-    my $option_completions
-	= {
-	   '--' => {
-		    '--restart' => '',
-		    '--no-restart' => '',
-		   },
-	  };
+    my $complete_arguments_array = shift || [];
 
-    my $result
-	= {
-	   ( "1.Type-a-role-name:" => $option_completions),
-	   map
-	   {
-	       $_ => $option_completions;
-	   }
-	   @$docker_roles,
-	  };
+    my $analysis = shift || {};
 
-    return $result;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin docker_containers_start) ],
+	 option_descriptions => {
+				 '--restart' => 'stop, then start the Docker container',
+				 '--no-restart' => 'do not restart the Docker container',
+				},
+	 positional_arguments => [
+				{
+				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 option_separator_hint => '2.Type_--_then_--restart_or_--no-restart_for_options',
+				 repeatable => 'yes',
+				},
+			       ],
+	 after_positional_option_separator_hint => '2.Type_--_then_--restart_or_--no-restart_for_options',
+	);
 }
 
 
@@ -5397,19 +5399,28 @@ sub builtin_docker_exec
 
 sub builtin_docker_exec_completor
 {
-    my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
+    my $complete_command_string = shift;
 
-    my $result
-	= {
-	   ( "1.Type-a-role-name:" => ''),
-	   map
-	   {
-	       $_ => '';
-	   }
-	   @$docker_roles,
-	  };
+    my $complete_arguments_array = shift || [];
 
-    return $result;
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin docker_exec) ],
+	 positional_arguments => [
+				{
+				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				},
+				{
+				 completions => {
+						 '2.<command-to-run-inside-the-container>' => '',
+					       },
+				},
+			       ],
+	);
 }
 
 
@@ -5531,19 +5542,24 @@ sub builtin_docker_images_build
 
 sub builtin_docker_images_build_completor
 {
-    my $docker_roles = [ sort keys %{_roles_select('^docker_')} ];
+    my $complete_command_string = shift;
 
-    my $result
-	= {
-	   ( "1.Type-a-role-name:" => ''),
-	   map
-	   {
-	       $_ => '';
-	   }
-	   @$docker_roles,
-	  };
+    my $complete_arguments_array = shift || [];
 
-    return $result;
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin docker_images_build) ],
+	 positional_arguments => [
+				{
+				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 repeatable => 'yes',
+				},
+			       ],
+	);
 }
 
 
@@ -5711,11 +5727,31 @@ sub builtin_grep_code
 
 sub builtin_grep_code_completor
 {
-    return
-    {
-     "1.<search-regex>" => '',
-     "2.[<project-name-regex>...]" => '',
-    };
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin grep_code) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<search-regex>' => '',
+					       },
+				},
+				{
+				 completions => {
+						 '2.[<project-name-regex>...]' => '',
+					       },
+				 repeatable => 'yes',
+				},
+			       ],
+	);
 }
 
 
@@ -5990,12 +6026,38 @@ sub builtin_grep_commands
 
 sub builtin_grep_commands_completor
 {
-    return
-    {
-     "1.<target-regex>" => '',
-     "2.<commands-regex>" => '',
-     "3.[<project-name-regex>...]" => '',
-    };
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin grep_commands) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<target-regex>' => '',
+						 ':all' => '',
+					       },
+				},
+				{
+				 completions => {
+						 '2.<commands-regex>' => '',
+						 ':all' => '',
+					       },
+				},
+				{
+				 completions => {
+						 '3.[<project-name-regex>...]' => '',
+					       },
+				 repeatable => 'yes',
+				},
+			       ],
+	);
 }
 
 
@@ -6116,72 +6178,33 @@ sub builtin_lint
 
 sub builtin_lint_completor
 {
-    # ($operation_name,
-    #  $arguments,
-    #  {
-    #   bash => {
-    # 	   command_line => $command_line,
-    # 	   comp_cword => $comp_cword,
-    # 	   comp_point => $comp_point,
-    # 	  },
-    #   status => {
-    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
-    # 	     perform_option_completion => $perform_option_completion,
-    # 	    },
-    #   string_after_point => $string_after_point,
-    #   string_before_point => $string_before_point,
-    #  },
-
-    my $debug_builtin_lint_completions = 0;
-
-    if ($debug_builtin_lint_completions)
-    {
-	use Data::Dumper;
-
-	print STDERR Dumper(\@_);
-    }
-
     my $operation_name = shift;
 
-    my $arguments = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $analysis = shift;
+    my $analysis = shift || {};
 
-    my $bash_variables = $analysis->{bash};
-
-    my $status = $analysis->{status};
-
-    my $perform_option_completion = $status->{perform_option_completion};
-
-    my $string_after_point = $analysis->{string_after_point};
-
-    my $string_before_point = $analysis->{string_before_point};
-
-    my $all_targets = $global_technical_project_configuration->{targets};
-
-    my $target_completions
-	= {
-	   map
-	   {
-	       $_ => '';
-	   }
-	   keys %$all_targets, ':all',
-	  };
-
-    my $option_completions
-	= {
-	   '--bash-completors' => '',
-	   '--help-pages' => '',
-	  };
-
-    my $completions = $target_completions;
-
-    if ($perform_option_completion)
-    {
-	$completions = $option_completions;
-    }
-
-    return $completions;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin lint) ],
+	 option_descriptions => {
+				 '--bash-completors' => 'check if the bash completion functions are implemented',
+				 '--help-pages' => 'check if the help pages are implemented',
+				},
+	 positional_arguments => [
+				{
+				 completions => {
+						 %{_builtin_completor_target_name_completions('1.<target-regex>')},
+						 ':all' => '',
+					       },
+				 option_separator_hint => '2.Type_--_then_--bash-completors_or_--help-pages_for_options',
+				 repeatable => 'yes',
+				},
+			       ],
+	 after_positional_option_separator_hint => '2.Type_--_then_--bash-completors_or_--help-pages_for_options',
+	);
 }
 
 
@@ -7594,47 +7617,42 @@ sub builtin_role_add_completor
 {
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $debug_completion = 0;
+    my $analysis = shift || {};
 
-    if ($debug_completion > 2)
-    {
-	print STDERR Dumper(
-			    {
-			     arguments => \@_,
-			     complete_arguments_array => $complete_arguments_array,
-			     complete_command_string => $complete_command_string,
-			    },
-			   );
-    }
-
-    my $completions_hash
-	= {
-	   "1.<role_name>" => '',
-	   "2.<role_description>" => '',
-	   "3.[--_<options>_]" => '',
-	   "--" => {
-		    "--dockerfile" => '',
-		    "--localuser" => '',
-		    "--scp-options" => '',
-		    "--ssh-options" => '',
-		    "--ssh-password" => '',
-		    "--ssh-port" => '',
-		    "--ssh-server" => '',
-		    "--ssh-user" => '',
-		    "--tmux-session" => '',
-		   },
-	  };
-
-    if (scalar @$complete_arguments_array > 2)
-    {
-	return {};
-    }
-    else
-    {
-	return $completions_hash;
-    }
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin role_add) ],
+	 option_descriptions => {
+				 '--dockerfile' => 'reference a docker file and configure the new role as a docker role',
+				 '--localuser' => 'set this for a local user role',
+				 '--scp-options' => 'set scp options for the role',
+				 '--ssh-options' => 'set ssh options for the role',
+				 '--ssh-password' => 'set the ssh password for the role',
+				 '--ssh-port' => 'set the ssh port for the role',
+				 '--ssh-server' => 'set the ssh server for the role',
+				 '--ssh-user' => 'set the ssh user for the role',
+				 '--tmux-session' => 'set the tmux session name for the role',
+				},
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<role-name>' => '',
+					       },
+				 option_separator_hint => '3.Type_--_then_role_options',
+				},
+				{
+				 completions => {
+						 '2.<role-description>' => '',
+					       },
+				 option_separator_hint => '3.Type_--_then_role_options',
+				},
+			       ],
+	 after_positional_option_separator_hint => '3.Type_--_then_role_options',
+	);
 }
 
 
@@ -7721,19 +7739,28 @@ sub builtin_role_print
 
 sub builtin_role_print_completor
 {
-    my $matcher = '.*';
+    my $operation_name = shift;
 
-    my $matching_roles = _roles_select($matcher);
+    my $complete_arguments_array = shift || [];
 
-    my $completions
-	= {
-	   ( "1.Type-a-role-name-or-regex:" => ''),
-	   map
-	   {
-	       $_ => '',
-	   }
-	   sort keys %$matching_roles
-	  };
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin role_print) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 %{_builtin_completor_role_name_completions('.*', '1.Type-a-role-name-or-regex:')},
+						 '^docker_' => '',
+						 '^serial_' => '',
+						 '^tmux_' => '',
+					       },
+				},
+			       ],
+	);
 }
 
 
@@ -7939,34 +7966,36 @@ sub builtin_target_add_completor
 {
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $debug_completion = 0;
+    my $analysis = shift || {};
 
-    if ($debug_completion > 2)
-    {
-	print STDERR Dumper(
-			    {
-			     arguments => \@_,
-			     complete_arguments_array => $complete_arguments_array,
-			     complete_command_string => $complete_command_string,
-			    },
-			   );
-    }
-
-    my $completions_hash
-	= {
-	   "1.<target_name>" => '',
-	   "2.<target_description>" => '',
-	   "'3.[--_<options>_]'" => '',
-	   '--' => {
-		    "--install-commands-pl" => '',
-		    "--install-commands-py" => '',
-		    "--install-commands-sh" => '',
-		   },
-	  };
-
-    return $completions_hash;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin target_add) ],
+	 option_descriptions => {
+				 '--install-commands-pl' => 'install a Perl command file template',
+				 '--install-commands-py' => 'install a Python command file template',
+				 '--install-commands-sh' => 'install a shell command file template',
+				},
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<target-name>' => '',
+					       },
+				 option_separator_hint => '3.Type_--_then_target_options',
+				},
+				{
+				 completions => {
+						 '2.<target-description>' => '',
+					       },
+				 option_separator_hint => '3.Type_--_then_target_options',
+				},
+			       ],
+	 after_positional_option_separator_hint => '3.Type_--_then_target_options',
+	);
 }
 
 
@@ -8052,53 +8081,34 @@ sub builtin_tmux_sessions_create
 
 sub builtin_tmux_sessions_create_completor
 {
-    # ($operation_name,
-    #  $arguments,
-    #  {
-    #   bash => {
-    # 	   command_line => $command_line,
-    # 	   comp_cword => $comp_cword,
-    # 	   comp_point => $comp_point,
-    # 	  },
-    #   status => {
-    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
-    # 	     perform_option_completion => $perform_option_completion,
-    # 	    },
-    #   string_after_point => $string_after_point,
-    #   string_before_point => $string_before_point,
-    #  },
-
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $analysis = shift;
-
-    my $bash_variables = $analysis->{bash};
-
-    my $status = $analysis->{status};
-
-    my $perform_option_completion = $status->{perform_option_completion};
-
-    my $string_after_point = $analysis->{string_after_point};
-
-    my $string_before_point = $analysis->{string_before_point};
+    my $analysis = shift || {};
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    my $completions
-	= {
-	   ((scalar @$complete_arguments_array == 2) ? ("1.Type-the-name-of-a-known-tmux-session:" => '') : ()),
-	   "_all" => '',
-	   # '--force' => '',
-	   map
-	   {
-	       $_ => ''
-	   }
-	   @$tmux_sessions,
-	  };
-
-    return $completions;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin tmux_sessions_create) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.Type-the-name-of-a-known-tmux-session:' => '',
+						 '_all' => '',
+						 map
+						 {
+						     $_ => '';
+						 }
+						 @$tmux_sessions,
+					       },
+				 repeatable => 'yes',
+				},
+			       ],
+	);
 }
 
 
@@ -8147,53 +8157,34 @@ sub builtin_tmux_sessions_kill
 
 sub builtin_tmux_sessions_kill_completor
 {
-    # ($operation_name,
-    #  $arguments,
-    #  {
-    #   bash => {
-    # 	   command_line => $command_line,
-    # 	   comp_cword => $comp_cword,
-    # 	   comp_point => $comp_point,
-    # 	  },
-    #   status => {
-    # 	     perform_internal_argument_completion => $perform_internal_argument_completion,
-    # 	     perform_option_completion => $perform_option_completion,
-    # 	    },
-    #   string_after_point => $string_after_point,
-    #   string_before_point => $string_before_point,
-    #  },
-
     my $complete_command_string = shift;
 
-    my $complete_arguments_array = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $analysis = shift;
-
-    my $bash_variables = $analysis->{bash};
-
-    my $status = $analysis->{status};
-
-    my $perform_option_completion = $status->{perform_option_completion};
-
-    my $string_after_point = $analysis->{string_after_point};
-
-    my $string_before_point = $analysis->{string_before_point};
+    my $analysis = shift || {};
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    my $completions
-	= {
-	   ((scalar @$complete_arguments_array == 2) ? ("1.Type-the-name-of-a-known-tmux-session:" => '') : ()),
-	   "_all" => '',
-	   # '--force' => '',
-	   map
-	   {
-	       $_ => ''
-	   }
-	   @$tmux_sessions,
-	  };
-
-    return $completions;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin tmux_sessions_kill) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.Type-the-name-of-a-known-tmux-session:' => '',
+						 '_all' => '',
+						 map
+						 {
+						     $_ => '';
+						 }
+						 @$tmux_sessions,
+					       },
+				 repeatable => 'yes',
+				},
+			       ],
+	);
 }
 
 
@@ -8447,22 +8438,39 @@ sub builtin_workflow_add
 
 sub builtin_workflow_add_completor
 {
-    return
-    {
-     "1.Follow-with:" => '',
-     "2.<target-name>" => '',
-     "3.<operation-name>" => '',
-     "'4.[--_<options>_]'" => '',
-     '--' => {
-	      '0.Available_options:' => '',
-	      '--add-templates' => '',
-	      '--bash-history' => '',
-	      '--editor' => '',
-	      '--filename' => '',
-	      '--pl' => '',
-	      '--py' => '',
-	     },
-    };
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin workflow_add) ],
+	 option_descriptions => {
+				 '--add-templates' => 'add templates and explanatory comments to the implementation',
+				 '--bash-history' => 'add selected bash history items to the workflow',
+				 '--editor' => 'invoke the editor after the workflow has been created',
+				 '--filename' => 'use an existing workflow file',
+				 '--pl' => 'create the workflow in a Perl workflow file',
+				 '--py' => 'create the workflow in a Python workflow file',
+				},
+	 positional_arguments => [
+				{
+				 completions => _builtin_completor_target_name_completions('1.<target-name>'),
+				 option_separator_hint => '3.Type_--_then_workflow_add_options',
+				},
+				{
+				 completions => {
+						 '2.<operation-name>' => '',
+					       },
+				 option_separator_hint => '3.Type_--_then_workflow_add_options',
+				},
+			       ],
+	 after_positional_option_separator_hint => '3.Type_--_then_workflow_add_options',
+	);
 }
 
 
@@ -8604,24 +8612,23 @@ sub builtin_workflow_file_remove
 
 sub builtin_workflow_file_remove_completor
 {
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+    my $operation_name = shift;
 
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+    my $complete_arguments_array = shift || [];
 
-    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+    my $analysis = shift || {};
 
-    $workflow_filenames = $workflow_filenames->{workflow_filenames};
-
-    # print STDERR Dump( { workflow_filenames_known => $workflow_filenames } );
-
-    return
-    {
-     map
-     {
-	 $_ => '',
-     }
-     @$workflow_filenames,
-    };
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin workflow_file_remove) ],
+	 positional_arguments => [
+				{
+				 completions => _builtin_completor_workflow_filename_completions('', '1.<workflow-filename>'),
+				},
+			       ],
+	);
 }
 
 
@@ -8767,24 +8774,28 @@ sub builtin_workflow_file_rename
 
 sub builtin_workflow_file_rename_completor
 {
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+    my $operation_name = shift;
 
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+    my $complete_arguments_array = shift || [];
 
-    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+    my $analysis = shift || {};
 
-    $workflow_filenames = $workflow_filenames->{workflow_filenames};
-
-    # print STDERR Dump( { workflow_filenames_known => $workflow_filenames } );
-
-    return
-    {
-     map
-     {
-	 $_ => $_,
-     }
-     @$workflow_filenames,
-    };
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin workflow_file_rename) ],
+	 positional_arguments => [
+				{
+				 completions => _builtin_completor_workflow_filename_completions('', '1.<old-filename>'),
+				},
+				{
+				 completions => {
+						 '2.<new-filename>' => '',
+					       },
+				},
+			       ],
+	);
 }
 
 
@@ -8869,29 +8880,27 @@ sub builtin_workflow_filenames_known
 
 sub builtin_workflow_filenames_known_completor
 {
-    # generate the list of command filenames
+    my $operation_name = shift;
 
-    my $full_paths = 'relative_paths';
+    my $complete_arguments_array = shift || [];
 
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+    my $analysis = shift || {};
 
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
-
-    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, $full_paths, $debug_builtin_workflow_filenames_known);
-
-    $workflow_filenames = $workflow_filenames->{workflow_filenames};
-
-    return
-    {
-     "1.Type-one-of:" => '',
-     "full-paths" => '',
-     "relative-paths" => '',
-     map
-     {
-	 $_ => 'edit',
-     }
-     @$workflow_filenames
-    };
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin workflow_filenames_known) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.Type-one-of:' => '',
+						 'full-paths' => '',
+						 'relative-paths' => '',
+					       },
+				},
+			       ],
+	);
 }
 
 
@@ -8944,26 +8953,31 @@ sub builtin_workflow_locate_completor
 {
     my $operation_name = shift;
 
-    my $arguments = shift;
+    my $complete_arguments_array = shift || [];
 
-    my $analysis = shift;
+    my $analysis = shift || {};
 
-    my $operations = main::operation_hash_typed_generate('with help subs');
-
-    my $completions
-        = {
-           map
-           {
-               my $operation = $_;
-
-               $operation =~ s/ /_/g;
-
-               $operation => '';
-           }
-           sort keys %$operations,
-          };
-
-    return $completions;
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin workflow_locate) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<target>' => '',
+						 %{_builtin_completor_target_name_completions()},
+						 %{_builtin_completor_workflow_operation_completions()},
+					       },
+				},
+				{
+				 completions => {
+						 '2.<operation>' => '',
+						 %{_builtin_completor_workflow_operation_completions()},
+					       },
+				},
+			       ],
+	);
 }
 
 
@@ -10113,11 +10127,34 @@ sub builtin_qemu_qcow2_mount
 
 sub builtin_qemu_qcow2_mount_completor
 {
-    return
-    {
-     "1.Type-a-qcow2-file-name" => '',
-     "2.Optionally-type-the-number-of-partitions" => '',
-    };
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin qemu_qcow2_mount) ],
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<qcow2-file-name>' => '',
+					       },
+				},
+				{
+				 completions => {
+						 '2.[<number-of-partitions>]' => '',
+						 1 => '',
+						 2 => '',
+						 3 => '',
+						 4 => '',
+					       },
+				},
+			       ],
+	);
 }
 
 
