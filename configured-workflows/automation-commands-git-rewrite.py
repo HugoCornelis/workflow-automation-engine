@@ -56,17 +56,17 @@ def git_rewrite_completor(command, argv, analysis):
             {
                 "completions": {
                     "1.<base-branch>": "",
+                    "2.<old-branch>": "",
+                    "3.<new-branch>": "",
                 },
             },
             {
                 "completions": {
                     "2.<old-branch>": "",
+                    "3.<new-branch>": "",
                 },
             },
             {
-                "completions": {
-                    "3.<new-branch>": "",
-                },
             },
         ],
     })
