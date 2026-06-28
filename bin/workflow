@@ -12620,6 +12620,55 @@ sub process_operation_results
 
 package FieldProject;
 
+sub _python_plugin_syntax_check
+{
+    my $pathname = shift;
+
+    my $python_interpreter = $ENV{WORKFLOW_PYTHON} || 'python3';
+
+    my $syntax_checker = <<'PYTHON';
+import os
+import py_compile
+import sys
+import tempfile
+
+try:
+    with tempfile.TemporaryDirectory(prefix="workflow-pycompile-") as temporary_directory:
+        pyc_path = os.path.join(temporary_directory, "plugin.pyc")
+        py_compile.compile(sys.argv[1], cfile=pyc_path, doraise=True)
+except py_compile.PyCompileError as exc:
+    sys.stdout.write(str(exc))
+    if not str(exc).endswith("\n"):
+        sys.stdout.write("\n")
+    sys.exit(1)
+except Exception as exc:
+    sys.stdout.write(f"{type(exc).__name__}: {exc}\n")
+    sys.exit(1)
+PYTHON
+
+    open my $fh, '-|', $python_interpreter, '-c', $syntax_checker, $pathname
+	or return "$global_program_name: *** Error: cannot start Python interpreter '$python_interpreter' while checking '$pathname' ($!)\n";
+
+    my $checker_output = do {
+	local $/;
+	<$fh>;
+    };
+
+    close $fh;
+
+    my $exit_status = $? >> 8;
+
+    if ($exit_status == 0)
+    {
+	return;
+    }
+
+    $checker_output ||= "Python syntax check failed with exit status $exit_status\n";
+
+    return "$global_program_name: *** Error: invalid Python workflow plugin '$pathname' (syntax error):\n$checker_output";
+}
+
+
 
 our $fp_status;
 
@@ -12922,6 +12971,13 @@ sub _init_do_eval_python_file
     {
 	$status = "$global_program_name: *** Error: file '$input_pathname' not found (because the file cannot be read)\n";
 
+	return (undef, $status);
+    }
+
+    $status = FieldProject::_python_plugin_syntax_check($input_pathname);
+
+    if ($status)
+    {
 	return (undef, $status);
     }
 
