@@ -4738,7 +4738,7 @@ options:
     ``--stream-live``: print streamed answer tokens live on STDERR while
     keeping the final YAML result on STDOUT.
 
-    ``--no-stream-live``: disable live token printing. This is the default.
+    ``--no-stream-live``: disable live token printing.  This is the default.
 
 arguments:
 ~~~~~~~~~~
