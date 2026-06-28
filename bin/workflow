@@ -4738,7 +4738,7 @@ options:
     ``--stream-live``: print streamed answer tokens live on STDERR while
     keeping the final YAML result on STDOUT.
 
-    ``--no-stream-live``: disable live token printing. This is the default.
+    ``--no-stream-live``: disable live token printing.  This is the default.
 
 arguments:
 ~~~~~~~~~~
@@ -4746,6 +4746,193 @@ arguments:
     ``ARGV[0]``: The name of the PDF manual of this project.
 
     ``ARGV[1]``: The query string with your question.
+";
+}
+
+
+sub _builtin_ai_query_generated_manual_pdf_pathname
+{
+    my $field_project_configuration;
+
+    if (exists $global_field_project_configuration->{field_project_name})
+    {
+	$field_project_configuration = $global_field_project_configuration;
+    }
+    else
+    {
+	$field_project_configuration
+	    = {
+	       field_project_name => 'The workflow engine',
+	      };
+    }
+
+    my $field_project_name = $field_project_configuration->{field_project_name};
+
+    my $manual_basename = _sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual";
+
+    my $manual_pdf_filename = "$manual_basename.pdf";
+
+    my $section_name = "dynamically-generated-manuals";
+
+    return Utilities::volatile_section_pathname($section_name, $manual_pdf_filename);
+}
+
+
+sub _builtin_ai_query_execute_scheduled_manual_generation_commands
+{
+    my $scheduled_commands = [ @$global_scheduled_commands ];
+
+    $global_scheduled_commands = [];
+
+    return ''
+	if not @$scheduled_commands;
+
+    my $current_directory;
+
+    {
+	require Cwd;
+
+	$current_directory = Cwd::getcwd();
+    }
+
+    my $error;
+
+    eval
+    {
+	my $operation_results
+	    = Engine::execute_all_scheduled_commands
+	      (
+	       $scheduled_commands,
+	       $InteractionRole::all_interaction_roles,
+	      );
+
+	Engine::process_operation_results
+	    (
+	     $operation_results,
+	     {
+	      console_output => 'always',
+	      dry_run_reason => '',
+	     },
+	    );
+
+	1;
+    }
+    or do
+    {
+	$error = $@ || 'unknown error';
+    };
+
+    if (defined $current_directory
+	and $current_directory ne '')
+    {
+	chdir $current_directory
+	    or die "$global_program_name: *** Error: cannot restore working directory '$current_directory' ($!)";
+    }
+
+    die $error
+	if $error;
+
+    return '';
+}
+
+
+sub builtin_ai_query
+{
+    my $arguments = shift || [];
+
+    my $option_api_key;
+    my $option_base_url;
+    my $option_model;
+    my $option_purpose = 'user_data';
+    my $option_stream_live = 1;
+
+    my $options
+	= {
+	   "api-key=s" => \$option_api_key,
+	   "base-url=s" => \$option_base_url,
+	   "model=s" => \$option_model,
+	   "purpose=s" => \$option_purpose,
+	   "stream-live!" => \$option_stream_live,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+	die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    my $ai_query = join ' ', @$arguments;
+
+    if (not defined $ai_query
+	or $ai_query eq '')
+    {
+	die "$global_program_name: *** Error: builtin ai_query expects a query string";
+    }
+
+    # Do not generate the manual, upload the file or spend API tokens when
+    # --dry-run, --help, --interactions, --export-sh, etc. have disabled
+    # execution.
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+    my $pdf_manual_filename = _builtin_ai_query_generated_manual_pdf_pathname();
+
+    builtin_manual([ '--no-view' ]);
+
+    _builtin_ai_query_execute_scheduled_manual_generation_commands();
+
+    if (not -f $pdf_manual_filename)
+    {
+	die "$global_program_name: *** Error: generated PDF manual does not exist: $pdf_manual_filename";
+    }
+
+    my $document_query_arguments
+	= [
+	   (defined $option_api_key ? ('--api-key', $option_api_key) : ()),
+	   (defined $option_base_url ? ('--base-url', $option_base_url) : ()),
+	   (defined $option_model ? ('--model', $option_model) : ()),
+	   (defined $option_purpose ? ('--purpose', $option_purpose) : ()),
+	   ($option_stream_live ? '--stream-live' : '--no-stream-live'),
+	   $pdf_manual_filename,
+	   @$arguments,
+	  ];
+
+    return builtin_ai_document_query($document_query_arguments);
+}
+
+
+sub builtin_ai_query_help
+{
+    my $command = shift;
+
+    return "$command: Generate this project's manual and use OpenAI to query them.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command [options] <query-string>
+
+options:
+~~~~~~~~
+
+    ``--stream-live``: print streamed answer tokens live on STDERR while keeping the final YAML result on STDOUT, this is the default.
+
+    ``--no-stream-live``: disable live token printing.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: The query string with your question.
 ";
 }
 
