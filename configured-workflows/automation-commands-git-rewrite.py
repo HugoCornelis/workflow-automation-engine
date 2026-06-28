@@ -44,20 +44,32 @@ def git_rewrite(argv):
     #
     # These options can given to any of the functions that execute commands.
 
-def git_rewrite_completor(command, argv, status):
+def git_rewrite_completor(command, argv, analysis):
 
 #     print_to_stderr(f"command: {command}\n  argv: {argv}")
 
-    completions_hash = { }
-    complete = True if len(argv) == 2 else False
-    if complete:
-        completions_hash = {
-            "1._<base-branch>": "",
-            "2._<old-branch>": "",
-            "3._<new-branch>": "",
-        }
-
-    return completions_hash
+    return _builtin_completor_expander({
+        "analysis": analysis,
+        "complete_arguments_array": argv,
+        "operation_path": [ "git", "rewrite" ],
+        "positional_arguments": [
+            {
+                "completions": {
+                    "1.<base-branch>": "",
+                    "2.<old-branch>": "",
+                    "3.<new-branch>": "",
+                },
+            },
+            {
+                "completions": {
+                    "2.<old-branch>": "",
+                    "3.<new-branch>": "",
+                },
+            },
+            {
+            },
+        ],
+    })
 
 
 def git_rewrite_help(command, argv):
