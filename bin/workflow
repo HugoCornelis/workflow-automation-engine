@@ -4750,6 +4750,73 @@ arguments:
 }
 
 
+sub builtin_ai_query
+{
+    my $arguments = shift || [];
+
+    my $option_api_key;
+    my $option_base_url;
+    my $option_model;
+    my $option_purpose = 'user_data';
+    my $option_stream_live = 0;
+
+    my $options
+	= {
+	   "api-key=s" => \$option_api_key,
+	   "base-url=s" => \$option_base_url,
+	   "model=s" => \$option_model,
+	   "purpose=s" => \$option_purpose,
+	   "stream-live!" => \$option_stream_live,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);;
+
+    my $result = GetOptionsFromArray($arguments, %$options);
+
+    if (!$result)
+    {
+	die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    # Do not upload the file or spend API tokens when --dry-run, --help,
+    # --interactions, --export-sh, etc. have disabled execution.
+
+    if (not $global_execute_scheduled_commands)
+    {
+	return '';
+    }
+
+}
+
+
+sub builtin_ai_query_help
+{
+    my $command = shift;
+
+    return "$command: Generate this project's manual and use OpenAI to query them.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command [options] <query-string>
+
+options:
+~~~~~~~~
+
+    ``--stream-live``: print streamed answer tokens live on STDERR while keeping the final YAML result on STDOUT, this is the default.
+
+    ``--no-stream-live``: disable live token printing.
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[1]``: The query string with your question.
+";
+}
+
+
 sub builtin_configuration_archive
 {
     my $arguments = shift || [];
