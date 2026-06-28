@@ -1,49 +1,67 @@
 $files = {
            '_<./bin/vigilia' => [
                                   {
-                                    'expr' => undef,
-                                    'fname' => './bin/vigilia',
-                                    'line' => 4074,
+                                    'value' => '1',
+                                    'type' => 'user',
                                     'text' => '		    die "test not understood by $0, aborting (illegal read clause for $description)";
 ',
+                                    'expr' => undef,
+                                    'fname' => './bin/vigilia',
+                                    'line' => 4074
+                                  },
+                                  {
                                     'type' => 'user',
+                                    'expr' => undef,
+                                    'fname' => './bin/vigilia',
+                                    'line' => '2222',
+                                    'text' => '    if ($short)
+',
                                     'value' => '1'
                                   },
                                   {
-                                    'expr' => undef,
+                                    'type' => 'user',
                                     'value' => '1',
+                                    'text' => '    if (! defined $error_report_directory)
+',
+                                    'fname' => './bin/vigilia',
+                                    'expr' => undef,
+                                    'line' => 1221
+                                  },
+                                  {
                                     'text' => '    if ($harness_command eq \'run-tests\')
 ',
+                                    'value' => '1',
                                     'type' => 'user',
                                     'fname' => './bin/vigilia',
+                                    'expr' => undef,
                                     'line' => 405
                                   },
                                   {
+                                    'value' => '1',
+                                    'type' => 'user',
                                     'text' => '    my $command_tests = $command_definition->{command_tests};
 ',
-                                    'type' => 'user',
                                     'fname' => './bin/vigilia',
-                                    'line' => 1325,
-                                    'value' => '1',
-                                    'expr' => undef
-                                  },
-                                  {
-                                    'line' => 1221,
-                                    'fname' => './bin/vigilia',
-                                    'text' => '    if (! defined $error_report_directory)
-',
-                                    'type' => 'user',
-                                    'value' => '1',
-                                    'expr' => undef
-                                  },
-                                  {
                                     'expr' => undef,
-                                    'line' => 4072,
-                                    'fname' => './bin/vigilia',
-                                    'text' => '		    my $description = $command_test->{description};
+                                    'line' => 1325
+                                  },
+                                  {
+                                    'line' => '2317',
+                                    'text' => '    return $error;
 ',
+                                    'value' => '1',
                                     'type' => 'user',
-                                    'value' => '1'
+                                    'fname' => './bin/vigilia',
+                                    'expr' => undef
+                                  },
+                                  {
+                                    'fname' => './bin/vigilia',
+                                    'expr' => undef,
+                                    'type' => 'user',
+                                    'line' => 4072,
+                                    'value' => '1',
+                                    'text' => '		    my $description = $command_test->{description};
+'
                                   }
                                 ]
          };
@@ -57,12 +75,12 @@ $expr_list = [
                  'expr' => '$test_result'
                },
                {
-                 'depth' => 1,
-                 'expr' => '$reporter'
+                 'expr' => '$reporter',
+                 'depth' => 1
                },
                {
-                 'expr' => '$self',
-                 'depth' => -1
+                 'depth' => -1,
+                 'expr' => '$self'
                },
                {
                  'expr' => '$read',
