@@ -427,6 +427,16 @@ sub command_line_dispatch
 			       },
 			      );
 
+    # Some commands produce their primary result on STDOUT rather than
+    # through the reporter.  The multiplexer reporter normally captures
+    # STDOUT into linear_log.txt for test execution.  Allow such commands
+    # to opt out so their output remains visible to the caller.
+
+    if (exists $harness_command_definition->{capture_stdout})
+    {
+	$default_reporter->{capture_stdout} = $harness_command_definition->{capture_stdout};
+    }
+
     {
 	no strict "refs";
 
@@ -2178,6 +2188,7 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
 		   "short!" => do { my $option_short; \$option_short; },
 		   "help!" => do { my $option_help; \$option_help; },
 		  },
+       capture_stdout => 0,
       };
 
 sub harness_command_report_summaries
