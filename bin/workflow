@@ -4879,6 +4879,39 @@ sub builtin_ai_query
 }
 
 
+sub builtin_ai_query_completor
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    # The query argument is free-form text and is therefore only represented
+    # by a placeholder before the first query word is entered.
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin ai_query) ],
+	 option_descriptions => {
+				 '--stream-live' => 'print streamed answer tokens live on STDERR while keeping YAML on STDOUT',
+				 '--no-stream-live' => 'disable live token printing',
+				},
+	 positional_arguments => [
+				  {
+				   completions => {
+						   '1.<query-string>' => '',
+						  },
+				   option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+				  },
+				 ],
+	 after_positional_option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+	);
+}
+
+
 sub builtin_ai_query_help
 {
     my $command = shift;
