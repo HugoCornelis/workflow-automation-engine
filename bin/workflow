@@ -4531,6 +4531,27 @@ sub _workflow_operations_load
 }
 
 
+sub _print_utf8_text
+{
+    my ($filehandle, @strings) = @_;
+
+    require Encode;
+
+    foreach my $string (@strings)
+    {
+	next
+	    if not defined $string;
+
+	my $output
+	    = Encode::is_utf8($string)
+	    ? Encode::encode('UTF-8', $string)
+	    : $string;
+
+	print {$filehandle} $output;
+    }
+}
+
+
 sub builtin_ai_document_query
 {
     my $arguments = shift || [];
@@ -4637,7 +4658,7 @@ sub builtin_ai_document_query
 
 	    select $selected;
 
-	    print STDERR $delta;
+	    _print_utf8_text(\*STDERR, $delta);
 	};
     }
 
@@ -4653,18 +4674,21 @@ sub builtin_ai_document_query
 
     if ($stream_callback)
     {
-	print STDERR "\n";
+	_print_utf8_text(\*STDERR, "\n");
     }
     else
     {
 	$answer = "$answer\n"
 	    if defined $answer and $answer !~ /\n\z/;
 
-	print YAML::PP::Dump(
+	my $yaml_answer
+	    = YAML::PP::Dump(
 			     {
 			      answer => $answer,
 			     }
 			    );
+
+	_print_utf8_text(\*STDOUT, $yaml_answer);
     }
 
     return '';
