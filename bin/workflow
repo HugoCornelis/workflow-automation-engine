@@ -359,7 +359,7 @@ sub file_ai_query
         # newly uploaded file is referenced immediately by the Responses API.
         # Retry only transient-looking failures; propagate ordinary 4xx errors.
 
-        last if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
+        last if $last_error !~ /validating file ownership|server_error|\b5\d\d\b|Internal Server Error|Bad Gateway|Service Unavailable|Gateway Timeout|timeout|timed out/i;
 
         sleep(2 ** ($attempt - 1));
     }
@@ -827,7 +827,16 @@ sub _perform_streaming_json_request
 
         eval
         {
-            $json = decode_json($raw_body);
+            # The program installs a global __DIE__ handler that prints a
+            # stack trace even for exceptions that are intentionally caught by
+            # eval.  Suppress it here: an empty/non-JSON error body is expected
+            # for some HTTP failures and is handled below by falling back to the
+            # status line.
+            local $SIG{'__DIE__'};
+
+            $json = decode_json($raw_body)
+                if defined $raw_body
+                    and $raw_body ne '';
 
             1;
         };
@@ -1106,6 +1115,64 @@ sub _builtin_add_workflow_filename
     }
 
     return $error;
+}
+
+
+sub _builtin_ai_query_execute_scheduled_manual_generation_commands
+{
+    my $scheduled_commands = [ @$global_scheduled_commands ];
+
+    $global_scheduled_commands = [];
+
+    return ''
+	if not @$scheduled_commands;
+
+    my $current_directory;
+
+    {
+	require Cwd;
+
+	$current_directory = Cwd::getcwd();
+    }
+
+    my $error;
+
+    eval
+    {
+	my $operation_results
+	    = Engine::execute_all_scheduled_commands
+	      (
+	       $scheduled_commands,
+	       $InteractionRole::all_interaction_roles,
+	      );
+
+	Engine::process_operation_results
+	    (
+	     $operation_results,
+	     {
+	      console_output => 'always',
+	      dry_run_reason => '',
+	     },
+	    );
+
+	1;
+    }
+    or do
+    {
+	$error = $@ || 'unknown error';
+    };
+
+    if (defined $current_directory
+	and $current_directory ne '')
+    {
+	chdir $current_directory
+	    or die "$global_program_name: *** Error: cannot restore working directory '$current_directory' ($!)";
+    }
+
+    die $error
+	if $error;
+
+    return '';
 }
 
 
@@ -3911,36 +3978,6 @@ sub _roles_select
 }
 
 
-sub _sentence_summarize
-{
-    my $sentence = shift;
-
-    my $maximum_length = shift || 80;
-
-    my $result = "$sentence";
-
-    $result =~ s(\s+)(-)g;
-
-    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
-
-    $result = _strings_remove($replace_these_chars, 'replace-with-dash', $result);
-
-    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
-
-    $result = _strings_remove($remove_these_words, 'with-dash-keep', $result);
-
-    my $remove_these_chars = [ '<', '>', '\'' ];
-
-    $result = _strings_remove($remove_these_chars, 'without-dash', $result);
-
-    $result = substr($result, 0, $maximum_length);
-
-    $result =~ s(-$)();
-
-    return $result;
-}
-
-
 sub _shell_quote
 {
     my ($s) = @_;
@@ -3950,50 +3987,6 @@ sub _shell_quote
     $s =~ s/'/'"'"'/g;
 
     return "'$s'";
-}
-
-
-sub _strings_remove
-{
-    my $strings = shift;
-
-    my $options = shift;
-
-    my $sentence = shift;
-
-    if ($options eq 'with-dash-keep')
-    {
-	foreach my $string (@$strings)
-	{
-	    $sentence =~ s(-$string-)(-)ig;
-	    $sentence =~ s(^$string-)()ig;
-	    $sentence =~ s($string$)()ig;
-	}
-    }
-    elsif ($options eq 'without-dash')
-    {
-	foreach my $string (@$strings)
-	{
-	    $strings = quotemeta($string);
-
-	    $sentence =~ s($string)()ig;
-	}
-    }
-    elsif ($options eq 'replace-with-dash')
-    {
-	foreach my $string (@$strings)
-	{
-	    $strings = quotemeta($string);
-
-	    $sentence =~ s($string)(-)ig;
-	}
-    }
-    else
-    {
-	die "$0: Internal error in _strings_remove()";
-    }
-
-    return $sentence;
 }
 
 
@@ -4547,6 +4540,27 @@ sub _workflow_operations_load
 }
 
 
+sub _print_utf8_text
+{
+    my ($filehandle, @strings) = @_;
+
+    require Encode;
+
+    foreach my $string (@strings)
+    {
+	next
+	    if not defined $string;
+
+	my $output
+	    = Encode::is_utf8($string)
+	    ? Encode::encode('UTF-8', $string)
+	    : $string;
+
+	print {$filehandle} $output;
+    }
+}
+
+
 sub builtin_ai_document_query
 {
     my $arguments = shift || [];
@@ -4653,7 +4667,7 @@ sub builtin_ai_document_query
 
 	    select $selected;
 
-	    print STDERR $delta;
+	    _print_utf8_text(\*STDERR, $delta);
 	};
     }
 
@@ -4669,18 +4683,21 @@ sub builtin_ai_document_query
 
     if ($stream_callback)
     {
-	print STDERR "\n";
+	_print_utf8_text(\*STDERR, "\n");
     }
     else
     {
 	$answer = "$answer\n"
 	    if defined $answer and $answer !~ /\n\z/;
 
-	print YAML::PP::Dump(
+	my $yaml_answer
+	    = YAML::PP::Dump(
 			     {
 			      answer => $answer,
 			     }
 			    );
+
+	_print_utf8_text(\*STDOUT, $yaml_answer);
     }
 
     return '';
@@ -4705,16 +4722,20 @@ sub builtin_ai_document_query_completor
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin ai_document_query) ],
 	 option_descriptions => {
+				 '--api-key_<key>' => 'use this OpenAI API key for the request',
+				 '--base-url_<url>' => 'use this OpenAI-compatible API base URL',
+				 '--model_<model>' => 'use this model for the document query',
+				 '--purpose_<purpose>' => 'use this purpose when uploading the PDF file',
 				 '--stream-live' => 'print streamed answer tokens live on STDERR while keeping YAML on STDOUT',
 				 '--no-stream-live' => 'disable live token printing',
 				},
 	 positional_arguments => [
 				{
 				 completions => _builtin_completor_pdf_filename_completions(),
-				 option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+				 option_separator_hint => '2.Type_--_for_options',
 				},
 			       ],
-	 after_positional_option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+	 after_positional_option_separator_hint => '2.Type_--_for_options',
 	);
 }
 
@@ -4735,6 +4756,19 @@ $command [options] <pdf-file> <query-string>
 options:
 ~~~~~~~~
 
+    ``--api-key <key>``: use this OpenAI API key for the request.  If this
+    option is omitted, the OpenAI client uses the configured token from
+    volatile storage or the ``OPENAI_API_KEY`` environment variable.
+
+    ``--base-url <url>``: use this OpenAI-compatible API base URL.  The
+    default is ``https://api.openai.com/v1``.
+
+    ``--model <model>``: use this model for the document query.  The default
+    is the model configured by the OpenAI client.
+
+    ``--purpose <purpose>``: use this purpose when uploading the PDF file.
+    The default is ``user_data``.
+
     ``--stream-live``: print streamed answer tokens live on STDERR while
     keeping the final YAML result on STDOUT.
 
@@ -4747,94 +4781,6 @@ arguments:
 
     ``ARGV[1]``: The query string with your question.
 ";
-}
-
-
-sub _builtin_ai_query_generated_manual_pdf_pathname
-{
-    my $field_project_configuration;
-
-    if (exists $global_field_project_configuration->{field_project_name})
-    {
-	$field_project_configuration = $global_field_project_configuration;
-    }
-    else
-    {
-	$field_project_configuration
-	    = {
-	       field_project_name => 'The workflow engine',
-	      };
-    }
-
-    my $field_project_name = $field_project_configuration->{field_project_name};
-
-    my $manual_basename = _sentence_summarize($field_project_name);
-
-    $manual_basename = "$manual_basename-manual";
-
-    my $manual_pdf_filename = "$manual_basename.pdf";
-
-    my $section_name = "dynamically-generated-manuals";
-
-    return Utilities::volatile_section_pathname($section_name, $manual_pdf_filename);
-}
-
-
-sub _builtin_ai_query_execute_scheduled_manual_generation_commands
-{
-    my $scheduled_commands = [ @$global_scheduled_commands ];
-
-    $global_scheduled_commands = [];
-
-    return ''
-	if not @$scheduled_commands;
-
-    my $current_directory;
-
-    {
-	require Cwd;
-
-	$current_directory = Cwd::getcwd();
-    }
-
-    my $error;
-
-    eval
-    {
-	my $operation_results
-	    = Engine::execute_all_scheduled_commands
-	      (
-	       $scheduled_commands,
-	       $InteractionRole::all_interaction_roles,
-	      );
-
-	Engine::process_operation_results
-	    (
-	     $operation_results,
-	     {
-	      console_output => 'always',
-	      dry_run_reason => '',
-	     },
-	    );
-
-	1;
-    }
-    or do
-    {
-	$error = $@ || 'unknown error';
-    };
-
-    if (defined $current_directory
-	and $current_directory ne '')
-    {
-	chdir $current_directory
-	    or die "$global_program_name: *** Error: cannot restore working directory '$current_directory' ($!)";
-    }
-
-    die $error
-	if $error;
-
-    return '';
 }
 
 
@@ -4883,9 +4829,9 @@ sub builtin_ai_query
 	return '';
     }
 
-    my $pdf_manual_filename = _builtin_ai_query_generated_manual_pdf_pathname();
+    my $pdf_manual_filename = Utilities::generated_manual_pdf_pathname();
 
-    builtin_manual([ '--no-view' ]);
+    builtin_manual([ '--no-view', '--use-cache' ]);
 
     _builtin_ai_query_execute_scheduled_manual_generation_commands();
 
@@ -4909,6 +4855,43 @@ sub builtin_ai_query
 }
 
 
+sub builtin_ai_query_completor
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    # The query argument is free-form text and is therefore only represented
+    # by a placeholder before the first query word is entered.
+
+    return _builtin_completor_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin ai_query) ],
+	 option_descriptions => {
+				 '--api-key_<key>' => 'use this OpenAI API key for the request',
+				 '--base-url_<url>' => 'use this OpenAI-compatible API base URL',
+				 '--model_<model>' => 'use this model for the document query',
+				 '--purpose_<purpose>' => 'use this purpose when uploading the PDF file',
+				 '--stream-live' => 'print streamed answer tokens live on STDERR while keeping YAML on STDOUT',
+				 '--no-stream-live' => 'disable live token printing',
+				},
+	 positional_arguments => [
+				  {
+				   completions => {
+						   '1.<query-string>' => '',
+						  },
+				   option_separator_hint => '2.Type_--_for_options',
+				  },
+				 ],
+	 after_positional_option_separator_hint => '2.Type_--_for_options',
+	);
+}
+
+
 sub builtin_ai_query_help
 {
     my $command = shift;
@@ -4924,6 +4907,19 @@ $command [options] <query-string>
 
 options:
 ~~~~~~~~
+
+    ``--api-key <key>``: use this OpenAI API key for the request.  If this
+    option is omitted, the OpenAI client uses the configured token from
+    volatile storage or the ``OPENAI_API_KEY`` environment variable.
+
+    ``--base-url <url>``: use this OpenAI-compatible API base URL.  The
+    default is ``https://api.openai.com/v1``.
+
+    ``--model <model>``: use this model for the document query.  The default
+    is the model configured by the OpenAI client.
+
+    ``--purpose <purpose>``: use this purpose when uploading the PDF file.
+    The default is ``user_data``.
 
     ``--stream-live``: print streamed answer tokens live on STDERR while keeping the final YAML result on STDOUT, this is the default.
 
@@ -6431,6 +6427,7 @@ sub builtin_manual
     my $option_input_md;
     my $option_output_pdf = 1;
     my $option_remove_intermediate_files;
+    my $option_use_cache;
     my $option_view = 1;
 
     our $options
@@ -6439,6 +6436,7 @@ sub builtin_manual
 	   'input-md!' => \$option_input_md,
 	   'output-pdf!' => \$option_output_pdf,
 	   "remove-intermediate-files!" => \$option_remove_intermediate_files,
+	   'use-cache!' => \$option_use_cache,
 	   'view!' => \$option_view,
 	  };
 
@@ -6450,14 +6448,6 @@ sub builtin_manual
     {
         die "$global_program_name: *** Error in option processing, try --help";
     }
-
-    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
-
-    my $operations = main::operation_hash_typed_generate('with help subs');
-
-    my $target = $arguments->[0];
-
-    my $matcher;
 
     my $field_project_configuration;
 
@@ -6482,6 +6472,10 @@ sub builtin_manual
     }
 
     my $field_project_name = $field_project_configuration->{field_project_name};
+
+    my $target = $arguments->[0];
+
+    my $matcher;
 
     my $filename_suffix = '';
 
@@ -6508,6 +6502,55 @@ sub builtin_manual
 
 	$filename_suffix =~ s/[^A-Za-z0-9._-]+//g;
     }
+
+    my $manual_basename = Utilities::sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual$filename_suffix";
+
+    my $manual_filename_rst = "$manual_basename.rst";
+
+    my $manual_filename_pdf = "$manual_basename.pdf";
+
+    # use a long name for this to avoid name clashes
+
+    my $section_name = "dynamically-generated-manuals";
+
+    my $pathname_full_rst = Utilities::volatile_section_pathname($section_name, $manual_filename_rst);
+
+    my $pathname_full_pdf = Utilities::volatile_section_pathname($section_name, $manual_filename_pdf);
+
+    my $directory_manual = $pathname_full_rst;
+
+    $directory_manual =~ s{/[^/]+\z}{};
+
+    my $commands_always_print
+	= [
+	   "echo '$manual_filename_rst' stored into volatile project storage $pathname_full_rst",
+	  ];
+
+    execute_shell_command_array($commands_always_print);
+
+    if ($option_use_cache)
+    {
+	if (-f $pathname_full_rst
+	    && -f $pathname_full_pdf)
+	{
+	    my $commands_view_from_cache
+		= [
+		   "echo '$manual_filename_rst' and '$manual_filename_pdf' are already available in the cache.",
+		   "cd '$directory_manual'",
+		   ($option_view ? "okular '$manual_filename_pdf'" : ()),
+		  ];
+
+	    execute_shell_command_array($commands_view_from_cache);
+
+	    return '';
+	}
+    }
+
+    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
+
+    my $operations = main::operation_hash_typed_generate('with help subs');
 
     my $operations_help
 	= [
@@ -6758,46 +6801,12 @@ $global_command_line
 	$last_target = $this_target;
     }
 
-    my $manual_basename = _sentence_summarize($field_project_name);
-
-    $manual_basename = "$manual_basename-manual$filename_suffix";
-
-    my $manual_filename = "$manual_basename.rst";
-
-    my $manual_file;
-
-    # use a long name for this to avoid name clashes
-
-    my $section_name = "dynamically-generated-manuals";
-
-    my $pathname_full = Utilities::volatile_section_pathname($section_name, $manual_filename);
-
     # write the generated manual to volatile storage
 
     if ($global_execute_scheduled_commands)
     {
-	Utilities::volatile_section_file_write($section_name, $manual_filename, $manual_string);
-
-	my $commands
-	    = [
-	       "echo '$manual_filename' stored into volatile project storage $pathname_full",
-	      ];
-
-	execute_shell_command_array($commands);
+	Utilities::volatile_section_file_write($section_name, $manual_filename_rst, $manual_string);
     }
-    else
-    {
-	my $commands
-	    = [
-	       "echo Internal commands to generate '$manual_filename'",
-	      ];
-
-	execute_shell_command_array($commands);
-    }
-
-    my $directory = $pathname_full;
-
-    $directory =~ s{/[^/]+\z}{};
 
     my $commands = [];
 
@@ -6806,9 +6815,9 @@ $global_command_line
     {
 	$commands
 	    = [
-	       "cd '$directory'",
-	       "pandoc '$manual_filename' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
-	       ($option_remove_intermediate_files ? "rm '$manual_filename'" : ()),,
+	       "cd '$directory_manual'",
+	       "pandoc '$manual_filename_rst' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
+	       ($option_remove_intermediate_files ? "rm '$manual_filename_rst'" : ()),,
 	       ($option_view ? "okular '$manual_basename.pdf'" : ()),
 	      ];
     }
@@ -6816,7 +6825,7 @@ $global_command_line
     {
 	$commands
 	    = [
-	       "cd '$directory'",
+	       "cd '$directory_manual'",
 	       ($option_view ? "okular '$manual_basename.pdf'" : ()),
 	      ];
     }
@@ -13954,6 +13963,36 @@ sub file_sha256sum
 }
 
 
+sub generated_manual_pdf_pathname
+{
+    my $field_project_configuration;
+
+    if (exists $global_field_project_configuration->{field_project_name})
+    {
+	$field_project_configuration = $global_field_project_configuration;
+    }
+    else
+    {
+	$field_project_configuration
+	    = {
+	       field_project_name => 'The workflow engine',
+	      };
+    }
+
+    my $field_project_name = $field_project_configuration->{field_project_name};
+
+    my $manual_basename = Utilities::sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual";
+
+    my $manual_pdf_filename = "$manual_basename.pdf";
+
+    my $section_name = "dynamically-generated-manuals";
+
+    return volatile_section_pathname($section_name, $manual_pdf_filename);
+}
+
+
 sub read_directory
 {
     my $directory = shift;
@@ -13981,6 +14020,80 @@ sub read_directory
     }
 
     return $result;
+}
+
+
+sub sentence_summarize
+{
+    my $sentence = shift;
+
+    my $maximum_length = shift || 80;
+
+    my $result = "$sentence";
+
+    $result =~ s(\s+)(-)g;
+
+    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+
+    $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
+
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
+
+    $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
+
+    my $remove_these_chars = [ '<', '>', '\'' ];
+
+    $result = strings_remove($remove_these_chars, 'without-dash', $result);
+
+    $result = substr($result, 0, $maximum_length);
+
+    $result =~ s(-$)();
+
+    return $result;
+}
+
+
+sub strings_remove
+{
+    my $strings = shift;
+
+    my $options = shift;
+
+    my $sentence = shift;
+
+    if ($options eq 'with-dash-keep')
+    {
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s(-$string-)(-)ig;
+	    $sentence =~ s(^$string-)()ig;
+	    $sentence =~ s($string$)()ig;
+	}
+    }
+    elsif ($options eq 'without-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)()ig;
+	}
+    }
+    elsif ($options eq 'replace-with-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)(-)ig;
+	}
+    }
+    else
+    {
+	die "$0: Internal error in _strings_remove()";
+    }
+
+    return $sentence;
 }
 
 
@@ -14182,7 +14295,16 @@ sub bash_completion
 			   );
     }
 
-    my $arguments = [ split ' ', $string_before_point ]; # $command_line, ];
+    # Bash passes COMP_CWORD to this process, but the completion engine
+    # still needs to reconstruct COMP_WORDS from COMP_LINE.  Reconstructing
+    # it with plain whitespace splitting breaks quoted arguments: a free-form
+    # query like 'What is this project about?' would otherwise be seen as
+    # five separate words.  Use the shell-aware parser's word index so the
+    # reconstructed argument vector and current-word index stay consistent.
+
+    my ($arguments, $comp_cword_from_command_line) = bash_completion_arguments_parse($string_before_point);
+
+    $comp_cword = $comp_cword_from_command_line;
 
     my $command_line_current_word = exists $arguments->[$comp_cword] ? $arguments->[$comp_cword] : undef;
 
@@ -14424,6 +14546,136 @@ sub bash_completion
     }
 
     exit 0;
+}
+
+
+sub bash_completion_arguments_parse
+{
+    my $string_before_point = shift || '';
+
+    my @arguments;
+
+    my $word = '';
+    my $word_started = 0;
+
+    my $in_single_quotes = 0;
+    my $in_double_quotes = 0;
+    my $escaped = 0;
+
+    my $last_character_was_unquoted_whitespace = 1;
+
+    foreach my $character (split //, $string_before_point)
+    {
+	if ($escaped)
+	{
+	    $word .= $character;
+	    $word_started = 1;
+	    $escaped = 0;
+	    $last_character_was_unquoted_whitespace = 0;
+
+	    next;
+	}
+
+	if ($in_single_quotes)
+	{
+	    if ($character eq "'")
+	    {
+		$in_single_quotes = 0;
+		$word_started = 1;
+	    }
+	    else
+	    {
+		$word .= $character;
+		$word_started = 1;
+	    }
+
+	    $last_character_was_unquoted_whitespace = 0;
+
+	    next;
+	}
+
+	if ($in_double_quotes)
+	{
+	    if ($character eq '"')
+	    {
+		$in_double_quotes = 0;
+		$word_started = 1;
+	    }
+	    elsif ($character eq '\\')
+	    {
+		$escaped = 1;
+		$word_started = 1;
+	    }
+	    else
+	    {
+		$word .= $character;
+		$word_started = 1;
+	    }
+
+	    $last_character_was_unquoted_whitespace = 0;
+
+	    next;
+	}
+
+	if ($character =~ /\s/)
+	{
+	    if ($word_started)
+	    {
+		push @arguments, $word;
+
+		$word = '';
+		$word_started = 0;
+	    }
+
+	    $last_character_was_unquoted_whitespace = 1;
+
+	    next;
+	}
+
+	$last_character_was_unquoted_whitespace = 0;
+
+	if ($character eq "'")
+	{
+	    $in_single_quotes = 1;
+	    $word_started = 1;
+	}
+	elsif ($character eq '"')
+	{
+	    $in_double_quotes = 1;
+	    $word_started = 1;
+	}
+	elsif ($character eq '\\')
+	{
+	    $escaped = 1;
+	    $word_started = 1;
+	}
+	else
+	{
+	    $word .= $character;
+	    $word_started = 1;
+	}
+    }
+
+    # If completion is requested immediately after a backslash, keep the
+    # backslash in the current token.  It is still part of the word being
+    # completed even though there is no following character yet.
+
+    if ($escaped)
+    {
+	$word .= '\\';
+    }
+
+    if ($word_started)
+    {
+	push @arguments, $word;
+    }
+
+    my $comp_cword_from_command_line
+	= $last_character_was_unquoted_whitespace
+	    ? scalar @arguments
+	    : scalar @arguments ? scalar(@arguments) - 1 : 0;
+
+    return (\@arguments, $comp_cword_from_command_line);
 }
 
 
