@@ -12,6 +12,7 @@ command_tests:
          some workflows may implement a usage message available with the --help option):
     1_workflows:
     - workflow builtin ai_document_query
+    - workflow builtin ai_query
     - workflow builtin configuration_archive
     - workflow builtin configuration_directory_print
     - workflow builtin configuration_fetch
