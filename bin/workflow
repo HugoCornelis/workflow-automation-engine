@@ -4752,6 +4752,19 @@ $command [options] <pdf-file> <query-string>
 options:
 ~~~~~~~~
 
+    ``--api-key <key>``: use this OpenAI API key for the request.  If this
+    option is omitted, the OpenAI client uses the configured token from
+    volatile storage or the ``OPENAI_API_KEY`` environment variable.
+
+    ``--base-url <url>``: use this OpenAI-compatible API base URL.  The
+    default is ``https://api.openai.com/v1``.
+
+    ``--model <model>``: use this model for the document query.  The default
+    is the model configured by the OpenAI client.
+
+    ``--purpose <purpose>``: use this purpose when uploading the PDF file.
+    The default is ``user_data``.
+
     ``--stream-live``: print streamed answer tokens live on STDERR while
     keeping the final YAML result on STDOUT.
 
@@ -4886,6 +4899,19 @@ $command [options] <query-string>
 
 options:
 ~~~~~~~~
+
+    ``--api-key <key>``: use this OpenAI API key for the request.  If this
+    option is omitted, the OpenAI client uses the configured token from
+    volatile storage or the ``OPENAI_API_KEY`` environment variable.
+
+    ``--base-url <url>``: use this OpenAI-compatible API base URL.  The
+    default is ``https://api.openai.com/v1``.
+
+    ``--model <model>``: use this model for the document query.  The default
+    is the model configured by the OpenAI client.
+
+    ``--purpose <purpose>``: use this purpose when uploading the PDF file.
+    The default is ``user_data``.
 
     ``--stream-live``: print streamed answer tokens live on STDERR while keeping the final YAML result on STDOUT, this is the default.
 
