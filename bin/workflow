@@ -4805,7 +4805,7 @@ sub builtin_ai_query
 
     my $pdf_manual_filename = Utilities::generated_manual_pdf_pathname();
 
-    builtin_manual([ '--no-view' ]);
+    builtin_manual([ '--no-view', '--use-cache' ]);
 
     _builtin_ai_query_execute_scheduled_manual_generation_commands();
 
@@ -6384,6 +6384,7 @@ sub builtin_manual
     my $option_input_md;
     my $option_output_pdf = 1;
     my $option_remove_intermediate_files;
+    my $option_use_cache;
     my $option_view = 1;
 
     our $options
@@ -6392,6 +6393,7 @@ sub builtin_manual
 	   'input-md!' => \$option_input_md,
 	   'output-pdf!' => \$option_output_pdf,
 	   "remove-intermediate-files!" => \$option_remove_intermediate_files,
+	   'use-cache!' => \$option_use_cache,
 	   'view!' => \$option_view,
 	  };
 
@@ -6403,14 +6405,6 @@ sub builtin_manual
     {
         die "$global_program_name: *** Error in option processing, try --help";
     }
-
-    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
-
-    my $operations = main::operation_hash_typed_generate('with help subs');
-
-    my $target = $arguments->[0];
-
-    my $matcher;
 
     my $field_project_configuration;
 
@@ -6435,6 +6429,10 @@ sub builtin_manual
     }
 
     my $field_project_name = $field_project_configuration->{field_project_name};
+
+    my $target = $arguments->[0];
+
+    my $matcher;
 
     my $filename_suffix = '';
 
@@ -6461,6 +6459,55 @@ sub builtin_manual
 
 	$filename_suffix =~ s/[^A-Za-z0-9._-]+//g;
     }
+
+    my $manual_basename = Utilities::sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual$filename_suffix";
+
+    my $manual_filename_rst = "$manual_basename.rst";
+
+    my $manual_filename_pdf = "$manual_basename.pdf";
+
+    # use a long name for this to avoid name clashes
+
+    my $section_name = "dynamically-generated-manuals";
+
+    my $pathname_full_rst = Utilities::volatile_section_pathname($section_name, $manual_filename_rst);
+
+    my $pathname_full_pdf = Utilities::volatile_section_pathname($section_name, $manual_filename_pdf);
+
+    my $directory_manual = $pathname_full_rst;
+
+    $directory_manual =~ s{/[^/]+\z}{};
+
+    my $commands_always_print
+	= [
+	   "echo '$manual_filename_rst' stored into volatile project storage $pathname_full_rst",
+	  ];
+
+    execute_shell_command_array($commands_always_print);
+
+    if ($option_use_cache)
+    {
+	if (-f $pathname_full_rst
+	    && -f $pathname_full_pdf)
+	{
+	    my $commands_view_from_cache
+		= [
+		   "echo '$manual_filename_rst' and '$manual_filename_pdf' are already available in the cache.",
+		   "cd '$directory_manual'",
+		   ($option_view ? "okular '$manual_filename_pdf'" : ()),
+		  ];
+
+	    execute_shell_command_array($commands_view_from_cache);
+
+	    return '';
+	}
+    }
+
+    #t should we move operation_hash_typed_generate() and family to an Operation:: package?
+
+    my $operations = main::operation_hash_typed_generate('with help subs');
 
     my $operations_help
 	= [
@@ -6711,46 +6758,12 @@ $global_command_line
 	$last_target = $this_target;
     }
 
-    my $manual_basename = Utilities::sentence_summarize($field_project_name);
-
-    $manual_basename = "$manual_basename-manual$filename_suffix";
-
-    my $manual_filename = "$manual_basename.rst";
-
-    my $manual_file;
-
-    # use a long name for this to avoid name clashes
-
-    my $section_name = "dynamically-generated-manuals";
-
-    my $pathname_full = Utilities::volatile_section_pathname($section_name, $manual_filename);
-
     # write the generated manual to volatile storage
 
     if ($global_execute_scheduled_commands)
     {
-	Utilities::volatile_section_file_write($section_name, $manual_filename, $manual_string);
-
-	my $commands
-	    = [
-	       "echo '$manual_filename' stored into volatile project storage $pathname_full",
-	      ];
-
-	execute_shell_command_array($commands);
+	Utilities::volatile_section_file_write($section_name, $manual_filename_rst, $manual_string);
     }
-    else
-    {
-	my $commands
-	    = [
-	       "echo Internal commands to generate '$manual_filename'",
-	      ];
-
-	execute_shell_command_array($commands);
-    }
-
-    my $directory = $pathname_full;
-
-    $directory =~ s{/[^/]+\z}{};
 
     my $commands = [];
 
@@ -6759,9 +6772,9 @@ $global_command_line
     {
 	$commands
 	    = [
-	       "cd '$directory'",
-	       "pandoc '$manual_filename' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
-	       ($option_remove_intermediate_files ? "rm '$manual_filename'" : ()),,
+	       "cd '$directory_manual'",
+	       "pandoc '$manual_filename_rst' -o '$manual_basename.pdf' -V geometry:margin=1cm --number-sections",
+	       ($option_remove_intermediate_files ? "rm '$manual_filename_rst'" : ()),,
 	       ($option_view ? "okular '$manual_basename.pdf'" : ()),
 	      ];
     }
@@ -6769,7 +6782,7 @@ $global_command_line
     {
 	$commands
 	    = [
-	       "cd '$directory'",
+	       "cd '$directory_manual'",
 	       ($option_view ? "okular '$manual_basename.pdf'" : ()),
 	      ];
     }

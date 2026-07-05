@@ -52,7 +52,7 @@ command_tests:
       END WORKFLOW: builtin_docker_images_build
       
       WORKFLOW: builtin_manual (use --help to see the help page)
-          'echo Internal commands to generate 'feature-testing-manual.rst''
+          'echo 'feature-testing-manual.rst' stored into volatile project storage /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/dynamically-generated-manuals/feature-testing-manual.rst'
           'cd /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/dynamically-generated-manuals '
           'pandoc 'feature-testing-manual.rst' -o 'feature-testing-manual.pdf' -V geometry:margin=1cm --number-sections'
           'okular 'feature-testing-manual.pdf''
