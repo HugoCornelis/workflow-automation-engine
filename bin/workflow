@@ -4722,16 +4722,20 @@ sub builtin_ai_document_query_completor
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin ai_document_query) ],
 	 option_descriptions => {
+				 '--api-key_<key>' => 'use this OpenAI API key for the request',
+				 '--base-url_<url>' => 'use this OpenAI-compatible API base URL',
+				 '--model_<model>' => 'use this model for the document query',
+				 '--purpose_<purpose>' => 'use this purpose when uploading the PDF file',
 				 '--stream-live' => 'print streamed answer tokens live on STDERR while keeping YAML on STDOUT',
 				 '--no-stream-live' => 'disable live token printing',
 				},
 	 positional_arguments => [
 				{
 				 completions => _builtin_completor_pdf_filename_completions(),
-				 option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+				 option_separator_hint => '2.Type_--_for_options',
 				},
 			       ],
-	 after_positional_option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+	 after_positional_option_separator_hint => '2.Type_--_for_options',
 	);
 }
 
@@ -4868,6 +4872,10 @@ sub builtin_ai_query_completor
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin ai_query) ],
 	 option_descriptions => {
+				 '--api-key_<key>' => 'use this OpenAI API key for the request',
+				 '--base-url_<url>' => 'use this OpenAI-compatible API base URL',
+				 '--model_<model>' => 'use this model for the document query',
+				 '--purpose_<purpose>' => 'use this purpose when uploading the PDF file',
 				 '--stream-live' => 'print streamed answer tokens live on STDERR while keeping YAML on STDOUT',
 				 '--no-stream-live' => 'disable live token printing',
 				},
@@ -4876,10 +4884,10 @@ sub builtin_ai_query_completor
 				   completions => {
 						   '1.<query-string>' => '',
 						  },
-				   option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+				   option_separator_hint => '2.Type_--_for_options',
 				  },
 				 ],
-	 after_positional_option_separator_hint => '2.Type_--_then_--stream-live_for_options',
+	 after_positional_option_separator_hint => '2.Type_--_for_options',
 	);
 }
 
