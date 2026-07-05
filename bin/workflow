@@ -1109,6 +1109,64 @@ sub _builtin_add_workflow_filename
 }
 
 
+sub _builtin_ai_query_execute_scheduled_manual_generation_commands
+{
+    my $scheduled_commands = [ @$global_scheduled_commands ];
+
+    $global_scheduled_commands = [];
+
+    return ''
+	if not @$scheduled_commands;
+
+    my $current_directory;
+
+    {
+	require Cwd;
+
+	$current_directory = Cwd::getcwd();
+    }
+
+    my $error;
+
+    eval
+    {
+	my $operation_results
+	    = Engine::execute_all_scheduled_commands
+	      (
+	       $scheduled_commands,
+	       $InteractionRole::all_interaction_roles,
+	      );
+
+	Engine::process_operation_results
+	    (
+	     $operation_results,
+	     {
+	      console_output => 'always',
+	      dry_run_reason => '',
+	     },
+	    );
+
+	1;
+    }
+    or do
+    {
+	$error = $@ || 'unknown error';
+    };
+
+    if (defined $current_directory
+	and $current_directory ne '')
+    {
+	chdir $current_directory
+	    or die "$global_program_name: *** Error: cannot restore working directory '$current_directory' ($!)";
+    }
+
+    die $error
+	if $error;
+
+    return '';
+}
+
+
 sub _builtin_completor_expander
 {
     my %parameters = @_;
@@ -4750,94 +4808,6 @@ arguments:
 }
 
 
-sub _builtin_ai_query_generated_manual_pdf_pathname
-{
-    my $field_project_configuration;
-
-    if (exists $global_field_project_configuration->{field_project_name})
-    {
-	$field_project_configuration = $global_field_project_configuration;
-    }
-    else
-    {
-	$field_project_configuration
-	    = {
-	       field_project_name => 'The workflow engine',
-	      };
-    }
-
-    my $field_project_name = $field_project_configuration->{field_project_name};
-
-    my $manual_basename = _sentence_summarize($field_project_name);
-
-    $manual_basename = "$manual_basename-manual";
-
-    my $manual_pdf_filename = "$manual_basename.pdf";
-
-    my $section_name = "dynamically-generated-manuals";
-
-    return Utilities::volatile_section_pathname($section_name, $manual_pdf_filename);
-}
-
-
-sub _builtin_ai_query_execute_scheduled_manual_generation_commands
-{
-    my $scheduled_commands = [ @$global_scheduled_commands ];
-
-    $global_scheduled_commands = [];
-
-    return ''
-	if not @$scheduled_commands;
-
-    my $current_directory;
-
-    {
-	require Cwd;
-
-	$current_directory = Cwd::getcwd();
-    }
-
-    my $error;
-
-    eval
-    {
-	my $operation_results
-	    = Engine::execute_all_scheduled_commands
-	      (
-	       $scheduled_commands,
-	       $InteractionRole::all_interaction_roles,
-	      );
-
-	Engine::process_operation_results
-	    (
-	     $operation_results,
-	     {
-	      console_output => 'always',
-	      dry_run_reason => '',
-	     },
-	    );
-
-	1;
-    }
-    or do
-    {
-	$error = $@ || 'unknown error';
-    };
-
-    if (defined $current_directory
-	and $current_directory ne '')
-    {
-	chdir $current_directory
-	    or die "$global_program_name: *** Error: cannot restore working directory '$current_directory' ($!)";
-    }
-
-    die $error
-	if $error;
-
-    return '';
-}
-
-
 sub builtin_ai_query
 {
     my $arguments = shift || [];
@@ -4883,7 +4853,7 @@ sub builtin_ai_query
 	return '';
     }
 
-    my $pdf_manual_filename = _builtin_ai_query_generated_manual_pdf_pathname();
+    my $pdf_manual_filename = Utilities::generated_manual_pdf_pathname();
 
     builtin_manual([ '--no-view' ]);
 
@@ -13951,6 +13921,36 @@ sub file_sha256sum
         or croak "Could not close $path after SHA256 calculation: $!";
 
     return $sha->hexdigest();
+}
+
+
+sub generated_manual_pdf_pathname
+{
+    my $field_project_configuration;
+
+    if (exists $global_field_project_configuration->{field_project_name})
+    {
+	$field_project_configuration = $global_field_project_configuration;
+    }
+    else
+    {
+	$field_project_configuration
+	    = {
+	       field_project_name => 'The workflow engine',
+	      };
+    }
+
+    my $field_project_name = $field_project_configuration->{field_project_name};
+
+    my $manual_basename = _sentence_summarize($field_project_name);
+
+    $manual_basename = "$manual_basename-manual";
+
+    my $manual_pdf_filename = "$manual_basename.pdf";
+
+    my $section_name = "dynamically-generated-manuals";
+
+    return volatile_section_pathname($section_name, $manual_pdf_filename);
 }
 
 
