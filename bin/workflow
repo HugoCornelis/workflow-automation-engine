@@ -3969,36 +3969,6 @@ sub _roles_select
 }
 
 
-sub _sentence_summarize
-{
-    my $sentence = shift;
-
-    my $maximum_length = shift || 80;
-
-    my $result = "$sentence";
-
-    $result =~ s(\s+)(-)g;
-
-    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
-
-    $result = _strings_remove($replace_these_chars, 'replace-with-dash', $result);
-
-    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
-
-    $result = _strings_remove($remove_these_words, 'with-dash-keep', $result);
-
-    my $remove_these_chars = [ '<', '>', '\'' ];
-
-    $result = _strings_remove($remove_these_chars, 'without-dash', $result);
-
-    $result = substr($result, 0, $maximum_length);
-
-    $result =~ s(-$)();
-
-    return $result;
-}
-
-
 sub _shell_quote
 {
     my ($s) = @_;
@@ -4008,50 +3978,6 @@ sub _shell_quote
     $s =~ s/'/'"'"'/g;
 
     return "'$s'";
-}
-
-
-sub _strings_remove
-{
-    my $strings = shift;
-
-    my $options = shift;
-
-    my $sentence = shift;
-
-    if ($options eq 'with-dash-keep')
-    {
-	foreach my $string (@$strings)
-	{
-	    $sentence =~ s(-$string-)(-)ig;
-	    $sentence =~ s(^$string-)()ig;
-	    $sentence =~ s($string$)()ig;
-	}
-    }
-    elsif ($options eq 'without-dash')
-    {
-	foreach my $string (@$strings)
-	{
-	    $strings = quotemeta($string);
-
-	    $sentence =~ s($string)()ig;
-	}
-    }
-    elsif ($options eq 'replace-with-dash')
-    {
-	foreach my $string (@$strings)
-	{
-	    $strings = quotemeta($string);
-
-	    $sentence =~ s($string)(-)ig;
-	}
-    }
-    else
-    {
-	die "$0: Internal error in _strings_remove()";
-    }
-
-    return $sentence;
 }
 
 
@@ -6761,7 +6687,7 @@ $global_command_line
 	$last_target = $this_target;
     }
 
-    my $manual_basename = _sentence_summarize($field_project_name);
+    my $manual_basename = Utilities::sentence_summarize($field_project_name);
 
     $manual_basename = "$manual_basename-manual$filename_suffix";
 
@@ -13975,7 +13901,7 @@ sub generated_manual_pdf_pathname
 
     my $field_project_name = $field_project_configuration->{field_project_name};
 
-    my $manual_basename = _sentence_summarize($field_project_name);
+    my $manual_basename = Utilities::sentence_summarize($field_project_name);
 
     $manual_basename = "$manual_basename-manual";
 
@@ -14014,6 +13940,80 @@ sub read_directory
     }
 
     return $result;
+}
+
+
+sub sentence_summarize
+{
+    my $sentence = shift;
+
+    my $maximum_length = shift || 80;
+
+    my $result = "$sentence";
+
+    $result =~ s(\s+)(-)g;
+
+    my $replace_these_chars = [ '\\.', '\\?', '\\(', '\\)', '/', ':' ];
+
+    $result = strings_remove($replace_these_chars, 'replace-with-dash', $result);
+
+    my $remove_these_words = [ 'the', 'a', 'an', 'that', 'this', 'to', 'of', 'about', 'is', 'do', 'we', 'can', 'what', 'when', 'see', 'create', 'in', 'uses', 'for', 'using' ];
+
+    $result = strings_remove($remove_these_words, 'with-dash-keep', $result);
+
+    my $remove_these_chars = [ '<', '>', '\'' ];
+
+    $result = strings_remove($remove_these_chars, 'without-dash', $result);
+
+    $result = substr($result, 0, $maximum_length);
+
+    $result =~ s(-$)();
+
+    return $result;
+}
+
+
+sub strings_remove
+{
+    my $strings = shift;
+
+    my $options = shift;
+
+    my $sentence = shift;
+
+    if ($options eq 'with-dash-keep')
+    {
+	foreach my $string (@$strings)
+	{
+	    $sentence =~ s(-$string-)(-)ig;
+	    $sentence =~ s(^$string-)()ig;
+	    $sentence =~ s($string$)()ig;
+	}
+    }
+    elsif ($options eq 'without-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)()ig;
+	}
+    }
+    elsif ($options eq 'replace-with-dash')
+    {
+	foreach my $string (@$strings)
+	{
+	    $strings = quotemeta($string);
+
+	    $sentence =~ s($string)(-)ig;
+	}
+    }
+    else
+    {
+	die "$0: Internal error in _strings_remove()";
+    }
+
+    return $sentence;
 }
 
 
