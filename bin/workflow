@@ -359,7 +359,7 @@ sub file_ai_query
         # newly uploaded file is referenced immediately by the Responses API.
         # Retry only transient-looking failures; propagate ordinary 4xx errors.
 
-        last if $last_error !~ /validating file ownership|server_error|HTTP\s+5\d\d|timeout|timed out/i;
+        last if $last_error !~ /validating file ownership|server_error|\b5\d\d\b|Internal Server Error|Bad Gateway|Service Unavailable|Gateway Timeout|timeout|timed out/i;
 
         sleep(2 ** ($attempt - 1));
     }
@@ -827,7 +827,16 @@ sub _perform_streaming_json_request
 
         eval
         {
-            $json = decode_json($raw_body);
+            # The program installs a global __DIE__ handler that prints a
+            # stack trace even for exceptions that are intentionally caught by
+            # eval.  Suppress it here: an empty/non-JSON error body is expected
+            # for some HTTP failures and is handled below by falling back to the
+            # status line.
+            local $SIG{'__DIE__'};
+
+            $json = decode_json($raw_body)
+                if defined $raw_body
+                    and $raw_body ne '';
 
             1;
         };
