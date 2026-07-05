@@ -14215,7 +14215,16 @@ sub bash_completion
 			   );
     }
 
-    my $arguments = [ split ' ', $string_before_point ]; # $command_line, ];
+    # Bash passes COMP_CWORD to this process, but the completion engine
+    # still needs to reconstruct COMP_WORDS from COMP_LINE.  Reconstructing
+    # it with plain whitespace splitting breaks quoted arguments: a free-form
+    # query like 'What is this project about?' would otherwise be seen as
+    # five separate words.  Use the shell-aware parser's word index so the
+    # reconstructed argument vector and current-word index stay consistent.
+
+    my ($arguments, $comp_cword_from_command_line) = bash_completion_arguments_parse($string_before_point);
+
+    $comp_cword = $comp_cword_from_command_line;
 
     my $command_line_current_word = exists $arguments->[$comp_cword] ? $arguments->[$comp_cword] : undef;
 
@@ -14457,6 +14466,136 @@ sub bash_completion
     }
 
     exit 0;
+}
+
+
+sub bash_completion_arguments_parse
+{
+    my $string_before_point = shift || '';
+
+    my @arguments;
+
+    my $word = '';
+    my $word_started = 0;
+
+    my $in_single_quotes = 0;
+    my $in_double_quotes = 0;
+    my $escaped = 0;
+
+    my $last_character_was_unquoted_whitespace = 1;
+
+    foreach my $character (split //, $string_before_point)
+    {
+	if ($escaped)
+	{
+	    $word .= $character;
+	    $word_started = 1;
+	    $escaped = 0;
+	    $last_character_was_unquoted_whitespace = 0;
+
+	    next;
+	}
+
+	if ($in_single_quotes)
+	{
+	    if ($character eq "'")
+	    {
+		$in_single_quotes = 0;
+		$word_started = 1;
+	    }
+	    else
+	    {
+		$word .= $character;
+		$word_started = 1;
+	    }
+
+	    $last_character_was_unquoted_whitespace = 0;
+
+	    next;
+	}
+
+	if ($in_double_quotes)
+	{
+	    if ($character eq '"')
+	    {
+		$in_double_quotes = 0;
+		$word_started = 1;
+	    }
+	    elsif ($character eq '\\')
+	    {
+		$escaped = 1;
+		$word_started = 1;
+	    }
+	    else
+	    {
+		$word .= $character;
+		$word_started = 1;
+	    }
+
+	    $last_character_was_unquoted_whitespace = 0;
+
+	    next;
+	}
+
+	if ($character =~ /\s/)
+	{
+	    if ($word_started)
+	    {
+		push @arguments, $word;
+
+		$word = '';
+		$word_started = 0;
+	    }
+
+	    $last_character_was_unquoted_whitespace = 1;
+
+	    next;
+	}
+
+	$last_character_was_unquoted_whitespace = 0;
+
+	if ($character eq "'")
+	{
+	    $in_single_quotes = 1;
+	    $word_started = 1;
+	}
+	elsif ($character eq '"')
+	{
+	    $in_double_quotes = 1;
+	    $word_started = 1;
+	}
+	elsif ($character eq '\\')
+	{
+	    $escaped = 1;
+	    $word_started = 1;
+	}
+	else
+	{
+	    $word .= $character;
+	    $word_started = 1;
+	}
+    }
+
+    # If completion is requested immediately after a backslash, keep the
+    # backslash in the current token.  It is still part of the word being
+    # completed even though there is no following character yet.
+
+    if ($escaped)
+    {
+	$word .= '\\';
+    }
+
+    if ($word_started)
+    {
+	push @arguments, $word;
+    }
+
+    my $comp_cword_from_command_line
+	= $last_character_was_unquoted_whitespace
+	    ? scalar @arguments
+	    : scalar @arguments ? scalar(@arguments) - 1 : 0;
+
+    return (\@arguments, $comp_cword_from_command_line);
 }
 
 
