@@ -12,7 +12,7 @@ command_tests:
       
       package main;
       
-      our $option_verbose;
+      our $global_context;
       
       our $global_technical_project_configuration;
       
