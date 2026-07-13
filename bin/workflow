@@ -62,15 +62,9 @@ $SIG{'INT'}
 
 
 our $option_bash_completion;
-our $option_details;
-our $option_dump_all_selected_operations;
-our $option_dump_operation_selector_type;
 our $option_dump_specific_workflow_roles;
 our $option_execution_mode = 'system';
 our $option_export_help_page;
-our $option_export_role;
-our $option_export_sudo;
-our $option_export_verbose;
 our $option_force_rebuild;
 our $option_help_field_project_name;
 our $option_help_builtin_package;
@@ -79,26 +73,36 @@ our $option_help_options;
 our $option_help_projects;
 our $option_help_targets;
 our $option_help_workflows;
-our $option_verbose;
 
 our $global_context
     = {
        global_execute_scheduled_commands => 'yes',
+       global_output_filename_template => undef,
        global_scheduled_commands => [],
+       'Engine::global_exported_sh_file' => undef,
+       'Engine::global_exported_sh_filename' => undef,
+       'Engine::global_exported_times_file' => undef,
        'Engine::global_remote_working_directory' => {},
        'InteractionRole::all_interaction_roles' => undef,
        'InteractionRole::current_interaction_role' => undef,
+       option_details => undef,
        option_dry_run => '',
+       option_dump_all_selected_operations => undef,
        option_dump_interaction_roles => undef,
        option_dump_module_interaction_roles => undef,
+       option_dump_operation_selector_type => undef,
        option_dump_schedule => undef,
+       option_export_role => undef,
        option_export_sh => undef,
+       option_export_sudo => undef,
        option_export_times => undef,
+       option_export_verbose => undef,
        option_help => undef,
        option_interactions => undef,
        option_interactions_all => undef,
        option_interactions_target => undef,
        option_interactions_target_all_roles => undef,
+       option_verbose => undef,
       };
 
 
@@ -106,19 +110,19 @@ our $global_options
     = {
        "bash-completion=s" => \$option_bash_completion,
        "dry-run!" => \$global_context->{option_dry_run},
-       "dump-all-selected-operations!" => \$option_dump_all_selected_operations,
+       "dump-all-selected-operations!" => \$global_context->{option_dump_all_selected_operations},
        "dump-interaction-roles!" => \$global_context->{option_dump_interaction_roles},
        "dump-module-interaction-roles!" => \$global_context->{option_dump_module_interaction_roles},
-       "dump-operation-selector-type!" => \$option_dump_operation_selector_type,
+       "dump-operation-selector-type!" => \$global_context->{option_dump_operation_selector_type},
        "dump-schedule!" => \$global_context->{option_dump_schedule},
-       "d|details+" => \$option_details,
+       "d|details+" => \$global_context->{option_details},
        "execution-mode=s" => \$option_execution_mode,
        "export-help-page!" => \$option_export_help_page,
-       "export-role=s" => \$option_export_role,
+       "export-role=s" => \$global_context->{option_export_role},
        "export-sh:s" => \$global_context->{option_export_sh},
-       "export-sudo" => \$option_export_sudo,
+       "export-sudo" => \$global_context->{option_export_sudo},
        "export-times!" => \$global_context->{option_export_times},
-       "export-verbose!" => \$option_export_verbose,
+       "export-verbose!" => \$global_context->{option_export_verbose},
        "force-rebuild!" => \$option_force_rebuild,
        "help!" => \$global_context->{option_help},
        "help-builtin-package!" => \$option_help_builtin_package,
@@ -132,27 +136,27 @@ our $global_options
        "interactions-all!" => \$global_context->{option_interactions_all},
        "interactions-target!" => \$global_context->{option_interactions_target},
        "interactions-target-all-roles!" => \$global_context->{option_interactions_target_all_roles},
-       "v|verbose+" => \$option_verbose,
+       "v|verbose+" => \$global_context->{option_verbose},
 
        # see https://stackoverflow.com/questions/56418722/handle-repeated-options-like-v-vv-vvv-idiomatically-with-perl-getopt
 
-       "dd" => sub { $option_details += 2 },
-       "ddd" => sub { $option_details += 3 },
-       "dddd" => sub { $option_details += 4 },
-       "ddddd" => sub { $option_details += 5 },
-       "dddddd" => sub { $option_details += 6 },
-       "ddddddd" => sub { $option_details += 7 },
-       "dddddddd" => sub { $option_details += 8 },
-       "ddddddddd" => sub { $option_details += 9 },
+       "dd" => sub { $global_context->{option_details} += 2 },
+       "ddd" => sub { $global_context->{option_details} += 3 },
+       "dddd" => sub { $global_context->{option_details} += 4 },
+       "ddddd" => sub { $global_context->{option_details} += 5 },
+       "dddddd" => sub { $global_context->{option_details} += 6 },
+       "ddddddd" => sub { $global_context->{option_details} += 7 },
+       "dddddddd" => sub { $global_context->{option_details} += 8 },
+       "ddddddddd" => sub { $global_context->{option_details} += 9 },
 
-       "vv" => sub { $option_verbose += 2 },
-       "vvv" => sub { $option_verbose += 3 },
-       "vvvv" => sub { $option_verbose += 4 },
-       "vvvvv" => sub { $option_verbose += 5 },
-       "vvvvvv" => sub { $option_verbose += 6 },
-       "vvvvvvv" => sub { $option_verbose += 7 },
-       "vvvvvvvv" => sub { $option_verbose += 8 },
-       "vvvvvvvvv" => sub { $option_verbose += 9 },
+       "vv" => sub { $global_context->{option_verbose} += 2 },
+       "vvv" => sub { $global_context->{option_verbose} += 3 },
+       "vvvv" => sub { $global_context->{option_verbose} += 4 },
+       "vvvvv" => sub { $global_context->{option_verbose} += 5 },
+       "vvvvvv" => sub { $global_context->{option_verbose} += 6 },
+       "vvvvvvv" => sub { $global_context->{option_verbose} += 7 },
+       "vvvvvvvv" => sub { $global_context->{option_verbose} += 8 },
+       "vvvvvvvvv" => sub { $global_context->{option_verbose} += 9 },
       };
 
 our $global_command_line = join " ", $0, @ARGV;
@@ -253,7 +257,6 @@ our $all_path_globals
       };
 
 
-our $global_output_filename_template;
 
 our $global_field_project_configuration;
 
@@ -1844,7 +1847,7 @@ use warnings;
 
 package main;
 
-our \$option_verbose;
+our \$global_context;
 
 our \$global_technical_project_configuration;
 
@@ -3270,8 +3273,8 @@ sub _file_contains_regex
 
     my $result = ($data =~ /$string/);
 
-    if ($option_verbose
-	and $option_verbose > 1)
+    if ($global_context->{option_verbose}
+	and $global_context->{option_verbose} > 1)
     {
 	if ($result)
 	{
@@ -3415,8 +3418,8 @@ sub _init_workflow_filenames_configured
 
     #! options haven't been processed yet for some execution paths
 
-    if (($option_verbose
-	 and $option_verbose > 1)
+    if (($global_context->{option_verbose}
+	 and $global_context->{option_verbose} > 1)
 	or $debug)
     {
 	use Data::Dumper;
@@ -3483,8 +3486,8 @@ sub _init_filenames_2_symlink_commands
 
     use Data::Dumper;
 
-    if (defined $option_verbose
-	and $option_verbose > 3)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 3)
     {
 	print Dumper( { _init_filenames_2_symlink_commands_filenames => $filenames, }, );
     }
@@ -3511,8 +3514,8 @@ sub _init_filenames_2_symlink_commands
 
 	       my $result = "ln -sf $source $target";
 
-	       if (defined $option_verbose
-		   and $option_verbose > 2)
+	       if (defined $global_context->{option_verbose}
+		   and $global_context->{option_verbose} > 2)
 	       {
 		   print "$command_filename: $result\n";
 	       }
@@ -3547,8 +3550,8 @@ sub _init_filenames_2_symlink_commands
 	   sort @$filenames,
 	  ];
 
-    if (defined $option_verbose
-	and $option_verbose > 3)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 3)
     {
 	print Dumper( { _init_filenames_2_symlink_commands_commands => $commands, }, );
     }
@@ -3574,7 +3577,7 @@ alias $project_name-configuration=\"grc $project_name-configuration\"
 
     my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $alias_marker);
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	if (not $bashrc_matches)
 	{
@@ -3680,7 +3683,7 @@ sub _install_script_grc_conf_additions
 
     my $grc_conf_matches = _file_contains_regex($etc_grc_conf_filename, $etc_grc_conf_marker);
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	if (not $grc_conf_matches)
 	{
@@ -3744,7 +3747,7 @@ sub _install_script_grc_symbolic_links
 		execute_shell_command($command, { sudo => 1, }, );
 	}
 
-	if ($option_verbose)
+	if ($global_context->{option_verbose})
 	{
 	    use Data::Dumper;
 
@@ -3762,7 +3765,7 @@ sub _install_script_grc_symbolic_links
 	if (-e $source_file_configuration
 	    and not -e $target_file_configuration)
 	{
-	    if ($option_verbose)
+	    if ($global_context->{option_verbose})
 	    {
 		print STDERR "Installing _install_script_grc_symbolic_links, configuration\n";
 	    }
@@ -3773,7 +3776,7 @@ sub _install_script_grc_symbolic_links
 	}
 	else
 	{
-	    if ($option_verbose)
+	    if ($global_context->{option_verbose})
 	    {
 		print STDERR "NOT Installing _install_script_grc_symbolic_links, configuration, either the source file ($source_file_configuration) does not exist or the target file ($target_file_configuration) already exists.\n";
 	    }
@@ -3786,7 +3789,7 @@ sub _install_script_grc_symbolic_links
 	if (-e $source_file_workflow
 	    and not -e $target_file_workflow)
 	{
-	    if ($option_verbose)
+	    if ($global_context->{option_verbose})
 	    {
 		print STDERR "Installing _install_script_grc_symbolic_links, workflow\n";
 	    }
@@ -3797,7 +3800,7 @@ sub _install_script_grc_symbolic_links
 	}
 	else
 	{
-	    if ($option_verbose)
+	    if ($global_context->{option_verbose})
 	    {
 		print STDERR "NOT Installing _install_script_grc_symbolic_links, workflow, either the source file ($source_file_workflow) does not exist or the target file ($target_file_workflow) already exists.\n";
 	    }
@@ -3824,7 +3827,7 @@ $bin_path_marker
 
     my $bashrc_matches = _file_contains_regex("$ENV{HOME}/.bashrc", $bin_path_marker);
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	if (not $bashrc_matches)
 	{
@@ -3853,7 +3856,7 @@ sub _install_script_symbolic_link_to_commands_configured
 
     my $option_install_report = shift || '';
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	print "$global_program_name: _install_script_symbolic_link_to_commands_configured with (--install-commands == $option_install_commands, --install-report == $option_install_report)\n";
     }
@@ -3872,8 +3875,8 @@ sub _install_script_symbolic_link_to_commands_configured
     # 2. requires adding the targets defined in the script to the configuration
     # -- this requires to guess the targets.
 
-    if (defined $option_verbose
-	and $option_verbose > 2)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 2)
     {
 	print "In: sub _install_script_symbolic_link_to_commands_configured()\n";
     }
@@ -3895,7 +3898,7 @@ sub _install_script_symbolic_link_to_configuration
 
     my $option_install_report = shift || '';
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	print "$global_program_name: installation of the workflow configuration with (--install-commands == $option_install_commands, --install-report == $option_install_report)\n";
     }
@@ -3909,8 +3912,8 @@ sub _install_script_symbolic_link_to_configuration
 	   @{ _init_workflow_filenames_found('full-paths-configuration') },
 	  };
 
-    if (defined $option_verbose
-	and $option_verbose > 2)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 2)
     {
 	print Dumper( { configuration_filenames_found_2 => $configuration_filenames_found_2, }, );
     }
@@ -3940,7 +3943,7 @@ sub _install_script_symbolic_link_to_engine
 
     if (not -e $target)
     {
-	if ($option_verbose)
+	if ($global_context->{option_verbose})
 	{
 	    print "$global_program_name: installation of the workflow engine with (--install-engine == $option_install_engine, --install-report == $option_install_report)\n";
 	}
@@ -4226,7 +4229,7 @@ use warnings;
 
 package main;
 
-our \$option_verbose;
+our \$global_context;
 
 our \$global_technical_project_configuration;
 
@@ -4635,7 +4638,7 @@ sub builtin_ai_document_query
     my $client = AI::OpenAI->new(%$client_options);
 
     print STDERR "$global_program_name: uploading $pdf_manual_filename to OpenAI\n"
-	if defined $option_verbose and $option_verbose;
+	if defined $global_context->{option_verbose} and $global_context->{option_verbose};
 
     my $cached_file
 	= $client->file_cache_or_upload
@@ -4653,7 +4656,7 @@ sub builtin_ai_document_query
     }
 
     print STDERR "$global_program_name: querying OpenAI with uploaded file $file_id\n"
-	if defined $option_verbose and $option_verbose;
+	if defined $global_context->{option_verbose} and $global_context->{option_verbose};
 
     my $stream_callback;
 
@@ -5026,7 +5029,7 @@ sub builtin_configuration_archive
 
 	$tar->write($tar_filename, $compression);
 
-	if ($option_verbose)
+	if ($global_context->{option_verbose})
 	{
 	    use YAML::PP;
 
@@ -6578,7 +6581,7 @@ sub builtin_manual
 			    {
 			     field_project_name => $field_project_name,
 			     filename_suffix => $filename_suffix,
-			     global_output_filename_template => $global_output_filename_template,
+			     global_output_filename_template => $global_context->{global_output_filename_template},
 			     matcher => $matcher,
 			     operations_help => $operations_help,
 			    } );
@@ -7675,7 +7678,7 @@ sub builtin_role_add
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	use Data::Dumper;
 
@@ -8049,7 +8052,7 @@ sub builtin_target_add
         die "$global_program_name: *** error in option processing, try --help";
     }
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	use Data::Dumper;
 
@@ -9817,8 +9820,8 @@ sub _repository_2_directory
 
     my $result = "$source_code_directory_prefix/$directory/$repository_name";
 
-    if (defined $option_verbose
-	and $option_verbose > 3)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 3)
     {
 	use Data::Dumper;
 
@@ -10422,12 +10425,6 @@ arguments:
 package Engine;
 
 
-our $global_exported_sh_file;
-
-our $global_exported_sh_filename;
-
-our $global_exported_times_file;
-
 
 # note: keys are interaction_roles, values are working directories
 # Stored in $global_context->{'Engine::global_remote_working_directory'}.
@@ -10601,8 +10598,8 @@ sub build_tree_needs_rebuild
 
     if ($option_force_rebuild)
     {
-	if ($option_verbose
-	    and $option_verbose > 1)
+	if ($global_context->{option_verbose}
+	    and $global_context->{option_verbose} > 1)
 	{
 	    print "build_tree_needs_rebuild(): option_force_rebuild is set\n";
 	}
@@ -10635,8 +10632,8 @@ sub build_tree_needs_rebuild
 
 	    my $source_stat_output = `$source_stat_command 2>/dev/null`;
 
-	    if ($option_verbose
-		and $option_verbose > 1)
+	    if ($global_context->{option_verbose}
+		and $global_context->{option_verbose} > 1)
 	    {
 		print "build_tree_needs_rebuild(): source_stat_output: $source_stat_output ($source)\n";
 	    }
@@ -10674,8 +10671,8 @@ sub build_tree_needs_rebuild
 
 	    my $target_stat_output = `$target_stat_command 2>/dev/null`;
 
-	    if ($option_verbose
-		and $option_verbose > 1)
+	    if ($global_context->{option_verbose}
+		and $global_context->{option_verbose} > 1)
 	    {
 		print "build_tree_needs_rebuild(): target_stat_output: $target_stat_output ($target)\n";
 	    }
@@ -10711,8 +10708,8 @@ sub build_tree_needs_rebuild
 	    $result = 0;
 	}
 
-	if ($option_verbose
-	    and $option_verbose > 1)
+	if ($global_context->{option_verbose}
+	    and $global_context->{option_verbose} > 1)
 	{
 	    print "build_tree_needs_rebuild(): source_youngest: $source_youngest, target_oldest: $target_oldest ==> needs_rebuild: $result\n";
 	}
@@ -10919,7 +10916,7 @@ sub compute_remote_and_interaction_role
 
     my $scp_options = "";
 
-    if ($option_verbose)
+    if ($global_context->{option_verbose})
     {
 	use Data::Dumper;
 
@@ -11078,7 +11075,7 @@ sub compute_remote_and_interaction_role
 		}
 	    }
 
-	    if (defined $option_verbose and $option_verbose > 1)
+	    if (defined $global_context->{option_verbose} and $global_context->{option_verbose} > 1)
 	    {
 		print STDERR "$global_program_name: *** result is $remote_prefix\n";
 	    }
@@ -11259,7 +11256,7 @@ sub execute_scheduled_command_option_dry_run
     {
 	$console_output .= "$global_program_name: *** Running in dry_run, not executing: '$shell_command'\n";
 
-	if ($option_details)
+	if ($global_context->{option_details})
 	{
 	}
 
@@ -11374,7 +11371,7 @@ sub execute_scheduled_command_option_interactions
 
 	    $console_output .= "$indent'$executable_command'\n";
 
-	    if ($option_details)
+	    if ($global_context->{option_details})
 	    {
 	    }
 	}
@@ -11501,32 +11498,32 @@ sub execute_scheduled_command_option_export_sh
 
     my $exit_status;
 
-    if (not defined $global_exported_sh_file)
+    if (not defined $global_context->{'Engine::global_exported_sh_file'})
     {
-	if (not defined $global_exported_sh_filename)
+	if (not defined $global_context->{'Engine::global_exported_sh_filename'})
 	{
-	    $global_exported_sh_filename = $export_sh->{filename};
+	    $global_context->{'Engine::global_exported_sh_filename'} = $export_sh->{filename};
 	}
 
-	my $ok = open($global_exported_sh_file, ">", $global_exported_sh_filename);
+	my $ok = open($global_context->{'Engine::global_exported_sh_file'}, ">", $global_context->{'Engine::global_exported_sh_filename'});
 
 	if (not $ok)
 	{
-	    die "*** Error: $global_program_name: cannot open $global_exported_sh_filename for writing ($!)";
+	    die "*** Error: $global_program_name: cannot open $global_context->{'Engine::global_exported_sh_filename'} for writing ($!)";
 	}
 
-	print $global_exported_sh_file "#!/bin/bash\n\n";
-	print $global_exported_sh_file "# -e: exit immediately if any command returns a non-zero exit status\n";
-	print $global_exported_sh_file "# -u: undefined variable causes the script to exit immediately\n";
-	print $global_exported_sh_file "# -o pipefail: a pipeline fails if any command in the pipeline fails\n"; # only for bash
-	print $global_exported_sh_file "set -euo pipefail\n\n";
-	print $global_exported_sh_file "#\n";
-	print $global_exported_sh_file "# script generated with $::global_program_name\n";
-	print $global_exported_sh_file "#\n";
-	print $global_exported_sh_file "# the command line used to generate this script was:\n";
-	print $global_exported_sh_file "#\n";
-	print $global_exported_sh_file "# $global_command_line\n";
-	print $global_exported_sh_file "#\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "#!/bin/bash\n\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# -e: exit immediately if any command returns a non-zero exit status\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# -u: undefined variable causes the script to exit immediately\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# -o pipefail: a pipeline fails if any command in the pipeline fails\n"; # only for bash
+	print { $global_context->{'Engine::global_exported_sh_file'} } "set -euo pipefail\n\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# script generated with $::global_program_name\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# the command line used to generate this script was:\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# $global_command_line\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
 
 	my $help_page;
 	my $help_string;
@@ -11562,7 +11559,7 @@ sub execute_scheduled_command_option_export_sh
 #
 ";
 
-		print $global_exported_sh_file $help_page;
+		print { $global_context->{'Engine::global_exported_sh_file'} } $help_page;
 	    }
 	    else
 	    {
@@ -11577,7 +11574,7 @@ $help_string
 #
 ";
 
-		print $global_exported_sh_file $help_page;
+		print { $global_context->{'Engine::global_exported_sh_file'} } $help_page;
 	    }
 	}
 
@@ -11590,7 +11587,7 @@ RUN_DRY_RUN=0
 
 ';
 
-	    print $global_exported_sh_file $running_modes;
+	    print { $global_context->{'Engine::global_exported_sh_file'} } $running_modes;
 	}
 
 	{
@@ -11618,7 +11615,7 @@ EOF
 done
 
 ';
-	    print $global_exported_sh_file $option_processor;
+	    print { $global_context->{'Engine::global_exported_sh_file'} } $option_processor;
 	}
 
 	{
@@ -11641,18 +11638,18 @@ do_run_command() {
 
 ';
 
-		print $global_exported_sh_file $command_runner;
+		print { $global_context->{'Engine::global_exported_sh_file'} } $command_runner;
 	}
 
-	if (not defined $option_export_role)
+	if (not defined $global_context->{option_export_role})
 	{
-	    print $global_exported_sh_file "# --export-role is not set, exporting all roles without a remote policy prefix\n";
-	    print $global_exported_sh_file "#\n";
+	    print { $global_context->{'Engine::global_exported_sh_file'} } "# --export-role is not set, exporting all roles without a remote policy prefix\n";
+	    print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
 	}
-	elsif ($option_export_role eq 0)
+	elsif ($global_context->{option_export_role} eq 0)
 	{
-	    print $global_exported_sh_file "# --export-role is 0, exporting all roles with the appriopriate remote policy prefix\n";
-	    print $global_exported_sh_file "#\n";
+	    print { $global_context->{'Engine::global_exported_sh_file'} } "# --export-role is 0, exporting all roles with the appriopriate remote policy prefix\n";
+	    print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
 	}
 	else
 	{
@@ -11662,28 +11659,28 @@ do_run_command() {
 		   {
 		       my $interaction_role = $_;
 
-		       $option_export_role eq $interaction_roles->{$interaction_role}->{name}
-			   or $option_export_role eq $interaction_roles->{$interaction_role}->{number};
+		       $global_context->{option_export_role} eq $interaction_roles->{$interaction_role}->{name}
+			   or $global_context->{option_export_role} eq $interaction_roles->{$interaction_role}->{number};
 		   }
 		   keys %$interaction_roles,
 		  ];
 
 	    my $export_remote_interaction_role = $export_remote_interaction_roles->[0] || 'undefined role';
 
-	    print $global_exported_sh_file "# --export-role is $option_export_role, role: $export_remote_interaction_role\n";
-	    print $global_exported_sh_file "#\n";
+	    print { $global_context->{'Engine::global_exported_sh_file'} } "# --export-role is $global_context->{option_export_role}, role: $export_remote_interaction_role\n";
+	    print { $global_context->{'Engine::global_exported_sh_file'} } "#\n";
 	}
 
 	if (exists $global_technical_project_configuration->{export_sh_variables})
 	{
 	    my $selected_variables = _execute_option_export_sh_variables_select($global_technical_project_configuration->{export_sh_variables}, $all_scheduled_commands);
 
-	    _execute_option_export_sh_variables_export($global_exported_sh_file, $selected_variables);
+	    _execute_option_export_sh_variables_export($global_context->{'Engine::global_exported_sh_file'}, $selected_variables);
 	}
 
-	print $global_exported_sh_file "\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "\n";
 
-	chmod 0755, $global_exported_sh_filename;
+	chmod 0755, $global_context->{'Engine::global_exported_sh_filename'};
     }
 
     # 'cd' commands must both be exported and executed
@@ -11713,11 +11710,11 @@ do_run_command() {
 
     $console_output .= "$global_program_name: *** Running in export_sh mode, exporting: '$export_sh_command'\n";
 
-    if ((not defined $option_export_role or $option_export_role eq 0)
-	or $option_export_role eq $interaction_roles->{$interaction_role}->{name}
-	or $option_export_role eq $interaction_roles->{$interaction_role}->{number})
+    if ((not defined $global_context->{option_export_role} or $global_context->{option_export_role} eq 0)
+	or $global_context->{option_export_role} eq $interaction_roles->{$interaction_role}->{name}
+	or $global_context->{option_export_role} eq $interaction_roles->{$interaction_role}->{number})
     {
-	if ($option_export_verbose)
+	if ($global_context->{option_export_verbose})
 	{
 	    my $options = $scheduled_command->{options};
 
@@ -11725,23 +11722,23 @@ do_run_command() {
 	    {
 		my $annotation = $options->{annotation};
 
-		print $global_exported_sh_file "\n# '$annotation'\n#\n";
+		print { $global_context->{'Engine::global_exported_sh_file'} } "\n# '$annotation'\n#\n";
 
-		print $global_exported_sh_file "echo -e '-------'\n";
-		print $global_exported_sh_file "echo -e '--- $annotation'\n";
+		print { $global_context->{'Engine::global_exported_sh_file'} } "echo -e '-------'\n";
+		print { $global_context->{'Engine::global_exported_sh_file'} } "echo -e '--- $annotation'\n";
 	    }
 	}
 
 	if (exists $export_sh->{prefix})
 	{
-	    print $global_exported_sh_file $export_sh->{prefix};
+	    print { $global_context->{'Engine::global_exported_sh_file'} } $export_sh->{prefix};
 	}
 
-	print $global_exported_sh_file "do_run_command $export_sh_command\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "do_run_command $export_sh_command\n";
     }
     else
     {
-	print $global_exported_sh_file "# do_run_command $export_sh_command\n";
+	print { $global_context->{'Engine::global_exported_sh_file'} } "# do_run_command $export_sh_command\n";
     }
 
     return { console_output => $console_output, exit_status => $exit_status };
@@ -12177,25 +12174,25 @@ sub execute_scheduled_command
 
 	if ($export_times)
 	{
-	    if (not defined $global_exported_times_file)
+	    if (not defined $global_context->{'Engine::global_exported_times_file'})
 	    {
 		my $exported_times_filename = $export_times->{filename};
 
-		my $ok = open($global_exported_times_file, ">", $exported_times_filename);
+		my $ok = open($global_context->{'Engine::global_exported_times_file'}, ">", $exported_times_filename);
 
 		if (not $ok)
 		{
 		    die "*** Error: $global_program_name: cannot open $exported_times_filename for writing ($!)";
 		}
 
-		print $global_exported_times_file "#!/bin/sh\n";
-		print $global_exported_times_file "#\n";
-		print $global_exported_times_file "# script generated with $::global_program_name\n";
-		print $global_exported_times_file "#\n";
-		print $global_exported_times_file "# the command line used to generate this script was:\n";
-		print $global_exported_times_file "#\n";
-		print $global_exported_times_file "# $global_command_line\n";
-		print $global_exported_times_file "#\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "#!/bin/sh\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "#\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "# script generated with $::global_program_name\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "#\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "# the command line used to generate this script was:\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "#\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "# $global_command_line\n";
+		print { $global_context->{'Engine::global_exported_times_file'} } "#\n";
 
 		chmod 0644, $exported_times_filename;
 	    }
@@ -12294,20 +12291,20 @@ sub execute_scheduled_command
 
 	if ($export_times)
 	{
-	    print $global_exported_times_file "$0: *** Starting ('$shell_command') at " . localtime($start_time) . "\n";
+	    print { $global_context->{'Engine::global_exported_times_file'} } "$0: *** Starting ('$shell_command') at " . localtime($start_time) . "\n";
 
-	    print $global_exported_times_file "$0: *** Ended    ('$shell_command') at " . localtime($end_time) . "\n";
+	    print { $global_context->{'Engine::global_exported_times_file'} } "$0: *** Ended    ('$shell_command') at " . localtime($end_time) . "\n";
 
-	    print $global_exported_times_file "$0: *** Duration (s): " . ($end_time - $start_time) . "\n";
+	    print { $global_context->{'Engine::global_exported_times_file'} } "$0: *** Duration (s): " . ($end_time - $start_time) . "\n";
 
-	    print $global_exported_times_file "\n";
+	    print { $global_context->{'Engine::global_exported_times_file'} } "\n";
 	}
 
 	#! we could add the output to $scheduled_command->{output} or something similar
 
 	if ($export_output)
 	{
-	    my $filename = generate_output_filename($global_output_filename_template, $shell_command);
+	    my $filename = generate_output_filename($global_context->{global_output_filename_template}, $shell_command);
 
 	    my $output_file;
 
@@ -12509,7 +12506,7 @@ sub execute_shell_command
 
     # option preprocessing
 
-    my $verbose = $options->{verbose} || $option_verbose;
+    my $verbose = $options->{verbose} || $global_context->{option_verbose};
 
     # the command to be exported defaults to the command given
 
@@ -12631,11 +12628,11 @@ sub execute_shell_command
 
     # apply the sudo prefix, possibly remote
 
-    ($shell_command, $export_sh_command) = apply_sudo($sudo_prefix, $shell_command, $option_export_sudo, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_sudo($sudo_prefix, $shell_command, $global_context->{option_export_sudo}, $export_sh_command);
 
     # apply the remoting prefix, but only for eventually recording it in a shell script
 
-    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($global_context->{'InteractionRole::all_interaction_roles'}, $remote_prefix, $shell_command, $option_export_role, $export_sh_command);
+    ($shell_command, $export_sh_command) = apply_remote_record_exported_shell_command($global_context->{'InteractionRole::all_interaction_roles'}, $remote_prefix, $shell_command, $global_context->{option_export_role}, $export_sh_command);
 
     # apply the timeout prefix, always local
 
@@ -12831,7 +12828,7 @@ sub process_operation_results
 
 	else
 	{
-	    # if ($option_verbose)
+	    # if ($global_context->{option_verbose})
 	    # {
 	    #     use Data::Dumper;
 
@@ -14155,8 +14152,8 @@ sub volatile_section_data_read
 
     my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
 
-    if (defined $option_verbose
-	and ($option_verbose > 1
+    if (defined $global_context->{option_verbose}
+	and ($global_context->{option_verbose} > 1
 	     and $debug_volatile_access))
     {
 	print STDERR "volatile_section_data_read(): '$pathname_full'\n";
@@ -14183,8 +14180,8 @@ sub volatile_section_data_write
 
     my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
 
-    if (defined $option_verbose
-	and ($option_verbose > 1
+    if (defined $global_context->{option_verbose}
+	and ($global_context->{option_verbose} > 1
 	     and $debug_volatile_access))
     {
 	print STDERR "volatile_section_data_write(): '$pathname_full'\n";
@@ -14213,8 +14210,8 @@ sub volatile_section_file_write
 
     my $pathname_full = Utilities::volatile_section_pathname($section, $pathname);
 
-    if (defined $option_verbose
-	and ($option_verbose > 1
+    if (defined $global_context->{option_verbose}
+	and ($global_context->{option_verbose} > 1
 	     and $debug_volatile_access))
     {
 	print STDERR "volatile_section_file_write(): '$pathname_full'\n";
@@ -14310,8 +14307,8 @@ sub bash_completion
 
     my $debug_completion
 	= {
-	   bash_completion => (defined $option_details && $option_details & 1),
-	   generate => (defined $option_details && $option_details & 2),
+	   bash_completion => (defined $global_context->{option_details} && $global_context->{option_details} & 1),
+	   generate => (defined $global_context->{option_details} && $global_context->{option_details} & 2),
 	  };
 
     if ($debug_completion->{bash_completion})
@@ -15203,8 +15200,8 @@ sub operation_hash_subs_generate
 	   sort @$all_subroutines,
 	  };
 
-    if (defined $option_verbose
-	and $option_verbose > 2)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 2)
     {
 	use Data::Dumper;
 
@@ -15350,21 +15347,32 @@ sub schedule_interactions_execute
 	    = {
 	       %$global_context,
 	       global_execute_scheduled_commands => '',
+	       global_output_filename_template => undef,
 	       global_scheduled_commands => [],
+	       'Engine::global_exported_sh_file' => undef,
+	       'Engine::global_exported_sh_filename' => undef,
+	       'Engine::global_exported_times_file' => undef,
 	       'Engine::global_remote_working_directory' => {},
 	       'InteractionRole::all_interaction_roles' => undef,
 	       'InteractionRole::current_interaction_role' => undef,
+	       option_details => undef,
 	       option_dry_run => undef,
+	       option_dump_all_selected_operations => undef,
 	       option_dump_interaction_roles => undef,
 	       option_dump_module_interaction_roles => undef,
+	       option_dump_operation_selector_type => undef,
 	       option_dump_schedule => undef,
+	       option_export_role => undef,
 	       option_export_sh => undef,
+	       option_export_sudo => undef,
 	       option_export_times => undef,
+	       option_export_verbose => undef,
 	       option_help => undef,
 	       option_interactions => 1,
 	       option_interactions_all => undef,
 	       option_interactions_target => undef,
 	       option_interactions_target_all_roles => undef,
+	       option_verbose => undef,
 	      };
 
 	my $operation_selector_type
@@ -15462,8 +15470,8 @@ sub main
 
     parse_command_line();
 
-    if (defined $option_verbose
-	and $option_verbose > 2)
+    if (defined $global_context->{option_verbose}
+	and $global_context->{option_verbose} > 2)
     {
 	use Data::Dumper;
 
@@ -15525,7 +15533,7 @@ sub main
 
     my $requested_target = (defined $global_context->{option_interactions_all} ? '.*' : $global_target);
 
-    $global_output_filename_template = join '-', $requested_target, ($global_operation || ''), @ARGV;
+    $global_context->{global_output_filename_template} = join '-', $requested_target, ($global_operation || ''), @ARGV;
 
     # make sure that enabling help does not run any commands
 
@@ -15540,12 +15548,12 @@ sub main
     {
 	if ($global_context->{option_export_sh} eq 0)
 	{
-	    $global_context->{option_export_sh} = "/tmp/$global_output_filename_template.sh";
+	    $global_context->{option_export_sh} = "/tmp/$global_context->{global_output_filename_template}.sh";
 	}
 	elsif ($global_context->{option_export_sh} eq 1
 	       or $global_context->{option_export_sh} eq '')
 	{
-	    $global_context->{option_export_sh} = "$global_output_filename_template.sh";
+	    $global_context->{option_export_sh} = "$global_context->{global_output_filename_template}.sh";
 	}
 
 	# do not need to press the shift key
@@ -15563,12 +15571,12 @@ sub main
     {
 	if ($global_context->{option_export_times} eq 0)
 	{
-	    $global_context->{option_export_times} = "/tmp/$global_output_filename_template.times";
+	    $global_context->{option_export_times} = "/tmp/$global_context->{global_output_filename_template}.times";
 	}
 	elsif ($global_context->{option_export_times} eq 1
 	       or $global_context->{option_export_times} eq '')
 	{
-	    $global_context->{option_export_times} = "$global_output_filename_template.times";
+	    $global_context->{option_export_times} = "$global_context->{global_output_filename_template}.times";
 	}
 
 	# do not need to press the shift key
@@ -15621,7 +15629,7 @@ sub main
 
     my $operation_selector_type = operation_selector_type_construct($requested_target, $global_operation, $dry_run_reason, $global_context->{option_help}, \@ARGV);
 
-    if ($option_dump_operation_selector_type)
+    if ($global_context->{option_dump_operation_selector_type})
     {
 	print Dumper( { operation_selector_type => $operation_selector_type, } );
     }
@@ -15879,8 +15887,8 @@ options:
 
 	my $targets = $global_technical_project_configuration->{targets};
 
-	if (!defined $option_verbose
-	    || $option_verbose < 1)
+	if (!defined $global_context->{option_verbose}
+	    || $global_context->{option_verbose} < 1)
 	{
 	    foreach my $target (keys %$targets)
 	    {
@@ -15989,7 +15997,7 @@ sub schedule_operations_for_execution
 
 	my $all_selected_operations = operation_selector($operation_selector_type, $help, $arguments);
 
-	if ($option_dump_all_selected_operations)
+	if ($global_context->{option_dump_all_selected_operations})
 	{
 	    print Dumper( { all_selected_operations => $all_selected_operations, } );
 	}
