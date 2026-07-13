@@ -8,6 +8,9 @@ command_tests:
       # Use the variable global_technical_project_configuration to access the configuration.
       # Roles are available as the variable global_roles.
       # Targets are available as the variable global_targets.
+      # The mapping global_execution_context provides live access to the workflow execution context.
+      # Global options are stored in global_execution_context['options'].
+      # Other execution state is stored in global_execution_context['variables'].
       # The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
       # The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
       

@@ -12,7 +12,10 @@ command_tests:
       
       package main;
       
-      our $option_verbose;
+      our $global_execution_context;
+      
+      # Global options are stored in $global_execution_context->{options}.
+      # Other execution state is stored in $global_execution_context->{variables}.
       
       our $global_technical_project_configuration;
       
