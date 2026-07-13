@@ -15521,11 +15521,6 @@ sub schedule_help_execute
 
 sub main
 {
-    # this is YAML related, see for instance https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=707229
-
-    $INC{'Mo/builder.pm'} = 1;
-    $INC{'Mo/default.pm'} = 1;
-
     # initiallize field project related global configuration
 
     ($global_field_project_configuration, $global_technical_project_configuration) = FieldProject::_configuration_initialize();
