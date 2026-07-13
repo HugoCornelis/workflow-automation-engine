@@ -4996,6 +4996,8 @@ sub builtin_configuration_archive
 
 	my $directory_inside_tar_name = $1;
 
+	my $excluded = [];
+
 	use Cwd 'abs_path';
 
 	use File::chdir;
@@ -5007,10 +5009,6 @@ sub builtin_configuration_archive
 	my $scripts
 	    = [
 	       sort
-	       map
-	       {
-		   chomp; $_;
-	       }
 	       grep
 	       {
 		   my $filename = $_;
@@ -5021,8 +5019,29 @@ sub builtin_configuration_archive
 		   {
 		       $exclude = 'is_inline_directory';
 		   }
+		   elsif ($filename =~ m(^$directory_inside_tar_name/\.gitignore))
+		   {
+		       $exclude = '';
+		   }
+		   elsif ($filename =~ m(^$directory_inside_tar_name/\.git))
+		   {
+		       $exclude = 'is_git_directory';
+		   }
+		   elsif ($filename =~ m(^$directory_inside_tar_name/.*volatile-data))
+		   {
+		       $exclude = 'is_volatile_directory';
+		   }
+
+		   if ($exclude)
+		   {
+		       push @$excluded, $filename;
+		   }
 
 		   not $exclude;
+	       }
+	       map
+	       {
+		   chomp; $_;
 	       }
 	       `find $directory_inside_tar_name -type f`,
 	      ];
@@ -5048,8 +5067,11 @@ sub builtin_configuration_archive
 		(
 		 {
 		  CWD => $CWD,
-		  # directory_inside_tar_name => $directory_inside_tar_name,
-		  # getcwd => $getcwd,
+		  directory_inside_tar_name => $directory_inside_tar_name,
+		  (defined $global_context->{option_verbose} && $global_context->{option_verbose} > 2
+		   ? (excluded => $excluded)
+		   : ()),
+		  getcwd => $getcwd,
 		  scripts => $scripts,
 		  tar_filename => $tar_filename,
 		 },

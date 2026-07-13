@@ -14,6 +14,8 @@ command_tests:
       sources_configuration_filename: /home/neurospaces/workflow-test/workflow-tests-configuration
     ---
     CWD: /home/neurospaces
+    directory_inside_tar_name: workflow-test
+    getcwd: /home/neurospaces
     scripts:
     - workflow-test/README.md
     - workflow-test/conf.workflow-tests-configuration
