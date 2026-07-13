@@ -6425,6 +6425,7 @@ sub builtin_manual
 
     my $option_input_rst = 1;
     my $option_input_md;
+    my $option_include_interactions = 1;
     my $option_output_pdf = 1;
     my $option_remove_intermediate_files;
     my $option_use_cache;
@@ -6434,6 +6435,7 @@ sub builtin_manual
 	= {
 	   'input-rst!' => \$option_input_rst,
 	   'input-md!' => \$option_input_md,
+	   'include-interactions!' => \$option_include_interactions,
 	   'output-pdf!' => \$option_output_pdf,
 	   "remove-intermediate-files!" => \$option_remove_intermediate_files,
 	   'use-cache!' => \$option_use_cache,
@@ -6798,6 +6800,35 @@ $global_command_line
 
 	$manual_string .= "$header\n$help_string\n";
 
+	if ($option_include_interactions)
+	{
+	    my $operation_interactions = main::schedule_interactions_execute($this_target, $this_operator, []);
+
+	    if ($operation_interactions)
+	    {
+		my $interactions_header = "Interactions";
+
+		if ($option_input_rst)
+		{
+		    my $underline = $rst_H5 x length($interactions_header);
+
+		    $manual_string .= "\n$interactions_header\n$underline\n\n.. code-block:: text\n\n";
+
+		    $operation_interactions =~ s/^/    /mg;
+
+		    $manual_string .= "$operation_interactions\n";
+		}
+		elsif ($option_input_md)
+		{
+		    $manual_string .= "\n$md_H5 $interactions_header\n\n```text\n$operation_interactions\n```\n";
+		}
+		else
+		{
+		    $manual_string .= "\n$interactions_header\n$operation_interactions\n";
+		}
+	    }
+	}
+
 	$last_target = $this_target;
     }
 
@@ -6862,6 +6893,8 @@ sub builtin_manual_completor
 	 option_descriptions => {
 				 '--input-md' => 'assume an input format of Markdown',
 				 '--input-rst' => 'assume an input format of ReStructuredText',
+				 '--include-interactions' => 'include interaction diagrams for documented operations',
+				 '--no-include-interactions' => 'do not include interaction diagrams for documented operations',
 				 '--no-input-md' => 'do not assume an input format of Markdown',
 				 '--no-input-rst' => 'do not assume an input format of ReStructuredText',
 				 '--output-pdf' => 'generate a PDF document',
@@ -6886,17 +6919,17 @@ sub builtin_manual_completor
 						    sort
 						    keys %$all_targets),
 						  },
-				   option_separator_hint => '3.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options',
+				   option_separator_hint => '3.Type_--_then_--input-rst_--input-md_--include-interactions_--output-pdf_--view_for_options',
 				  },
 				  {
 				   completions => {
 						   '1.Optional_argument:<manual-type>' => '',
 						   'specification' => '',
 						  },
-				   option_separator_hint => '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options',
+				   option_separator_hint => '2.Type_--_then_--input-rst_--input-md_--include-interactions_--output-pdf_--view_for_options',
 				  },
 				 ],
-	 after_positional_option_separator_hint => '2.Type_--_then_--input-rst_--input-md_--output-pdf_--view_for_options',
+	 after_positional_option_separator_hint => '2.Type_--_then_--input-rst_--input-md_--include-interactions_--output-pdf_--view_for_options',
 	);
 }
 
@@ -6929,6 +6962,10 @@ options:
     ``--input-md``: Assume an input format of MarkDown.
 
     ``--input-rst``: Assume an input format of ReStructuredText, this is the default.
+
+    ``--include-interactions``: Include the interaction diagram of each documented operation, this is the default.
+
+    ``--no-include-interactions``: Do not include interaction diagrams in the generated manual.
 
     ``--output-pdf``: Generate a PDF document.
 
@@ -15286,6 +15323,82 @@ sub schedule_operation_execute_call
 
     return $error;
 
+}
+
+
+sub schedule_interactions_execute
+{
+    my $target = shift;
+
+    my $operation = shift;
+
+    my $arguments = shift || [];
+
+    $operation =~ s(_help$)();
+
+    my $console_output = '';
+
+    my $error;
+
+    eval
+    {
+	# Generate the same output as the global --interactions option,
+	# but keep all dry-run state local to this documentation query.
+
+	local $global_execute_scheduled_commands = '';
+	local $global_scheduled_commands = [];
+	local $Engine::global_remote_working_directory = {};
+
+	local $InteractionRole::all_interaction_roles;
+	local $InteractionRole::current_interaction_role;
+
+	local $option_dry_run;
+	local $option_dump_interaction_roles;
+	local $option_dump_module_interaction_roles;
+	local $option_dump_schedule;
+	local $option_export_sh;
+	local $option_export_times;
+	local $option_help;
+	local $option_interactions = 1;
+	local $option_interactions_all;
+	local $option_interactions_target;
+	local $option_interactions_target_all_roles;
+
+	my $operation_selector_type
+	    = operation_selector_type_construct($target, $operation, 'option_interactions', undef, [ @$arguments ]);
+
+	my $scheduled_commands = schedule_operations_for_execution($operation_selector_type, [ @$arguments ]);
+
+	my $operation_results
+	    = Engine::execute_all_scheduled_commands($scheduled_commands, $InteractionRole::all_interaction_roles);
+
+	my $schedule_result
+	    = Engine::process_operation_results
+	      (
+	       $operation_results,
+	       {
+		dry_run_reason => 'option_interactions',
+	       },
+	      );
+
+	$console_output = $schedule_result->{console_output} || '';
+
+	1;
+    }
+    or do
+    {
+	$error = $@ || 'unknown error';
+    };
+
+    if ($error)
+    {
+	chomp $error;
+
+	$console_output
+	    = "$global_program_name: *** Warning: interaction diagram for $target $operation could not be generated: $error\n";
+    }
+
+    return $console_output;
 }
 
 
