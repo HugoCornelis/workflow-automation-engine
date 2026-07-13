@@ -6060,7 +6060,10 @@ sub builtin_grep_commands
 
     my $project_selectors;
 
-    if (scalar @$arguments == 1)
+    # ARGV[0] and ARGV[1] are the target and command regular
+    # expressions.  Project selectors start at ARGV[2].
+
+    if (scalar @$arguments <= 2)
     {
 	my $field_project_name = $global_field_project_configuration->{field_project_name};
 
@@ -6077,7 +6080,7 @@ sub builtin_grep_commands
     {
 	$project_selectors
 	    = [
-	       @$arguments > 1 ? @$arguments[1 .. $#$arguments] : ()
+	       @$arguments[2 .. $#$arguments]
 	      ];
     }
 
@@ -6144,19 +6147,48 @@ sub builtin_grep_commands
 	   target => $regex_target,
 	  };
 
-    # disable command execution
+    # Build the schedules in an isolated interactions context.  Probing
+    # workflows must not change the execution state of builtin_grep_commands
+    # itself or of its caller.
 
-    $global_execution_context->{variables}->{global_execute_scheduled_commands} = '';
+    local $global_execution_context
+	= main::_global_execution_context_for_interactions_generate();
 
-    # tell the scheduler that we are doing some form of interactions query
+    # Some workflows validate required arguments, deliberately die for tests,
+    # or print reports before consulting global_execute_scheduled_commands.
+    # Their diagnostics are not grep results, so capture them while invoking
+    # the workflows to populate the schedule.
 
-    local $global_execution_context->{options}->{option_interactions} = 1;
+    my $probe_stdout = '';
+    my $probe_stderr = '';
 
-    # build a schedule of operations and invoke them to create the command list
+    my $scheduled_commands;
 
-    my $scheduled_commands = main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
+    {
+	open my $probe_stdout_file, '>', \$probe_stdout
+	    or die "$global_program_name: *** Error: cannot capture workflow probe STDOUT ($!)";
 
-    # local $global_execution_context->{options}->{option_interactions_target_all_roles} = 1;
+	open my $probe_stderr_file, '>', \$probe_stderr
+	    or die "$global_program_name: *** Error: cannot capture workflow probe STDERR ($!)";
+
+	local *STDOUT = $probe_stdout_file;
+	local *STDERR = $probe_stderr_file;
+
+	$scheduled_commands
+	    = main::schedule_operations_for_execution($operation_selector_type, $schedule_arguments);
+    }
+
+    if ($debug_builtin_grep_commands > 1
+	and ($probe_stdout ne '' or $probe_stderr ne ''))
+    {
+	print STDERR Dumper
+	    (
+	     {
+	      discarded_probe_stderr => $probe_stderr,
+	      discarded_probe_stdout => $probe_stdout,
+	     }
+	    );
+    }
 
     InteractionRole::interaction_roles_identify_all();
 
@@ -6307,7 +6339,7 @@ synopsis:
 
 .. code-block:: bash
 
-$command <grep-regex> [ <project-name-regex> <project-name-regex> ... ]
+$command <target-regex> <commands-regex> [ <project-name-regex> <project-name-regex> ... ]
 
 arguments:
 ~~~~~~~~~~
@@ -15507,6 +15539,46 @@ sub schedule_operation_execute_call
 }
 
 
+# Generate a fresh execution context for operations that inspect workflow
+# schedules without executing their commands.  Both nested hashes must be
+# copied: localizing only the outer hash would leave options and variables
+# shared with the caller.
+
+sub _global_execution_context_for_interactions_generate
+{
+    my $options
+	= {
+	   map
+	   {
+	       $_ => undef
+	   }
+	   keys %{ $global_execution_context->{options} },
+	  };
+
+    $options->{option_execution_mode} = 'system';
+    $options->{option_interactions} = 1;
+
+    return
+	{
+	 %$global_execution_context,
+	 options => $options,
+	 variables
+	     => {
+		 %{ $global_execution_context->{variables} },
+		 global_execute_scheduled_commands => '',
+		 global_output_filename_template => undef,
+		 global_scheduled_commands => [],
+		 'Engine::global_exported_sh_file' => undef,
+		 'Engine::global_exported_sh_filename' => undef,
+		 'Engine::global_exported_times_file' => undef,
+		 'Engine::global_remote_working_directory' => {},
+		 'InteractionRole::all_interaction_roles' => undef,
+		 'InteractionRole::current_interaction_role' => undef,
+		},
+	};
+}
+
+
 sub schedule_interactions_execute
 {
     my $target = shift;
@@ -15527,56 +15599,7 @@ sub schedule_interactions_execute
 	# but keep all dry-run state local to this documentation query.
 
 	local $global_execution_context
-	    = {
-	       %$global_execution_context,
-	       options
-	           => {
-	               %{ $global_execution_context->{options} },
-	               option_bash_completion => undef,
-	               option_details => undef,
-	               option_dry_run => undef,
-	               option_dump_all_selected_operations => undef,
-	               option_dump_interaction_roles => undef,
-	               option_dump_module_interaction_roles => undef,
-	               option_dump_operation_selector_type => undef,
-	               option_dump_schedule => undef,
-	               option_dump_specific_workflow_roles => undef,
-	               option_execution_mode => 'system',
-	               option_export_help_page => undef,
-	               option_export_role => undef,
-	               option_export_sh => undef,
-	               option_export_sudo => undef,
-	               option_export_times => undef,
-	               option_export_verbose => undef,
-	               option_force_rebuild => undef,
-	               option_help => undef,
-	               option_help_builtin_package => undef,
-	               option_help_builtin_packages_all => undef,
-	               option_help_field_project_name => undef,
-	               option_help_options => undef,
-	               option_help_projects => undef,
-	               option_help_targets => undef,
-	               option_help_workflows => undef,
-	               option_interactions => 1,
-	               option_interactions_all => undef,
-	               option_interactions_target => undef,
-	               option_interactions_target_all_roles => undef,
-	               option_verbose => undef,
-	              },
-	       variables
-	           => {
-	               %{ $global_execution_context->{variables} },
-	               global_execute_scheduled_commands => '',
-	               global_output_filename_template => undef,
-	               global_scheduled_commands => [],
-	               'Engine::global_exported_sh_file' => undef,
-	               'Engine::global_exported_sh_filename' => undef,
-	               'Engine::global_exported_times_file' => undef,
-	               'Engine::global_remote_working_directory' => {},
-	               'InteractionRole::all_interaction_roles' => undef,
-	               'InteractionRole::current_interaction_role' => undef,
-	              },
-	      };
+	    = _global_execution_context_for_interactions_generate();
 
 	my $operation_selector_type
 	    = operation_selector_type_construct($target, $operation, 'option_interactions', undef, [ @$arguments ]);
