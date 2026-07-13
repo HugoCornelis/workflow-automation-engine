@@ -2251,6 +2251,7 @@ sub _builtin_project_workflow_template_create_python
 # Use the variable global_technical_project_configuration to access the configuration.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
+# The mapping global_context provides live access to the workflow execution context.
 # The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
 # The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
 
@@ -4109,6 +4110,7 @@ sub _workflow_commands_2_implementation
 # Use the variable global_technical_project_configuration to access the configuration.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
+# The mapping global_context provides live access to the workflow execution context.
 # The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
 # The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
 
@@ -4133,6 +4135,7 @@ def ${target}_${operation}(argv):
 # Use the variable global_technical_project_configuration to access the configuration.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
+# The mapping global_context provides live access to the workflow execution context.
 # The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
 # The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
 
@@ -4151,6 +4154,7 @@ def ${target}_${operation}(argv):
 # Use the variable global_technical_project_configuration to access the configuration.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
+# The mapping global_context provides live access to the workflow execution context.
 # The function 'print_to_stdout' prints to STDOUT (instead of with a shell command).
 # The function 'print_to_stderr' prints to STDERR (instead of with a shell redirection).
 
@@ -13173,6 +13177,40 @@ sub _python_builtin_completor_expander
 }
 
 
+sub _python_global_context_get
+{
+    my $key = shift;
+
+    return $global_context->{$key};
+}
+
+
+sub _python_global_context_set
+{
+    my $key = shift;
+
+    my $value = shift;
+
+    $global_context->{$key} = $value;
+
+    return $value;
+}
+
+
+sub _python_global_context_exists
+{
+    my $key = shift;
+
+    return exists $global_context->{$key} ? 1 : 0;
+}
+
+
+sub _python_global_context_keys
+{
+    return [ sort keys %$global_context ];
+}
+
+
 package FieldProject;
 
 sub _init_do_eval_python_file
@@ -13248,6 +13286,7 @@ sub _init_do_eval_python_file
 	my $api_bind_code = "
 
 import json
+from collections.abc import MutableMapping
 
 global_technical_project_configuration_path = '$configuration_cache_directory/configuration.json'
 
@@ -13277,8 +13316,37 @@ execute_shell_script_remote = None
 print_to_stdout = None
 print_to_stderr = None
 _builtin_completor_expander = None
+_global_context_get = None
+_global_context_set = None
+_global_context_exists = None
+_global_context_keys = None
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_builtin_completor_expander):
+
+class _WorkflowGlobalContext(MutableMapping):
+    '''Live mapping proxy for the currently active Perl global_context.'''
+
+    def __getitem__(self, key):
+        if not _global_context_exists(key):
+            raise KeyError(key)
+        return _global_context_get(key)
+
+    def __setitem__(self, key, value):
+        _global_context_set(key, value)
+
+    def __delitem__(self, key):
+        raise TypeError('global_context entries cannot be deleted')
+
+    def __iter__(self):
+        return iter(_global_context_keys())
+
+    def __len__(self):
+        return len(_global_context_keys())
+
+
+global_context = _WorkflowGlobalContext()
+
+
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_builtin_completor_expander, ref_global_context_get, ref_global_context_set, ref_global_context_exists, ref_global_context_keys):
     global execute_command
     global execute_command_array
     global execute_command_schedule
@@ -13287,6 +13355,10 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     global print_to_stdout
     global print_to_stderr
     global _builtin_completor_expander
+    global _global_context_get
+    global _global_context_set
+    global _global_context_exists
+    global _global_context_keys
     execute_command = exe_command
     execute_command_array = exe_command_array
     execute_command_schedule = exe_command_schedule
@@ -13295,11 +13367,15 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     print_to_stdout = ref_print_to_stdout
     print_to_stderr = ref_print_to_stderr
     _builtin_completor_expander = ref_builtin_completor_expander
+    _global_context_get = ref_global_context_get
+    _global_context_set = ref_global_context_set
+    _global_context_exists = ref_global_context_exists
+    _global_context_keys = ref_global_context_keys
 
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_builtin_completor_expander);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_builtin_completor_expander, \\&Command::_python_global_context_get, \\&Command::_python_global_context_set, \\&Command::_python_global_context_exists, \\&Command::_python_global_context_keys);
 
 ";
 	my $commands_template_code
