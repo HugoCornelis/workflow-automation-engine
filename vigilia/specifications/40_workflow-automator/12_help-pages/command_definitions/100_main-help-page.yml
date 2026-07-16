@@ -2,6 +2,7 @@
 command: bin/workflow --help
 command_tests:
   - description: Do we get the main help page?
+    exit_code: 0
     read: |+2
       
       workflow: queryable workflow knowledge base creation for complex command line based software projects.

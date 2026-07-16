@@ -2,6 +2,7 @@
 command: bin/workflow builtin target_add --help
 command_tests:
   - description: Do we see the help page for adding a new target to a project?
+    exit_code: 0
     read: |+
       workflow builtin target_add: add a new target and update the configuration to integrate it.
       

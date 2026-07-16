@@ -3,6 +3,7 @@ command: bin/workflow --help-workflows
 command_tests:
 - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
   description: Can we display the builtin workflows help page?
+  exit_code: 0
   read: |
 
     0_description: |-

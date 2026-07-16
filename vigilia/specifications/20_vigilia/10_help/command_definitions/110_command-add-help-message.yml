@@ -2,6 +2,7 @@
 command: bin/vigilia command-add --help
 command_tests:
   - description: Is a help message given (command-add) ?
+    exit_code: 0
     read: |2
       
       bin/vigilia command-add <options> <module-name> <command-name> <'command-test-description'>

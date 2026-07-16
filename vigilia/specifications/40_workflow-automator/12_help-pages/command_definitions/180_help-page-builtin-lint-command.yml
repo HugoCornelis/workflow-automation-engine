@@ -2,6 +2,7 @@
 command: bin/workflow builtin lint --help
 command_tests:
   - description: Do we see the help page of the builtin lint command?
+    exit_code: 0
     read: |+2
       workflow builtin lint: Generate a report about missing functions for one or more targets.
       

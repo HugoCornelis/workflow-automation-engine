@@ -2,6 +2,7 @@
 command: bin/workflow Command::Qemu --help-builtin-package
 command_tests:
   - description: help of the Command::Qemu builtin module
+    exit_code: 0
     read: |2
       
       Command::Qemu:

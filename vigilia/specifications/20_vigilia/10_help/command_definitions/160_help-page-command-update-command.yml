@@ -2,6 +2,7 @@
 command: bin/vigilia command-update --help
 command_tests:
   - description: help page of the command-update command
+    exit_code: 0
     read: |+2
       
       bin/vigilia command-update <options> <module-name> <command-name> <'command-test-description'>

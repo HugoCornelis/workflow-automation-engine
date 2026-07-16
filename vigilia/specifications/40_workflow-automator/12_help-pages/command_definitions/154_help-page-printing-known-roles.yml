@@ -2,6 +2,7 @@
 command: bin/workflow builtin role_print --help
 command_tests:
   - description: Do we see the help page for printing known roles?
+    exit_code: 0
     read: |+
       workflow builtin role_print: Print the known roles.
       

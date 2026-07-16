@@ -2,6 +2,7 @@
 command: bin/vigilia module-renumber --help
 command_tests:
   - description: help page of the module-renumber command
+    exit_code: 0
     read: |+2
       
       bin/vigilia module-renumber <options> <module-name>

@@ -2,6 +2,7 @@
 command: bin/vigilia command-correct --help
 command_tests:
 - description: Is a help message given (command-correct)?
+  exit_code: 0
   read: |+
 
     bin/vigilia command-correct <options> <error-report-directory>

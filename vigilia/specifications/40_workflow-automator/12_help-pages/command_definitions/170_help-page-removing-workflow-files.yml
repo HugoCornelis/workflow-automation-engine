@@ -2,6 +2,7 @@
 command: bin/workflow builtin workflow_file_remove --help
 command_tests:
   - description: Do we see the help page for removing workflow files?
+    exit_code: 0
     read: |
       workflow builtin workflow_file_remove: Remove a file that implements workflows.
       

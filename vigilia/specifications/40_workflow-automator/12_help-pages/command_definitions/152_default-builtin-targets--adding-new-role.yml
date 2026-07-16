@@ -2,6 +2,7 @@
 command: bin/workflow builtin role_add --help
 command_tests:
   - description: 'default builtin targets: adding a new role'
+    exit_code: 0
     read: |+
       workflow builtin role_add: add a new role and update the configuration to integrate it.
       
