@@ -3913,14 +3913,18 @@ sub check_exit_code
 	{
 	    $execution_result->{error} = $exit_error;
 
-	    $execution_result->{expected} = "$expected_exit_code";
+	    $execution_result->{expected}
+		= "Wrong exit_code: $expected_exit_code";
 
-	    $execution_result->{before_match}
+	    my $actual_exit_status
 		= (defined $execution_result->{actual_exit_code}
 		   ? "$execution_result->{actual_exit_code}"
 		   : (defined $execution_result->{exit_signal}
 		      ? "signal $execution_result->{exit_signal}"
 		      : "exit status unavailable"));
+
+	    $execution_result->{before_match}
+		= "Wrong exit_code: $actual_exit_status";
 	}
     }
 
