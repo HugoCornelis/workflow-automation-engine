@@ -2,6 +2,7 @@
 command: vigilia
 command_tests:
   - description: Do we get a correct error message when the configuration file has syntax errors?
+    exit_code: 255
     read: |
       /usr/local/bin/vigilia: Error reading './vigilia.config' (syntax error at ./vigilia.config line 32, near "+ ;"
       ) at /usr/local/bin/vigilia line 2486.
