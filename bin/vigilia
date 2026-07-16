@@ -880,7 +880,7 @@ disable: Gives the reason why this command test is disabled.
 error: Gives the reason why this command test will always fail.
 exit_code: The expected exit code of the tested command.  This assertion waits for the command to terminate and should therefore normally be used on its final command test.
 expected_output_file: The pathname of a file with the contents that is expected.
-read: The expected output on STDOUT of the command.  This can be a regular expression (take a look at the examples).
+read: The expected pseudo-terminal output of the command.  This stream combines STDOUT and STDERR and can be matched with a regular expression (take a look at the examples).  Use a mapping with an exact key, for example read: { exact: 'complete output\\n' }, to require equality with the complete remaining output stream.  An exact assertion waits for command termination and should be the first and final output assertion for that command.
 tag: An array of tags associated with this command test.  These are matched with the tags given on the command line.
 tester: A shell command that will be run after the command has produced output (likely to be combined with a wait keyword for reliability and reproducibility).
 timeout: An optional timeout after which the test will fail if the expected output is not seen yet.
@@ -4048,6 +4048,7 @@ sub ct_run_complete
 # "Heterarch::Test::CommandTest::Interactive"
 # "Heterarch::Test::CommandTest::Interactive::ShellTester"
 # "Heterarch::Test::CommandTest::Interactive::ExitCode"
+# "Heterarch::Test::CommandTest::Interactive::Exact"
 # "Heterarch::Test::CommandTest::Interactive::Literal"
 # "Heterarch::Test::CommandTest::Interactive::Regex"
 # "Heterarch::Test::CommandTest::Interactive::Alternatives"
@@ -4241,9 +4242,16 @@ sub rebless
 
 	    else
 	    {
+		# Compare the complete remaining output stream byte-for-byte.
+
+		if (exists $read->{exact})
+		{
+		    $target_package = "Heterarch::Test::CommandTest::Interactive::Exact";
+		}
+
 		# compose the alternatives regex
 
-		if ($read->{alternatives})
+		elsif ($read->{alternatives})
 		{
 		    # expect that the output literally matches with one of the given alternatives
 
@@ -4755,6 +4763,112 @@ sub ct_run_command
     $self->after_testing($execution_context, $test_result);
 
     # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::Exact;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+#
+# Compare the complete remaining output stream with the expected string.
+# Unlike a normal literal Expect pattern, this assertion waits for EOF and
+# then applies Perl string equality to the accumulated output.
+#
+
+sub ct_run_command
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    $self->before_testing($execution_context, $executor);
+
+    my $expected = $self->{read}->{exact};
+
+    $expected = '' if !defined $expected;
+
+    if (exists $execution_context->{variable_actions})
+    {
+	my $variable_actions = $execution_context->{variable_actions};
+
+	foreach my $variable_actions_entry (@$variable_actions)
+	{
+	    foreach my $variable_name (sort keys %$variable_actions_entry)
+	    {
+		my $variable_value = $variable_actions_entry->{$variable_name};
+
+		$expected =~ s/$variable_name/$variable_value/g;
+	    }
+	}
+    }
+
+    if (exists $self->{white_space})
+    {
+	my $reporter = $execution_context->{reporter};
+
+	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
+	{
+	    $reporter->report_message("message_details", "Converting seen \\x0a to \\x0d \\x0a newlines\n");
+
+	    $expected =~ s(\x0a)(\x0d\x0a)g;
+	}
+	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
+	{
+	    $reporter->report_message("message_details", "Converting seen \\x0d \\x0a to \\x0a newlines\n");
+
+	    $expected =~ s(\x0d\x0a)(\x0a)g;
+	}
+	elsif ($self->{white_space} eq 'ignore')
+	{
+	    $reporter->report_message("message_details", "Ignoring white_space in the expected output\n");
+
+	    # Preserve the current, documented-but-incomplete behavior of the
+	    # literal matcher rather than silently introducing new semantics.
+
+	    $expected =~ s(\s)(.*)g;
+	}
+    }
+
+    my $timeout = $self->get_timeout();
+
+    my $completion_result
+	= Heterarch::Test::CommandDefinition::Interactive::wait_for_command_completion($timeout);
+
+    $executor->{expect_object} = undef;
+
+    my $actual = $completion_result->{output};
+
+    my $test_result
+	= {
+	   before_match => $actual,
+	   error => '',
+	   expected => $expected,
+	  };
+
+    if (exists $completion_result->{raw_status})
+    {
+	$test_result->{raw_exit_status} = $completion_result->{raw_status};
+    }
+
+    if ($completion_result->{error})
+    {
+	$test_result->{error}
+	    = "cannot complete exact output comparison: $completion_result->{error}";
+    }
+    elsif ($actual ne $expected)
+    {
+	$test_result->{error}
+	    = "the complete output of the tested command does not exactly match the expected output";
+    }
+
+    $self->after_testing($execution_context, $test_result);
 
     return $test_result;
 }
