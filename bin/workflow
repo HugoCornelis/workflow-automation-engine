@@ -15534,6 +15534,14 @@ sub schedule_operation_execute_call
 	&$operation_implementation($arguments);
     };
 
+    # An operation exception is stored in $@ by eval.  Propagate it instead
+    # of silently converting it into an undefined return value, which lets
+    # the workflow process finish successfully despite the failed operation.
+
+    my $exception = $@;
+
+    die $exception if length "$exception";
+
     return $error;
 
 }
