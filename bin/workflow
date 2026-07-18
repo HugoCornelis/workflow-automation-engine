@@ -4856,8 +4856,8 @@ sub builtin_ai_query
 
     my $ai_query = join ' ', @$arguments;
 
-    if (not defined $ai_query
-	or $ai_query eq '')
+    if ((not defined $ai_query or $ai_query eq '')
+	and $global_execution_context->{variables}->{global_execute_scheduled_commands})
     {
 	die "$global_program_name: *** Error: builtin ai_query expects a query string";
     }
@@ -5204,6 +5204,12 @@ sub builtin_configuration_fetch
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
+    if (!defined $sources_configuration_directory
+	&& !$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	$sources_configuration_directory = 'a-dummy-directory';
+    }
+
     my $commands
 	= [
 	   "cd '$sources_configuration_directory'",
@@ -5291,14 +5297,26 @@ sub builtin_configuration_install
 
     # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
 
+    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
+
     my $field_configuration = FieldProject::_init_get_field_project_configuration();
 
-    if (!$field_configuration)
+    if (!$field_configuration
+	&& $global_execution_context->{variables}->{global_execute_scheduled_commands})
     {
         die "$global_program_name: *** error: no valid field_configuration found";
     }
 
     my $project_name = $field_configuration->{field_project_name};
+
+    if (!defined $project_name
+	&& !$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	$project_name = 'a-dummy-project-name';
+    }
 
     if (!$project_name)
     {
@@ -5448,6 +5466,12 @@ Note that grc configuration files will also be installed and configured.
 sub builtin_configuration_pull
 {
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    if (!defined $sources_configuration_directory
+	&& !$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	$sources_configuration_directory = 'a-dummy-directory';
+    }
 
     my $commands
 	= [
@@ -5707,6 +5731,11 @@ sub builtin_docker_images_build
     }
 
     my $docker_command = 'docker';
+
+    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
 
     my $configuration_directory = "$::global_field_project_configuration->{sources_configuration_directory}";
 
@@ -6396,6 +6425,11 @@ sub builtin_lint
         die "$global_program_name: *** Error in option processing, try --help";
     }
 
+    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
+
     #t should we move operation_hash_typed_generate() and family to an Operation:: package?
 
     my $operations_with_help = main::operation_hash_typed_generate('with help subs');
@@ -6545,6 +6579,11 @@ sub builtin_manual
     if (!$result)
     {
         die "$global_program_name: *** Error in option processing, try --help";
+    }
+
+    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
     }
 
     my $field_project_configuration;
@@ -9157,13 +9196,18 @@ sub builtin_workflow_filenames_known
 {
     my $arguments = shift || [ 'relative-paths' ];
 
+    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
+
     # get the configuration_data_directory
 
     my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
 
     my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
 
-    if ($global_execution_context->{variables}->{global_execute_scheduled_commands})
+    # if ($global_execution_context->{variables}->{global_execute_scheduled_commands})
     {
 	my $index = $#$arguments;
 
@@ -9260,6 +9304,11 @@ sub builtin_workflow_locate
     my $arguments = shift || [];
 
     my $workflow_name = join ' ', @$arguments;
+
+    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
 
     if (! scalar @$arguments)
     {
