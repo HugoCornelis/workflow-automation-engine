@@ -2477,14 +2477,22 @@ sub initialize_config
 
     if (!-f $option_config_filename)
     {
-	die "$0: Error reading '$option_config_filename' (file does not exist)";
+	die "$0: Error reading '$option_config_filename' (file does not exist)\n";
     }
 
     $global_config = do $option_config_filename;
 
     if ($@)
     {
-	die "$0: Error reading '$option_config_filename' ($@)";
+	my $config_error = $@;
+
+	chomp $config_error;
+
+	# A newline-terminated die message prevents Perl from appending the
+	# implementation location of this die statement.  The diagnostic then
+	# remains stable when unrelated edits move this code to another line.
+
+	die "$0: Error reading '$option_config_filename' ($config_error)\n";
     }
 
     my $old_format = 0;
@@ -2500,7 +2508,7 @@ sub initialize_config
 
     if (not defined $global_config)
     {
-	die "$0: No test configuration found";
+	die "$0: No test configuration found\n";
     }
 
     if (not exists $global_config->{tests_directory})
