@@ -44,9 +44,21 @@ use Getopt::Long qw(GetOptionsFromArray);;
 $SIG{'__DIE__'}
     = sub
       {
+          # Exceptions raised inside eval are inspected through $@ by the
+          # caller.  Reporting them here would print an exception before the
+          # caller has had an opportunity to handle or propagate it.
+
+          return if $^S;
+
 	  require Carp;
 
-	  print STDERR Carp::longmess(@_);
+          # Replace the final uncaught exception with its stack-expanded form.
+          # Disable this handler while throwing the replacement to prevent
+          # recursive invocation and duplicate diagnostics.
+
+          local $SIG{'__DIE__'};
+
+          die Carp::longmess(@_);
       };
 
 
