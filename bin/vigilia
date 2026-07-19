@@ -880,7 +880,7 @@ disable: Gives the reason why this command test is disabled.
 error: Gives the reason why this command test will always fail.
 exit_code: The expected exit code of the tested command.  This assertion waits for the command to terminate and should therefore normally be used on its final command test.
 expected_output_file: The pathname of a file with the contents that is expected.
-read: The expected pseudo-terminal output of the command.  This stream combines STDOUT and STDERR and can be matched with a regular expression (take a look at the examples).  Use a mapping with an exact key, for example read: { exact: 'complete output\\n' }, to require equality with the complete remaining output stream.  An exact assertion waits for command termination and should be the first and final output assertion for that command.
+read: The expected pseudo-terminal output of the command.  This stream combines STDOUT and STDERR.  A scalar is matched as literal text, including when it begins with a hyphen (for example '---').  The existing array form, for example read: [ '-re', 'pattern' ], selects a regular expression.  Use a mapping with an exact key, for example read: { exact: 'complete output\\n' }, to require equality with the complete remaining output stream.  An exact assertion waits for command termination and should be the first and final output assertion for that command.
 tag: An array of tags associated with this command test.  These are matched with the tags given on the command line.
 tester: A shell command that will be run after the command has produced output (likely to be combined with a wait keyword for reliability and reproducibility).
 timeout: An optional timeout after which the test will fail if the expected output is not seen yet.
@@ -4971,7 +4971,7 @@ sub ct_run_command
 	$successfully_matching_string,
 	$before_match,
 	$after_match)
-	= $executor->{expect_object}->expect($timeout, $read, );
+	= $executor->{expect_object}->expect($timeout, "-ex", $read, );
 
     my $test_result
 	= {
@@ -5309,7 +5309,7 @@ sub ct_run_command
 	$successfully_matching_string,
 	$before_match,
 	$after_match)
-	= $executor->{expect_object}->expect($timeout, $expected, );
+	= $executor->{expect_object}->expect($timeout, "-ex", $expected, );
 
     my $test_result
 	= {
