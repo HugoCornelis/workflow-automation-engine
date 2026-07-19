@@ -4119,14 +4119,13 @@ sub rebless
 
 	my $write = $command_test->{write};
 
-	# set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
+	# set timeout, defaults to two seconds
+	# note that for newly created processes two additional seconds are added elsewhere.
 
 	my $timeout
 	    = (defined $command_test->{timeout}
 	       ? $command_test->{timeout} * $option_timeout_multiplier
-	       : (0
-		  ? 4 * $option_timeout_multiplier
-		  : 2 * $option_timeout_multiplier));
+	       : (2 * $option_timeout_multiplier));
 
 	# write
 
@@ -4534,6 +4533,9 @@ sub get_timeout
     my $self = shift;
 
     my $test_startup = $self->{test_startup};
+
+    # set timeout, defaults to two seconds
+    # note that for newly created processes two additional seconds are added.
 
     my $result
 	= (defined $self->{timeout}
