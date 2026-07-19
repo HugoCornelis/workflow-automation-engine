@@ -2,6 +2,7 @@
 command: bin/workflow builtin workflow_file_rename --help
 command_tests:
   - description: Do we see the help page for renaming workflow files?
+    exit_code: 0
     read: |
       workflow builtin workflow_file_rename: Rename a file that implements workflows.
       

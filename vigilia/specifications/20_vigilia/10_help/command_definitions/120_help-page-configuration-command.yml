@@ -2,6 +2,7 @@
 command: bin/vigilia configuration-create --help
 command_tests:
   - description: help page of the configuration command
+    exit_code: 0
     read: |+2
       
       bin/vigilia configuration-create <options> <package-name> <package-version> [ <test-module-name> ]

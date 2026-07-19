@@ -149,6 +149,11 @@ sub features_cd_tests_tmux
 
 sub features_die
 {
+    if (!$::global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
+
     die "Die for testing";
 
     my $commands

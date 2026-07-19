@@ -2,6 +2,7 @@
 command: bin/workflow Command::Git --help-builtin-package
 command_tests:
   - description: help of the Command::Git builtin package
+    exit_code: 0
     read: |
       Command::Git:
         description: workflows for working with Git

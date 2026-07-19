@@ -2,6 +2,7 @@
 command: bin/workflow builtin configuration_archive --help
 command_tests:
   - description: Do we see the help page for archiving a workflow configuration?
+    exit_code: 0
     read: |+
       workflow builtin configuration_archive: create a tarball with the configuration of the current workflow project.
       

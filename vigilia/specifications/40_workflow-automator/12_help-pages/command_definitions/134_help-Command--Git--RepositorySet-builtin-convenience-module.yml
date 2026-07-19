@@ -2,6 +2,7 @@
 command: bin/workflow Command::Git::RepositorySet --help-builtin-package
 command_tests:
   - description: help of the Command::Git::RepositorySet builtin package
+    exit_code: 0
     read: |
       Command::Git::RepositorySet:
         description: workflows for working with Git repositories

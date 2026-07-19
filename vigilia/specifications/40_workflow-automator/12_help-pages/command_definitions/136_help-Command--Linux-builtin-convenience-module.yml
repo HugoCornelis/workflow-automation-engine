@@ -2,6 +2,7 @@
 command: bin/workflow Command::Linux --help-builtin-package
 command_tests:
   - description: help of the Command::Linux builtin package
+    exit_code: 0
     read: |
       Command::Linux:
         description: workflows for working with the Linux kernel source code

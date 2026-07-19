@@ -878,8 +878,9 @@ application_output_file: The pathname of a file that will be produced by the tes
 description: A single line description: of the executed test.
 disable: Gives the reason why this command test is disabled.
 error: Gives the reason why this command test will always fail.
+exit_code: The expected exit code of the tested command.  This assertion waits for the command to terminate and should therefore normally be used on its final command test.
 expected_output_file: The pathname of a file with the contents that is expected.
-read: The expected output on STDOUT of the command.  This can be a regular expression (take a look at the examples).
+read: The expected pseudo-terminal output of the command.  This stream combines STDOUT and STDERR.  A scalar is matched as literal text, including when it begins with a hyphen (for example '---').  The existing array form, for example read: [ '-re', 'pattern' ], selects a regular expression.  Use a mapping with an exact key, for example read: { exact: 'complete output\\n' }, to require equality with the complete remaining output stream.  An exact assertion waits for command termination and should be the first and final output assertion for that command.
 tag: An array of tags associated with this command test.  These are matched with the tags given on the command line.
 tester: A shell command that will be run after the command has produced output (likely to be combined with a wait keyword for reliability and reproducibility).
 timeout: An optional timeout after which the test will fail if the expected output is not seen yet.
@@ -2476,14 +2477,22 @@ sub initialize_config
 
     if (!-f $option_config_filename)
     {
-	die "$0: Error reading '$option_config_filename' (file does not exist)";
+	die "$0: Error reading '$option_config_filename' (file does not exist)\n";
     }
 
     $global_config = do $option_config_filename;
 
     if ($@)
     {
-	die "$0: Error reading '$option_config_filename' ($@)";
+	my $config_error = $@;
+
+	chomp $config_error;
+
+	# A newline-terminated die message prevents Perl from appending the
+	# implementation location of this die statement.  The diagnostic then
+	# remains stable when unrelated edits move this code to another line.
+
+	die "$0: Error reading '$option_config_filename' ($config_error)\n";
     }
 
     my $old_format = 0;
@@ -2499,7 +2508,7 @@ sub initialize_config
 
     if (not defined $global_config)
     {
-	die "$0: No test configuration found";
+	die "$0: No test configuration found\n";
     }
 
     if (not exists $global_config->{tests_directory})
@@ -3246,7 +3255,172 @@ sub close_pending
 	#t perhaps.
 
 	$global_exp->hard_close();
+
+	$global_exp = undef;
+
+	$global_running_command_definition = undef;
     }
+}
+
+
+#
+# Invoke Expect without allowing exceptions from its argument parser or I/O
+# implementation to terminate the complete vigilia test run.  Normal Expect
+# results and errors retain their existing fields; Perl exceptions are
+# converted to a regular test error with any accumulated output attached.
+#
+
+sub expect_safely
+{
+    my $expect_object = shift;
+
+    my $timeout = shift;
+
+    my @patterns = @_;
+
+    my $result = {};
+
+    if (!$expect_object)
+    {
+	$result->{error}
+	    = "Expect interaction failed: no Expect object is available";
+
+	$result->{before_match} = '';
+
+	return $result;
+    }
+
+    my @expect_result;
+
+    my $completed
+	= eval
+	  {
+	      @expect_result = $expect_object->expect($timeout, @patterns);
+
+	      1;
+	  };
+
+    if (!$completed)
+    {
+	my $exception = $@;
+
+	$exception = 'unknown Expect exception'
+	    if !defined $exception || $exception eq '';
+
+	chomp $exception;
+
+	my $before_match
+	    = eval { $expect_object->before(); };
+
+	$result->{before_match}
+	    = defined $before_match ? $before_match : '';
+
+	$result->{error}
+	    = "Expect interaction failed: $exception";
+
+	$result->{expect_exception} = $exception;
+
+	return $result;
+    }
+
+    my ($matched_pattern_position,
+	$expect_error,
+	$successfully_matching_string,
+	$before_match,
+	$after_match)
+	= @expect_result;
+
+    $result->{matched_pattern_position} = $matched_pattern_position;
+    $result->{error} = $expect_error;
+    $result->{successfully_matching_string} = $successfully_matching_string;
+    $result->{before_match} = $before_match;
+    $result->{after_match} = $after_match;
+
+    return $result;
+}
+
+
+#
+# Wait until the currently running command closes its pseudo-terminal and
+# return both the remaining output and the wait status recorded by Expect.
+#
+# Calling expect() without match patterns is deliberate: Expect then reads
+# until EOF or until the supplied timeout expires.  The exit status returned
+# by Expect is the raw Perl wait status and is decoded by the caller.
+#
+
+sub wait_for_command_completion
+{
+    my $timeout = shift;
+
+    my $result
+	= {
+	   output => '',
+	  };
+
+    if (!$global_exp)
+    {
+	$result->{error} = "no tested command is currently running";
+
+	return $result;
+    }
+
+    my $expect_object = $global_exp;
+
+    my $expect_result
+	= expect_safely($expect_object, $timeout);
+
+    my $before_match = $expect_result->{before_match};
+
+    my $expect_error = $expect_result->{error};
+
+    $result->{output} = defined $before_match ? $before_match : '';
+
+    $result->{expect_error} = $expect_error if defined $expect_error;
+
+    my $raw_status = $expect_object->exitstatus();
+
+    if ($expect_result->{expect_exception})
+    {
+	$result->{error} = $expect_error;
+
+	# The interaction state is not reliable after an exception.
+
+	eval { $expect_object->hard_close(); };
+    }
+    elsif (defined $expect_error
+	and $expect_error =~ /^1:TIMEOUT/)
+    {
+	$result->{error}
+	    = "timed out after $timeout seconds while waiting for the tested command to terminate";
+
+	# Do not leave a timed-out process behind for the next command test.
+
+	eval { $expect_object->hard_close(); };
+    }
+    elsif (!defined $raw_status)
+    {
+	# EOF normally causes Expect to reap the process.  Give hard_close() a
+	# final opportunity to collect a status before reporting it unavailable.
+
+	eval { $expect_object->hard_close(); };
+
+	$raw_status = $expect_object->exitstatus();
+
+	if (!defined $raw_status)
+	{
+	    $result->{error}
+		= "the tested command terminated but its exit status is unavailable";
+	}
+    }
+
+    $result->{raw_status} = $raw_status if defined $raw_status;
+
+    $global_exp = undef;
+
+    $global_running_command_definition = undef;
+
+    return $result;
 }
 
 
@@ -3305,6 +3479,10 @@ sub spawn_new
 		    #t perhaps.
 
 		    $global_exp->hard_close();
+
+		    $global_exp = undef;
+
+		    $global_running_command_definition = undef;
 		}
 
 		# create a new Expect object by spawning a new process with the new command
@@ -3728,6 +3906,125 @@ sub before_testing
 }
 
 
+#
+# Check an optional exit_code assertion after the command-test-specific I/O
+# assertion has completed.  This placement permits one command test to assert
+# both output and process status, while retaining the existing sequential
+# Expect interactions for tests that do not specify exit_code.
+#
+
+sub check_exit_code
+{
+    my $command_test = shift;
+
+    my $executor = shift;
+
+    my $execution_result = shift || {};
+
+    return $execution_result if !exists $command_test->{exit_code};
+
+    my $expected_exit_code = $command_test->{exit_code};
+
+    my $exit_error;
+
+    if (!defined $expected_exit_code
+	or $expected_exit_code !~ /^\d+$/
+	or $expected_exit_code > 255)
+    {
+	$exit_error
+	    = "invalid expected exit code '$expected_exit_code'; an integer between 0 and 255 is required";
+    }
+
+    my $completion_result;
+
+    if (!$exit_error)
+    {
+	# A whole-output assertion may already have waited for EOF and retained
+	# the raw status in its result.  Otherwise, finish the process here.
+
+	if (exists $execution_result->{raw_exit_status})
+	{
+	    $completion_result
+		= {
+		   raw_status => $execution_result->{raw_exit_status},
+		  };
+	}
+	else
+	{
+	    my $timeout = $command_test->get_timeout();
+
+	    $completion_result
+		= Heterarch::Test::CommandDefinition::Interactive::wait_for_command_completion($timeout);
+
+	    $executor->{expect_object} = undef;
+	}
+
+	if ($completion_result->{error})
+	{
+	    $exit_error = $completion_result->{error};
+	}
+	else
+	{
+	    my $raw_status = $completion_result->{raw_status};
+
+	    $execution_result->{raw_exit_status} = $raw_status;
+
+	    my $signal = $raw_status & 127;
+
+	    my $core_dumped = $raw_status & 128;
+
+	    my $actual_exit_code = $raw_status >> 8;
+
+	    $execution_result->{actual_exit_code} = $actual_exit_code;
+
+	    $execution_result->{expected_exit_code} = $expected_exit_code;
+
+	    if ($signal)
+	    {
+		$execution_result->{exit_signal} = $signal;
+
+		$exit_error
+		    = "tested command terminated by signal $signal"
+		      . ($core_dumped ? " and produced a core dump" : "")
+		      . "; expected exit code $expected_exit_code";
+	    }
+	    elsif ($actual_exit_code != $expected_exit_code)
+	    {
+		$exit_error
+		    = "tested command exited with code $actual_exit_code; expected exit code $expected_exit_code";
+	    }
+	}
+    }
+
+    if ($exit_error)
+    {
+	if ($execution_result->{error})
+	{
+	    $execution_result->{error} .= "; $exit_error";
+	}
+	else
+	{
+	    $execution_result->{error} = $exit_error;
+
+	    $execution_result->{expected}
+		= "Wrong exit_code: $expected_exit_code";
+
+	    my $actual_exit_status
+		= (defined $execution_result->{actual_exit_code}
+		   ? "$execution_result->{actual_exit_code}"
+		   : (defined $execution_result->{exit_signal}
+		      ? "signal $execution_result->{exit_signal}"
+		      : "exit status unavailable"));
+
+	    $execution_result->{before_match}
+		= "Wrong exit_code: $actual_exit_status";
+	}
+    }
+
+    return $execution_result;
+}
+
+
 sub ct_run_complete
 {
     my $command_test = shift;
@@ -3754,6 +4051,13 @@ sub ct_run_complete
     # run the test executor which will run the command_test
 
     my $execution_result = $executor->ex_ct_run($command_test);
+
+    $execution_result ||= {};
+
+    # If requested, wait for command termination and compare its status.
+
+    $execution_result
+	= $command_test->check_exit_code($executor, $execution_result);
 
     # process errors
 
@@ -3840,6 +4144,8 @@ sub ct_run_complete
 # this one is not supported anymore: $target_package = "Heterarch::Test::CommandTest::PerlCode";
 # "Heterarch::Test::CommandTest::Interactive"
 # "Heterarch::Test::CommandTest::Interactive::ShellTester"
+# "Heterarch::Test::CommandTest::Interactive::ExitCode"
+# "Heterarch::Test::CommandTest::Interactive::Exact"
 # "Heterarch::Test::CommandTest::Interactive::Literal"
 # "Heterarch::Test::CommandTest::Interactive::Regex"
 # "Heterarch::Test::CommandTest::Interactive::Alternatives"
@@ -3898,14 +4204,13 @@ sub rebless
 
 	my $write = $command_test->{write};
 
-	# set timeout, defaults to two seconds, but for newly created processes add two additional seconds.
+	# set timeout, defaults to two seconds
+	# note that for newly created processes two additional seconds are added elsewhere.
 
 	my $timeout
 	    = (defined $command_test->{timeout}
 	       ? $command_test->{timeout} * $option_timeout_multiplier
-	       : (0
-		  ? 4 * $option_timeout_multiplier
-		  : 2 * $option_timeout_multiplier));
+	       : (2 * $option_timeout_multiplier));
 
 	# write
 
@@ -4033,9 +4338,16 @@ sub rebless
 
 	    else
 	    {
+		# Compare the complete remaining output stream byte-for-byte.
+
+		if (exists $read->{exact})
+		{
+		    $target_package = "Heterarch::Test::CommandTest::Interactive::Exact";
+		}
+
 		# compose the alternatives regex
 
-		if ($read->{alternatives})
+		elsif ($read->{alternatives})
 		{
 		    # expect that the output literally matches with one of the given alternatives
 
@@ -4085,6 +4397,14 @@ sub rebless
 		    die "test not understood by $0, aborting (illegal read clause for $description)";
 		}
 	    }
+	}
+
+	# An exit-code-only test still needs an interactive implementation that
+	# performs write/wait clauses and returns a complete result object.
+
+	elsif (exists $command_test->{exit_code})
+	{
+	    $target_package = "Heterarch::Test::CommandTest::Interactive::ExitCode";
 	}
     }
 
@@ -4299,6 +4619,9 @@ sub get_timeout
 
     my $test_startup = $self->{test_startup};
 
+    # set timeout, defaults to two seconds
+    # note that for newly created processes two additional seconds are added.
+
     my $result
 	= (defined $self->{timeout}
 	   ? $self->{timeout} * $option_timeout_multiplier
@@ -4429,6 +4752,40 @@ sub ct_run_command
 }
 
 
+package Heterarch::Test::CommandTest::Interactive::ExitCode;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+#
+# An exit-code-only command test does not consume a pattern.  The common
+# check_exit_code() method waits for EOF after this method returns.
+#
+
+sub ct_run_command
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    $self->before_testing($execution_context, $executor);
+
+    my $test_result
+	= {
+	   before_match => '',
+	   error => '',
+	   expected => '',
+	  };
+
+    $self->after_testing($execution_context, $test_result);
+
+    return $test_result;
+}
+
+
 package Heterarch::Test::CommandTest::Interactive::ShellTester;
 
 
@@ -4505,6 +4862,112 @@ sub ct_run_command
     $self->after_testing($execution_context, $test_result);
 
     # return the final test result
+
+    return $test_result;
+}
+
+
+package Heterarch::Test::CommandTest::Interactive::Exact;
+
+
+our @ISA = ("Heterarch::Test::CommandTest::Interactive");
+
+
+#
+# Compare the complete remaining output stream with the expected string.
+# Unlike a normal literal Expect pattern, this assertion waits for EOF and
+# then applies Perl string equality to the accumulated output.
+#
+
+sub ct_run_command
+{
+    my $self = shift;
+
+    my $execution_context = shift;
+
+    my $executor = shift;
+
+    $self->before_testing($execution_context, $executor);
+
+    my $expected = $self->{read}->{exact};
+
+    $expected = '' if !defined $expected;
+
+    if (exists $execution_context->{variable_actions})
+    {
+	my $variable_actions = $execution_context->{variable_actions};
+
+	foreach my $variable_actions_entry (@$variable_actions)
+	{
+	    foreach my $variable_name (sort keys %$variable_actions_entry)
+	    {
+		my $variable_value = $variable_actions_entry->{$variable_name};
+
+		$expected =~ s/$variable_name/$variable_value/g;
+	    }
+	}
+    }
+
+    if (exists $self->{white_space})
+    {
+	my $reporter = $execution_context->{reporter};
+
+	if ($self->{white_space} eq 'convert seen 0a to 0d 0a newlines')
+	{
+	    $reporter->report_message("message_details", "Converting seen \\x0a to \\x0d \\x0a newlines\n");
+
+	    $expected =~ s(\x0a)(\x0d\x0a)g;
+	}
+	elsif ($self->{white_space} eq 'convert seen \\x0d \\x0a to \\x0a newlines')
+	{
+	    $reporter->report_message("message_details", "Converting seen \\x0d \\x0a to \\x0a newlines\n");
+
+	    $expected =~ s(\x0d\x0a)(\x0a)g;
+	}
+	elsif ($self->{white_space} eq 'ignore')
+	{
+	    $reporter->report_message("message_details", "Ignoring white_space in the expected output\n");
+
+	    # Preserve the current, documented-but-incomplete behavior of the
+	    # literal matcher rather than silently introducing new semantics.
+
+	    $expected =~ s(\s)(.*)g;
+	}
+    }
+
+    my $timeout = $self->get_timeout();
+
+    my $completion_result
+	= Heterarch::Test::CommandDefinition::Interactive::wait_for_command_completion($timeout);
+
+    $executor->{expect_object} = undef;
+
+    my $actual = $completion_result->{output};
+
+    my $test_result
+	= {
+	   before_match => $actual,
+	   error => '',
+	   expected => $expected,
+	  };
+
+    if (exists $completion_result->{raw_status})
+    {
+	$test_result->{raw_exit_status} = $completion_result->{raw_status};
+    }
+
+    if ($completion_result->{error})
+    {
+	$test_result->{error}
+	    = "cannot complete exact output comparison: $completion_result->{error}";
+    }
+    elsif ($actual ne $expected)
+    {
+	$test_result->{error}
+	    = "the complete output of the tested command does not exactly match the expected output";
+    }
+
+    $self->after_testing($execution_context, $test_result);
 
     return $test_result;
 }
@@ -4588,22 +5051,16 @@ sub ct_run_command
 
     my $timeout = $self->get_timeout();
 
-    my ($matched_pattern_position,
-	$error,
-	$successfully_matching_string,
-	$before_match,
-	$after_match)
-	= $executor->{expect_object}->expect($timeout, $read, );
-
     my $test_result
-	= {
-	   matched_pattern_position => $matched_pattern_position,
-	   error => $error,
-	   successfully_matching_string => $successfully_matching_string,
-	   before_match => $before_match,
-	   after_match => $after_match,
-	   expected => $read,
-	  };
+	= Heterarch::Test::CommandDefinition::Interactive::expect_safely
+	  (
+	   $executor->{expect_object},
+	   $timeout,
+	   "-ex",
+	   $read,
+	  );
+
+    $test_result->{expected} = $read;
 
     # try correcting
 
@@ -4651,25 +5108,17 @@ sub ct_run_command
 
     my $timeout = $self->get_timeout();
 
-    my ($matched_pattern_position,
-	$error,
-	$successfully_matching_string,
-	$before_match,
-	$after_match)
-	= $executor->{expect_object}->expect($timeout, @$read, );
-
     my $test_result
-	= {
-	   matched_pattern_position => $matched_pattern_position,
-	   error => $error,
-	   successfully_matching_string => $successfully_matching_string,
-	   before_match => $before_match,
-	   after_match => $after_match,
+	= Heterarch::Test::CommandDefinition::Interactive::expect_safely
+	  (
+	   $executor->{expect_object},
+	   $timeout,
+	   @$read,
+	  );
 
-	   #! skip the expect '-re' flag
+    #! skip the expect '-re' flag
 
-	   expected => $read->[1],
-	  };
+    $test_result->{expected} = $read->[1];
 
     # try correcting
 
@@ -4724,18 +5173,29 @@ sub ct_run_command
 
     my $timeout = $self->get_timeout();
 
-    my ($matched_pattern_position,
-	$error,
-	$successfully_matching_string,
-	$before_match,
-	$after_match)
-	= $executor->{expect_object}->expect($timeout, "-re", $test_result->{expected}, );
+    my $expect_result
+	= Heterarch::Test::CommandDefinition::Interactive::expect_safely
+	  (
+	   $executor->{expect_object},
+	   $timeout,
+	   "-re",
+	   $test_result->{expected},
+	  );
 
-    $test_result->{matched_pattern_position} = $matched_pattern_position;
-    $test_result->{error} = $error;
-    $test_result->{successfully_matching_string} = $successfully_matching_string;
-    $test_result->{before_match} = $before_match;
-    $test_result->{after_match} = $after_match;
+    foreach my $result_key
+	(qw
+	 (
+	  matched_pattern_position
+	  error
+	  successfully_matching_string
+	  before_match
+	  after_match
+	  expect_exception
+	 ))
+    {
+	$test_result->{$result_key} = $expect_result->{$result_key}
+	    if exists $expect_result->{$result_key};
+    }
 
     # try correcting
 
@@ -4926,22 +5386,16 @@ sub ct_run_command
 
     my $timeout = $self->get_timeout();
 
-    my ($matched_pattern_position,
-	$error,
-	$successfully_matching_string,
-	$before_match,
-	$after_match)
-	= $executor->{expect_object}->expect($timeout, $expected, );
-
     my $test_result
-	= {
-	   matched_pattern_position => $matched_pattern_position,
-	   error => $error,
-	   successfully_matching_string => $successfully_matching_string,
-	   before_match => $before_match,
-	   after_match => $after_match,
-	   expected => $expected,
-	  };
+	= Heterarch::Test::CommandDefinition::Interactive::expect_safely
+	  (
+	   $executor->{expect_object},
+	   $timeout,
+	   "-ex",
+	   $expected,
+	  );
+
+    $test_result->{expected} = $expected;
 
     # try correcting
 

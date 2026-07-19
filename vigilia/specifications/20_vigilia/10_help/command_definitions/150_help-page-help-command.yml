@@ -2,6 +2,7 @@
 command: bin/vigilia help --help
 command_tests:
   - description: help page of the help command
+    exit_code: 0
     read: |2
       
       bin/vigilia: test definition processor and executor

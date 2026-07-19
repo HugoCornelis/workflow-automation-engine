@@ -4,6 +4,7 @@ arguments:
 command: bin/vigilia
 command_tests:
   - description: Is a help message given ?
+    exit_code: 0
     read: |2
       
       bin/vigilia: test definition processor and executor

@@ -2,6 +2,7 @@
 command: bin/workflow Command::Net::IPerf --help-builtin-package
 command_tests:
 - description: help of the Command::Net::IPerf builtin package
+  exit_code: 0
   read: |
 
     Command::Net::IPerf:
