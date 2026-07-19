@@ -5297,10 +5297,10 @@ sub builtin_configuration_install
 
     # 1. Install to ~/bin or ~/.local/bin: symbolic link for the workflow engine with correct name and the configuration of the project
 
-    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
-    {
-	return '';
-    }
+    # if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    # {
+    # 	return '';
+    # }
 
     my $field_configuration = FieldProject::_init_get_field_project_configuration();
 
@@ -5732,10 +5732,10 @@ sub builtin_docker_images_build
 
     my $docker_command = 'docker';
 
-    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
-    {
-	return '';
-    }
+    # if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    # {
+    # 	return '';
+    # }
 
     my $configuration_directory = "$::global_field_project_configuration->{sources_configuration_directory}";
 
@@ -6587,10 +6587,10 @@ sub builtin_manual
         die "$global_program_name: *** Error in option processing, try --help";
     }
 
-    if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
-    {
-	return '';
-    }
+    # if (!$global_execution_context->{variables}->{global_execute_scheduled_commands})
+    # {
+    # 	return '';
+    # }
 
     my $field_project_configuration;
 
