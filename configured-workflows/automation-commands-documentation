@@ -172,9 +172,11 @@ sub markdown_view
 }
 
 
-sub _builtin_completor_markdown_filename_completions
+sub _builtin_completor_filename_extension_completions
 {
     my $current_word = shift // '';
+
+    my $extensions = shift;;
 
     # Completion is deliberately limited to the current working directory
     # and its descendants.
@@ -232,7 +234,7 @@ sub _builtin_completor_markdown_filename_completions
             # this directory.
             $candidate .= '/';
         }
-        elsif (-f $candidate and $entry =~ /\.md\z/i)
+	elsif (-f $candidate and $entry =~ /$extensions\z/i)
         {
             # This is an eligible Markdown file.
         }
@@ -332,6 +334,8 @@ sub _builtin_markdown_file_completor
             = $current_word_is_present ? 'x' : ' ';
     }
 
+    my $extensions = ".md";
+
     return _builtin_completor_expander
         (
          analysis => $expander_analysis,
@@ -340,9 +344,10 @@ sub _builtin_markdown_file_completor
          positional_arguments => [
                                   {
                                    completions
-                                       => _builtin_completor_markdown_filename_completions
+                                       => _builtin_completor_filename_extension_completions
                                           (
-                                           $current_word
+                                           $current_word,
+					   $extensions,
                                           ),
                                   },
                                  ],
