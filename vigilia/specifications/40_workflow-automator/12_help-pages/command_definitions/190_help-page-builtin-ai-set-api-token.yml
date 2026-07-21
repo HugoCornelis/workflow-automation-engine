@@ -1,0 +1,26 @@
+---
+command: bin/workflow builtin ai_set_api_token --help
+command_tests:
+  - description: Do we see the help page of the builtin ai_set_api_token command?
+    exit_code: 0
+    read: |+
+      workflow builtin ai_set_api_token: Store an OpenAI API token in this project's volatile storage.
+      
+      synopsis:
+      ~~~~~~~~~
+      
+      .. code-block:: bash
+      
+      builtin ai_set_api_token [<token-file>]
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: optional file containing the OpenAI API token.  Leading and
+          trailing whitespace is removed.  When no filename is given, the token is
+          read from the ``OPENAI_API_KEY`` environment variable.
+      
+      The token is stored as ``secret-tokens/openai.yml`` in the project's volatile
+      storage, where the existing OpenAI client retrieves it.  The command does not
+      print the token and restricts access to the token directory and file.
+description: Do we see the help page of the builtin ai_set_api_token command?
