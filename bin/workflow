@@ -302,15 +302,32 @@ sub new
 {
     my ($class, %args) = @_;
 
-    my $api_key = $args{api_key} if exists $args{api_key};
+    my $api_key;
 
-    my $openai_data = Utilities::volatile_section_data_read("secret-tokens", "openai.yml");
+    if (exists $args{api_key})
+    {
+	$api_key = $args{api_key};
+    }
+    else
+    {
+	my $openai_data
+	    = Utilities::volatile_section_data_read
+	      (
+	       "secret-tokens",
+	       "openai.yml",
+	      );
 
-    $api_key = $openai_data->{'key-value'};
+	$api_key = $openai_data->{'key-value'}
+	    if ref $openai_data eq 'HASH';
 
-    $api_key = $ENV{OPENAI_API_KEY} if not $api_key;
+	$api_key = $ENV{OPENAI_API_KEY}
+	    if not defined $api_key
+		or $api_key eq '';
+    }
 
-    $api_key or croak "Missing api_key or OPENAI_API_KEY";
+    defined $api_key
+	and $api_key ne ''
+	or croak "Missing api_key, volatile OpenAI API token, or OPENAI_API_KEY";
 
     my $self
 	= bless {
