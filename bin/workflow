@@ -1200,291 +1200,6 @@ sub _builtin_ai_query_execute_scheduled_manual_generation_commands
 }
 
 
-sub _builtin_completor_expander
-{
-    my %parameters = @_;
-
-    my $after_positional_completions = $parameters{after_positional_completions} || {};
-    my $analysis = $parameters{analysis} || {};
-    my $complete_arguments_array = $parameters{complete_arguments_array} || [];
-    my $operation_path = $parameters{operation_path} || [];
-    my $option_descriptions = $parameters{option_descriptions} || {};
-    my $positional_arguments = $parameters{positional_arguments} || [];
-
-    my $bash_variables = $analysis->{bash} || {};
-
-    my $string_before_point = $analysis->{string_before_point};
-
-    my $current_word_is_complete = $string_before_point =~ /\s\z/;
-
-    # figure out the operation path
-
-    my $operation_arguments = [ @$complete_arguments_array ];
-
-    if (scalar @$operation_arguments >= scalar @$operation_path)
-    {
-	my $operation_path_matches = 1;
-
-	foreach my $index (0 .. scalar(@$operation_path) - 1)
-	{
-	    if ($operation_arguments->[$index] ne $operation_path->[$index])
-	    {
-		$operation_path_matches = 0;
-
-		last;
-	    }
-	}
-
-	if ($operation_path_matches)
-	{
-	    splice @$operation_arguments, 0, scalar @$operation_path;
-	}
-    }
-
-    # When the cursor is inside a word, bash_completion_generate() will filter
-    # the returned candidates with that current word.  Therefore the dynamic
-    # tree below must only contain the arguments that are complete and located
-    # before the current word.
-
-    my $completed_operation_arguments = [ @$operation_arguments ];
-
-    if (not $current_word_is_complete
-	and scalar @$completed_operation_arguments)
-    {
-	pop @$completed_operation_arguments;
-    }
-
-    my $option_names = [ sort keys %$option_descriptions ];
-
-    my $used_options
-	= {
-	   map
-	   {
-	       $_ => 1;
-	   }
-	   grep
-	   {
-	       exists $option_descriptions->{$_};
-	   }
-	   @$completed_operation_arguments,
-	  };
-
-    # available options are those that are not used yet
-
-    my $available_options
-	= {
-	   map
-	   {
-	       $_ => $option_descriptions->{$_};
-	   }
-	   grep
-	   {
-	       not $used_options->{$_};
-	   }
-	   @$option_names,
-	  };
-
-    # has the option separator been seen?
-
-    my $completed_separator_seen
-	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
-
-    # what are the already seen arguments / non-options?
-
-    my $completed_positional_arguments
-	= [
-	   grep
-	   {
-	       $_ ne '--'
-		   and not exists $option_descriptions->{$_};
-	   }
-	   @$completed_operation_arguments,
-	  ];
-
-    my $completed_positional_argument_count = scalar @$completed_positional_arguments;
-
-    my $leaf_completions;
-
-    if ($completed_separator_seen)
-    {
-	# A command-specific option separator is already present before the
-	# current word.  Therefore a second `--` being typed is the prefix of
-	# the actual command-specific options, so return the available options.
-
-	$leaf_completions = $available_options;
-    }
-    else
-    {
-	my $positional_argument_index = $completed_positional_argument_count;
-
-	if ($positional_argument_index >= scalar @$positional_arguments
-	    and scalar @$positional_arguments)
-	{
-	    my $last_positional_argument = $positional_arguments->[-1] || {};
-
-	    if ($last_positional_argument->{repeatable})
-	    {
-		$positional_argument_index = scalar(@$positional_arguments) - 1;
-	    }
-	}
-
-	if ($positional_argument_index < scalar @$positional_arguments)
-	{
-	    my $positional_argument = $positional_arguments->[$positional_argument_index] || {};
-
-	    my $positional_completions = $positional_argument->{completions} || {};
-
-	    #! for future expansion only
-
-	    # if (ref $positional_completions eq 'CODE')
-	    # {
-	    #     $positional_completions = &$positional_completions();
-	    # }
-
-	    my $option_separator_hint = $positional_argument->{option_separator_hint};
-
-	    $leaf_completions
-		= {
-		   %$positional_completions,
-		   (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
-		   (scalar keys %$available_options ? ('--' => '') : ()),
-		  };
-	}
-	else
-	{
-	    my $option_separator_hint = $parameters{after_positional_option_separator_hint};
-
-	    $leaf_completions
-		= {
-		   %$after_positional_completions,
-		   (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
-		   (scalar keys %$available_options ? ('--' => '') : ()),
-		  };
-	}
-    }
-
-    my $completions = $leaf_completions;
-
-    foreach my $argument (reverse @$completed_operation_arguments)
-    {
-	$completions = { $argument => $completions };
-    }
-
-    return $completions;
-}
-
-
-sub _builtin_completor_pdf_filename_completions
-{
-    return
-    {
-     '1.<pdf-file>' => '',
-     map
-     {
-	 my $filename = $_;
-
-	 # The generated bash completion script feeds candidates through
-	 # compgen -W.  Escaping whitespace keeps common file names with spaces
-	 # usable without changing the completion protocol used elsewhere.
-
-	 $filename =~ s/(\s)/\\$1/g;
-
-	 $filename => '';
-     }
-     sort
-     grep
-     {
-	 -f $_ and /\.pdf\z/i;
-     }
-     glob('*'),
-    };
-}
-
-
-sub _builtin_completor_role_name_completions
-{
-    my $matcher = shift || '.*';
-
-    my $hint = shift;
-
-    my $matching_roles = _roles_select($matcher);
-
-    return
-    {
-     (defined $hint ? ($hint => '') : ()),
-     map
-     {
-	 $_ => '';
-     }
-     sort keys %$matching_roles,
-    };
-}
-
-
-sub _builtin_completor_target_name_completions
-{
-    my $hint = shift;
-
-    my $all_targets = $global_technical_project_configuration->{targets} || {};
-
-    return
-    {
-     (defined $hint ? ($hint => '') : ()),
-     map
-     {
-	 $_ => '';
-     }
-     sort keys %$all_targets,
-    };
-}
-
-
-sub _builtin_completor_workflow_filename_completions
-{
-    my $value = shift || '';
-
-    my $hint = shift;
-
-    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
-
-    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
-
-    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
-
-    $workflow_filenames = $workflow_filenames->{workflow_filenames} || [];
-
-    return
-    {
-     (defined $hint ? ($hint => '') : ()),
-     map
-     {
-	 $_ => $value;
-     }
-     @$workflow_filenames,
-    };
-}
-
-
-sub _builtin_completor_workflow_operation_completions
-{
-    my $operations = main::operation_hash_typed_generate();
-
-    my $completions = {};
-
-    foreach my $operation (sort keys %$operations)
-    {
-	my $operation_with_underscore = $operation;
-
-	$operation_with_underscore =~ s/ /_/g;
-
-	$completions->{$operation_with_underscore} = '';
-	$completions->{"Command::$operation_with_underscore"} = '';
-    }
-
-    return $completions;
-}
-
-
 sub _builtin_configuration_browser_code
 {
     my $code = '($0 =~ m(.*/(\S+)));
@@ -3254,6 +2969,531 @@ sub _builtin_tmux_sessions
 }
 
 
+sub _completor_directory_is_relevant
+{
+    my ($directory, $extension) = @_;
+
+    opendir(my $directory_handle, $directory)
+        or return 0;
+
+    while (defined(my $entry = readdir $directory_handle))
+    {
+        next
+            if $entry eq '.'
+            or $entry eq '..';
+
+        my $path = "$directory/$entry";
+
+        if (-d $path)
+        {
+            closedir $directory_handle;
+
+            return 'directory';
+        }
+        if (-f $path and $entry =~ /\Q$extension\E\z/i)
+        {
+            closedir $directory_handle;
+
+            return 'extension';
+        }
+    }
+
+    closedir $directory_handle;
+
+    return 0;
+}
+
+
+sub _completor_filename_extension_completions
+{
+    my $current_word = shift // '';
+
+    my $extensions = shift;;
+
+    # Completion is deliberately limited to the current working directory
+    # and its descendants.
+    return {}
+        if $current_word =~ m{\A/};
+
+    my @path_components = split m{/+}, $current_word, -1;
+
+    return {}
+        if grep { $_ eq '..' } @path_components;
+
+    # Examples:
+    #
+    #   current word       directory prefix    entry prefix
+    #   ------------       ----------------    ------------
+    #   RE                 ""                  RE
+    #   documentation/     documentation/      ""
+    #   documentation/RE   documentation/      RE
+
+    my ($directory_prefix, $entry_prefix)
+        = $current_word =~ m{\A(.*/)([^/]*)\z}
+        ? ($1, $2)
+        : ('', $current_word);
+
+    my $directory
+        = length $directory_prefix
+        ? $directory_prefix
+        : '.';
+
+    opendir(my $directory_handle, $directory)
+        or return {};
+
+    my $completions = {};
+
+    foreach my $entry (sort readdir $directory_handle)
+    {
+        next
+            if $entry eq '.'
+            or $entry eq '..';
+
+        # Behave like ordinary Bash filename completion: hidden entries
+        # are shown only after the user has typed a leading dot.
+        next
+            if $entry =~ /^\./
+            and $entry_prefix !~ /^\./;
+
+        next
+            if index($entry, $entry_prefix) != 0;
+
+        my $candidate = $directory_prefix . $entry;
+
+        my @candidate_completions;
+
+        if (-d $candidate)
+        {
+            # Do not offer a directory that contains neither a file with the
+            # requested extension nor another directory.
+            my $why = _completor_directory_is_relevant
+                       (
+                        $candidate,
+                        $extensions,
+                       );
+
+	    if ($why eq 'directory')
+	    {
+		# The imaginary children make Bash complete only through "/".
+		push @candidate_completions,
+		    "$candidate/_directories_",
+		    "$candidate/more_directories";
+	    }
+	    elsif ($why eq 'extension')
+	    {
+		# The imaginary children make Bash complete only through "/".
+		push @candidate_completions,
+		    "$candidate/_${extensions}_files",
+		    "$candidate/<more_${extensions}_files>";
+	    }
+        }
+        elsif (-f $candidate
+               and $entry =~ /\Q$extensions\E\z/i)
+        {
+            push @candidate_completions, $candidate;
+        }
+        else
+        {
+            next;
+        }
+
+        foreach my $completion (@candidate_completions)
+        {
+            $completion =~ s/(\s)/\\$1/g;
+
+            $completions->{$completion} = '';
+        }
+    }
+
+    closedir $directory_handle;
+
+    return $completions;
+}
+
+
+sub _completor_filetype_markdown
+{
+    my $operation_name = shift // '';
+
+    my $complete_arguments_array = shift;
+
+    my $analysis = shift;
+
+    $complete_arguments_array = []
+        if ref $complete_arguments_array ne 'ARRAY';
+
+    $analysis = {}
+        if ref $analysis ne 'HASH';
+
+    my $operation_path
+        = [
+           grep { length $_ }
+           split /\s+/, $operation_name,
+          ];
+
+    my $bash_variables
+        = ref $analysis->{bash} eq 'HASH'
+        ? $analysis->{bash}
+        : {};
+
+    my $current_word_index;
+
+    my $current_word_is_present;
+
+    # COMP_CWORD counts words including the executable, whereas
+    # complete_arguments_array no longer contains that executable.
+    if (defined $bash_variables->{comp_cword}
+        and $bash_variables->{comp_cword} > 0)
+    {
+        $current_word_index = $bash_variables->{comp_cword} - 1;
+
+        $current_word_is_present
+            = exists $complete_arguments_array->[$current_word_index];
+    }
+    elsif (defined $analysis->{string_before_point})
+    {
+        $current_word_is_present
+            = $analysis->{string_before_point} !~ /\s\z/;
+
+        $current_word_index = $#$complete_arguments_array
+            if $current_word_is_present
+            and @$complete_arguments_array;
+    }
+    else
+    {
+        # Compatibility fallback for callers that provide neither the Bash
+        # state nor string_before_point. Anything following the operation
+        # path is treated as the current partial argument.
+        $current_word_is_present
+            = scalar(@$complete_arguments_array)
+            > scalar(@$operation_path);
+
+        $current_word_index = $#$complete_arguments_array
+            if $current_word_is_present;
+    }
+
+    my $current_word
+        = $current_word_is_present
+        ? ($complete_arguments_array->[$current_word_index] // '')
+        : '';
+
+    # _completor_generic_expander() currently assumes this field is always
+    # defined. Supply an equivalent sentinel when the caller omitted it:
+    # non-whitespace means a partial word; whitespace means a new word.
+    my $expander_analysis = { %$analysis };
+
+    if (not defined $expander_analysis->{string_before_point})
+    {
+        $expander_analysis->{string_before_point}
+            = $current_word_is_present ? 'x' : ' ';
+    }
+
+    my $extensions = ".md";
+
+    return _completor_generic_expander
+        (
+         analysis => $expander_analysis,
+         complete_arguments_array => $complete_arguments_array,
+         operation_path => $operation_path,
+         positional_arguments => [
+                                  {
+                                   completions
+                                       => _completor_filename_extension_completions
+                                          (
+                                           $current_word,
+					   $extensions,
+                                          ),
+                                  },
+                                 ],
+        );
+}
+
+
+sub _completor_generic_expander
+{
+    my %parameters = @_;
+
+    my $after_positional_completions = $parameters{after_positional_completions} || {};
+    my $analysis = $parameters{analysis} || {};
+    my $complete_arguments_array = $parameters{complete_arguments_array} || [];
+    my $operation_path = $parameters{operation_path} || [];
+    my $option_descriptions = $parameters{option_descriptions} || {};
+    my $positional_arguments = $parameters{positional_arguments} || [];
+
+    my $bash_variables = $analysis->{bash} || {};
+
+    my $string_before_point = $analysis->{string_before_point};
+
+    my $current_word_is_complete = $string_before_point =~ /\s\z/;
+
+    # figure out the operation path
+
+    my $operation_arguments = [ @$complete_arguments_array ];
+
+    if (scalar @$operation_arguments >= scalar @$operation_path)
+    {
+	my $operation_path_matches = 1;
+
+	foreach my $index (0 .. scalar(@$operation_path) - 1)
+	{
+	    if ($operation_arguments->[$index] ne $operation_path->[$index])
+	    {
+		$operation_path_matches = 0;
+
+		last;
+	    }
+	}
+
+	if ($operation_path_matches)
+	{
+	    splice @$operation_arguments, 0, scalar @$operation_path;
+	}
+    }
+
+    # When the cursor is inside a word, bash_completion_generate() will filter
+    # the returned candidates with that current word.  Therefore the dynamic
+    # tree below must only contain the arguments that are complete and located
+    # before the current word.
+
+    my $completed_operation_arguments = [ @$operation_arguments ];
+
+    if (not $current_word_is_complete
+	and scalar @$completed_operation_arguments)
+    {
+	pop @$completed_operation_arguments;
+    }
+
+    my $option_names = [ sort keys %$option_descriptions ];
+
+    my $used_options
+	= {
+	   map
+	   {
+	       $_ => 1;
+	   }
+	   grep
+	   {
+	       exists $option_descriptions->{$_};
+	   }
+	   @$completed_operation_arguments,
+	  };
+
+    # available options are those that are not used yet
+
+    my $available_options
+	= {
+	   map
+	   {
+	       $_ => $option_descriptions->{$_};
+	   }
+	   grep
+	   {
+	       not $used_options->{$_};
+	   }
+	   @$option_names,
+	  };
+
+    # has the option separator been seen?
+
+    my $completed_separator_seen
+	= scalar grep { $_ eq '--' } @$completed_operation_arguments;
+
+    # what are the already seen arguments / non-options?
+
+    my $completed_positional_arguments
+	= [
+	   grep
+	   {
+	       $_ ne '--'
+		   and not exists $option_descriptions->{$_};
+	   }
+	   @$completed_operation_arguments,
+	  ];
+
+    my $completed_positional_argument_count = scalar @$completed_positional_arguments;
+
+    my $leaf_completions;
+
+    if ($completed_separator_seen)
+    {
+	# A command-specific option separator is already present before the
+	# current word.  Therefore a second `--` being typed is the prefix of
+	# the actual command-specific options, so return the available options.
+
+	$leaf_completions = $available_options;
+    }
+    else
+    {
+	my $positional_argument_index = $completed_positional_argument_count;
+
+	if ($positional_argument_index >= scalar @$positional_arguments
+	    and scalar @$positional_arguments)
+	{
+	    my $last_positional_argument = $positional_arguments->[-1] || {};
+
+	    if ($last_positional_argument->{repeatable})
+	    {
+		$positional_argument_index = scalar(@$positional_arguments) - 1;
+	    }
+	}
+
+	if ($positional_argument_index < scalar @$positional_arguments)
+	{
+	    my $positional_argument = $positional_arguments->[$positional_argument_index] || {};
+
+	    my $positional_completions = $positional_argument->{completions} || {};
+
+	    #! for future expansion only
+
+	    # if (ref $positional_completions eq 'CODE')
+	    # {
+	    #     $positional_completions = &$positional_completions();
+	    # }
+
+	    my $option_separator_hint = $positional_argument->{option_separator_hint};
+
+	    $leaf_completions
+		= {
+		   %$positional_completions,
+		   (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
+		   (scalar keys %$available_options ? ('--' => '') : ()),
+		  };
+	}
+	else
+	{
+	    my $option_separator_hint = $parameters{after_positional_option_separator_hint};
+
+	    $leaf_completions
+		= {
+		   %$after_positional_completions,
+		   (defined $option_separator_hint ? ($option_separator_hint => '') : ()),
+		   (scalar keys %$available_options ? ('--' => '') : ()),
+		  };
+	}
+    }
+
+    my $completions = $leaf_completions;
+
+    foreach my $argument (reverse @$completed_operation_arguments)
+    {
+	$completions = { $argument => $completions };
+    }
+
+    return $completions;
+}
+
+
+sub _completor_pdf_filename_completions
+{
+    return
+    {
+     '1.<pdf-file>' => '',
+     map
+     {
+	 my $filename = $_;
+
+	 # The generated bash completion script feeds candidates through
+	 # compgen -W.  Escaping whitespace keeps common file names with spaces
+	 # usable without changing the completion protocol used elsewhere.
+
+	 $filename =~ s/(\s)/\\$1/g;
+
+	 $filename => '';
+     }
+     sort
+     grep
+     {
+	 -f $_ and /\.pdf\z/i;
+     }
+     glob('*'),
+    };
+}
+
+
+sub _completor_role_name_completions
+{
+    my $matcher = shift || '.*';
+
+    my $hint = shift;
+
+    my $matching_roles = _roles_select($matcher);
+
+    return
+    {
+     (defined $hint ? ($hint => '') : ()),
+     map
+     {
+	 $_ => '';
+     }
+     sort keys %$matching_roles,
+    };
+}
+
+
+sub _completor_target_name_completions
+{
+    my $hint = shift;
+
+    my $all_targets = $global_technical_project_configuration->{targets} || {};
+
+    return
+    {
+     (defined $hint ? ($hint => '') : ()),
+     map
+     {
+	 $_ => '';
+     }
+     sort keys %$all_targets,
+    };
+}
+
+
+sub _completor_workflow_filename_completions
+{
+    my $value = shift || '';
+
+    my $hint = shift;
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$global_field_project_configuration->{sources_configuration_filename}-data";
+
+    my $workflow_filenames = main::operation_filenames_file_read($sources_configuration_directory, $configuration_data_directory, '', 0);
+
+    $workflow_filenames = $workflow_filenames->{workflow_filenames} || [];
+
+    return
+    {
+     (defined $hint ? ($hint => '') : ()),
+     map
+     {
+	 $_ => $value;
+     }
+     @$workflow_filenames,
+    };
+}
+
+
+sub _completor_workflow_operation_completions
+{
+    my $operations = main::operation_hash_typed_generate();
+
+    my $completions = {};
+
+    foreach my $operation (sort keys %$operations)
+    {
+	my $operation_with_underscore = $operation;
+
+	$operation_with_underscore =~ s/ /_/g;
+
+	$completions->{$operation_with_underscore} = '';
+	$completions->{"Command::$operation_with_underscore"} = '';
+    }
+
+    return $completions;
+}
+
+
 sub _file_append_string
 {
     my $filename = shift;
@@ -4758,7 +4998,7 @@ sub builtin_ai_document_query_completor
     # not completed.  This avoids Bash auto-inserting a single placeholder
     # after the PDF filename has already been provided.
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -4773,7 +5013,7 @@ sub builtin_ai_document_query_completor
 				},
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_pdf_filename_completions(),
+				 completions => _completor_pdf_filename_completions(),
 				 option_separator_hint => '2.Type_--_for_options',
 				},
 			       ],
@@ -4908,7 +5148,7 @@ sub builtin_ai_query_completor
     # The query argument is free-form text and is therefore only represented
     # by a placeholder before the first query word is entered.
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5122,7 +5362,7 @@ sub builtin_configuration_archive_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5408,7 +5648,7 @@ sub builtin_configuration_install_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5581,7 +5821,7 @@ sub builtin_docker_containers_start_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5592,7 +5832,7 @@ sub builtin_docker_containers_start_completor
 				},
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 completions => _completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
 				 option_separator_hint => '2.Type_--_then_--restart_or_--no-restart_for_options',
 				 repeatable => 'yes',
 				},
@@ -5676,14 +5916,14 @@ sub builtin_docker_exec_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin docker_exec) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 completions => _completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
 				},
 				{
 				 completions => {
@@ -5824,14 +6064,14 @@ sub builtin_docker_images_build_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin docker_images_build) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 completions => _completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
 				 repeatable => 'yes',
 				},
 			       ],
@@ -6009,7 +6249,7 @@ sub builtin_grep_code_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -6346,7 +6586,7 @@ sub builtin_grep_commands_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -6503,7 +6743,7 @@ sub builtin_lint_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -6515,7 +6755,7 @@ sub builtin_lint_completor
 	 positional_arguments => [
 				{
 				 completions => {
-						 %{_builtin_completor_target_name_completions('1.<target-regex>')},
+						 %{_completor_target_name_completions('1.<target-regex>')},
 						 ':all' => '',
 					       },
 				 option_separator_hint => '2.Type_--_then_--bash-completors_or_--help-pages_for_options',
@@ -7026,7 +7266,7 @@ sub builtin_manual_completor
 	$all_targets = $global_technical_project_configuration->{targets};
     }
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -7714,7 +7954,7 @@ sub builtin_project_start_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -7995,7 +8235,7 @@ sub builtin_role_add_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8119,7 +8359,7 @@ sub builtin_role_print_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8127,7 +8367,7 @@ sub builtin_role_print_completor
 	 positional_arguments => [
 				{
 				 completions => {
-						 %{_builtin_completor_role_name_completions('.*', '1.Type-a-role-name-or-regex:')},
+						 %{_completor_role_name_completions('.*', '1.Type-a-role-name-or-regex:')},
 						 '^docker_' => '',
 						 '^serial_' => '',
 						 '^tmux_' => '',
@@ -8344,7 +8584,7 @@ sub builtin_target_add_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8463,7 +8703,7 @@ sub builtin_tmux_sessions_create_completor
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8539,7 +8779,7 @@ sub builtin_tmux_sessions_kill_completor
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8818,7 +9058,7 @@ sub builtin_workflow_add_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8833,7 +9073,7 @@ sub builtin_workflow_add_completor
 				},
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_target_name_completions('1.<target-name>'),
+				 completions => _completor_target_name_completions('1.<target-name>'),
 				 option_separator_hint => '3.Type_--_then_workflow_add_options',
 				},
 				{
@@ -8992,14 +9232,14 @@ sub builtin_workflow_file_remove_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin workflow_file_remove) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_workflow_filename_completions('', '1.<workflow-filename>'),
+				 completions => _completor_workflow_filename_completions('', '1.<workflow-filename>'),
 				},
 			       ],
 	);
@@ -9154,14 +9394,14 @@ sub builtin_workflow_file_rename_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin workflow_file_rename) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_workflow_filename_completions('', '1.<old-filename>'),
+				 completions => _completor_workflow_filename_completions('', '1.<old-filename>'),
 				},
 				{
 				 completions => {
@@ -9265,7 +9505,7 @@ sub builtin_workflow_filenames_known_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -9341,7 +9581,7 @@ sub builtin_workflow_locate_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -9350,14 +9590,14 @@ sub builtin_workflow_locate_completor
 				{
 				 completions => {
 						 '1.<target>' => '',
-						 %{_builtin_completor_target_name_completions()},
-						 %{_builtin_completor_workflow_operation_completions()},
+						 %{_completor_target_name_completions()},
+						 %{_completor_workflow_operation_completions()},
 					       },
 				},
 				{
 				 completions => {
 						 '2.<operation>' => '',
-						 %{_builtin_completor_workflow_operation_completions()},
+						 %{_completor_workflow_operation_completions()},
 					       },
 				},
 			       ],
@@ -10517,7 +10757,7 @@ sub builtin_qemu_qcow2_mount_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -13309,11 +13549,11 @@ sub _python_print_to_stderr
 }
 
 
-sub _python_builtin_completor_expander
+sub _python_completor_generic_expander
 {
     my $parameters = shift || {};
 
-    return Command::_builtin_completor_expander(%$parameters);
+    return Command::_completor_generic_expander(%$parameters);
 }
 
 
@@ -13511,7 +13751,7 @@ execute_command_schedule_array = None
 execute_shell_script_remote = None
 print_to_stdout = None
 print_to_stderr = None
-_builtin_completor_expander = None
+_completor_generic_expander = None
 _global_execution_context_get = None
 _global_execution_context_set = None
 _global_execution_context_exists = None
@@ -13550,7 +13790,7 @@ class _WorkflowGlobalExecutionContext(MutableMapping):
 global_execution_context = _WorkflowGlobalExecutionContext()
 
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_builtin_completor_expander, ref_global_execution_context_get, ref_global_execution_context_set, ref_global_execution_context_exists, ref_global_execution_context_keys, ref_global_execution_context_is_mapping):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_completor_generic_expander, ref_global_execution_context_get, ref_global_execution_context_set, ref_global_execution_context_exists, ref_global_execution_context_keys, ref_global_execution_context_is_mapping):
     global execute_command
     global execute_command_array
     global execute_command_schedule
@@ -13558,7 +13798,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     global execute_shell_script_remote
     global print_to_stdout
     global print_to_stderr
-    global _builtin_completor_expander
+    global _completor_generic_expander
     global _global_execution_context_get
     global _global_execution_context_set
     global _global_execution_context_exists
@@ -13571,7 +13811,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     execute_shell_script_remote = exe_shell_script_remote
     print_to_stdout = ref_print_to_stdout
     print_to_stderr = ref_print_to_stderr
-    _builtin_completor_expander = ref_builtin_completor_expander
+    _completor_generic_expander = ref_completor_generic_expander
     _global_execution_context_get = ref_global_execution_context_get
     _global_execution_context_set = ref_global_execution_context_set
     _global_execution_context_exists = ref_global_execution_context_exists
@@ -13581,7 +13821,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_builtin_completor_expander, \\&Command::_python_global_execution_context_get, \\&Command::_python_global_execution_context_set, \\&Command::_python_global_execution_context_exists, \\&Command::_python_global_execution_context_keys, \\&Command::_python_global_execution_context_is_mapping);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_completor_generic_expander, \\&Command::_python_global_execution_context_get, \\&Command::_python_global_execution_context_set, \\&Command::_python_global_execution_context_exists, \\&Command::_python_global_execution_context_keys, \\&Command::_python_global_execution_context_is_mapping);
 
 ";
 	my $commands_template_code
