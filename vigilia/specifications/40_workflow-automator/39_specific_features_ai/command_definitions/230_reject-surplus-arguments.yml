@@ -1,0 +1,10 @@
+---
+command: >-
+  output=$(feature-testing-workflow builtin ai_set_api_token first-token-file second-token-file 2>&1); status=$?; printf '%s' "$output" | grep -F 'feature-testing-workflow: *** Error: builtin ai_set_api_token expects at most one token filename' >/dev/null && printf '%s\n' "$status"
+command_tests:
+  - description: Are surplus positional arguments rejected?
+    read: |+2
+      2
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: rejecting more than one OpenAI API token filename

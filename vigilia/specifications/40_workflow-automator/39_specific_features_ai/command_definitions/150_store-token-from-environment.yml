@@ -1,0 +1,10 @@
+---
+command: >-
+  output=$(env OPENAI_API_KEY=test-environment-token-39 feature-testing-workflow builtin ai_set_api_token 2>&1); status=$?; case "$output" in *test-environment-token-39*) exit 1 ;; esac; test "$status" -eq 0 && printf '%s\n' "$output"
+command_tests:
+  - description: Can a token be read from OPENAI_API_KEY without exposing it in the command output?
+    read: |+2
+      Stored the OpenAI API token from the OPENAI_API_KEY environment variable in '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml'.
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: storing an OpenAI API token supplied through the environment

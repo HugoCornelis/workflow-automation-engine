@@ -1,0 +1,10 @@
+---
+command: >-
+  printf 'test invalid token 39\n' > /tmp/workflow-openai-whitespace-token-39; output=$(feature-testing-workflow builtin ai_set_api_token /tmp/workflow-openai-whitespace-token-39 2>&1); status=$?; printf '%s' "$output" | grep -F "feature-testing-workflow: *** Error: the OpenAI API token read from file '/tmp/workflow-openai-whitespace-token-39' contains whitespace" >/dev/null && printf '%s\n' "$status"
+command_tests:
+  - description: Is a token containing embedded whitespace rejected?
+    read: |+2
+      2
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: rejecting an OpenAI API token containing whitespace

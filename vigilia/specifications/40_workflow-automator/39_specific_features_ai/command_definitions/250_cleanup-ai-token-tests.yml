@@ -1,0 +1,7 @@
+---
+command: >-
+  rm -f /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml /tmp/workflow-openai-token-file-39 /tmp/workflow-openai-empty-token-39 /tmp/workflow-openai-whitespace-token-39 /tmp/workflow-openai-dry-run-token-39 /tmp/workflow-openai-dry-run-output-39
+command_tests:
+  - description: Can we remove all files created by the AI token tests?
+    exit_code: 0
+description: cleaning up after the AI token tests

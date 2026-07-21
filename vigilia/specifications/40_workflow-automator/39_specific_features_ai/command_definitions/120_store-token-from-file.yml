@@ -1,0 +1,10 @@
+---
+command: >-
+  printf '  test-file-token-39\n\n' > /tmp/workflow-openai-token-file-39 && output=$(feature-testing-workflow builtin ai_set_api_token /tmp/workflow-openai-token-file-39 2>&1); status=$?; case "$output" in *test-file-token-39*) exit 1 ;; esac; test "$status" -eq 0 && printf '%s\n' "$output"
+command_tests:
+  - description: Can a token be read from a file without exposing it in the command output?
+    read: |+2
+      Stored the OpenAI API token from file '/tmp/workflow-openai-token-file-39' in '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml'.
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: storing a trimmed OpenAI API token supplied in a file

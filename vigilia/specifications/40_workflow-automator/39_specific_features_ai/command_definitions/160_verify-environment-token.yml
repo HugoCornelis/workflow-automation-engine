@@ -1,0 +1,10 @@
+---
+command: >-
+  perl -MYAML::PP -e 'my $data = YAML::PP::LoadFile(shift); print $data->{"key-value"}, "\n";' /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml
+command_tests:
+  - description: Has the environment token replaced the previously stored file token?
+    read: |+2
+      test-environment-token-39
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: verifying the token stored from OPENAI_API_KEY
