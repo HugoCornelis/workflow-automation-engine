@@ -1200,7 +1200,7 @@ sub _builtin_ai_query_execute_scheduled_manual_generation_commands
 }
 
 
-sub _builtin_completor_expander
+sub _completor_generic_expander
 {
     my %parameters = @_;
 
@@ -1374,7 +1374,7 @@ sub _builtin_completor_expander
 }
 
 
-sub _builtin_completor_pdf_filename_completions
+sub _completor_pdf_filename_completions
 {
     return
     {
@@ -1401,7 +1401,7 @@ sub _builtin_completor_pdf_filename_completions
 }
 
 
-sub _builtin_completor_role_name_completions
+sub _completor_role_name_completions
 {
     my $matcher = shift || '.*';
 
@@ -1421,7 +1421,7 @@ sub _builtin_completor_role_name_completions
 }
 
 
-sub _builtin_completor_target_name_completions
+sub _completor_target_name_completions
 {
     my $hint = shift;
 
@@ -1439,7 +1439,7 @@ sub _builtin_completor_target_name_completions
 }
 
 
-sub _builtin_completor_workflow_filename_completions
+sub _completor_workflow_filename_completions
 {
     my $value = shift || '';
 
@@ -1465,7 +1465,7 @@ sub _builtin_completor_workflow_filename_completions
 }
 
 
-sub _builtin_completor_workflow_operation_completions
+sub _completor_workflow_operation_completions
 {
     my $operations = main::operation_hash_typed_generate();
 
@@ -4758,7 +4758,7 @@ sub builtin_ai_document_query_completor
     # not completed.  This avoids Bash auto-inserting a single placeholder
     # after the PDF filename has already been provided.
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -4773,7 +4773,7 @@ sub builtin_ai_document_query_completor
 				},
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_pdf_filename_completions(),
+				 completions => _completor_pdf_filename_completions(),
 				 option_separator_hint => '2.Type_--_for_options',
 				},
 			       ],
@@ -4908,7 +4908,7 @@ sub builtin_ai_query_completor
     # The query argument is free-form text and is therefore only represented
     # by a placeholder before the first query word is entered.
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5122,7 +5122,7 @@ sub builtin_configuration_archive_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5408,7 +5408,7 @@ sub builtin_configuration_install_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5581,7 +5581,7 @@ sub builtin_docker_containers_start_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -5592,7 +5592,7 @@ sub builtin_docker_containers_start_completor
 				},
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 completions => _completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
 				 option_separator_hint => '2.Type_--_then_--restart_or_--no-restart_for_options',
 				 repeatable => 'yes',
 				},
@@ -5676,14 +5676,14 @@ sub builtin_docker_exec_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin docker_exec) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 completions => _completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
 				},
 				{
 				 completions => {
@@ -5824,14 +5824,14 @@ sub builtin_docker_images_build_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin docker_images_build) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
+				 completions => _completor_role_name_completions('^docker_', '1.Type-a-docker-role-name:'),
 				 repeatable => 'yes',
 				},
 			       ],
@@ -6009,7 +6009,7 @@ sub builtin_grep_code_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -6346,7 +6346,7 @@ sub builtin_grep_commands_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -6503,7 +6503,7 @@ sub builtin_lint_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -6515,7 +6515,7 @@ sub builtin_lint_completor
 	 positional_arguments => [
 				{
 				 completions => {
-						 %{_builtin_completor_target_name_completions('1.<target-regex>')},
+						 %{_completor_target_name_completions('1.<target-regex>')},
 						 ':all' => '',
 					       },
 				 option_separator_hint => '2.Type_--_then_--bash-completors_or_--help-pages_for_options',
@@ -7026,7 +7026,7 @@ sub builtin_manual_completor
 	$all_targets = $global_technical_project_configuration->{targets};
     }
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -7714,7 +7714,7 @@ sub builtin_project_start_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -7995,7 +7995,7 @@ sub builtin_role_add_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8119,7 +8119,7 @@ sub builtin_role_print_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8127,7 +8127,7 @@ sub builtin_role_print_completor
 	 positional_arguments => [
 				{
 				 completions => {
-						 %{_builtin_completor_role_name_completions('.*', '1.Type-a-role-name-or-regex:')},
+						 %{_completor_role_name_completions('.*', '1.Type-a-role-name-or-regex:')},
 						 '^docker_' => '',
 						 '^serial_' => '',
 						 '^tmux_' => '',
@@ -8344,7 +8344,7 @@ sub builtin_target_add_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8463,7 +8463,7 @@ sub builtin_tmux_sessions_create_completor
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8539,7 +8539,7 @@ sub builtin_tmux_sessions_kill_completor
 
     my $tmux_sessions = _builtin_tmux_sessions();
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8818,7 +8818,7 @@ sub builtin_workflow_add_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -8833,7 +8833,7 @@ sub builtin_workflow_add_completor
 				},
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_target_name_completions('1.<target-name>'),
+				 completions => _completor_target_name_completions('1.<target-name>'),
 				 option_separator_hint => '3.Type_--_then_workflow_add_options',
 				},
 				{
@@ -8992,14 +8992,14 @@ sub builtin_workflow_file_remove_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin workflow_file_remove) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_workflow_filename_completions('', '1.<workflow-filename>'),
+				 completions => _completor_workflow_filename_completions('', '1.<workflow-filename>'),
 				},
 			       ],
 	);
@@ -9154,14 +9154,14 @@ sub builtin_workflow_file_rename_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
 	 operation_path => [ qw(builtin workflow_file_rename) ],
 	 positional_arguments => [
 				{
-				 completions => _builtin_completor_workflow_filename_completions('', '1.<old-filename>'),
+				 completions => _completor_workflow_filename_completions('', '1.<old-filename>'),
 				},
 				{
 				 completions => {
@@ -9265,7 +9265,7 @@ sub builtin_workflow_filenames_known_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -9341,7 +9341,7 @@ sub builtin_workflow_locate_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -9350,14 +9350,14 @@ sub builtin_workflow_locate_completor
 				{
 				 completions => {
 						 '1.<target>' => '',
-						 %{_builtin_completor_target_name_completions()},
-						 %{_builtin_completor_workflow_operation_completions()},
+						 %{_completor_target_name_completions()},
+						 %{_completor_workflow_operation_completions()},
 					       },
 				},
 				{
 				 completions => {
 						 '2.<operation>' => '',
-						 %{_builtin_completor_workflow_operation_completions()},
+						 %{_completor_workflow_operation_completions()},
 					       },
 				},
 			       ],
@@ -10517,7 +10517,7 @@ sub builtin_qemu_qcow2_mount_completor
 
     my $analysis = shift || {};
 
-    return _builtin_completor_expander
+    return _completor_generic_expander
 	(
 	 analysis => $analysis,
 	 complete_arguments_array => $complete_arguments_array,
@@ -13309,11 +13309,11 @@ sub _python_print_to_stderr
 }
 
 
-sub _python_builtin_completor_expander
+sub _python_completor_generic_expander
 {
     my $parameters = shift || {};
 
-    return Command::_builtin_completor_expander(%$parameters);
+    return Command::_completor_generic_expander(%$parameters);
 }
 
 
@@ -13511,7 +13511,7 @@ execute_command_schedule_array = None
 execute_shell_script_remote = None
 print_to_stdout = None
 print_to_stderr = None
-_builtin_completor_expander = None
+_completor_generic_expander = None
 _global_execution_context_get = None
 _global_execution_context_set = None
 _global_execution_context_exists = None
@@ -13550,7 +13550,7 @@ class _WorkflowGlobalExecutionContext(MutableMapping):
 global_execution_context = _WorkflowGlobalExecutionContext()
 
 
-def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_builtin_completor_expander, ref_global_execution_context_get, ref_global_execution_context_set, ref_global_execution_context_exists, ref_global_execution_context_keys, ref_global_execution_context_is_mapping):
+def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, exe_command_schedule_array, exe_shell_script_remote, ref_print_to_stdout, ref_print_to_stderr, ref_completor_generic_expander, ref_global_execution_context_get, ref_global_execution_context_set, ref_global_execution_context_exists, ref_global_execution_context_keys, ref_global_execution_context_is_mapping):
     global execute_command
     global execute_command_array
     global execute_command_schedule
@@ -13558,7 +13558,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     global execute_shell_script_remote
     global print_to_stdout
     global print_to_stderr
-    global _builtin_completor_expander
+    global _completor_generic_expander
     global _global_execution_context_get
     global _global_execution_context_set
     global _global_execution_context_exists
@@ -13571,7 +13571,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
     execute_shell_script_remote = exe_shell_script_remote
     print_to_stdout = ref_print_to_stdout
     print_to_stderr = ref_print_to_stderr
-    _builtin_completor_expander = ref_builtin_completor_expander
+    _completor_generic_expander = ref_completor_generic_expander
     _global_execution_context_get = ref_global_execution_context_get
     _global_execution_context_set = ref_global_execution_context_set
     _global_execution_context_exists = ref_global_execution_context_exists
@@ -13581,7 +13581,7 @@ def assign_api_functions(exe_command, exe_command_array, exe_command_schedule, e
 ";
 
 	my $api_bind_call_code = "
-assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_builtin_completor_expander, \\&Command::_python_global_execution_context_get, \\&Command::_python_global_execution_context_set, \\&Command::_python_global_execution_context_exists, \\&Command::_python_global_execution_context_keys, \\&Command::_python_global_execution_context_is_mapping);
+assign_api_functions(\\&Command::execute_shell_command, \\&Command::execute_shell_command_array, \\&Command::execute_command_schedule, \\&Command::execute_command_schedule_array, \\&Command::execute_shell_script_remote, \\&_python_print_to_stdout, \\&_python_print_to_stderr, \\&Command::_python_completor_generic_expander, \\&Command::_python_global_execution_context_get, \\&Command::_python_global_execution_context_set, \\&Command::_python_global_execution_context_exists, \\&Command::_python_global_execution_context_keys, \\&Command::_python_global_execution_context_is_mapping);
 
 ";
 	my $commands_template_code
