@@ -5215,6 +5215,179 @@ arguments:
 }
 
 
+sub builtin_ai_set_api_token
+{
+    my $arguments = shift || [];
+
+    # Do not read or write secret material when execution has been disabled
+    # by --dry-run, --help, --interactions, --export-sh, etc.
+
+    if (not $global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
+
+    if (scalar @$arguments > 1)
+    {
+	die "$global_program_name: *** Error: builtin ai_set_api_token expects at most one token filename";
+    }
+
+    my $token_filename = shift @$arguments;
+
+    my $api_token;
+    my $token_source;
+
+    if (defined $token_filename
+	and $token_filename ne '')
+    {
+	if (not -f $token_filename)
+	{
+	    die "$global_program_name: *** Error: OpenAI API token file does not exist: $token_filename";
+	}
+
+	my $token_file;
+
+	open($token_file, '<', $token_filename)
+	    or die "$global_program_name: *** Error: cannot read OpenAI API token file '$token_filename' ($!)";
+
+	local $/;
+
+	$api_token = <$token_file>;
+
+	close($token_file)
+	    or die "$global_program_name: *** Error: cannot close OpenAI API token file '$token_filename' ($!)";
+
+	$token_source = "file '$token_filename'";
+    }
+    else
+    {
+	$api_token = $ENV{OPENAI_API_KEY};
+	$token_source = 'the OPENAI_API_KEY environment variable';
+    }
+
+    $api_token = ''
+	if not defined $api_token;
+
+    $api_token =~ s/\A\s+//;
+    $api_token =~ s/\s+\z//;
+
+    if ($api_token eq '')
+    {
+	die "$global_program_name: *** Error: no OpenAI API token was found in $token_source";
+    }
+
+    if ($api_token =~ /\s/)
+    {
+	die "$global_program_name: *** Error: the OpenAI API token read from $token_source contains whitespace";
+    }
+
+    my $section_name = 'secret-tokens';
+    my $token_filename_volatile = 'openai.yml';
+
+    my $token_pathname
+	= Utilities::volatile_section_pathname
+	  (
+	   $section_name,
+	   $token_filename_volatile,
+	  );
+
+    my $previous_umask = umask 0077;
+
+    my $error
+	= Utilities::volatile_section_data_write
+	  (
+	   $section_name,
+	   $token_filename_volatile,
+	   {
+	    'key-value' => $api_token,
+	   },
+	  );
+
+    umask $previous_umask;
+
+    if (defined $error)
+    {
+	die "$global_program_name: *** Error: could not store the OpenAI API token ($error)";
+    }
+
+    my $section_pathname
+	= Utilities::volatile_section_pathname($section_name);
+
+    chmod 0700, $section_pathname
+	or die "$global_program_name: *** Error: cannot protect OpenAI token directory '$section_pathname' ($!)";
+
+    chmod 0600, $token_pathname
+	or die "$global_program_name: *** Error: cannot protect OpenAI token file '$token_pathname' ($!)";
+
+    print "Stored the OpenAI API token from $token_source in '$token_pathname'.\n";
+
+    return '';
+}
+
+
+sub builtin_ai_set_api_token_completor
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    my $filename_completions
+	= {
+	   '1.<token-file>' => 'file containing the OpenAI API token',
+	  };
+
+    foreach my $filename (sort grep { -f $_ } glob('*'))
+    {
+	my $completion = $filename;
+
+	$completion =~ s/(\s)/\\$1/g;
+
+	$filename_completions->{$completion} = '';
+    }
+
+    return _completor_generic_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin ai_set_api_token) ],
+	 positional_arguments => [
+				  {
+				   completions => $filename_completions,
+				  },
+				 ],
+	);
+}
+
+
+sub builtin_ai_set_api_token_help
+{
+    my $command = shift;
+
+    return "$command: Store an OpenAI API token in this project's volatile storage.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command [<token-file>]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: optional file containing the OpenAI API token.  Leading and
+    trailing whitespace is removed.  When no filename is given, the token is
+    read from the ``OPENAI_API_KEY`` environment variable.
+
+The token is stored as ``secret-tokens/openai.yml`` in the project's volatile
+storage, where the existing OpenAI client retrieves it.  The command does not
+print the token and restricts access to the token directory and file.
+";
+}
+
+
 sub builtin_configuration_archive
 {
     my $arguments = shift || [];
