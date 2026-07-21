@@ -1,0 +1,10 @@
+---
+command: >-
+  printf ' \n\t\n' > /tmp/workflow-openai-empty-token-39; output=$(feature-testing-workflow builtin ai_set_api_token /tmp/workflow-openai-empty-token-39 2>&1); status=$?; printf '%s' "$output" | grep -F "feature-testing-workflow: *** Error: no OpenAI API token was found in file '/tmp/workflow-openai-empty-token-39'" >/dev/null && printf '%s\n' "$status"
+command_tests:
+  - description: Is a file containing only whitespace rejected as empty?
+    read: |+2
+      2
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: rejecting an empty OpenAI API token

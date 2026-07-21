@@ -1,0 +1,10 @@
+---
+command: >-
+  printf 'test-filename-precedence-token-39\n' > /tmp/workflow-openai-token-file-39 && env OPENAI_API_KEY=test-lower-priority-environment-token-39 feature-testing-workflow builtin ai_set_api_token /tmp/workflow-openai-token-file-39
+command_tests:
+  - description: Does an explicitly supplied filename take precedence over OPENAI_API_KEY?
+    read: |+2
+      Stored the OpenAI API token from file '/tmp/workflow-openai-token-file-39' in '/home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml'.
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: testing precedence of the token filename over the environment variable

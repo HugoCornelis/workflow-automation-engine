@@ -1,0 +1,10 @@
+---
+command: >-
+  rm -f /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml; printf 'test-dry-run-token-39\n' > /tmp/workflow-openai-dry-run-token-39; feature-testing-workflow --dry-run builtin ai_set_api_token /tmp/workflow-openai-dry-run-token-39 > /tmp/workflow-openai-dry-run-output-39 2>&1; status=$?; test "$status" -eq 0 || exit "$status"; if test -e /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml; then exit 1; fi; printf 'not-created\n'
+command_tests:
+  - description: Does --dry-run avoid reading and storing the token?
+    read: |+2
+      not-created
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: verifying that dry-run mode has no secret-storage side effects

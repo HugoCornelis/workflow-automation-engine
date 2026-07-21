@@ -2,8 +2,10 @@
 command: cd workflow-test && workflow-tests-workflow --help-workflows
 command_tests:
 - description: Have the project workflows been correctly installed?
-  read: |
-
+  exit_code: 0
+  read:
+   exact: |
+    ---
     0_description: |-
       The list of available workflows for this project are
         (copy-paste the one you would like to execute,
@@ -12,6 +14,7 @@ command_tests:
     1_workflows:
     - workflow-tests-workflow builtin ai_document_query
     - workflow-tests-workflow builtin ai_query
+    - workflow-tests-workflow builtin ai_set_api_token
     - workflow-tests-workflow builtin configuration_archive
     - workflow-tests-workflow builtin configuration_directory_print
     - workflow-tests-workflow builtin configuration_fetch

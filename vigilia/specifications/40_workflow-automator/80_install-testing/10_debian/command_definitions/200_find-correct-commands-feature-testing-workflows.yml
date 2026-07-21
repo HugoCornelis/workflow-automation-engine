@@ -2,8 +2,10 @@
 command: feature-testing-workflow --help-workflows
 command_tests:
 - description: Do we find the correct commands for the feature-testing workflows?
-  read: |
-
+  exit_code: 0
+  read:
+   exact: |
+    ---
     0_description: |-
       The list of available workflows for this project are
         (copy-paste the one you would like to execute,
@@ -15,6 +17,7 @@ command_tests:
     - feature-testing-workflow build operation3
     - feature-testing-workflow builtin ai_document_query
     - feature-testing-workflow builtin ai_query
+    - feature-testing-workflow builtin ai_set_api_token
     - feature-testing-workflow builtin configuration_archive
     - feature-testing-workflow builtin configuration_directory_print
     - feature-testing-workflow builtin configuration_fetch

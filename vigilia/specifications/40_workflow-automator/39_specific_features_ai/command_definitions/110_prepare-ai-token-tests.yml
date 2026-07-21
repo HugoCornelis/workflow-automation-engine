@@ -1,0 +1,8 @@
+---
+command: >-
+  rm -fv /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-volatile-data/secret-tokens/openai.yml /tmp/workflow-openai-token-file-39 /tmp/workflow-openai-empty-token-39 /tmp/workflow-openai-whitespace-token-39 /tmp/workflow-openai-dry-run-token-39 /tmp/workflow-openai-dry-run-output-39
+command_tests:
+  - description: Can we remove state left by an earlier AI token test run?
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: preparing a clean environment for the AI token tests

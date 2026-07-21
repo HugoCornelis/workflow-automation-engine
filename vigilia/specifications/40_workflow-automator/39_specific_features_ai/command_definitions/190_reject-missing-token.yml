@@ -1,0 +1,10 @@
+---
+command: >-
+  output=$(env -u OPENAI_API_KEY feature-testing-workflow builtin ai_set_api_token 2>&1); status=$?; printf '%s' "$output" | grep -F 'feature-testing-workflow: *** Error: no OpenAI API token was found in the OPENAI_API_KEY environment variable' >/dev/null && printf '%s\n' "$status"
+command_tests:
+  - description: Is invocation without a filename or OPENAI_API_KEY rejected?
+    read: |+2
+      2
+    exit_code: 0
+    white_space: convert seen 0a to 0d 0a newlines
+description: rejecting an invocation for which no OpenAI API token is available

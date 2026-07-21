@@ -4,8 +4,9 @@ command_tests:
 - comment: note that the expect module does not easily allow the read string to be started with yaml's '---'
   description: Can we display the builtin workflows help page?
   exit_code: 0
-  read: |
-
+  read:
+   exact: |
+    ---
     0_description: |-
       The list of available workflows for this project are
         (copy-paste the one you would like to execute,
@@ -14,6 +15,7 @@ command_tests:
     1_workflows:
     - workflow builtin ai_document_query
     - workflow builtin ai_query
+    - workflow builtin ai_set_api_token
     - workflow builtin configuration_archive
     - workflow builtin configuration_directory_print
     - workflow builtin configuration_fetch
