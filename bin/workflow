@@ -8106,7 +8106,7 @@ sub builtin_project_start
 	    print "  workflow --help-field-project-name\n\n";
 	    print "Afterwards install the configuration on your system by invoking the command:\n\n";
 	    print "  workflow builtin configuration_install -- --commands --git\n\n";
-	    print "Then check if they work by inspecting the examples they provide (with various options):\n\n";
+	    print "If you installed example configuration, you can check if it works (using various options):\n\n";
 	    print "  $project_name-workflow examples array_of_commands_remote_execution --interactions\n\n";
 	    print "  $project_name-workflow examples sequencing_and_composition --interactions-target\n\n";
 	    print "  $project_name-workflow examples single_command --dry-run\n\n";

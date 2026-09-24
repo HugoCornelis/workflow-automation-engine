@@ -16,7 +16,7 @@ command_tests:
       
         workflow builtin configuration_install -- --commands --git
       
-      Then check if they work by inspecting the examples they provide (with various options):
+      If you installed example configuration, you can check if it works (using various options):
       
         abcd-workflow examples array_of_commands_remote_execution --interactions
       
