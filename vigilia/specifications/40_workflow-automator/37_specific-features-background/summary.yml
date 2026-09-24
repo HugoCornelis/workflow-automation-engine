@@ -24,4 +24,4 @@ harnessing:
       name_image: workflow_feature_testing_image
     identifier: docker_harness_feature_testing
     type: Heterarch::Test::ExecutionContext::Harness::Docker
-name: 40_workflow-automator/38_specific-features-background/summary.yml
+name: 40_workflow-automator/37_specific-features-background/summary.yml
