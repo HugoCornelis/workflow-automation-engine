@@ -13531,13 +13531,13 @@ sub _configuration_export
 		YAML::PP::DumpFile($yaml_export_filename, $configuration);
 	    };
 
+	    my $json_export_filename = "$cache_directory/configuration.json";
+
 	    eval
 	    {
 		local $SIG{'__DIE__'};
 
 		require JSON;
-
-		my $json_export_filename = "$cache_directory/configuration.json";
 
 		my $json = JSON->new();
 
@@ -13547,12 +13547,26 @@ sub _configuration_export
 
 		$json->canonical(1);
 
-		my $file = IO::File->new(">$json_export_filename");
+		my $file = IO::File->new(">$json_export_filename")
+		    or die "cannot open '$json_export_filename' for writing: $!\n";
 
 		print $file $json->pretty->encode($configuration);
 
 		$file->close();
 	    };
+
+	    # The JSON configuration cache is not optional: the Python command
+	    # files load it at startup (see _init_do_eval_python_file).  A silent
+	    # failure here (for example a missing JSON module) surfaces much later
+	    # as a misleading "no configuration file ... (No such file or
+	    # directory)" when the Python wrapper cannot find configuration.json.
+	    # Report the real cause here instead of swallowing it.
+
+	    if ($@)
+	    {
+		warn "$global_program_name: *** Warning: could not write the JSON configuration cache '$json_export_filename': $@";
+		warn "$global_program_name: *** The Python command files need this file; install the JSON Perl module (e.g. 'sudo apt install libjson-perl').\n";
+	    }
 
 	    eval
 	    {
