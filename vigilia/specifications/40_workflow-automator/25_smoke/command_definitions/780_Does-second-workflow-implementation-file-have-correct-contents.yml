@@ -6,6 +6,7 @@ command_tests:
       #!/usr/bin/python3
       
       # Use the variable global_technical_project_configuration to access the configuration.
+      # Project settings from the configuration are available from the dictionary project_settings.
       # Roles are available as the variable global_roles.
       # Targets are available as the variable global_targets.
       # The mapping global_execution_context provides live access to the workflow execution context.

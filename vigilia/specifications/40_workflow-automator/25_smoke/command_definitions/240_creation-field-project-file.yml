@@ -20,6 +20,7 @@ command_tests:
       ./workflow-tests-configuration-data
       ./workflow-tests-configuration-data/cache
       ./workflow-tests-configuration-data/node_configuration.yml
+      ./workflow-tests-configuration-data/project_settings.yml
       ./workflow-tests-configuration-data/roles.yml
       ./workflow-tests-configuration-data/targets.yml
       ./workflow-tests-configuration-data/workflow_filenames.yml

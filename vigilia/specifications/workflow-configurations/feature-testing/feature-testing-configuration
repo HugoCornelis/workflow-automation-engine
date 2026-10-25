@@ -10,6 +10,8 @@ my $workflow_filenames = eval { YAML::PP::LoadFile('feature-testing-configuratio
 
 my $node_configuration = eval { YAML::PP::LoadFile('feature-testing-configuration-data/node_configuration.yml'); };
 
+my $project_settings = eval { YAML::PP::LoadFile('feature-testing-configuration-data/project_settings.yml'); };
+
 my $roles = eval { YAML::PP::LoadFile('feature-testing-configuration-data/roles.yml'); };
 
 my $targets = eval { YAML::PP::LoadFile('feature-testing-configuration-data/targets.yml'); };
@@ -17,6 +19,7 @@ my $targets = eval { YAML::PP::LoadFile('feature-testing-configuration-data/targ
 my $configuration = {
 		      %{ ref $workflow_filenames eq 'HASH' ? $workflow_filenames : {}; },
 		      %{ ref $node_configuration eq 'HASH' ? $node_configuration : {}; },
+		      %{ ref $project_settings eq 'HASH' ? $project_settings : {}; },
 		      %{ ref $roles eq 'HASH' ? $roles : {}; },
 		      %{ ref $targets eq 'HASH' ? $targets : {}; },
 		     };

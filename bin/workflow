@@ -1611,6 +1611,8 @@ package Command;
 
 our \$roles = \$::global_technical_project_configuration->{roles};
 
+our \$project_settings = \$::global_technical_project_configuration->{project_settings};
+
 ";
 
     my $commands_template_code_single_command
@@ -2001,6 +2003,7 @@ sub _builtin_project_workflow_template_create_python
 	= "#!/usr/bin/python3
 
 # Use the variable global_technical_project_configuration to access the configuration.
+# Project settings from the configuration are available from the dictionary project_settings.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
 # The mapping global_execution_context provides live access to the workflow execution context.
@@ -2357,6 +2360,8 @@ my \$workflow_filenames = eval { YAML::PP::LoadFile('$configuration_data_directo
 
 my \$node_configuration = eval { YAML::PP::LoadFile('$configuration_data_directory/node_configuration.yml'); };
 
+my \$project_settings = eval { YAML::PP::LoadFile('$configuration_data_directory/project_settings.yml'); };
+
 my \$roles = eval { YAML::PP::LoadFile('$configuration_data_directory/roles.yml'); };
 
 my \$targets = eval { YAML::PP::LoadFile('$configuration_data_directory/targets.yml'); };
@@ -2364,6 +2369,7 @@ my \$targets = eval { YAML::PP::LoadFile('$configuration_data_directory/targets.
 my \$configuration = {
 		      \%{ ref \$workflow_filenames eq 'HASH' ? \$workflow_filenames : {}; },
 		      \%{ ref \$node_configuration eq 'HASH' ? \$node_configuration : {}; },
+		      \%{ ref \$project_settings eq 'HASH' ? \$project_settings : {}; },
 		      \%{ ref \$roles eq 'HASH' ? \$roles : {}; },
 		      \%{ ref \$targets eq 'HASH' ? \$targets : {}; },
 		     };
@@ -2390,6 +2396,11 @@ my \$configuration = {
     if (not $error)
     {
 	$error = _builtin_project_configuration_node_configuration_create($project_name, $configuration_data_directory);
+    }
+
+    if (not $error)
+    {
+	$error = _builtin_project_configuration_project_settings_create($project_name, $configuration_data_directory);
     }
 
     if (not $error)
@@ -2507,6 +2518,42 @@ targets:
     else
     {
 	$error = "cannot open $configuration_data_directory/targets.yml";
+    }
+
+    return $error;
+}
+
+
+sub _builtin_project_configuration_project_settings_create
+{
+    my $project_name = shift;
+
+    my $configuration_data_directory = shift;
+
+    my $configuration_file_part
+	= "---
+# Project settings are project specific settings that you define.
+
+project_settings:
+  any_key_here:
+    description: You can define arrays, dictionaries, keys and values as required.
+";
+
+    my $error = '';
+
+    use IO::File;
+
+    my $file = IO::File->new("> $configuration_data_directory/project_settings.yml");
+
+    if (defined $file)
+    {
+	print $file $configuration_file_part;
+
+	$file->close();
+    }
+    else
+    {
+	$error = "cannot open $configuration_data_directory/project_settings.yml";
     }
 
     return $error;
@@ -4387,6 +4434,7 @@ sub _workflow_commands_2_implementation
 	    $implementation = "#!/usr/bin/python3
 
 # Use the variable global_technical_project_configuration to access the configuration.
+# Project settings from the configuration are available from the dictionary project_settings.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
 # The mapping global_execution_context provides live access to the workflow execution context.
@@ -4414,6 +4462,7 @@ def ${target}_${operation}(argv):
 	    $implementation = "#!/usr/bin/python3
 
 # Use the variable global_technical_project_configuration to access the configuration.
+# Project settings from the configuration are available from the dictionary project_settings.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
 # The mapping global_execution_context provides live access to the workflow execution context.
@@ -4435,6 +4484,7 @@ def ${target}_${operation}(argv):
 	    $implementation = "#!/usr/bin/python3
 
 # Use the variable global_technical_project_configuration to access the configuration.
+# Project settings from the configuration are available from the dictionary project_settings.
 # Roles are available as the variable global_roles.
 # Targets are available as the variable global_targets.
 # The mapping global_execution_context provides live access to the workflow execution context.
@@ -13933,17 +13983,20 @@ global_technical_project_configuration_path = '$configuration_cache_directory/co
 global_technical_project_configuration = None
 global_roles = None
 global_targets = None
+project_settings = None
 
 def _load_json_configuration_file(filepath):
     global global_technical_project_configuration
     global global_roles
     global global_targets
+    global project_settings
     with open(filepath, 'r', encoding='utf-8') as f:
         global_technical_project_configuration = json.load(f)
     # print_to_stdout('Configuration loaded')
     # print_to_stderr('Configuration loaded')
     global_roles = global_technical_project_configuration['technical_project_configuration'].get('roles', global_technical_project_configuration['technical_project_configuration'].get('target_servers'))
     global_targets = global_technical_project_configuration['technical_project_configuration']['targets']
+    project_settings = global_technical_project_configuration['technical_project_configuration'].get('project_settings', {})
 
 _load_json_configuration_file(global_technical_project_configuration_path)
 
