@@ -1,0 +1,32 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use warnings;
+
+require YAML::PP;
+
+# A minimal field-project configuration whose workflow_filenames lists a command
+# file that does not exist, so the engine's "file cannot be read" path can be
+# exercised in a dedicated container (see the vigilia module
+# 40_workflow-automator/29_config-loader-errors).
+
+my $workflow_filenames = eval { YAML::PP::LoadFile('missing-config-testing-configuration-data/workflow_filenames.yml'); };
+
+my $node_configuration = eval { YAML::PP::LoadFile('missing-config-testing-configuration-data/node_configuration.yml'); };
+
+my $project_settings = eval { YAML::PP::LoadFile('missing-config-testing-configuration-data/project_settings.yml'); };
+
+my $roles = eval { YAML::PP::LoadFile('missing-config-testing-configuration-data/roles.yml'); };
+
+my $targets = eval { YAML::PP::LoadFile('missing-config-testing-configuration-data/targets.yml'); };
+
+my $configuration = {
+		      %{ ref $workflow_filenames eq 'HASH' ? $workflow_filenames : {}; },
+		      %{ ref $node_configuration eq 'HASH' ? $node_configuration : {}; },
+		      %{ ref $project_settings eq 'HASH' ? $project_settings : {}; },
+		      %{ ref $roles eq 'HASH' ? $roles : {}; },
+		      %{ ref $targets eq 'HASH' ? $targets : {}; },
+		     };
+
+return $configuration;

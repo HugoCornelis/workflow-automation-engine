@@ -1,0 +1,4 @@
+---
+node_configuration:
+  0_concepts:
+    description00: The design goals of this IP address plan is to separate administration networks from operations networks.

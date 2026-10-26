@@ -52,3 +52,31 @@ def features_background_completions(command, argv):
 def features_background_help(command, argv):
     return f"{command}: <synopsis> and an rst or md formatted help page"
 
+
+# A feature for testing the engine's per-role command-array handling: it
+# dispatches a multi-command array to the role named by the first argument
+# (default laptop).  With a tmux role the engine concatenates the array into one
+# ';'-joined line (fire-and-forget safety); other roles keep the commands
+# separate.  Inspect the difference with --interactions.
+
+def features_command_concatenation(argv):
+    role_name = argv[0] if len(argv) > 0 else 'laptop'
+    role = global_roles[role_name]
+    command_array = [
+        "echo one",
+        "echo two",
+        "echo three",
+    ]
+    execute_command_array(command_array, { "role": role })
+
+
+def features_command_concatenation_completions(command, argv):
+    return {
+        "laptop": "a non-tmux (localuser) role -> separate lines",
+        "ssh_cd": "a non-tmux ssh role -> separate lines",
+        "tmux_cd": "a tmux role -> one concatenated line",
+    }
+
+
+def features_command_concatenation_help(command, argv):
+    return f"{command}: run a three-command array on the given role (default laptop) to exercise the engine's per-role command-array handling; inspect with --interactions"
