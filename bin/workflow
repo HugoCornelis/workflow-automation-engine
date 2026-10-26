@@ -13314,6 +13314,26 @@ sub execute_shell_command_array
 	return 0;
     }
 
+    # tmux-based roles are fire-and-forget: the engine sends each
+    # command as a separate key-stroke line without waiting, so a
+    # command sent while a previous (blocking) command is still
+    # running is swallowed by the terminal.  For such roles, we run
+    # the whole array as one ';'-joined line so the shell reads and
+    # runs the commands in order from a single input.  Other roles run
+    # each command separately (clearer for example in --interactions
+    # output).
+
+    my $role = $options->{role};
+
+    my $role_name = ref $role eq 'HASH' ? $role->{name} : $role;
+
+    if (defined $role_name and $role_name =~ m(^tmux_) and @$shell_commands > 1)
+    {
+	execute_shell_command(join(' ; ', @$shell_commands), $options);
+
+	return '';
+    }
+
     my $first = 'true';
 
     foreach my $shell_command (@$shell_commands)
