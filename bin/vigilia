@@ -132,6 +132,7 @@ options:
     --randomize-order            Randomize the order of the tests before executing them (require List::Util to be installed).
     --regex-selector             Defines a regex to run specific tests.
     --report-disabled-tests      Include information of disabled tests in the test report.
+    --report-rerun-errors        Run those test modules that reported errors on the previous run.
     --reporting-directory        The directory to use to write reports to (default is '.').
     --select-context-path        Select only the matching context paths (default is '$option_select_context_path').
     --show-command-descriptions  Show tests that would be run using the current configuration.
