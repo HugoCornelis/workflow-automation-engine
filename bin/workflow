@@ -13772,6 +13772,10 @@ sub _init_do_eval_perl_file
 
 	# local $CWD = "/tmp"; # $cache_directory;
 
+	# Clear any stale errno / eval error so a leftover value from an unrelated
+	# syscall cannot leak into the diagnostics below.
+	local ($!, $@);
+
 	$result = do $filename;
 
 	# do error processing: perl problems
@@ -13782,11 +13786,16 @@ sub _init_do_eval_perl_file
 	}
 
 	# do error processing: file problems.
+	#
+	# Only report the file itself as missing when it really does not exist.
+	# A failure *inside* the file (for example the embedded Python failing to
+	# open configuration.json) sets $@ and is reported above; without the -e
+	# guard a leftover $! would misreport that as this file being absent.
 
-	if (not defined $result
-	    and $!)
+	elsif (not defined $result
+	    and not -e $filename)
 	{
-	    $status = "$global_program_name: *** Error: no configuration file '$filename' ($!)\n";
+	    $status = "$global_program_name: *** Error: configuration file '$filename' not found ($!)\n";
 	}
     }
     # else
