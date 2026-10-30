@@ -833,11 +833,190 @@ def builtin_project_start(argv):
     return 0
 
 
+# ----- manual: generate an RST (and PDF) reference manual from the help pages -----
+def _rst_header(text, char):
+    return f"{text}\n{char * len(text)}\n"
+
+
+def _capture_interactions(fname, fn):
+    """Run a command in --interactions mode and capture its scheduled-commands block.
+
+    Isolated in a forked child so a command that calls os._exit / crashes on empty
+    args cannot abort the manual generation.
+    """
+    try:
+        r, w = os.pipe()
+        pid = os.fork()
+    except OSError:
+        return ""   # no fork available: skip interactions for this op
+    if pid == 0:                                   # child
+        os.close(r)
+        data = ""
+        try:
+            STATE["interactions"] = True
+            buf = io.StringIO()
+            old = sys.stdout
+            sys.stdout = buf
+            try:
+                buf.write(f"---\nWORKFLOW: {fname} (use --help to see the help page)\n")
+                fn([])
+                buf.write(f"---\nEND WORKFLOW: {fname}\n")
+            except BaseException:                  # noqa: BLE001
+                pass
+            finally:
+                sys.stdout = old
+            data = buf.getvalue()
+        except BaseException:                      # noqa: BLE001
+            data = ""
+        try:
+            os.write(w, data.encode("utf-8", "replace"))
+        finally:
+            os.close(w)
+            os._exit(0)
+    os.close(w)                                    # parent
+    chunks = []
+    while True:
+        b = os.read(r, 65536)
+        if not b:
+            break
+        chunks.append(b)
+    os.close(r)
+    os.waitpid(pid, 0)
+    return b"".join(chunks).decode("utf-8", "replace")
+
+
+def builtin_manual(argv):
+    _require_config("builtin manual")
+    spec = {"input-rst": "bool", "input-md": "bool", "include-interactions": "bool",
+            "output-pdf": "bool", "remove-intermediate-files": "bool", "use-cache": "bool",
+            "view": "bool"}
+    pos, opts = _parse_builtin_options(argv, spec)
+    target = pos[0] if pos else None
+    use_md = bool(opts.get("input-md"))
+    include_interactions = opts.get("include-interactions", True)
+    output_pdf = opts.get("output-pdf", True)
+
+    ns = STATE["namespace"]
+    targets = STATE["targets"]
+    name = STATE["project_name"]
+    config_dir = os.path.abspath(STATE["config_dir"])
+
+    suffix = ""
+    if target:
+        suffix = "-" + re.sub(r"[^A-Za-z0-9._-]+", "", target)
+    basename = f"{name}-manual{suffix}"
+    vol = os.path.join(config_dir, f"{name}-volatile-data", "dynamically-generated-manuals")
+    rst_path = os.path.join(vol, f"{basename}.rst")
+    pdf_path = os.path.join(vol, f"{basename}.pdf")
+
+    sys.stdout.write(f"'{basename}.rst' stored into volatile project storage {rst_path}\n")
+
+    if opts.get("use-cache") and os.path.isfile(rst_path) and os.path.isfile(pdf_path):
+        sys.stdout.write(f"'{basename}.rst' and '{basename}.pdf' are already available in the cache.\n")
+        return 0
+
+    # which commands to document
+    commands = _command_functions(ns, targets)
+    selected = sorted(k for k in commands if (target is None or k[0] == target))
+    if not selected:
+        sys.stderr.write(f"{_program_name()}: *** Error: no operations found"
+                         + (f" for target '{target}'" if target else "") + "\n")
+        return 2
+
+    cmdline = " ".join([_program_name()] + sys.argv[1:])
+
+    # ---- assemble the manual ----
+    out = []
+    title = name.upper().replace("-", " ")
+    if use_md:
+        out.append(f"# {title}\n\n")
+    else:
+        out.append(_rst_header(title, "#") + "\n")
+
+    if use_md:
+        out.append("This manual was automatically generated with the command line:\n\n"
+                   f"```bash\n{cmdline}\n```\n\n")
+    else:
+        out.append("This manual was automatically generated with the command line:\n\n"
+                   f".. code-block:: bash\n\n    {cmdline}\n\n")
+
+    if target:
+        sub = f"Draft Specification Manual: target ``{target}``"
+        out.append((f"## {sub}\n\n") if use_md else (_rst_header(sub, "*") + "\n"))
+    else:
+        out.append("Complete Draft Specification Manual\n\n")
+
+    last_target = None
+    for (t, op) in selected:
+        fname = commands[(t, op)]
+        if t != last_target:
+            desc = targets.get(t, {}).get("description", "") if isinstance(targets.get(t), dict) else ""
+            if use_md:
+                out.append(f"\n### Target: {t}\n\n")
+            else:
+                out.append("\n" + _rst_header(f"Target: {t}", "=") + "\n")
+            if desc:
+                out.append(f"{desc}\n\n")
+            lst = f"Alphabetical list of ``{t}`` operations"
+            out.append((f"\n### {lst}\n\n") if use_md else ("\n" + _rst_header(lst, "=") + "\n"))
+            last_target = t
+
+        op_title = f"Operation: {t} {op}"
+        out.append(("\n" + f"#### {op_title}\n\n") if use_md else ("\n" + _rst_header(op_title, "-") + "\n"))
+
+        helper = ns.get(fname + "_help")
+        help_text = ""
+        if callable(helper):
+            try:
+                help_text = helper(f"{t} {op}", []) or ""
+            except Exception as exc:  # noqa: BLE001
+                help_text = f"(help unavailable: {exc})"
+        out.append(f"{help_text}\n")
+
+        if include_interactions:
+            inter = _capture_interactions(fname, ns[fname]).strip("\n")
+            if inter:
+                if use_md:
+                    out.append(f"\n##### Interactions\n\n```text\n{inter}\n```\n")
+                else:
+                    indented = "\n".join("    " + ln for ln in inter.splitlines())
+                    out.append("\n" + _rst_header("Interactions", "~") + "\n.. code-block:: text\n\n"
+                               + indented + "\n")
+
+    manual = "".join(out)
+
+    # ---- write + convert ----
+    os.makedirs(vol, exist_ok=True)
+    with open(rst_path, "w", encoding="utf-8") as fh:
+        fh.write(manual)
+    sys.stdout.write(f"{_program_name()}: wrote {rst_path} ({len(selected)} operations)\n")
+
+    if output_pdf and not use_md:
+        if shutil.which("pandoc"):
+            rc = _run_local(f"cd {shlex.quote(vol)} && pandoc {shlex.quote(basename + '.rst')} "
+                            f"-o {shlex.quote(basename + '.pdf')} -V geometry:margin=1cm --number-sections",
+                            capture=True)
+            if rc == 0:
+                sys.stdout.write(f"{_program_name()}: wrote {pdf_path}\n")
+                if opts.get("remove-intermediate-files"):
+                    os.remove(rst_path)
+            else:
+                sys.stderr.write(f"{_program_name()}: *** Warning: pandoc failed; kept the RST only\n")
+        else:
+            sys.stderr.write(f"{_program_name()}: note: pandoc not found; wrote the RST only "
+                             f"(install pandoc to get the PDF)\n")
+
+    if opts.get("view", True) and not shutil.which("okular"):
+        sys.stderr.write(f"{_program_name()}: note: okular not found; not opening a viewer\n")
+    return 0
+
+
 _BUILTINS = {
     "project_start": builtin_project_start,
     "configuration_install": builtin_configuration_install,
     "target_add": builtin_target_add,
     "role_add": builtin_role_add,
+    "manual": builtin_manual,
 }
 
 
