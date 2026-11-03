@@ -6,7 +6,7 @@ documentation:
     The workflow script enables the automation of customizable modular
     project-specific workflows consisting of shell commands.
 
-  purpose: This module tests how the workflow engine dispatches a multi-command array per role: a tmux-based role receives one ';'-concatenated line (fire-and-forget safety), other roles receive the commands separately.
+  purpose: "This module tests how the workflow engine dispatches a multi-command array per role: a tmux-based role receives one ';'-concatenated line (fire-and-forget safety), other roles receive the commands separately."
 harnessing:
   class:
     comment: Enter this container with "docker exec -it workflow_feature_testing_container bash".
