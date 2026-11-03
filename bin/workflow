@@ -229,6 +229,7 @@ my $global_builtin_operations
        tmux_sessions_create => 1,
        tmux_sessions_kill => 1,
        workflow_filenames_known => 1,
+       workflow_import => 1,
        workflow_report => 1,
       };
 
@@ -8885,6 +8886,251 @@ options:
 }
 
 
+sub builtin_workflow_import
+{
+    my $arguments = shift || [];
+
+    if (not $global_execution_context->{variables}->{global_execute_scheduled_commands})
+    {
+	return '';
+    }
+
+    my $option_description;
+    my $option_remove;
+
+    our $workflow_import_options
+	= {
+	   "description=s" => \$option_description,
+	   "remove!" => \$option_remove,
+	  };
+
+    use Getopt::Long qw(GetOptionsFromArray);
+
+    my $result = GetOptionsFromArray($arguments, %$workflow_import_options);
+
+    if (!$result)
+    {
+	die "$global_program_name: *** error in option processing, try --help";
+    }
+
+    my $error = '';
+
+    # the target alias under which the imported workflows are offered
+
+    my $alias = $arguments->[0];
+
+    if (not $error)
+    {
+	if (not defined $alias)
+	{
+	    $error = 'no target alias found on the command line';
+	}
+    }
+
+    # the builtin package to import (not required when removing)
+
+    my $package = $arguments->[1];
+
+    if (not $error and not $option_remove)
+    {
+	if (not defined $package)
+	{
+	    $error = 'no builtin package found on the command line';
+	}
+    }
+
+    if (not $error and not $option_remove)
+    {
+	if (not exists $global_known_operation_packages_builtin->{$package})
+	{
+	    $error = "'$package' is not a known builtin package, try '$global_program_name --help-builtin-packages-all'";
+	}
+    }
+
+    my $field_project_name = $global_field_project_configuration->{field_project_name};
+
+    if (not $error)
+    {
+	if (not $field_project_name)
+	{
+	    $error = 'no valid field_project_name found in the field_project_configuration';
+	}
+    }
+
+    my $sources_configuration_directory = $global_field_project_configuration->{sources_configuration_directory};
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+    # read the workflow imports configuration file, or start a fresh one
+
+    my $workflow_imports_configuration_filename = "$configuration_data_directory/workflow_imports.yml";
+
+    my $workflow_imports_configuration;
+
+    if (not $error)
+    {
+	if (-r $workflow_imports_configuration_filename)
+	{
+	    $workflow_imports_configuration = YAML::PP::LoadFile($workflow_imports_configuration_filename);
+	}
+
+	if (ref $workflow_imports_configuration ne 'HASH')
+	{
+	    $workflow_imports_configuration = { workflow_imports => {}, };
+	}
+
+	if (ref $workflow_imports_configuration->{workflow_imports} ne 'HASH')
+	{
+	    $workflow_imports_configuration->{workflow_imports} = {};
+	}
+    }
+
+    # remove an existing import
+
+    if (not $error and $option_remove)
+    {
+	if (not exists $workflow_imports_configuration->{workflow_imports}->{$alias})
+	{
+	    $error = "there is no workflow import '$alias' to remove";
+	}
+	else
+	{
+	    delete $workflow_imports_configuration->{workflow_imports}->{$alias};
+
+	    YAML::PP::DumpFile($workflow_imports_configuration_filename, $workflow_imports_configuration);
+
+	    print "$global_program_name: removed the workflow import '$alias'\n";
+
+	    print "$global_program_name: updated $workflow_imports_configuration_filename\n";
+	}
+
+	return $error;
+    }
+
+    # add (or update) an import
+
+    if (not $error)
+    {
+	my $import
+	    = {
+	       package => $package,
+	      };
+
+	if (defined $option_description)
+	{
+	    $import->{description} = $option_description;
+	}
+
+	$workflow_imports_configuration->{workflow_imports}->{$alias} = $import;
+
+	YAML::PP::DumpFile($workflow_imports_configuration_filename, $workflow_imports_configuration);
+
+	print "$global_program_name: imported builtin package '$package' as target '$alias'\n";
+
+	print "$global_program_name: updated $workflow_imports_configuration_filename\n";
+
+	print "$global_program_name: try '$field_project_name-workflow --help-targets' to see the imported target\n";
+    }
+
+    return $error;
+}
+
+
+sub builtin_workflow_import_completor
+{
+    my $complete_command_string = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    # offer the known builtin packages as completions of the second argument
+
+    my $package_completions
+	= {
+	   map
+	   {
+	       ("2.$_" => $global_known_operation_packages_builtin->{$_}->{description});
+	   }
+	   sort keys %$global_known_operation_packages_builtin,
+	  };
+
+    return _completor_generic_expander
+	(
+	 analysis => $analysis,
+	 complete_arguments_array => $complete_arguments_array,
+	 operation_path => [ qw(builtin workflow_import) ],
+	 option_descriptions => {
+				 '--description' => 'set the description shown for the imported target',
+				 '--remove' => 'remove the named workflow import',
+				},
+	 positional_arguments => [
+				{
+				 completions => {
+						 '1.<target-alias>' => '',
+						},
+				 option_separator_hint => '3.Type_--_then_import_options',
+				},
+				{
+				 completions => $package_completions,
+				 option_separator_hint => '3.Type_--_then_import_options',
+				},
+			       ],
+	 after_positional_option_separator_hint => '3.Type_--_then_import_options',
+	);
+}
+
+
+sub builtin_workflow_import_help
+{
+    my $command = shift;
+
+    return "$command: import a builtin workflow package so that its workflows become available under a short, project local target alias.
+
+This enables, through the project file '<name>-configuration-data/workflow_imports.yml', the workflows of a builtin package (as listed by '--help-builtin-packages-all') under a target alias of your choice.  For example, after
+
+.. code-block:: bash
+
+$command git Command::Git
+
+the verbose invocation
+
+.. code-block:: bash
+
+workflow builtin Command::Git builtin_git_move_files_across_keep_history
+
+also becomes available as
+
+.. code-block:: bash
+
+workflow git move_files_across_keep_history
+
+The operations are auto derived from the builtin_* subs of the package, stripping the 'builtin_' prefix and an optional '<alias>_' prefix.
+
+synopsis:
+~~~~~~~~~
+
+.. code-block:: bash
+
+$command <target-alias> <builtin-package> [-- <options>]
+
+arguments:
+~~~~~~~~~~
+
+    ``ARGV[0]``: the target alias under which to make the workflows available.
+
+    ``ARGV[1]``: the builtin package to import, for example 'Command::Git'.
+
+options:
+~~~~~~~~
+
+    ``--description <text>``: the description shown for the imported target.
+
+    ``--remove``: remove the named workflow import instead of adding it.
+";
+}
+
+
 sub builtin_tmux_sessions_create
 {
     my $arguments = shift || [ '_all' ];
@@ -13720,9 +13966,202 @@ workflow builtin configuration_install -- --commands --git
 
     }
 
+    # add the project specific workflow imports, if any
+
+    #! this is opt-in: only a project that provides a
+    #! <name>-configuration-data/workflow_imports.yml file gets the
+    #! imported builtin workflows, and only the ones it lists.
+
+    _init_load_workflow_imports($result_field, $result_technical);
+
     # return field project configuration data
 
     return ($result_field, $result_technical);
+}
+
+
+# Load the project specific workflow imports.
+#
+# A project makes builtin workflow packages available under short,
+# project-local target names by providing a file
+# <name>-configuration-data/workflow_imports.yml, for example:
+#
+# ---
+# workflow_imports:
+#   git:
+#     package: Command::Git
+#     description: Git history preserving workflows.
+#     operations:
+#       move_files_across_keep_history: builtin_git_move_files_across_keep_history
+#
+# Each top level key is a target alias.  'package' names a builtin
+# package (as listed by --help-builtin-packages-all).  'operations' is
+# optional: when it is absent the operations are auto derived from the
+# builtin_* subs of the package, stripping the 'builtin_' prefix and an
+# optional '<alias>_' prefix.  With the example above, the verbose
+# invocation
+#
+#   workflow builtin Command::Git builtin_git_move_files_across_keep_history
+#
+# also becomes available as
+#
+#   workflow git move_files_across_keep_history
+#
+# The imported aliases are registered as regular targets so that they
+# participate in target checking, --help-targets and execution.  An
+# alias never overrides an existing, non imported target.
+
+sub _init_load_workflow_imports
+{
+    my $field_project_configuration = shift;
+
+    my $technical_project_configuration = shift;
+
+    # without a field project configuration there is nothing to import into
+
+    return if not defined $field_project_configuration;
+
+    return if not defined $technical_project_configuration;
+
+    my $field_project_name = $field_project_configuration->{field_project_name};
+
+    return if not defined $field_project_name;
+
+    my $sources_configuration_directory = $field_project_configuration->{sources_configuration_directory};
+
+    return if not defined $sources_configuration_directory;
+
+    my $configuration_data_directory = "$sources_configuration_directory/$field_project_name-configuration-data";
+
+    my $workflow_imports_filename = "$configuration_data_directory/workflow_imports.yml";
+
+    # the feature is opt-in: without this file nothing is imported
+
+    return if not -r $workflow_imports_filename;
+
+    my $workflow_imports_configuration = eval { YAML::PP::LoadFile($workflow_imports_filename); };
+
+    if ($@ or not defined $workflow_imports_configuration)
+    {
+	print STDERR "$global_program_name: *** Warning: cannot read '$workflow_imports_filename', ignoring the workflow imports\n";
+
+	return;
+    }
+
+    my $workflow_imports = $workflow_imports_configuration->{workflow_imports};
+
+    return if not defined $workflow_imports or ref $workflow_imports ne 'HASH';
+
+    foreach my $alias (sort keys %$workflow_imports)
+    {
+	my $import = $workflow_imports->{$alias};
+
+	my $package = (ref $import eq 'HASH' ? $import->{package} : undef);
+
+	if (not defined $package)
+	{
+	    print STDERR "$global_program_name: *** Warning: the workflow import '$alias' has no 'package', skipping it\n";
+
+	    next;
+	}
+
+	if (not exists $global_known_operation_packages_builtin->{$package})
+	{
+	    print STDERR "$global_program_name: *** Warning: the workflow import '$alias' refers to the unknown builtin package '$package', skipping it\n";
+
+	    next;
+	}
+
+	# never override an existing, non imported target
+
+	if (exists $technical_project_configuration->{targets}->{$alias})
+	{
+	    print STDERR "$global_program_name: *** Warning: the workflow import '$alias' clashes with an existing target, skipping it\n";
+
+	    next;
+	}
+
+	# resolve the operations: an explicit map wins, else auto derive them
+
+	my $operations;
+
+	if (defined $import->{operations} and ref $import->{operations} eq 'HASH')
+	{
+	    $operations = { %{ $import->{operations} }, };
+	}
+	else
+	{
+	    $operations = _init_workflow_import_operations_derive($package, $alias);
+	}
+
+	my $description = $import->{description} || $global_known_operation_packages_builtin->{$package}->{description};
+
+	# register the alias as a first class target
+
+	$technical_project_configuration->{targets}->{$alias}->{description}
+	    = "$description (imported from the builtin package $package)";
+
+	$technical_project_configuration->{targets}->{$alias}->{documentation}
+	    = "These workflows are imported, through '$field_project_name-configuration-data/workflow_imports.yml', from the builtin package $package.  The available operations are: "
+	      . (join ', ', sort keys %$operations) . ".";
+
+	# record the resolved import so that the dispatcher can find it
+
+	$technical_project_configuration->{workflow_imports}->{$alias}
+	    = {
+	       package => $package,
+	       description => $description,
+	       operations => $operations,
+	      };
+    }
+}
+
+
+# Auto derive the operation-name to builtin-sub map for an imported
+# package: every builtin_* sub of the package, excluding its _help and
+# completion subs, becomes an operation.  The operation name is the sub
+# name with the leading 'builtin_' and an optional '<alias>_' removed.
+
+sub _init_workflow_import_operations_derive
+{
+    my $package = shift;
+
+    my $alias = shift;
+
+    my $operations = {};
+
+    no strict "refs";
+
+    foreach my $symbol (sort keys %{"${package}::"})
+    {
+	# only real subs
+
+	next if not defined &{"${package}::${symbol}"};
+
+	# only builtin workflows, and not their help or completion subs
+
+	next if $symbol !~ m(^builtin_);
+
+	next if $symbol =~ m(_help$);
+
+	next if $symbol =~ m(_completor$);
+
+	next if $symbol =~ m(_completions$);
+
+	my $operation = $symbol;
+
+	# strip the builtin_ prefix
+
+	$operation =~ s(^builtin_)();
+
+	# strip an optional leading '<alias>_'
+
+	$operation =~ s(^\Q${alias}\E_)();
+
+	$operations->{$operation} = $symbol;
+    }
+
+    return $operations;
 }
 
 
@@ -17236,6 +17675,34 @@ sub operation_selector
 }
 
 
+# Look up a project local workflow import.  Returns the resolved import
+# hash ({ package, description, operations }) when $target is an imported
+# alias that provides $operation, otherwise undef.
+
+sub _workflow_import_lookup
+{
+    my $target = shift;
+
+    my $operation = shift;
+
+    return undef if not defined $target;
+
+    return undef if not defined $operation;
+
+    my $workflow_imports = $global_technical_project_configuration->{workflow_imports};
+
+    return undef if not defined $workflow_imports;
+
+    my $import = $workflow_imports->{$target};
+
+    return undef if not defined $import;
+
+    return undef if not exists $import->{operations}->{$operation};
+
+    return $import;
+}
+
+
 sub operation_selector_type_construct
 {
     my $target = shift;
@@ -17281,6 +17748,27 @@ sub operation_selector_type_construct
 	}
 
 	$package = $builtin_package;
+    }
+    elsif (my $workflow_import = _workflow_import_lookup($target, $operation_or_package))
+    {
+	# an imported builtin workflow invoked under its project local
+	# target alias: route it through the builtin package machinery
+	# so it reuses the same help and execution path.
+
+	$package = $workflow_import->{package};
+
+	$sub_name = $workflow_import->{operations}->{$operation_or_package};
+
+	# if help was requested for this command
+
+	if ($help)
+	{
+	    # call the subroutine that implements the help function
+
+	    $sub_name .= "_help";
+	}
+
+	$builtin_package = $package;
     }
     elsif (defined $operation_or_package)
     {
