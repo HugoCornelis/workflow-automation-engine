@@ -52,6 +52,7 @@ command_tests:
     - feature-testing-workflow features cd_tests
     - feature-testing-workflow features cd_tests_ssh
     - feature-testing-workflow features cd_tests_tmux
+    - feature-testing-workflow features command_concatenation
     - feature-testing-workflow features die
     - feature-testing-workflow features export_sh
     - feature-testing-workflow features export_variables
