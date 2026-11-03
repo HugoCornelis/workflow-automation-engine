@@ -1,0 +1,8 @@
+---
+command: feature-testing-workflow builtin workflow_import git Command::Git
+command_tests:
+  - description: Can we import a builtin package under a short project local target alias?
+    read: |
+      feature-testing-workflow: imported builtin package 'Command::Git' as target 'git'
+    white_space: convert seen 0a to 0d 0a newlines
+description: Can we import a builtin package under a short project local target alias?
