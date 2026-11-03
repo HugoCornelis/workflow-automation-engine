@@ -1,0 +1,8 @@
+---
+command: feature-testing-workflow git move_files_across_keep_history --help
+command_tests:
+  - description: Does the imported alias dispatch to the builtin workflow (here its help page)?
+    read: |
+      Git::builtin_git_move_files_across_keep_history: given a source and target git repository and a file in the
+    white_space: convert seen 0a to 0d 0a newlines
+description: Does the imported alias dispatch to the builtin workflow (here its help page)?
