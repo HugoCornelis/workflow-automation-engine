@@ -79,5 +79,6 @@ command_tests:
     /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:307:sub perl_examples_sequencing_and_composition_help
     /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:307:sub perl_examples_sequencing_and_composition_help
     /home/neurospaces/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/feature-testing/feature-testing-commands-perl_examples:311:    return "$command: an example that composes other examples into one sequence of commands.
+  timeout: 10
   white_space: convert seen 0a to 0d 0a newlines
 description: Can we grep a string in the code across workflow projects?
