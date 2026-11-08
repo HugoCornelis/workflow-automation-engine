@@ -22,6 +22,7 @@ command_tests:
       workflow-test/workflow-tests-configuration-data/cache/configuration.toml
       workflow-test/workflow-tests-configuration-data/cache/configuration.yaml
       workflow-test/workflow-tests-configuration-data/node_configuration.yml
+      workflow-test/workflow-tests-configuration-data/project_settings.yml
       workflow-test/workflow-tests-configuration-data/roles.yml
       workflow-test/workflow-tests-configuration-data/targets.yml
       workflow-test/workflow-tests-configuration-data/workflow_filenames.yml

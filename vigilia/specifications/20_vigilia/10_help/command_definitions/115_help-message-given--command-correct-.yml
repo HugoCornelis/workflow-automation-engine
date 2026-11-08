@@ -10,8 +10,8 @@ command_tests:
     Correct an existing command's expected output based on the information in the given error report directory.
 
     Options:
-        --help             Show this help message.
-        --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
-        --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
+        --convert-seen-0d-0a-to-0a-newlines  Convert seen 0x0d 0x0a to 0x0a newlines.
+        --help                               Show this help message.
+        --yaml-work-around                   Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
 
 description: Is a help message given (command-correct)?
