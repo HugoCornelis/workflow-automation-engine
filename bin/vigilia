@@ -1205,9 +1205,9 @@ $global_command_line_configuration->{command_configuration}->{known_commands}->{
        help => {
 		synopsis => "$0 command-correct <options> <error-report-directory>",
 		usage => "Options:
-    --help             Show this help message.
-    --output-stdout    Print output to stdout and do not create a test specification (this is useful to first inspect the output before adding the test).
-    --yaml-work-around Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
+    --convert-seen-0d-0a-to-0a-newlines  Convert seen 0x0d 0x0a to 0x0a newlines.
+    --help                               Show this help message.
+    --yaml-work-around                   Work around a yaml output problem with the Expect module, the default value of this option is true, use --no-yaml-work-around to disable.
 ",
 	       },
        options => {
