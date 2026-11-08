@@ -26,6 +26,75 @@ my $configuration_directory = "$global_field_project_configuration->{sources_con
 my $workflow_project_directory = "$configuration_directory/..";
 
 
+sub test_correct
+{
+    my $arguments = shift;
+
+    my $do_it = $arguments->[0] || "do_it";
+
+    if ($do_it ne 'do_it')
+    {
+	die "$0: *** Error: 'do_it' is the only available option to test_correct";
+    }
+
+    my $error_report_base_directory = "report_workflow-automation-engine";
+
+    my $error_report_directories
+	= [
+	   map
+	   {
+	       chomp; $_;
+	   }
+	   `find "$error_report_base_directory"/* -type d`,
+	  ];
+
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	   map
+	   {
+	       my $error_report_directory = $_;
+
+	       "bin/vigilia command-correct $error_report_directory",
+	   }
+	   @$error_report_directories
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub test_correct_completor
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    return
+    {
+     do_it => "",
+     dry_run => "",
+    };
+}
+
+
+sub test_correct_help
+{
+    my $command = shift;
+
+    my $selected_images_yaml = _test_read_known_containers();
+
+    return "$command: Correct an existing command's expected output based on the information in the workflow source code error report directory.
+
+arguments:
+
+    ARGV[0]: Either 'do_it' or 'dry_run' (note that dry_run is not implemented).
+";
+}
+
+
 sub test_enter
 {
     my $commands
