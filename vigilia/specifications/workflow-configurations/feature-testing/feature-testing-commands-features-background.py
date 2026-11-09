@@ -11,17 +11,6 @@ def features_background_testing(argv):
     execute_command("echo 'foreground command (2)'")
 
 
-def features_background(argv):
-    # command = "echo python_command1"
-    # execute_command(command)
-    # command_array = [
-    #     "echo python_command2",
-    #     "echo python_command3"
-    # ]
-    # execute_command_array(command_array)
-    pass
-
-
     # Some options to command execution:
     #   allow_fail: allow execution of this command to fail.
     #   allow_fail_silent: allow execution of this command to fail and remain silent about it when it does.
@@ -38,17 +27,4 @@ def features_background(argv):
     # execute_shell_command(command, { 'role': '<name of a role that is defined in the global global_roles>', } )
     #
     # These options can given to any of the functions that execute commands.
-
-def features_background_completions(command, argv):
-    completions_hash = {
-           "1._<your_completion_without_spaces_here>": "more_nested_dictionary_items_here",
-           "2._<another_completion_here>": "the_numbers_preserve_the_order_for_this_example",
-           "3._Don't_use_spaces_in_your_completions,_because_they_confuse_bash": "",
-          }
-
-    return completions_hash
-
-
-def features_background_help(command, argv):
-    return f"{command}: <synopsis> and an rst or md formatted help page"
 
