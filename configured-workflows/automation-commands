@@ -395,6 +395,37 @@ arguments:
 }
 
 
+sub workflow_vigilia_install
+{
+    my $arguments = shift || [];
+
+    my $search_string = $arguments->[0];
+
+    my $workflow_project_directory = "$configuration_directory/..";
+
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	   "./configure && make && sudo make install",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub workflow_vigilia_install_help
+{
+    my $command = shift;
+
+    return "$command: Reinstall workflow and vigilia.
+
+arguments:
+
+    none.
+";
+}
+
+
 # return success
 
 1;

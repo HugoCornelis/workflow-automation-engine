@@ -18,3 +18,5 @@ targets:
     description: Commands for testing functions of the engine.
   wiki_gitlab:
     description: pulls the wiki pages from gitlab (and possibly other sources) and converts them PDF (or other formats)
+  workflow_vigilia:
+    description: Operations to maintain the workflow and vigilia (configuration, installation, running tests).
