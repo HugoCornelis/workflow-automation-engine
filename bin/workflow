@@ -4830,7 +4830,7 @@ sub _workflow_operations_load
 
 	my $commands_cache_directory = Utilities::commands_cache_directory();
 
-	`rm -fr $commands_cache_directory`;
+	# `rm -fr $commands_cache_directory`;
     }
 
     foreach my $command_filename (@$workflow_filenames)
