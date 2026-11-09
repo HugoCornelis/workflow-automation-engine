@@ -1,0 +1,49 @@
+---
+command: bin/workflow builtin workflow_import --help
+command_tests:
+  - description: Do we see the help page of the builtin command workflow_import?
+    exit_code: 0
+    read: |+
+      workflow builtin workflow_import: import a builtin workflow package so that its workflows become available under a short, project local target alias.
+      
+      This enables, through the project file '<name>-configuration-data/workflow_imports.yml', the workflows of a builtin package (as listed by '--help-builtin-packages-all') under a target alias of your choice.  For example, after
+      
+      .. code-block:: bash
+      
+      builtin workflow_import git Command::Git
+      
+      the verbose invocation
+      
+      .. code-block:: bash
+      
+      workflow builtin Command::Git builtin_git_move_files_across_keep_history
+      
+      also becomes available as
+      
+      .. code-block:: bash
+      
+      workflow git move_files_across_keep_history
+      
+      The operations are auto derived from the builtin_* subs of the package, stripping the 'builtin_' prefix and an optional '<alias>_' prefix.
+      
+      synopsis:
+      ~~~~~~~~~
+      
+      .. code-block:: bash
+      
+      builtin workflow_import <target-alias> <builtin-package> [-- <options>]
+      
+      arguments:
+      ~~~~~~~~~~
+      
+          ``ARGV[0]``: the target alias under which to make the workflows available.
+      
+          ``ARGV[1]``: the builtin package to import, for example 'Command::Git'.
+      
+      options:
+      ~~~~~~~~
+      
+          ``--description <text>``: the description shown for the imported target.
+      
+          ``--remove``: remove the named workflow import instead of adding it.
+description: Do we see the help page of the builtin command workflow_import?
