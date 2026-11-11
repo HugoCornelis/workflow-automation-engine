@@ -4833,6 +4833,54 @@ sub _workflow_operations_load
 	# `rm -fr $commands_cache_directory`;
     }
 
+    # Detect genuinely duplicate workflow definitions across the python command
+    # files.  Inline::Python binds every file into one shared interpreter
+    # namespace (__main__), so two files that define a top-level function with
+    # the same name silently collide -- the file loaded last wins.  Inline's own
+    # "Subroutine ... redefined" warning cannot flag this: it binds through one
+    # shared interpreter, cannot tell a genuine duplicate from an internal
+    # re-bind, and does not know which source file defines a name.  We therefore
+    # detect the real duplicates here, by name and source file, and warn only
+    # about those.
+
+    {
+	my %definition_sources;
+
+	foreach my $command_filename (@$workflow_filenames)
+	{
+	    next
+		if $command_filename !~ m(\.py$);
+
+	    open my $python_fh, '<', $command_filename
+		or next;
+
+	    while (my $line = <$python_fh>)
+	    {
+		# only top-level (column 0) 'def name(' definitions are workflows
+		# bound into the shared namespace; indented defs are nested/local.
+
+		next
+		    if $line !~ m(^def\s+(\w+)\s*\();
+
+		push @{$definition_sources{$1}}, $command_filename;
+	    }
+
+	    close $python_fh;
+	}
+
+	foreach my $definition_name (sort keys %definition_sources)
+	{
+	    my $sources = $definition_sources{$definition_name};
+
+	    next
+		if @$sources < 2;
+
+	    my $count = scalar @$sources;
+
+	    print "$global_program_name: *** Warning: the workflow definition '$definition_name' appears $count times, in: " . join(', ', @$sources) . " -- the definition loaded last overrides the earlier ones (rename or remove the duplicates).\n";
+	}
+    }
+
     foreach my $command_filename (@$workflow_filenames)
     {
 	if ($debug_operations_load)
