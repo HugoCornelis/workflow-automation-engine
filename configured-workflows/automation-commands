@@ -296,22 +296,45 @@ arguments:
 }
 
 
-sub test_report_error_commands
+sub test_report_error_diffs
 {
     my $arguments = shift || [ '' ];
+
+    my $mode = $arguments->[0] || 'executed_command_with_module';
+
+    $mode = 'commands_modules';
 
     my $filter = '';
 
     my $regex = '050_executed_command';
 
-    if ($arguments->[0] eq 'commands_only')
+    # commands_only
+
+    if ($mode eq 'commands_only')
     {
+	# shorten the reported path
+
 	$filter = "| cut -d: -f3-";
     }
-    elsif ($arguments->[0] eq 'commands_modules')
+
+    # modules and commands
+
+    elsif ($mode eq 'commands_modules')
     {
+	# select the module name and executed command
+
 	$regex = "-E '010_module_name|050_executed_command'";
+
+	# shorten the reported path and indent the executed command
+
 	$filter = "| cut -d: -f2- | sed 's/050/    050/g'";
+    }
+
+    # else
+
+    else
+    {
+	# the raw output
     }
 
     my $vigilia_config = do "$workflow_project_directory/vigilia.config";
@@ -321,7 +344,92 @@ sub test_report_error_commands
     my $commands
 	= [
 	   "cd $workflow_project_directory",
-	   "grep $regex report_$project_name/*/*summary.yml $filter"
+	   "grep $regex report_$project_name/*/*summary.yml $filter",
+	   "cat report_$project_name/*/030_expected-minus-seen.diff",
+	  ];
+
+    execute_shell_command_array($commands);
+}
+
+
+sub test_report_error_diffs_completor
+{
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
+    return
+    {
+     'commands_only' => '',
+     'commands_modules' => '',
+     'executed_command_with_module' => '',
+    };
+}
+
+
+sub test_report_error_diffs_help
+{
+    my $command = shift;
+
+    return "$command: Report the diffs of test errors.
+
+arguments:
+
+    ARGV[0]: 'commands_only' if you want to see the commands without the filename of the summary file.
+
+";
+}
+
+
+sub test_report_error_commands
+{
+    my $arguments = shift || [ '' ];
+
+    my $mode = $arguments->[0] || 'executed_command_with_module';
+
+    my $filter = '';
+
+    my $regex = '050_executed_command';
+
+    # commands_only
+
+    if ($mode eq 'commands_only')
+    {
+	# shorten the reported path
+
+	$filter = "| cut -d: -f3-";
+    }
+
+    # modules and commands
+
+    elsif ($mode eq 'commands_modules')
+    {
+	# select the module name and executed command
+
+	$regex = "-E '010_module_name|050_executed_command'";
+
+	# shorten the reported path and indent the executed command
+
+	$filter = "| cut -d: -f2- | sed 's/050/    050/g'";
+    }
+
+    # else
+
+    else
+    {
+	# the raw output
+    }
+
+    my $vigilia_config = do "$workflow_project_directory/vigilia.config";
+
+    my $project_name = $vigilia_config->{package}->{name};
+
+    my $commands
+	= [
+	   "cd $workflow_project_directory",
+	   "grep $regex report_$project_name/*/*summary.yml $filter",
 	  ];
 
     execute_shell_command_array($commands);
@@ -330,10 +438,17 @@ sub test_report_error_commands
 
 sub test_report_error_commands_completions
 {
+    my $operation_name = shift;
+
+    my $complete_arguments_array = shift || [];
+
+    my $analysis = shift || {};
+
     return
     {
      'commands_only' => '',
      'commands_modules' => '',
+     'executed_command_with_module' => '',
     };
 }
 
@@ -342,12 +457,13 @@ sub test_report_error_commands_help
 {
     my $command = shift;
 
-    return "$command: Report the commands that produced an test error.
+    return "$command: Report the commands that produced a test error.
 
 arguments:
 
-    ARGV[0]: 'commands_only' if you want to see the commands without the filename of the summary file.
-
+    ARGV[0]: 'commands_only' report the commands without the filename of the summary file.
+             'commands_modules' reportthe commands and the modules that invoke them.
+             'executed_command_with_module' report the raw output of some grep command.
 ";
 }
 
