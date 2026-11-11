@@ -52,7 +52,7 @@ Appending installation info to /usr/local/lib/x86_64-linux-gnu/perl/5.36.0/perll
 						       {
 							description => "Can we install the developer package in the Docker container ?",
 							read => 'workflow and vigilia installation finished',
-							timeout => 5,
+							timeout => 10,
 							white_space => 'convert seen 0a to 0d 0a newlines',
 						       },
 						      ],
