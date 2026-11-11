@@ -1,0 +1,8 @@
+---
+command: cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/broken-config-testing && workflow builtin
+command_tests:
+  - description: a command file that fails at load time is reported as an invalid configuration file (syntax error), not misreported via a stale errno as a missing file
+    read: "broken-config-testing-commands-broken.py' (syntax error:"
+    white_space: convert seen 0a to 0d 0a newlines
+    timeout: 15
+description: the config-loader reports a command file that fails to load as invalid, not missing
