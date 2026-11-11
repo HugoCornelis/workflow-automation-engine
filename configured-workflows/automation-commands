@@ -30,37 +30,99 @@ sub test_correct
 {
     my $arguments = shift;
 
-    my $do_it = $arguments->[0] || "do_it";
+    my $mode = $arguments->[0] || "do_it";
 
-    if ($do_it ne 'do_it')
+    if ($mode ne 'apply_diffs'
+	&& $mode ne 'do_it')
     {
-	die "$0: *** Error: 'do_it' is the only available option to test_correct";
+	die "$0: *** Error: 'apply_diffs' and 'do_it' are the only available modes to test_correct";
     }
 
-    my $error_report_base_directory = "report_workflow-automation-engine";
+    my $vigilia_config = do "$workflow_project_directory/vigilia.config";
 
-    my $error_report_directories
-	= [
-	   map
-	   {
-	       chomp; $_;
-	   }
-	   `find "$error_report_base_directory"/* -type d`,
-	  ];
+    my $project_name = $vigilia_config->{package}->{name};
 
-    my $commands
-	= [
-	   "cd $workflow_project_directory",
-	   map
-	   {
-	       my $error_report_directory = $_;
+    my $error_report_base_directory = "report_$project_name";
 
-	       "bin/vigilia command-correct $error_report_directory",
-	   }
-	   @$error_report_directories
-	  ];
+    if ($mode eq 'do_it')
+    {
+	my $error_report_directories
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       `find "$error_report_base_directory"/* -type d`,
+	      ];
 
-    execute_shell_command_array($commands);
+	my $commands
+	    = [
+	       "cd $workflow_project_directory",
+	       map
+	       {
+		   my $error_report_directory = $_;
+
+		   "bin/vigilia command-correct $error_report_directory",
+	       }
+	       @$error_report_directories,
+	      ];
+
+	execute_shell_command_array($commands);
+    }
+    else
+    {
+	my $error_report_directories
+	    = [
+	       map
+	       {
+		   chomp; $_;
+	       }
+	       `find "$error_report_base_directory"/* -type d`,
+	      ];
+
+	# use Data::Dumper; print STDERR Dumper($error_report_directories);
+
+	my $commands
+	    = [
+	       "cd $workflow_project_directory",
+	       map
+	       {
+		   my $error_report_directory = $_;
+
+		   my $summary_filename = "$error_report_directory/000_summary.yml";
+
+		   my $summary = YAML::PP::LoadFile($summary_filename);
+
+		   my $module_name = $summary->{path}->{'010_module_name'};
+
+		   my $command_definition_path = $summary->{path}->{'020_command_definition_path'};
+
+		   my $test_pathname = "$module_name/$command_definition_path";
+
+		   my $diffs = "$error_report_directory/030_expected-minus-seen.diff";
+
+		   my $commands
+		       = [
+			  "cd $test_pathname",
+
+			  "echo it is unclear how this is supposed to work",
+			  "pwd",
+			  "echo test_pathname: $test_pathname",
+			  "echo diffs: $diffs",
+
+			  "cd ../../..",
+			 ];
+
+		   @$commands,
+
+	       }
+	       @$error_report_directories,
+	      ];
+
+	execute_shell_command_array($commands);
+    }
+
+    return 1;
 }
 
 
@@ -74,6 +136,7 @@ sub test_correct_completor
 
     return
     {
+     apply_diffs => "",
      do_it => "",
      dry_run => "",
     };
