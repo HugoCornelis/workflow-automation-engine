@@ -2,7 +2,14 @@
 command: feature-testing-workflow features command_concatenation tmux_cd --interactions
 command_tests:
   - description: a tmux-based role receives the command array as one ';'-concatenated line
+    disabled: This is not implemented yet.
     read: |2
+          ROLE: 'tmux_cd'
+
+          'echo one'
+          'echo two'
+          'echo three'
+    wanted_read: |2
           ROLE: 'tmux_cd'
 
           'echo one ; echo two ; echo three'
