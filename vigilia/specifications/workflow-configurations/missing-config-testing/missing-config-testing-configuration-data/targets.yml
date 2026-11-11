@@ -1,0 +1,27 @@
+---
+description: 'The following are example targets, modify/remove/add according to your project needs.'
+targets:
+  all:
+    description: used for processing of target files that are produced by other targets
+  build:
+    description: 'Operations on the build target, here this is used to test bash completion features.'
+  docker_testing:
+    description: Docker role testing
+  examples_sh:
+    description: Shell examples
+  features:
+    description: testing of workflow features
+  more_python:
+    description: More python testing
+  perl_examples:
+    description: these are perl examples that explain how to use the APIs
+  python:
+    description: Python testing
+  python_examples:
+    description: these are python examples that explain how to use the APIs
+  scripts:
+    description: An archive of scripts to test workflow features.
+  source_code:
+    description: operations on the source code that is used for testing
+  wiki_gitlab:
+    description: pulls the wiki pages from gitlab (and possibly other sources) and converts them PDF (or other formats)

@@ -1,0 +1,8 @@
+---
+command: cd ~/projects/workflow-automation-engine/source/snapshots/master/vigilia/specifications/workflow-configurations/missing-config-testing && workflow builtin
+command_tests:
+  - description: a command file listed in the configuration but absent (or unreadable) is reported as a file that cannot be read, naming the file
+    read: "missing-config-testing-commands-absent.py' not found (because the file cannot be read)"
+    white_space: convert seen 0a to 0d 0a newlines
+    timeout: 15
+description: the config-loader reports a listed-but-unreadable command file as a file that cannot be read

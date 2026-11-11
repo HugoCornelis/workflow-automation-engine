@@ -1,0 +1,12 @@
+---
+command: feature-testing-workflow features command_concatenation ssh_cd --interactions
+command_tests:
+  - description: a non-tmux (ssh) role receives the command array as separate commands
+    read: |2
+          ROLE: 'root@ssh_cd'
+
+          'echo one'
+          'echo two'
+          'echo three'
+    white_space: convert seen 0a to 0d 0a newlines
+description: a non-tmux (ssh) role receives the command array as separate commands

@@ -1,0 +1,6 @@
+---
+# Project settings are project specific settings that you define.
+
+project_settings:
+  any_key_here:
+    description: You can define arrays, dictionaries, keys and values as required.
