@@ -79,7 +79,7 @@ install-data-local: neurospaces_cpan_modules
 install-data-hook:
 	@echo "workflow and vigilia installation finished"
 
-neurospaces_cpan_modules:
+neurospaces_cpan_modules: $(wildcard $(srcdir)/cpan/[0-9][0-9]*.tar.gz) $(srcdir)/cpan/cpan_install
 	@echo "======================== Installing CPAN modules"
 	( cd cpan ; ./cpan_install [0-9][0-9]*.gz )
 	touch $(top_srcdir)/neurospaces_cpan_modules

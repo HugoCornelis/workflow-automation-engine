@@ -7,6 +7,45 @@ my $module_filenames = [ sort @ARGV, ];
 
 use Data::Dumper;
 
+# Run a shell command and abort the whole installation if it fails, so that a
+# broken build (for example a missing Python.h when python3-dev is not installed)
+# can never masquerade as success and silently leave an older version of the
+# module in place.
+
+sub run_or_die
+{
+    my ($command, $context) = @_;
+
+    print "cpan_install: running: $command\n";
+
+    my $status = system $command;
+
+    if ($status != 0)
+    {
+	my $detail
+	    = $status == -1   ? "failed to execute: $!"
+	    : ($status & 127) ? "died with signal " . ($status & 127)
+	    :                   "exited with status " . ($status >> 8);
+
+	die "cpan_install: *** ERROR while $context: '$command' $detail\n";
+    }
+}
+
+# Like run_or_die, but only warns.  Used for the test suite, whose failures
+# should be visible without necessarily blocking installation.
+
+sub run_or_warn
+{
+    my ($command, $context) = @_;
+
+    print "cpan_install: running: $command\n";
+
+    if (system $command)
+    {
+	warn "cpan_install: *** WARNING while $context: '$command' failed (continuing)\n";
+    }
+}
+
 print "Installing CPAN modules\n";
 
 print Dumper($module_filenames);
@@ -49,9 +88,10 @@ foreach my $module_filename (@$module_filenames)
 
     # unpack the module
 
-    system "tar xfz $module_filename --no-same-owner --no-same-permissions";
+    run_or_die("tar xfz $module_filename --no-same-owner --no-same-permissions", "unpacking $module_name");
 
-    chdir $module_name;
+    chdir $module_name
+	or die "cpan_install: *** ERROR: cannot enter '$module_name' after unpacking: $!\n";
 
     print `pwd`;
 
@@ -63,7 +103,7 @@ foreach my $module_filename (@$module_filenames)
     {
 	# ... uses an interactive perl makefile
 
-	system "echo '' | perl Makefile.PL";
+	run_or_die("echo '' | perl Makefile.PL", "configuring $module_name");
     }
 
     # ... other inline modules ...
@@ -72,7 +112,7 @@ foreach my $module_filename (@$module_filenames)
     {
 	# ... have perl makefiles that ask questions that should be answered with 'y'es.
 
-	system "echo y | perl Makefile.PL";
+	run_or_die("echo y | perl Makefile.PL", "configuring $module_name");
     }
 
     # ... other modules ...
@@ -81,18 +121,19 @@ foreach my $module_filename (@$module_filenames)
     {
 	# ... don't require special handling
 
-	system "perl Makefile.PL";
+	run_or_die("perl Makefile.PL", "configuring $module_name");
     }
 
     # build and install
 
-    system "make";
+    run_or_die("make", "building $module_name");
 
-    system "make test";
+    run_or_warn("make test", "testing $module_name");
 
-    system "sudo make install";
+    run_or_die("sudo make install", "installing $module_name");
 
-    chdir "..";
+    chdir ".."
+	or die "cpan_install: *** ERROR: cannot return to the cpan directory: $!\n";
 
     system "rm -fr $module_name";
 
