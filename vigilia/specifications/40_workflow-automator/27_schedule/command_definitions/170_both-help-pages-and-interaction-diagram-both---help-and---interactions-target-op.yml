@@ -75,6 +75,15 @@ command_tests:
       ---
       END WORKFLOW: features_cd_tests_tmux
       
+      feature-testing-workflow features command_concatenation: run a three-command array on the given role (default laptop) to exercise the engine's per-role command-array handling; inspect with --interactions
+      ---
+      WORKFLOW: features_command_concatenation (use --help to see the help page)
+          'echo one'
+          'echo two'
+          'echo three'
+      ---
+      END WORKFLOW: features_command_concatenation
+
       ---
       WORKFLOW: features_die
       ---

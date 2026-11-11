@@ -62,6 +62,14 @@ command_tests:
       END WORKFLOW: features_cd_tests_tmux
       
       ---
+      WORKFLOW: features_command_concatenation (use --help to see the help page)
+          'echo one'
+          'echo two'
+          'echo three'
+      ---
+      END WORKFLOW: features_command_concatenation
+
+      ---
       WORKFLOW: features_die
       ---
       END WORKFLOW: features_die
